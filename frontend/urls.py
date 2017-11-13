@@ -5,5 +5,5 @@ from frontend import views
 app_name = 'frontend'
 
 urlpatterns = [
-    url(r'^$', views.HomepageView.as_view(), name='index'),
+    url(r'^welcome', views.WelcomeView.as_view(), name='welcome'),
 ]

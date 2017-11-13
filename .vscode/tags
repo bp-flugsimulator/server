@@ -1,0 +1,81 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.8	//
+ALLOWED_HOSTS	../server/settings.py	/^ALLOWED_HOSTS = []$/;"	kind:variable	line:28
+AUTH_PASSWORD_VALIDATORS	../server/settings.py	/^AUTH_PASSWORD_VALIDATORS = [$/;"	kind:variable	line:89
+AppConfig	../base/apps.py	/^from django.apps import AppConfig$/;"	kind:namespace	line:1
+AppConfig	../frontend/apps.py	/^from django.apps import AppConfig$/;"	kind:namespace	line:1
+BASE_DIR	../server/settings.py	/^BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))$/;"	kind:variable	line:16
+BaseConfig	../base/apps.py	/^class BaseConfig(AppConfig):$/;"	kind:class	line:4
+Client	../frontend/tests.py	/^from django.test import TestCase, Client$/;"	kind:namespace	line:1
+DATABASES	../server/settings.py	/^DATABASES = {$/;"	kind:variable	line:78
+DEBUG	../server/settings.py	/^DEBUG = True$/;"	kind:variable	line:26
+FrontendConfig	../frontend/apps.py	/^class FrontendConfig(AppConfig):$/;"	kind:class	line:4
+FrontendTests	../frontend/tests.py	/^class FrontendTests(TestCase):$/;"	kind:class	line:4
+HomepageView	../frontend/views.py	/^class HomepageView(TemplateView):$/;"	kind:class	line:4
+INSTALLED_APPS	../server/settings.py	/^INSTALLED_APPS = [$/;"	kind:variable	line:33
+LANGUAGE_CODE	../server/settings.py	/^LANGUAGE_CODE = 'en-us'$/;"	kind:variable	line:108
+MIDDLEWARE	../server/settings.py	/^MIDDLEWARE = [$/;"	kind:variable	line:44
+ROOT_URLCONF	../server/settings.py	/^ROOT_URLCONF = 'server.urls'$/;"	kind:variable	line:54
+SECRET_KEY	../server/settings.py	/^SECRET_KEY = ')%6g_4%cxu0hr34b-!!ki1-^opbxam4-h+yhdq&a8*wx(h+vh*'$/;"	kind:variable	line:23
+STATICFILES_DIRS	../server/settings.py	/^STATICFILES_DIRS = [$/;"	kind:variable	line:124
+STATIC_URL	../server/settings.py	/^STATIC_URL = '\/static\/'$/;"	kind:variable	line:122
+TEMPLATES	../server/settings.py	/^TEMPLATES = [$/;"	kind:variable	line:56
+TIME_ZONE	../server/settings.py	/^TIME_ZONE = 'UTC'$/;"	kind:variable	line:110
+TemplateView	../frontend/views.py	/^from django.views.generic import TemplateView$/;"	kind:namespace	line:2
+TestCase	../base/tests.py	/^from django.test import TestCase$/;"	kind:namespace	line:1
+TestCase	../frontend/tests.py	/^from django.test import TestCase, Client$/;"	kind:namespace	line:1
+USE_I18N	../server/settings.py	/^USE_I18N = True$/;"	kind:variable	line:112
+USE_L10N	../server/settings.py	/^USE_L10N = True$/;"	kind:variable	line:114
+USE_TZ	../server/settings.py	/^USE_TZ = True$/;"	kind:variable	line:116
+WSGI_APPLICATION	../server/settings.py	/^WSGI_APPLICATION = 'server.wsgi.application'$/;"	kind:variable	line:72
+__init__.py	../base/__init__.py	1;"	kind:file	line:1
+__init__.py	../base/migrations/__init__.py	1;"	kind:file	line:1
+__init__.py	../frontend/__init__.py	1;"	kind:file	line:1
+__init__.py	../frontend/migrations/__init__.py	1;"	kind:file	line:1
+__init__.py	../server/__init__.py	1;"	kind:file	line:1
+admin	../base/admin.py	/^from django.contrib import admin$/;"	kind:namespace	line:1
+admin	../frontend/admin.py	/^from django.contrib import admin$/;"	kind:namespace	line:1
+admin	../server/urls.py	/^from django.contrib import admin$/;"	kind:namespace	line:17
+admin.py	../base/admin.py	1;"	kind:file	line:1
+admin.py	../frontend/admin.py	1;"	kind:file	line:1
+app_name	../frontend/urls.py	/^app_name = 'frontend'$/;"	kind:variable	line:5
+application	../server/wsgi.py	/^application = get_wsgi_application()$/;"	kind:variable	line:16
+apps.py	../base/apps.py	1;"	kind:file	line:1
+apps.py	../frontend/apps.py	1;"	kind:file	line:1
+django	../manage.py	/^            import django$/;"	kind:namespace	line:14
+execute_from_command_line	../manage.py	/^        from django.core.management import execute_from_command_line$/;"	kind:namespace	line:8
+get_wsgi_application	../server/wsgi.py	/^from django.core.wsgi import get_wsgi_application$/;"	kind:namespace	line:12
+include	../server/urls.py	/^from django.conf.urls import url, include$/;"	kind:namespace	line:16
+manage.py	../manage.py	1;"	kind:file	line:1
+models	../base/models.py	/^from django.db import models$/;"	kind:namespace	line:1
+models	../frontend/models.py	/^from django.db import models$/;"	kind:namespace	line:1
+models.py	../base/models.py	1;"	kind:file	line:1
+models.py	../frontend/models.py	1;"	kind:file	line:1
+name	../base/apps.py	/^    name = 'base'$/;"	kind:variable	line:5
+name	../frontend/apps.py	/^    name = 'frontend'$/;"	kind:variable	line:5
+os	../manage.py	/^import os$/;"	kind:namespace	line:2
+os	../server/settings.py	/^import os$/;"	kind:namespace	line:13
+os	../server/wsgi.py	/^import os$/;"	kind:namespace	line:10
+render	../base/views.py	/^from django.shortcuts import render$/;"	kind:namespace	line:1
+render	../frontend/views.py	/^from django.shortcuts import render$/;"	kind:namespace	line:1
+reverse	../frontend/tests.py	/^from django.urls import reverse$/;"	kind:namespace	line:2
+settings.py	../server/settings.py	1;"	kind:file	line:1
+sys	../manage.py	/^import sys$/;"	kind:namespace	line:3
+template_name	../frontend/views.py	/^    template_name = 'frontend\/index.html'$/;"	kind:variable	line:5
+test_homepage_get	../frontend/tests.py	/^    def test_homepage_get(self):$/;"	kind:member	line:5
+tests.py	../base/tests.py	1;"	kind:file	line:1
+tests.py	../frontend/tests.py	1;"	kind:file	line:1
+url	../frontend/urls.py	/^from django.conf.urls import url$/;"	kind:namespace	line:1
+url	../server/urls.py	/^from django.conf.urls import url, include$/;"	kind:namespace	line:16
+urlpatterns	../frontend/urls.py	/^urlpatterns = [$/;"	kind:variable	line:7
+urlpatterns	../server/urls.py	/^urlpatterns = [$/;"	kind:variable	line:19
+urls.py	../frontend/urls.py	1;"	kind:file	line:1
+urls.py	../server/urls.py	1;"	kind:file	line:1
+views	../frontend/urls.py	/^from frontend import views$/;"	kind:namespace	line:3
+views.py	../base/views.py	1;"	kind:file	line:1
+views.py	../frontend/views.py	1;"	kind:file	line:1
+wsgi.py	../server/wsgi.py	1;"	kind:file	line:1
