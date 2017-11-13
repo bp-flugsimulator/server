@@ -6,3 +6,4 @@ class FrontendTests(TestCase):
         c = Client()
         response = c.get(reverse('frontend:welcome'))
         self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "welcome")
