@@ -8,7 +8,7 @@ class FrontendTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "welcome")
 
-    def test_index_get(self):
+    def test_slaves_get(self):
         c = Client()
-        response = c.get(reverse('frontend:index'))
+        response = c.get(reverse('frontend:slaves'))
         self.assertEqual(response.status_code, 200)
