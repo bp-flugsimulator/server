@@ -17,13 +17,16 @@
 		<div class="modal-content">
 			<div class="modal-header">
 				<button type="button" class="close" data-dismiss="modal">&times;</button>
-				<h4 class="modal-title">Modal Header</h4>
 			</div>
 			<div class="modal-body">
-				<p>Some text in the modal.</p>
+					<form id="ipform">
+							Ip-Adresse:
+							<input type="text" name="ip">
+					</form>
 			</div>
 			<div class="modal-footer">
-				<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+				<button id="cancelRegisterSlave" type="button" class="btn btn-default" data-dismiss="modal">Abbrechen</button>
+				<button id="saveSlave" type="button" class="btn btn-default" data-dismiss="modal">Speichern</button>
 			</div>
 		</div>
 	</div>
@@ -31,12 +34,23 @@
 {% endblock %}
 {% block script %}
 <script>
-$(document).ready(function(){
-	$("#registerButton").click(function(){
-		console.log("test");
-		$("#registerSlaveModal").modal();
-	});
-})
+	slave_list = []
+	$(document).ready(function(){
+		$("#registerButton").click(function(){
+			console.log("test");
+			$("#registerSlaveModal").modal();
+		});
+
+		$("#cancelRegisterSlave").click(function(){
+			$("#registerSlaveModal").modal();
+		});
+
+		$("#saveSlave").click(function(){
+			let address = 	$("#ipform").serialize();
+			slave_list.push(address);
+			console.log(address);
+		});
+	})
 </script>
 {% endblock %}
 
