@@ -26,10 +26,10 @@
 				<button type="button" class="close" data-dismiss="modal">&times;</button>
 			</div>
 			<div class="modal-body">
-					<form id="ipform">
+					<div class="form" id="ipform">
 							Ip-Adresse:
 							<input type="text" name="ip">
-					</form>
+					</div>
 			</div>
 			<div class="modal-footer">
 				<button id="cancelRegisterSlave" type="button" class="btn btn-default" data-dismiss="modal">Abbrechen</button>
@@ -57,8 +57,8 @@
 		});
 
 		$("#saveSlave").click(function(){
-			let address = $("#ipform").serializeArray()[0].value; //FIXME
-			console.log(address);
+			let address = $("#ipform").children()[0].value; //FIXME
+			console.log($("#ipform").children());
 			append_slave(address);
 		});
 	})
