@@ -18,6 +18,7 @@
 </div>
 <ul class="list-group" id="slaveList">
 </ul>
+
 <!-- Modal -->
 <div class="modal fade" id="registerSlaveModal" role="dialog">
 	<div class="modal-dialog">
@@ -41,12 +42,6 @@
 {% endblock %}
 {% block script %}
 <script>
-	function append_slave(address){
-		var slave_template = document.getElementById("SlaveTemplate").content.cloneNode(true);
-		slave_template.querySelector("#ip").appendChild(document.createTextNode(address));
-		$("#slaveList").append(slave_template);
-	}
-
 	$(document).ready(function(){
 		$("#registerButton").click(function(){
 			$("#registerSlaveModal").modal();
@@ -57,9 +52,15 @@
 		});
 
 		$("#saveSlave").click(function(){
-			let address = $("#ipform").children()[0].value; //FIXME
-			console.log($("#ipform").children());
-			append_slave(address);
+			//read input from form	
+			let address = $("#ipform").children()[0].value; 
+
+			//generate Slave entry from SlaveTemplate and address	
+			var slave_template = document.getElementById("SlaveTemplate").content.cloneNode(true);
+			slave_template.querySelector("#ip").appendChild(document.createTextNode(address));
+
+			//append Slave to list	
+			$("#slaveList").append(slave_template);
 		});
 	})
 </script>
