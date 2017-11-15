@@ -1,16 +1,22 @@
 {% extends "base/base.html" %}{% load staticfiles %}
 {% block title %}Willkommen{% endblock %}
 {% block premain %}
-
+<template id="SlaveTemplate">
+	<div id="Slave">
+	<li class="list-group-item" id="SlaveListItem">
+			<h1 id="ip"></h1>
+	</li>
+	</div>
+</template>		
 {% endblock %}
 {% block content %}
 <div class="jumbotron">
 	<div class="container">
 		<button type="button" id="registerButton">Slave hinzufügen</button>
 	</div>
-
 </div>
-
+<ul class="list-group" id="slaveList">
+</ul>
 <!-- Modal -->
 <div class="modal fade" id="registerSlaveModal" role="dialog">
 	<div class="modal-dialog">
@@ -34,10 +40,14 @@
 {% endblock %}
 {% block script %}
 <script>
-	slave_list = []
+	function append_slave(address){
+		var slave_template = document.getElementById("SlaveTemplate").content.cloneNode(true);
+		slave_template.querySelector("#ip").appendChild(document.createTextNode(address));
+		$("#slaveList").append(slave_template);
+	}
+
 	$(document).ready(function(){
 		$("#registerButton").click(function(){
-			console.log("test");
 			$("#registerSlaveModal").modal();
 		});
 
@@ -46,9 +56,9 @@
 		});
 
 		$("#saveSlave").click(function(){
-			let address = 	$("#ipform").serialize();
-			slave_list.push(address);
+			let address = $("#ipform").serializeArray()[0].value; //FIXME
 			console.log(address);
+			append_slave(address);
 		});
 	})
 </script>
