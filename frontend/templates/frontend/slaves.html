@@ -4,6 +4,24 @@
 {% block premain %} {% endblock %}
 {% block content %}
 <div class="jumbotron">
+    <button type="button" data-toggle="modal" data-target="#registerSlaveModal">Slave hinzufügen</button>
+
+    <div class="modal fade" id="registerSlaveModal" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+
+                </div>
+                <div class="modal-footer">
+                    <button id="saveSlave" type="button" class="btn btn-default" data-dismiss="modal">Speichern</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <ul class="list-group">
         {% for slave in slaves %}
         <li class="list-group-item"> {{ slave.name }} {{ slave.ip_address }} {{ slave.mac_address }}</li>
@@ -13,4 +31,14 @@
         {% endfor %}
     </ul>
 </div>
+{% endblock %}
+
+{% block script %}
+<script>
+    $(document).ready(function(){
+		$("#saveSlave").click(function(){
+
+        });
+	})
+</script>
 {% endblock %}
