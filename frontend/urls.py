@@ -6,4 +6,5 @@ app_name = 'frontend'
 
 urlpatterns = [
     url(r'^welcome', views.WelcomeView.as_view(), name='welcome'),
+    url(r'^slaves/$', views.SlavesView.as_view(), name='slaves'),
 ]
