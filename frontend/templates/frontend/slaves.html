@@ -13,7 +13,16 @@
                     <button type="button" class="close" data-dismiss="modal">&times;</button>
                 </div>
                 <div class="modal-body">
-
+                    <form action="/api/addSlave" method="post">
+                        {{ form.as_p}}
+                    </form>
+                    {% if form.subject.errors %}
+                        <ol>
+                            {% for error in form.subject.errors %}
+                                <li><strong>{{ error|escape }}</strong></li>
+                            {% endfor %}
+                        </ol>
+                    {% endif %}
                 </div>
                 <div class="modal-footer">
                     <button id="saveSlave" type="button" class="btn btn-default" data-dismiss="modal">Speichern</button>
