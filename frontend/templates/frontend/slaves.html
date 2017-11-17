@@ -14,6 +14,7 @@
                         <div class="modal-header">
                             <button type="button" class="close" data-dismiss="modal">&times;</button>
                         </div>
+
                         <div class="modal-body">
                                 {% csrf_token %}
 
@@ -70,18 +71,35 @@
             ip_address = $(this).find("input[name='ip_address']").val();
             mac_address = $(this).find("input[name='mac_address']").val();
 
-            $.post(url
-                ,{csrfmiddlewaretoken:'{{ csrf_token }}',name: name, ip_address: ip_address, mac_address: mac_address}
-                ,function(err){
-                    if($.isEmptyObject(err)){
-                        window.location.reload();
-                    } else {
-                        alert(JSON.stringify(err));
-                    }
-                }
-            );
-        })
+            $.post(url,
+             {
+                csrfmiddlewaretoken:'{{ csrf_token }}',
+                name: name,
+                ip_address: ip_address,
+                mac_address: mac_address
+            },
+            function(err){
+                if($.isEmptyObject(err)){
+                    window.location.reload();
+                } else {
+                    $("#slave_form").find("div[class='invalid-feedback']").each(function (index, item) {
+                        item.remove();
+                    });
 
+                    $("#slave_form").find(".is-invalid").each(function (index, item) {
+                        console.log(item);
+                        $(item).addClass("is-valid");
+                        $(item).removeClass("is-invalid");
+                    });
+
+                    $.each(err, function (id, msg) {
+                        node = $("#slave_form").find("input[name=" + id +"]");
+                        node.addClass("is-invalid");
+                        node.parent().append('<div class="invalid-feedback">' + msg + '</div>');
+                    });
+                }
+            });
+        })
     })
 </script>
 {% endblock %}
