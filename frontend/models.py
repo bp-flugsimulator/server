@@ -4,39 +4,6 @@ from django.utils.translation import gettext_lazy as _
 
 
 # Create your models here.
-def validate_ip_address(ip_addr):
-    """
-    Validates a given IP address.
-
-    This functions checks if a given string is a valid
-    IPv4 address.
-
-    Parameters
-    ----------
-    ip_addr : str
-        IP address
-
-    Returns
-    -------
-    nothing
-
-    Exception
-    ---------
-    Raises an ValidationError if the given string is not
-    a valid IPv4 address.
-    """
-    parts = ip_addr.split(".")
-    if len(parts) != 4:
-        return False
-    for item in parts:
-        if not 0 <= int(item) <= 255:
-            raise ValidationError(
-                _('Invalid IP Address: %(ip_addr)s'),
-                params={'ip_addr': 'ip_addr'},
-                code='invalid_ip',
-            )
-
-
 def validate_mac_address(mac_addr):
     """
     Validates a given MAC address.
@@ -58,25 +25,35 @@ def validate_mac_address(mac_addr):
     Raises an ValidationError if the given string is not
     a valid MAC address.
     """
-    if mac_addr.count(":") != 5:
-        return False
-    for i in mac_addr.split(":"):
-        for j in i:
-            if j > "F" or (j < "A" and not j.isdigit()) or len(i) != 2:
-                raise ValidationError(
-                    _('Invalid MAC Address: %(mac_addr)s'),
-                    params={'mac_addr': 'mac_addr'},
-                    code='invalid_mac',
-                )
+
+    def ishex(char):
+        return (char <= 'F' and char >= 'A') or (char <= 'f' and char >= 'a')
+
+    parts = mac_addr.split(":")
+    if len(parts) == 6:
+        for part in parts:
+            for char in part:
+                if (not ishex(char) and not char.isdigit()) or len(part) != 2:
+                    raise ValidationError(
+                        _('Invalid MAC Address (not allowed symbols): %(mac_addr)s'
+                          ),
+                        params={'mac_addr': 'mac_addr'},
+                        code='invalid_mac_sym',
+                    )
+    else:
+        raise ValidationError(
+            _('Invalid MAC Address (too few parts): %(mac_addr)s'),
+            params={'mac_addr': 'mac_addr'},
+            code='invalid_mac_few',
+        )
 
 
 class Slave(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(unique=True, max_length=200)
-    ip_address = models.CharField(
-        unique=True, max_length=200, validators=[validate_ip_address])
+    ip_address = models.GenericIPAddressField(unique=True)
     mac_address = models.CharField(
-        unique=True, max_length=200, validators=[validate_mac_address])
+        unique=True, max_length=17, validators=[validate_mac_address])
 
     def clean(self):
         super(Slave, self).clean()
