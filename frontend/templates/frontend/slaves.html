@@ -39,9 +39,11 @@
 {% block script %}
 <script>
     $(document).ready(function(){
-		$("#saveSlave").click(function(){
-
-        });
-	})
+        {% if messages %}
+            {% for message in messages %}
+                alert("{{ message }}")
+            {% endfor %}
+        {% endif %}
+    })
 </script>
 {% endblock %}

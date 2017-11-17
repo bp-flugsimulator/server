@@ -124,3 +124,6 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [
      ('node', 'node_modules'),
 ]
+
+# Message Storage
+MESSAGE_STORAGE = 'django.contrib.messages.storage.cookie.CookieStorage'
