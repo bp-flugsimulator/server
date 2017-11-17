@@ -1,8 +1,9 @@
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.core.exceptions import ValidationError
+from django.forms import ModelForm
 
-from .models import Slave as SlaveModel
+from .models import Slave as SlaveModel, validate_mac_address
 
 
 def fill_database_slaves_set_1():
@@ -72,3 +73,30 @@ class DatabaseTests(TestCase):
     def test_slave_insert_invalid_mac(self):
         self.assertRaises(
             ValidationError, SlaveModel(mac_address='my_cool_mac').full_clean)
+
+    def test_mac_validator_upper(self):
+        validate_mac_address("00:AA:BB:CC:DD:EE")
+        self.assertTrue(True)
+
+    def test_mac_validator_lower(self):
+        validate_mac_address("00:aa:bb:cc:dd:ee")
+        self.assertTrue(True)
+
+    def test_mac_validator_mixed(self):
+        validate_mac_address("00:Aa:Bb:cC:dD:EE")
+        self.assertTrue(True)
+
+    def test_mac_validator_too_short(self):
+        self.assertRaises(ValidationError, validate_mac_address, "00:02:23")
+
+    def test_mac_validator_too_long(self):
+        self.assertRaises(ValidationError, validate_mac_address,
+                          "00:02:23:23:23:23:32")
+
+    def test_mac_validator_too_long_inner(self):
+        self.assertRaises(ValidationError, validate_mac_address,
+                          "00:02:23:223:23:23")
+
+    def test_mac_validator_too_short_inner(self):
+        self.assertRaises(ValidationError, validate_mac_address,
+                          "00:02:23:2:23:23")
