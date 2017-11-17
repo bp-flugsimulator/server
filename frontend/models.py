@@ -35,15 +35,12 @@ def validate_mac_address(mac_addr):
             for char in part:
                 if (not ishex(char) and not char.isdigit()) or len(part) != 2:
                     raise ValidationError(
-                        _('Invalid MAC Address (not allowed symbols): %(mac_addr)s'
-                          ),
-                        params={'mac_addr': 'mac_addr'},
+                        _('Enter a valid MAC Address.'),
                         code='invalid_mac_sym',
                     )
     else:
         raise ValidationError(
-            _('Invalid MAC Address (too few parts): %(mac_addr)s'),
-            params={'mac_addr': 'mac_addr'},
+            _('Enter a valid MAC Address.'),
             code='invalid_mac_few',
         )
 
