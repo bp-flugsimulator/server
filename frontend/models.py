@@ -1,5 +1,6 @@
 from django.db import models
 from django.core.exceptions import ValidationError
+from django.utils.translation import gettext_lazy as _
 
 
 # Create your models here.
@@ -10,7 +11,10 @@ def validate_ip_address(ip_addr):
     for item in parts:
         if not 0 <= int(item) <= 255:
             raise ValidationError(
-                "{} is not a valid IP Address".format(ip_addr))
+                _('Invalid IP Address: %(ip_addr)s'),
+                params={'ip_addr': 'ip_addr'},
+                code='invalid_ip',
+            )
 
 
 def validate_mac_address(mac_addr):
@@ -20,7 +24,10 @@ def validate_mac_address(mac_addr):
         for j in i:
             if j > "F" or (j < "A" and not j.isdigit()) or len(i) != 2:
                 raise ValidationError(
-                    "{} is not a valid MAC Address".format(mac_addr))
+                    _('Invalid MAC Address: %(mac_addr)s'),
+                    params={'mac_addr': 'mac_addr'},
+                    code='invalid_mac',
+                )
 
 
 class Slave(models.Model):
