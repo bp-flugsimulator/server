@@ -55,7 +55,6 @@ class FrontendTests(TestCase):
             self.assertContains(response, data.ip_address)
 
 class ApiTests(TestCase):
-
     def test_add_slave_success(self):
         data_set = [
             SlaveModel(
@@ -117,7 +116,9 @@ class ApiTests(TestCase):
         #see if message contains the error
         messages = list(view_response.context['messages'])
         self.assertTrue(messages)
-        self.assertEqual('Slave with this Ip address already exists. Slave with this Mac address already exists. ', str(messages[0]))
+        self.assertTrue('Slave with this Name already exists' in str(messages[0]))
+        self.assertTrue('Slave with this Ip address already exists' in str(messages[0]))
+        self.assertTrue('Slave with this Mac address already exists' in str(messages[0]))
 
     def test_add_slave_false_input_fail(self):
         data = SlaveModel(name="add_slave_5", ip_address="ip address",mac_address="mac address")
