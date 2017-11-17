@@ -14,18 +14,12 @@
                 </div>
                 <div class="modal-body">
                     <form action="/api/addSlave" method="post">
+                        {% csrf_token %}
                         {{ form.as_p}}
+                        <input class="button" type="submit" value="Speichern">
                     </form>
-                    {% if form.subject.errors %}
-                        <ol>
-                            {% for error in form.subject.errors %}
-                                <li><strong>{{ error|escape }}</strong></li>
-                            {% endfor %}
-                        </ol>
-                    {% endif %}
                 </div>
                 <div class="modal-footer">
-                    <button id="saveSlave" type="button" class="btn btn-default" data-dismiss="modal">Speichern</button>
                 </div>
             </div>
         </div>
