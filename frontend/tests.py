@@ -82,7 +82,7 @@ class ApiTests(TestCase):
             api_response = c.post(reverse('frontend:add_slaves'),{'name': data.name, 'ip_address': data.ip_address, 'mac_address':data.mac_address})
 
             self.assertEqual(api_response.status_code, 200)
-            self.assertJSONEqual(api_response.content, "{}")
+            self.assertJSONEqual(api_response.content.decode('utf-8'), "{}")
 
         #test if all slaves get displayed
         view_response =  c.get(reverse('frontend:slaves'))
