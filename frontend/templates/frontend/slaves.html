@@ -13,7 +13,7 @@
                     <button type="button" class="close" data-dismiss="modal">&times;</button>
                 </div>
                 <div class="modal-body">
-                    <form action="/api/addSlave" method="post">
+                    <form action="/api/add_slave/" id="slave_form">
                         {% csrf_token %}
                         {{ form.as_p}}
                         <input class="button" type="submit" value="Speichern">
@@ -39,11 +39,28 @@
 {% block script %}
 <script>
     $(document).ready(function(){
-        {% if messages %}
-            {% for message in messages %}
-                alert("{{ message }}")
-            {% endfor %}
-        {% endif %}
+        $("#slave_form").submit(function (event) {
+            //Stop form from submitting normally
+            event.preventDefault();
+
+            //get data from form
+            url = $(this).attr("action")
+            name = $(this).find("input[name='name']").val();
+            ip_address = $(this).find("input[name='ip_address']").val();
+            mac_address = $(this).find("input[name='mac_address']").val();
+
+            $.post(url
+                ,{csrfmiddlewaretoken:'{{ csrf_token }}',name: name, ip_address: ip_address, mac_address: mac_address}
+                ,function(err){
+                    if($.isEmptyObject(err)){
+                        window.location.reload();
+                    } else {
+                        alert(JSON.stringify(err));
+                    }
+                }
+            );
+        })
+
     })
 </script>
 {% endblock %}

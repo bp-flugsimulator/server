@@ -1,4 +1,4 @@
-from django.http import HttpResponseForbidden, HttpResponseRedirect
+from django.http import HttpResponseForbidden, JsonResponse
 from .models import Slave as SlaveModel
 from .forms import SlaveForm
 from django.db.utils import DatabaseError
@@ -25,14 +25,6 @@ def add_slave(request):
             mac = form.cleaned_data['mac_address']
             model = SlaveModel(name=name, ip_address=ip,mac_address=mac)
             model.save()
-        else:
-            errormsg = ''
-            for value in form.errors.as_data().values():
-                errormsg += str(value[0])\
-                    .replace('\'','')\
-                    .replace('[','')\
-                    .replace(']','') + ' '
-            messages.error(request, errormsg)
-        return HttpResponseRedirect("/slaves/")
+        return JsonResponse(form.errors)
     else:
         return HttpResponseForbidden
