@@ -1,9 +1,6 @@
 from django.http import HttpResponseForbidden, JsonResponse
 from .models import Slave as SlaveModel
 from .forms import SlaveForm
-from django.db.utils import DatabaseError
-
-from django.contrib import messages
 
 
 def add_slave(request):
@@ -15,7 +12,12 @@ def add_slave(request):
         a POST request containing a SlaveForm
     Returns
     -------
-    nothing
+    A HttpResponse with a JSON object which
+    contains a errors if something is goes
+    wrong or is empty on success.
+    If the request method is something other
+    than POST, then HttpResponseForbidden()
+    will be returned.
     """
     if request.method == 'POST':
         form = SlaveForm(request.POST)
@@ -27,4 +29,4 @@ def add_slave(request):
             model.save()
         return JsonResponse(form.errors)
     else:
-        return HttpResponseForbidden
+        return HttpResponseForbidden()

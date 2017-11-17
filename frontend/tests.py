@@ -1,7 +1,7 @@
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.core.exceptions import ValidationError
-from django.forms import ModelForm
+from django.http import HttpResponseForbidden
 
 from .models import Slave as SlaveModel, validate_mac_address
 
@@ -126,6 +126,12 @@ class ApiTests(TestCase):
         #test if the database does not contain the false slave
         self.assertFalse(SlaveModel.objects.filter(name=data.name,ip_address=data.ip_address,mac_address=data.mac_address).exists())
 
+    def test_add_slave_no_post(self):
+        data = SlaveModel(name="add_slave_5", ip_address="ip address",mac_address="mac address")
+
+        c = Client()
+        api_response = c.get(reverse('frontend:add_slaves'))
+        self.assertEqual(api_response.status_code,403)
 
 class DatabaseTests(TestCase):
     def test_slave_insert_valid(self):
