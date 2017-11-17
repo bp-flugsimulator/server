@@ -8,9 +8,9 @@ Es bietet sich an, die Abhängigkeiten in ein virtualenv zu installieren, sodass
 ```
 virtualenv3 venv
 source venv/bin/activate
-pip install -r requirements.txt
+pip3 install -r requirements.txt
 npm install
-python manage.py migrate
+python3 manage.py migrate
 ```
 
-Der Server kann dann über `python manage.py runserver` gestartet werden.
+Der Server kann dann über `python3 manage.py runserver` gestartet werden.
