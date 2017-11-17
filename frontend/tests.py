@@ -82,7 +82,7 @@ class ApiTests(TestCase):
             api_response = c.post(reverse('frontend:add_slaves'),{'name': data.name, 'ip_address': data.ip_address, 'mac_address':data.mac_address})
 
             self.assertEqual(api_response.status_code, 200)
-            self.assertJSONEqual(api_response.content, {})
+            self.assertJSONEqual(api_response.content, "{}")
 
         #test if all slaves get displayed
         view_response =  c.get(reverse('frontend:slaves'))
@@ -100,17 +100,14 @@ class ApiTests(TestCase):
         #add first slave
         api_response = c.post(reverse('frontend:add_slaves'),{'name': data.name, 'ip_address': data.ip_address, 'mac_address':data.mac_address})
         self.assertEqual(api_response.status_code, 200)
-        self.assertJSONEqual(api_response.content, {})
+        self.assertJSONEqual(api_response.content, "{}")
 
         #insert data a second time
         api_response = c.post(reverse('frontend:add_slaves'),{'name': data.name, 'ip_address': data.ip_address, 'mac_address':data.mac_address})
 
         #test if the response contains a JSONobject with the error
         self.assertEqual(api_response.status_code, 200)
-        self.assertJSONEqual(api_response.content
-                             ,{'name':['Slave with this Name already exists.']
-                             ,'ip_address':['Slave with this Ip address already exists.']
-                             ,'mac_address':['Slave with this Mac address already exists.']})
+        self.assertJSONEqual(api_response.content,'{"name":["Slave with this Name already exists."],"ip_address":["Slave with this Ip address already exists."],"mac_address":["Slave with this Mac address already exists."]}')
 
         #test if the slave is still in the database
         self.assertTrue(SlaveModel.objects.filter(name=data.name,ip_address=data.ip_address,mac_address=data.mac_address).exists())
@@ -124,9 +121,7 @@ class ApiTests(TestCase):
         self.assertEqual(api_response.status_code, 200)
 
         #see if message contains the error
-        self.assertJSONEqual(api_response.content
-                             ,{'ip_address': ['Enter a valid IPv4 or IPv6 address.']
-                             ,'mac_address': ['Invalid MAC Address (too few parts): mac_addr']})
+        self.assertJSONEqual(api_response.content, '{"ip_address":["Enter a valid IPv4 or IPv6 address."],"mac_address": ["Invalid MAC Address (too few parts): mac_addr"]}')
 
         #test if the database does not contain the false slave
         self.assertFalse(SlaveModel.objects.filter(name=data.name,ip_address=data.ip_address,mac_address=data.mac_address).exists())
