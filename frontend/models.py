@@ -30,7 +30,3 @@ class Slave(models.Model):
         unique=True, max_length=200, validators=[validate_ip_address])
     mac_address = models.CharField(
         unique=True, max_length=200, validators=[validate_mac_address])
-
-    def clean(self):
-        super(Slave, self).clean()
-        self.name = self.name.capitalize()
