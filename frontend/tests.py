@@ -81,14 +81,8 @@ class ApiTests(TestCase):
         for data in data_set:
             api_response = c.post(reverse('frontend:add_slaves'),{'name': data.name, 'ip_address': data.ip_address, 'mac_address':data.mac_address})
 
-            #test if response is a redirect (code 302 = FOUND commonly used for redirect)
-            self.assertEqual(api_response.status_code, 302)
-            self.assertRedirects(api_response, reverse('frontend:slaves'))
-
-
-        #test if all slaves are in the database
-        for data in data_set:
-            self.assertTrue(SlaveModel.objects.filter(name=data.name, ip_address=data.ip_address, mac_address=data.mac_address).exists())
+            self.assertEqual(api_response.status_code, 200)
+            self.assertJSONEqual(api_response.content, "{}")
 
         #test if all slaves get displayed
         view_response =  c.get(reverse('frontend:slaves'))
@@ -97,43 +91,40 @@ class ApiTests(TestCase):
             self.assertContains(view_response, data.ip_address)
             self.assertContains(view_response, data.mac_address)
 
+
     def test_add_slave_double_entry_fail(self):
         data = SlaveModel(name="add_slave_4", ip_address="0.0.1.4",mac_address="00:00:00:00:01:04")
 
         c = Client()
 
+        #add first slave
         api_response = c.post(reverse('frontend:add_slaves'),{'name': data.name, 'ip_address': data.ip_address, 'mac_address':data.mac_address})
-        #test if response is a redirect (code 302 = FOUND commonly used for redirect)
-        self.assertEqual(api_response.status_code, 302)
-        self.assertRedirects(api_response, reverse('frontend:slaves'))
-        view_response = c.get(reverse('frontend:slaves'))
+        self.assertEqual(api_response.status_code, 200)
+        self.assertJSONEqual(api_response.content, "{}")
 
-        #insert data a second time and follow the redirect
-        view_response = c.post(reverse('frontend:add_slaves'),{'name': data.name, 'ip_address': data.ip_address, 'mac_address':data.mac_address}, follow=True)
-        #test if response is a redirected
-        self.assertEqual(view_response.status_code, 200)
+        #insert data a second time
+        api_response = c.post(reverse('frontend:add_slaves'),{'name': data.name, 'ip_address': data.ip_address, 'mac_address':data.mac_address})
 
-        #see if message contains the error
-        messages = list(view_response.context['messages'])
-        self.assertTrue(messages)
-        self.assertTrue('Slave with this Name already exists' in str(messages[0]))
-        self.assertTrue('Slave with this Ip address already exists' in str(messages[0]))
-        self.assertTrue('Slave with this Mac address already exists' in str(messages[0]))
+        #test if the response contains a JSONobject with the error
+        self.assertEqual(api_response.status_code, 200)
+        self.assertJSONEqual(api_response.content,'{"name":["Slave with this Name already exists."],"ip_address":["Slave with this Ip address already exists."],"mac_address":["Slave with this Mac address already exists."]}')
+
+        #test if the slave is still in the database
+        self.assertTrue(SlaveModel.objects.filter(name=data.name,ip_address=data.ip_address,mac_address=data.mac_address).exists())
 
     def test_add_slave_false_input_fail(self):
         data = SlaveModel(name="add_slave_5", ip_address="ip address",mac_address="mac address")
 
         c = Client()
-        view_response = c.post(reverse('frontend:add_slaves'),{'name':data.name , 'ip_address': data.ip_address, 'mac_address':data.mac_address}, follow=True)
-        #test if response is a redirected
-        self.assertEqual(view_response.status_code, 200)
+        api_response = c.post(reverse('frontend:add_slaves'),{'name':data.name , 'ip_address': data.ip_address, 'mac_address':data.mac_address})
+        #test if response was successfull
+        self.assertEqual(api_response.status_code, 200)
 
         #see if message contains the error
-        messages = list(view_response.context['messages'])
-        self.assertTrue(messages)
-        self.assertTrue("Enter a valid IPv4 or IPv6 address" in str(messages[0]))
-        self.assertTrue("Invalid MAC Address" in str(messages[0]))
+        self.assertJSONEqual(api_response.content, '{"ip_address":["Enter a valid IPv4 or IPv6 address."],"mac_address": ["Invalid MAC Address (too few parts): mac_addr"]}')
 
+        #test if the database does not contain the false slave
+        self.assertFalse(SlaveModel.objects.filter(name=data.name,ip_address=data.ip_address,mac_address=data.mac_address).exists())
 
 
 class DatabaseTests(TestCase):
