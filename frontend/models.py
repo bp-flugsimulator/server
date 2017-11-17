@@ -5,6 +5,26 @@ from django.utils.translation import gettext_lazy as _
 
 # Create your models here.
 def validate_ip_address(ip_addr):
+    """
+    Validates a given IP address.
+
+    This functions checks if a given string is a valid
+    IPv4 address.
+
+    Parameters
+    ----------
+    ip_addr : str
+        IP address
+
+    Returns
+    -------
+    nothing
+
+    Exception
+    ---------
+    Raises an ValidationError if the given string is not
+    a valid IPv4 address.
+    """
     parts = ip_addr.split(".")
     if len(parts) != 4:
         return False
@@ -18,6 +38,26 @@ def validate_ip_address(ip_addr):
 
 
 def validate_mac_address(mac_addr):
+    """
+    Validates a given MAC address.
+
+    This functions checks if a given string is a valid
+    MAC address.
+
+    Parameters
+    ----------
+    mac_addr : str
+        MAC address
+
+    Returns
+    -------
+    nothing
+
+    Exception
+    ---------
+    Raises an ValidationError if the given string is not
+    a valid MAC address.
+    """
     if mac_addr.count(":") != 5:
         return False
     for i in mac_addr.split(":"):
