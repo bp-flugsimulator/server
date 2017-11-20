@@ -9,7 +9,7 @@
 
         <div class="modal fade" id="registerSlaveModal" role="dialog">
             <div class="modal-dialog">
-                <form action="/api/add_slave/" method="post" id="slave_form">
+                <form action="/api/slaves/" method="post" id="form_slave">
                     <div class="modal-content">
                         <div class="modal-header">
                             <button type="button" class="close" data-dismiss="modal">&times;</button>
@@ -61,7 +61,7 @@
 {% block script %}
 <script>
     $(document).ready(function(){
-        $("#slave_form").submit(function (event) {
+        $("#form_slave").submit(function (event) {
             //Stop form from submitting normally
             event.preventDefault();
 
@@ -82,18 +82,18 @@
                 if($.isEmptyObject(err)){
                     window.location.reload();
                 } else {
-                    $("#slave_form").find("div[class='invalid-feedback']").each(function (index, item) {
+                    $("#form_slave").find("div[class='invalid-feedback']").each(function (index, item) {
                         item.remove();
                     });
 
-                    $("#slave_form").find(".is-invalid").each(function (index, item) {
+                    $("#form_slave").find(".is-invalid").each(function (index, item) {
                         console.log(item);
                         $(item).addClass("is-valid");
                         $(item).removeClass("is-invalid");
                     });
 
                     $.each(err, function (id, msg) {
-                        node = $("#slave_form").find("input[name=" + id +"]");
+                        node = $("#form_slave").find("input[name=" + id +"]");
                         node.addClass("is-invalid");
                         node.parent().append('<div class="invalid-feedback">' + msg + '</div>');
                     });
