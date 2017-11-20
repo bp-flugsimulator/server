@@ -8,7 +8,7 @@ pipeline {
   stages {
     stage('Build') {
       steps {
-        sh 'pip install --user -r requirements.txt'
+        sh 'pip install --no-cache --user -r requirements.txt'
         sh 'python manage.py test'
       }
     }
