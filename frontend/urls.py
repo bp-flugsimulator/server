@@ -1,10 +1,12 @@
 from django.conf.urls import url
 
 from frontend import views
+from frontend import api
 
 app_name = 'frontend'
 
 urlpatterns = [
     url(r'^welcome', views.WelcomeView.as_view(), name='welcome'),
-    url(r'^', views.IndexView.as_view(), name='index'),
+    url(r'^slaves/$', views.SlavesView.as_view(), name='slaves'),
+    url(r'^api/slaves', api.add_slave, name='add_slaves'),
 ]
