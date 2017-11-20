@@ -1,0 +1,16 @@
+{% extends "base/base.html" %}
+{% load staticfiles %}
+{% block title %} Slaves {% endblock %}
+{% block premain %} {% endblock %}
+{% block content %}
+<div class="jumbotron">
+    <ul class="list-group">
+        {% for slave in slaves %}
+        <li class="list-group-item"> {{ slave.name }} {{ slave.ip_address }} {{ slave.mac_address }}</li>
+
+        {% empty %}
+        <li class="list-group-item disabled">No Slaves found.</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}
