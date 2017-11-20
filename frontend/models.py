@@ -35,22 +35,35 @@ def validate_mac_address(mac_addr):
             for char in part:
                 if (not ishex(char) and not char.isdigit()) or len(part) != 2:
                     raise ValidationError(
-                        _('Invalid MAC Address (not allowed symbols): %(mac_addr)s'
-                          ),
-                        params={'mac_addr': 'mac_addr'},
+                        _('Enter a valid MAC Address.'),
                         code='invalid_mac_sym',
                     )
     else:
         raise ValidationError(
-            _('Invalid MAC Address (too few parts): %(mac_addr)s'),
-            params={'mac_addr': 'mac_addr'},
+            _('Enter a valid MAC Address.'),
             code='invalid_mac_few',
         )
 
 
 class Slave(models.Model):
+    """
+    Represents a slave which is node in the network.
+    This is stored in a database.
+
+    Attributes
+    ----------
+    id: int
+        The unique ID which can be referenced to this object.
+
+    ip_address: GenericIPAddressField
+        The IP address of the slave.
+
+    mac_address: String
+        The MAC address of the slave.
+
+    """
     id = models.AutoField(primary_key=True)
     name = models.CharField(unique=True, max_length=200)
     ip_address = models.GenericIPAddressField(unique=True)
     mac_address = models.CharField(
-        unique=True, max_length=200, validators=[validate_mac_address])
+        unique=True, max_length=17, validators=[validate_mac_address])

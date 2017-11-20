@@ -3,6 +3,7 @@ from django.urls import reverse
 from django.core.exceptions import ValidationError
 from django.http import HttpResponseForbidden
 
+
 from .models import Slave as SlaveModel, validate_mac_address
 
 def fill_database_slaves_set_1():
