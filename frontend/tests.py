@@ -122,7 +122,7 @@ class ApiTests(TestCase):
         self.assertEqual(api_response.status_code, 200)
 
         #see if message contains the error
-        self.assertJSONEqual(api_response.content.decode('utf-8'), '{"ip_address":["Enter a valid IPv4 or IPv6 address."],"mac_address": ["Invalid MAC Address (too few parts): mac_addr"]}')
+        self.assertJSONEqual(api_response.content.decode('utf-8'), '{"ip_address":["Enter a valid IPv4 or IPv6 address."],"mac_address": ["Enter a valid MAC Address."]}')
 
         #test if the database does not contain the false slave
         self.assertFalse(SlaveModel.objects.filter(name=data.name,ip_address=data.ip_address,mac_address=data.mac_address).exists())
