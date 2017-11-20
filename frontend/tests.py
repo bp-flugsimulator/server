@@ -1,10 +1,10 @@
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.core.exceptions import ValidationError
-from django.forms import ModelForm
+from django.http import HttpResponseForbidden
+
 
 from .models import Slave as SlaveModel, validate_mac_address
-
 
 def fill_database_slaves_set_1():
     data_set = [
@@ -55,6 +55,84 @@ class FrontendTests(TestCase):
             self.assertContains(response, data.mac_address)
             self.assertContains(response, data.ip_address)
 
+class ApiTests(TestCase):
+    def test_add_slave_success(self):
+        data_set = [
+            SlaveModel(
+                name="add_slave_0",
+                ip_address="0.0.1.0",
+                mac_address="00:00:00:00:01:00"),
+            SlaveModel(
+                name="add_slave_1",
+                ip_address="0.0.1.1",
+                mac_address="00:00:00:00:01:01"),
+            SlaveModel(
+                name="add_slave_2",
+                ip_address="0.0.1.2",
+                mac_address="00:00:00:00:01:02"),
+            SlaveModel(
+                name="add_slave_3",
+                ip_address="0.0.1.3",
+                mac_address="00:00:00:00:01:03"),
+
+        ]
+        c = Client()
+
+        #make a request for every slave in the data_set
+        for data in data_set:
+            api_response = c.post(reverse('frontend:add_slaves'),{'name': data.name, 'ip_address': data.ip_address, 'mac_address':data.mac_address})
+
+            self.assertEqual(api_response.status_code, 200)
+            self.assertJSONEqual(api_response.content.decode('utf-8'), "{}")
+
+        #test if all slaves get displayed
+        view_response =  c.get(reverse('frontend:slaves'))
+        for data in data_set:
+            self.assertContains(view_response, data.name)
+            self.assertContains(view_response, data.ip_address)
+            self.assertContains(view_response, data.mac_address)
+
+
+    def test_add_slave_double_entry_fail(self):
+        data = SlaveModel(name="add_slave_4", ip_address="0.0.1.4",mac_address="00:00:00:00:01:04")
+
+        c = Client()
+
+        #add first slave
+        api_response = c.post(reverse('frontend:add_slaves'),{'name': data.name, 'ip_address': data.ip_address, 'mac_address':data.mac_address})
+        self.assertEqual(api_response.status_code, 200)
+        self.assertJSONEqual(api_response.content.decode('utf-8'), "{}")
+
+        #insert data a second time
+        api_response = c.post(reverse('frontend:add_slaves'),{'name': data.name, 'ip_address': data.ip_address, 'mac_address':data.mac_address})
+
+        #test if the response contains a JSONobject with the error
+        self.assertEqual(api_response.status_code, 200)
+        self.assertJSONEqual(api_response.content.decode('utf-8'),'{"name":["Slave with this Name already exists."],"ip_address":["Slave with this Ip address already exists."],"mac_address":["Slave with this Mac address already exists."]}')
+
+        #test if the slave is still in the database
+        self.assertTrue(SlaveModel.objects.filter(name=data.name,ip_address=data.ip_address,mac_address=data.mac_address).exists())
+
+    def test_add_slave_false_input_fail(self):
+        data = SlaveModel(name="add_slave_5", ip_address="ip address",mac_address="mac address")
+
+        c = Client()
+        api_response = c.post(reverse('frontend:add_slaves'),{'name':data.name , 'ip_address': data.ip_address, 'mac_address':data.mac_address})
+        #test if response was successfull
+        self.assertEqual(api_response.status_code, 200)
+
+        #see if message contains the error
+        self.assertJSONEqual(api_response.content.decode('utf-8'), '{"ip_address":["Enter a valid IPv4 or IPv6 address."],"mac_address": ["Enter a valid MAC Address."]}')
+
+        #test if the database does not contain the false slave
+        self.assertFalse(SlaveModel.objects.filter(name=data.name,ip_address=data.ip_address,mac_address=data.mac_address).exists())
+
+    def test_add_slave_no_post(self):
+        data = SlaveModel(name="add_slave_5", ip_address="ip address",mac_address="mac address")
+
+        c = Client()
+        api_response = c.get(reverse('frontend:add_slaves'))
+        self.assertEqual(api_response.status_code,403)
 
 class DatabaseTests(TestCase):
     def test_slave_insert_valid(self):

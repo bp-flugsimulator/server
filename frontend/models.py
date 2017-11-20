@@ -67,7 +67,3 @@ class Slave(models.Model):
     ip_address = models.GenericIPAddressField(unique=True)
     mac_address = models.CharField(
         unique=True, max_length=17, validators=[validate_mac_address])
-
-    def clean(self):
-        super(Slave, self).clean()
-        self.name = self.name.capitalize()

@@ -1,9 +1,52 @@
 {% extends "base/base.html" %}
 {% load staticfiles %}
+{% load widget_tweaks %}
 {% block title %} Slaves {% endblock %}
 {% block premain %} {% endblock %}
 {% block content %}
 <div class="jumbotron">
+        <button type="button" data-toggle="modal" data-target="#registerSlaveModal">Slave hinzuf??gen</button>
+
+        <div class="modal fade" id="registerSlaveModal" role="dialog">
+            <div class="modal-dialog">
+                <form action="/api/slaves/" method="post" id="form_slave">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        </div>
+
+                        <div class="modal-body">
+                                {% csrf_token %}
+
+                                {% for hidden_field in form.hidden_fields %}
+                                    {{ hidden_field }}
+                                {% endfor %}
+
+                                {% for field in form.visible_fields %}
+                                    <div class="form-group">
+                                        {{ field.label_tag }}
+
+                                        {% if form.is_bound %}
+                                            {% render_field field class="form-control is-valid" %}
+                                        {% else %}
+                                            {% render_field field class="form-control" %}
+                                        {% endif %}
+
+                                        {% if field.help_text %}
+                                            <small class="form-text text-muted">{{ field.help_text }}</small>
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+                        </div>
+                        <div class="modal-footer">
+                            <button type="reset" class="btn btn-primary" data-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Add</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
     <ul class="list-group">
         {% for slave in slaves %}
         <li class="list-group-item"> {{ slave.name }} {{ slave.ip_address }} {{ slave.mac_address }}</li>
@@ -13,4 +56,50 @@
         {% endfor %}
     </ul>
 </div>
+{% endblock %}
+
+{% block script %}
+<script>
+    $(document).ready(function(){
+        $("#form_slave").submit(function (event) {
+            //Stop form from submitting normally
+            event.preventDefault();
+
+            //get data from form
+            url = $(this).attr("action")
+            name = $(this).find("input[name='name']").val();
+            ip_address = $(this).find("input[name='ip_address']").val();
+            mac_address = $(this).find("input[name='mac_address']").val();
+
+            $.post(url,
+             {
+                csrfmiddlewaretoken:'{{ csrf_token }}',
+                name: name,
+                ip_address: ip_address,
+                mac_address: mac_address
+            },
+            function(err){
+                if($.isEmptyObject(err)){
+                    window.location.reload();
+                } else {
+                    $("#form_slave").find("div[class='invalid-feedback']").each(function (index, item) {
+                        item.remove();
+                    });
+
+                    $("#form_slave").find(".is-invalid").each(function (index, item) {
+                        console.log(item);
+                        $(item).addClass("is-valid");
+                        $(item).removeClass("is-invalid");
+                    });
+
+                    $.each(err, function (id, msg) {
+                        node = $("#form_slave").find("input[name=" + id +"]");
+                        node.addClass("is-invalid");
+                        node.parent().append('<div class="invalid-feedback">' + msg + '</div>');
+                    });
+                }
+            });
+        })
+    })
+</script>
 {% endblock %}
