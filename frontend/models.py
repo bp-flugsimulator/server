@@ -46,6 +46,22 @@ def validate_mac_address(mac_addr):
 
 
 class Slave(models.Model):
+    """
+    Represents a slave which is node in the network.
+    This is stored in a database.
+
+    Attributes
+    ----------
+    id: int
+        The unique ID which can be referenced to this object.
+
+    ip_address: GenericIPAddressField
+        The IP address of the slave.
+
+    mac_address: String
+        The MAC address of the slave.
+
+    """
     id = models.AutoField(primary_key=True)
     name = models.CharField(unique=True, max_length=200)
     ip_address = models.GenericIPAddressField(unique=True)
