@@ -31,12 +31,9 @@ def add_slave(request):
     else:
         return HttpResponseForbidden()
 
-def remove_slave(request, id):
+def manage_slave(request, id):
     if request.method == 'DELETE':
-        try:
-            SlaveModel.objects.filter(id=id).delete();
-        except Exception as err:
-            return JsonResponse(err);
-        return JsonResponse({});
+        SlaveModel.objects.filter(id=id).delete() #i can't find any exeptions that can be thrown in our case
+        return JsonResponse({})
     else:
-        return HttpResponseForbidden();
+        return HttpResponseForbidden()
