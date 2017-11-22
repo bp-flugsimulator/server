@@ -12,9 +12,12 @@
                         <h4 class="modal-title">Warnung!</h4>
                     </div>
                     <div class="modal-body">
-                        <p>Wollen Sie wirklich Slave </p>
-                        <p id="deleteSlaveId"></p>
-                        <p>löschen?</p>
+                        <a>Wollen Sie wirklich Slave </a>
+                        <a id="deleteSlaveName" type="hidden"></a>
+                        <a>löschen?</a>
+
+                    </div>
+                    <div id="deleteSlaveId" value="" style="display: none;">
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-primary" id="deleteSlaveModalButton">Ja</button>
@@ -169,12 +172,14 @@
     $(document).ready(function(){
         $(".delete_slave").click(function () {
             var id = $(this).parents(".card").attr("id");
-            $('#deleteSlaveWarning .modal-body #deleteSlaveId').text(id);
+            var name = "test"                       <!--HIER NAME EINFÜGEN -->
+            $('#deleteSlaveWarning .modal-body #deleteSlaveName').text(name);
+            $('#deleteSlaveId').attr('value',id);
             $('#deleteSlaveWarning').modal('toggle');
         });
 
         $('#deleteSlaveModalButton').click(function () {
-            var id = $('#deleteSlaveId').text();
+            var id = $('#deleteSlaveId').attr('value');
             $.ajax({
                     type: 'DELETE',
                     url: '/api/slave/' + id,
