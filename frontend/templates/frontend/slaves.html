@@ -5,8 +5,6 @@
 {% block premain %} {% endblock %}
 {% block content %}
 <div class="jumbotron">
-        <button type="button" data-toggle="modal" data-target="#registerSlaveModal">Slave hinzuf??gen</button>
-
         <div class="modal fade" id="registerSlaveModal" role="dialog">
             <div class="modal-dialog">
                 <form action="/api/slaves/" method="post" id="form_slave">
@@ -47,20 +45,106 @@
             </div>
         </div>
 
-    <ul class="list-group">
+    <div id="accordion" role="tablist">
+            <div class="container">
+                    <div class="row">
+                        <div class="col-sm">
+                            <h4>Name</h4>
+                        </div>
+                        <div class="col-sm">
+                             <h4>IP</h4>
+                        </div>
+                        <div class="col-sm">
+                            <h4>MAC</h4>
+                        </div>
+                    </div>
+                </div>
         {% for slave in slaves %}
-        <li class="list-group-item"> {{ slave.name }} {{ slave.ip_address }} {{ slave.mac_address }}</li>
+        <div class="card" id="{{ slave.id }}">
+            <div data-toggle="collapse" href="#collapse{{ slave.id }}"
+            class="card-header collapsed" role="tab" id="headingOne"
+            style="cursor:pointer">
+                <a>
+                    <h5 class="mb-o">
+                        <div class="container">
+                            <div class="row">
+                                <div class="col-sm">
+                                    {{ slave.name }}
+                                </div>
+                                <div class="col-sm">
+                                     {{ slave.ip_address }}
+                                </div>
+                                <div class="col-sm">
+                                     {{ slave.mac_address }}
+                                </div>
+                                <i class="material-icons">expand_more</i>
+                            </div>
+                        </div>
+                    </h5>
+                </a>
+            </div>
+            <div id="collapse{{ slave.id }}" class="collapse" role="tabpanel" data-parent="#accordion">
+                <div class="card-body">
+                    <div class="btn-group" role="group" aria-label="Basic example">
+                        <button type="button" class="btn btn-primary"
+                        data-toggle="tooltip" data-placement="top" title="Start/Stop">
+                            <i class="material-icons">power_settings_new</i>
+                        </button>
+                        <button type="button" class="btn btn-primary"
+                         data-toggle="tooltip" data-placement="top" title="Restart">
+                            <i class="material-icons">refresh</i>
+                        </button>
+                    </div>
 
+                    <div class="btn-group" role="group" aria-label="Basic example">
+                        <button type="button" class="btn btn-primary"
+                         data-toggle="tooltip" data-placement="top" title="Details">
+                            <i class="material-icons">info_outline</i>
+                        </button>
+                        <button type="button" class="btn btn-primary"
+                         data-toggle="tooltip" data-placement="top" title="Ping">
+                            <i class="material-icons">flare</i>
+                        </button>
+                        <button type="button" class="btn btn-primary"
+                        data-toggle="tooltip" data-placement="top" title="Run">
+                            <i class="material-icons">directions_run</i>
+                        </button>
+                        <button type="button" class="btn btn-primary"
+                         data-toggle="tooltip" data-placement="top" title="Move">
+                            <i class="material-icons">compare_arrows</i>
+                        </button>
+                    </div>
+
+                    <div class="btn-group" role="group" aria-label="Basic example">
+                        <button type="button" class="btn btn-primary"
+                         data-toggle="tooltip" data-placement="top" title="Edit">
+                            <i class="material-icons">edit</i>
+                        </button>
+                        <button type="button" class="btn btn-primary"
+                         data-toggle="tooltip" data-placement="top" title="Delete">
+                            <i class="material-icons">delete</i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
         {% empty %}
-        <li class="list-group-item disabled">No Slaves found.</li>
+        <div class="card"><a>No Slaves found.</a></div>
         {% endfor %}
-    </ul>
+        <div class="card">
+            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#registerSlaveModal">
+            <i class="material-icons">add</i>
+        </button></div>
+    </div>
 </div>
 {% endblock %}
 
 {% block script %}
 <script>
     $(document).ready(function(){
+        $(function () {
+            $('[data-toggle="tooltip"]').tooltip()
+        })
         $("#form_slave").submit(function (event) {
             //Stop form from submitting normally
             event.preventDefault();
