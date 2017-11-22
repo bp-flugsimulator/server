@@ -120,7 +120,7 @@
                          data-toggle="tooltip" data-placement="top" title="Edit">
                             <i class="material-icons">edit</i>
                         </button>
-                        <button type="button" class="btn btn-primary"
+                        <button type="button" class="btn btn-primary delete_slave"
                          data-toggle="tooltip" data-placement="top" title="Delete">
                             <i class="material-icons">delete</i>
                         </button>
@@ -142,9 +142,24 @@
 {% block script %}
 <script>
     $(document).ready(function(){
+        $(".delete_slave").click(function () {
+            var id = $(this).parents(".card").attr("id");
+            $.ajax({
+                    type: 'DELETE',
+                    url: '/api/slave/' + id
+                }
+            ).done(function(err){
+                if($.isEmptyObject(err)){
+                    window.location.reload();
+                }else{
+                    alert(err); //TODO better errorhandling
+                }
+            })
+        });
+
         $(function () {
             $('[data-toggle="tooltip"]').tooltip()
-        })
+        });
         $("#form_slave").submit(function (event) {
             //Stop form from submitting normally
             event.preventDefault();
