@@ -5,6 +5,25 @@
 {% block premain %} {% endblock %}
 {% block content %}
 <div class="jumbotron">
+        <div id="deleteSlaveWarning" class="modal fade" role="dialog">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title">Warnung!</h4>
+                    </div>
+                    <div class="modal-body">
+                        <p>Wollen Sie wirklich Slave </p>
+                        <p id="deleteSlaveId"></p>
+                        <p>löschen?</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" id="deleteSlaveModalButton">Ja</button>
+                        <button type="reset" class="btn btn-primary" data-dismiss="modal">Nein</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="modal fade" id="registerSlaveModal" role="dialog">
             <div class="modal-dialog">
                 <form action="/api/slaves/" method="post" id="form_slave">
@@ -144,6 +163,12 @@
     $(document).ready(function(){
         $(".delete_slave").click(function () {
             var id = $(this).parents(".card").attr("id");
+            $('#deleteSlaveWarning .modal-body #deleteSlaveId').text(id);
+            $('#deleteSlaveWarning').modal('toggle');
+        });
+
+        $('#deleteSlaveModalButton').click(function () {
+            var id = $('#deleteSlaveId').text();
             $.ajax({
                     type: 'DELETE',
                     url: '/api/slave/' + id,
@@ -157,9 +182,9 @@
                             alert(err); //TODO better errorhandling
                         }
                     }
-                }
-            );
+            })
         });
+
 
         $(function () {
             $('[data-toggle="tooltip"]').tooltip()
