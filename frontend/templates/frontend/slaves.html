@@ -146,15 +146,19 @@
             var id = $(this).parents(".card").attr("id");
             $.ajax({
                     type: 'DELETE',
-                    url: '/api/slave/' + id
+                    url: '/api/slave/' + id,
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader("X-CSRFToken", '{{ csrf_token }}');
+                    },
+                    success: function (err) {
+                        if ($.isEmptyObject(err)) {
+                            window.location.reload();
+                        } else {
+                            alert(err); //TODO better errorhandling
+                        }
+                    }
                 }
-            ).done(function(err){
-                if($.isEmptyObject(err)){
-                    window.location.reload();
-                }else{
-                    alert(err); //TODO better errorhandling
-                }
-            })
+            );
         });
 
         $(function () {

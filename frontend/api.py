@@ -30,3 +30,13 @@ def add_slave(request):
         return JsonResponse(form.errors)
     else:
         return HttpResponseForbidden()
+
+def remove_slave(request, id):
+    if request.method == 'DELETE':
+        try:
+            SlaveModel.objects.filter(id=id).delete();
+        except Exception as err:
+            return JsonResponse(err);
+        return JsonResponse({});
+    else:
+        return HttpResponseForbidden();
