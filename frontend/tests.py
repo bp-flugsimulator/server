@@ -181,12 +181,6 @@ class ApiTests(TestCase):
             self.assertJSONEqual(api_response.content.decode('utf-8'), "{}")
             self.assertFalse(SlaveModel.objects.filter(id=data.id).exists())
 
-    def test_remove_slave_db_err(self):
-        c = Client()
-        api_response = c.delete('/api/slave/1333333337')
-        self.assertEqual(api_response.status_code, 200)
-        self.assertJSONEqual(api_response.content.decode('utf-8'), "{}")
-
 
 class DatabaseTests(TestCase):
     def test_slave_insert_valid(self):
