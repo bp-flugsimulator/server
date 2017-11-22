@@ -154,16 +154,22 @@
                         if ($.isEmptyObject(err)) {
                             window.location.reload();
                         } else {
-                            alert(err); //TODO better errorhandling
+                            throw_error(id, err);
                         }
                     }
                 }
             );
         });
 
+        // Error Display for Slave-Kontextmenu
+        function throw_error(id, err) {
+            $("#collapse"+id).append('<div class="alert alert-danger"><strong>Error!</strong> '+err+'</div>');
+        }
+        // Tooltip
         $(function () {
             $('[data-toggle="tooltip"]').tooltip()
         });
+        // Form Handler
         $("#form_slave").submit(function (event) {
             //Stop form from submitting normally
             event.preventDefault();
