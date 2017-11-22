@@ -188,7 +188,7 @@
                         if ($.isEmptyObject(err)) {
                             window.location.reload();
                         } else {
-                            throw_error(id, err);
+                            throw_error(id, JSON.stringify(err));
                         }
                     }
             })
