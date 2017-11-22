@@ -46,6 +46,19 @@
         </div>
 
     <div id="accordion" role="tablist">
+            <div class="container">
+                    <div class="row">
+                        <div class="col-sm">
+                            <h4>Name</h4>
+                        </div>
+                        <div class="col-sm">
+                             <h4>IP</h4>
+                        </div>
+                        <div class="col-sm">
+                            <h4>MAC</h4>
+                        </div>
+                    </div>
+                </div>
         {% for slave in slaves %}
         <div class="card">
             <div data-toggle="collapse" href="#collapse{{ slave.id }}"
@@ -55,16 +68,16 @@
                     <h5 class="mb-o">
                         <div class="container">
                             <div class="row">
-                                <i class="material-icons">expand_more</i>
                                 <div class="col-sm">
                                     {{ slave.name }}
                                 </div>
                                 <div class="col-sm">
-                                     IP: {{ slave.ip_address }}
+                                     {{ slave.ip_address }}
                                 </div>
                                 <div class="col-sm">
-                                     MAC: {{ slave.mac_address }}
+                                     {{ slave.mac_address }}
                                 </div>
+                                <i class="material-icons">expand_more</i>
                             </div>
                         </div>
                     </h5>
