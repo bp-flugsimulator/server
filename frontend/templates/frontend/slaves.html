@@ -17,8 +17,6 @@
                         <a>löschen?</a>
 
                     </div>
-                    <div id="deleteSlaveId" value="" style="display: none;">
-                    </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-primary" id="deleteSlaveModalButton">Ja</button>
                         <button type="reset" class="btn btn-primary" data-dismiss="modal">Nein</button>
@@ -90,7 +88,7 @@
                     <h5 class="mb-o">
                         <div class="container">
                             <div class="row">
-                                <div class="col-sm">
+                                <div id="slaveName{{ slave.id }}" class="col-sm">
                                     {{ slave.name }}
                                 </div>
                                 <div class="col-sm">
@@ -172,14 +170,14 @@
     $(document).ready(function(){
         $(".delete_slave").click(function () {
             var id = $(this).parents(".card").attr("id");
-            var name = "test"                       <!--HIER NAME EINFÜGEN -->
+            var name = $(this).parents(".card").children().find("#slaveName"+id).text();
             $('#deleteSlaveWarning .modal-body #deleteSlaveName').text(name);
-            $('#deleteSlaveId').attr('value',id);
+            $('#deleteSlaveWarning').data('slaveId',id);
             $('#deleteSlaveWarning').modal('toggle');
         });
 
         $('#deleteSlaveModalButton').click(function () {
-            var id = $('#deleteSlaveId').attr('value');
+            var id = $('#deleteSlaveWarning').data('slaveId');
             $.ajax({
                     type: 'DELETE',
                     url: '/api/slave/' + id,
