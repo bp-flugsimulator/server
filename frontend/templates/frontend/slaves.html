@@ -129,7 +129,13 @@
             </div>
         </div>
         {% empty %}
-        <div class="card"><a>No Slaves found.</a></div>
+        <div class="card">
+            <div class="alert alert-info">
+                <strong>Info!</strong> No Slaves in System. Press  <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#registerSlaveModal">
+                        <i class="material-icons">add</i>
+                    </button> to add the first one!
+            </div>
+        </div>
         {% endfor %}
         <div class="card">
             <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#registerSlaveModal">
