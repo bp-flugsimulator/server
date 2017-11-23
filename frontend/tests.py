@@ -134,6 +134,54 @@ class ApiTests(TestCase):
         api_response = c.get(reverse('frontend:add_slaves'))
         self.assertEqual(api_response.status_code,403)
 
+    def test_manage_slave_forbidden(self):
+        c = Client()
+        api_response = c.get("/api/slave/0")
+        self.assertEqual(api_response.status_code,403)
+
+
+    def test_remove_slave(self):
+        data_set = [
+            SlaveModel(
+                name="remove_slave_0",
+                ip_address="0.0.2.0",
+                mac_address="00:00:00:00:02:00"),
+            SlaveModel(
+                name="remove_slave_1",
+                ip_address="0.0.2.1",
+                mac_address="00:00:00:00:02:01"),
+            SlaveModel(
+                name="remove_slave_2",
+                ip_address="0.0.2.2",
+                mac_address="00:00:00:00:02:02"),
+            SlaveModel(
+                name="remove_slave_3",
+                ip_address="0.0.2.3",
+                mac_address="00:00:00:00:02:03"),
+
+        ]
+        c = Client()
+
+        #make a request for every slave in the data_set
+        for data in data_set:
+            api_response = c.post(reverse('frontend:add_slaves'),{'name': data.name, 'ip_address': data.ip_address, 'mac_address':data.mac_address})
+
+            self.assertEqual(api_response.status_code, 200)
+            self.assertJSONEqual(api_response.content.decode('utf-8'), "{}")
+
+        #get all the database entries because the ids are needed to delete
+        data_in_database_set = []
+        for data in data_set:
+            data_in_database_set.append(SlaveModel.objects.filter(name=data.name, ip_address=data.ip_address, mac_address=data.mac_address).get())
+
+        #make a request to delete the slave entry
+        for data in data_in_database_set:
+            api_response = c.delete('/api/slave/'+ str(data.id))
+            self.assertEqual(api_response.status_code, 200)
+            self.assertJSONEqual(api_response.content.decode('utf-8'), "{}")
+            self.assertFalse(SlaveModel.objects.filter(id=data.id).exists())
+
+
 class DatabaseTests(TestCase):
     def test_slave_insert_valid(self):
         mod = SlaveModel(

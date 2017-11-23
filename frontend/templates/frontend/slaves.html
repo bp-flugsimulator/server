@@ -5,6 +5,26 @@
 {% block premain %} {% endblock %}
 {% block content %}
 <div class="jumbotron">
+        <div id="deleteSlaveWarning" class="modal fade" role="dialog">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title">Warnung!</h4>
+                    </div>
+                    <div class="modal-body">
+                        <a>Wollen Sie wirklich Slave </a>
+                        <a id="deleteSlaveName" type="hidden"></a>
+                        <a>löschen?</a>
+
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" id="deleteSlaveModalButton">Ja</button>
+                        <button type="reset" class="btn btn-primary" data-dismiss="modal">Nein</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="modal fade" id="registerSlaveModal" role="dialog">
             <div class="modal-dialog">
                 <form action="/api/slaves/" method="post" id="form_slave">
@@ -68,7 +88,7 @@
                     <h5 class="mb-o">
                         <div class="container">
                             <div class="row">
-                                <div class="col-sm">
+                                <div id="slaveName{{ slave.id }}" class="col-sm">
                                     {{ slave.name }}
                                 </div>
                                 <div class="col-sm">
@@ -85,7 +105,7 @@
             </div>
             <div id="collapse{{ slave.id }}" class="collapse" role="tabpanel" data-parent="#accordion">
                 <div class="card-body">
-                    <div class="btn-group" role="group" aria-label="Basic example">
+                    <div class="btn-group" role="group">
                         <button type="button" class="btn btn-primary"
                         data-toggle="tooltip" data-placement="top" title="Start/Stop">
                             <i class="material-icons">power_settings_new</i>
@@ -96,7 +116,7 @@
                         </button>
                     </div>
 
-                    <div class="btn-group" role="group" aria-label="Basic example">
+                    <div class="btn-group" role="group">
                         <button type="button" class="btn btn-primary"
                          data-toggle="tooltip" data-placement="top" title="Details">
                             <i class="material-icons">info_outline</i>
@@ -115,12 +135,12 @@
                         </button>
                     </div>
 
-                    <div class="btn-group" role="group" aria-label="Basic example">
+                    <div class="btn-group" role="group">
                         <button type="button" class="btn btn-primary"
                          data-toggle="tooltip" data-placement="top" title="Edit">
                             <i class="material-icons">edit</i>
                         </button>
-                        <button type="button" class="btn btn-primary"
+                        <button type="button" class="btn btn-primary delete_slave"
                          data-toggle="tooltip" data-placement="top" title="Delete">
                             <i class="material-icons">delete</i>
                         </button>
@@ -129,7 +149,13 @@
             </div>
         </div>
         {% empty %}
-        <div class="card"><a>No Slaves found.</a></div>
+        <div class="card">
+            <div class="alert alert-info">
+                <strong>Info!</strong> No Slaves in System. Press  <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#registerSlaveModal">
+                        <i class="material-icons">add</i>
+                    </button> to add the first one!
+            </div>
+        </div>
         {% endfor %}
         <div class="card">
             <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#registerSlaveModal">
@@ -142,9 +168,41 @@
 {% block script %}
 <script>
     $(document).ready(function(){
+        $(".delete_slave").click(function () {
+            var id = $(this).parents(".card").attr("id");
+            var name = $(this).parents(".card").children().find("#slaveName"+id).text();
+            $('#deleteSlaveWarning .modal-body #deleteSlaveName').text(name);
+            $('#deleteSlaveWarning').data('slaveId',id);
+            $('#deleteSlaveWarning').modal('toggle');
+        });
+
+        $('#deleteSlaveModalButton').click(function () {
+            var id = $('#deleteSlaveWarning').data('slaveId');
+            $.ajax({
+                    type: 'DELETE',
+                    url: '/api/slave/' + id,
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader("X-CSRFToken", '{{ csrf_token }}');
+                    },
+                    success: function (err) {
+                        if ($.isEmptyObject(err)) {
+                            window.location.reload();
+                        } else {
+                            throw_error(id, JSON.stringify(err));
+                        }
+                    }
+            })
+        });
+
+        // Error Display for Slave-Kontextmenu
+        function throw_error(id, err) {
+            $("#collapse"+id).append('<div class="alert alert-danger"><strong>Error!</strong> '+err+'</div>');
+        }
+
         $(function () {
             $('[data-toggle="tooltip"]').tooltip()
-        })
+        });
+        // Form Handler
         $("#form_slave").submit(function (event) {
             //Stop form from submitting normally
             event.preventDefault();
