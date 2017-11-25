@@ -2,7 +2,6 @@ from django.http import HttpResponseForbidden, JsonResponse
 from django.http.request import QueryDict
 from .models import Slave as SlaveModel
 from .forms import SlaveForm
-import json
 
 def add_slave(request):
     """
@@ -35,13 +34,13 @@ def manage_slave(request, id):
     ----------
     request: HttpRequest
         a DELETE request
-        or a PUT request
+        or a PUT request (data has to be url encoded)
     id: int
         the id of the slave which will be modified
     Returns
     -------
     A HttpResponse with a JSON object which
-    contains currently nothing.
+    can contain errors.
     If the request method is something other
     than DELETE, then HttpResponseForbidden()
     will be returned.
