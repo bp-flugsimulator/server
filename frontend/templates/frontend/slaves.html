@@ -27,7 +27,7 @@
 
         <div class="modal fade" id="registerSlaveModal" role="dialog">
             <div class="modal-dialog">
-                <form action="/api/slaves/" method="POST" id="slaveForm">
+                <form id="slaveForm">
                     <div class="modal-content">
                         <div class="modal-header">
                             <button type="button" class="close" data-dismiss="modal">&times;</button>
@@ -151,14 +151,14 @@
         {% empty %}
         <div class="card">
             <div class="alert alert-info">
-                <strong>Info!</strong> No Slaves in System. Press  <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#registerSlaveModal">
+                <strong>Info!</strong> No Slaves in System. Press  <button type="button" class="btn btn-primary add-slave-btn">
                         <i class="material-icons">add</i>
                     </button> to add the first one!
             </div>
         </div>
         {% endfor %}
         <div class="card">
-            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#registerSlaveModal">
+            <button type="button" class="btn btn-primary add-slave-btn">
             <i class="material-icons">add</i>
         </button></div>
     </div>
@@ -202,6 +202,14 @@
         $(function () {
             $('[data-toggle="tooltip"]').tooltip()
         });
+
+        $('.add-slave-btn').click(function () {
+            slaveForm = $('#registerSlaveModal').children().find('#slaveForm');
+            slaveForm.attr('action','/api/slaves');
+            slaveForm.attr('method','POST');
+            $('#registerSlaveModal').modal('toggle');
+        });
+
         // Form Handler
         $('#slaveForm').submit(function (event) {
             //Stop form from submitting normally
@@ -240,7 +248,7 @@
                                 node.parent().append('<div class="invalid-feedback">' + msg + '</div>');
                             });
                         }
-                    },
+                    }
             });
         })
     });
