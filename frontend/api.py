@@ -1,7 +1,8 @@
 from django.http import HttpResponseForbidden, JsonResponse
+from django.http.request import QueryDict
 from .models import Slave as SlaveModel
 from .forms import SlaveForm
-
+import json
 
 def add_slave(request):
     """
@@ -38,6 +39,7 @@ def manage_slave(request, id):
     ----------
     request: HttpRequest
         a DELETE request
+        or a PUT request
     id: int
         the id of the slave which will be modified
     Returns
@@ -49,7 +51,21 @@ def manage_slave(request, id):
     will be returned.
     """
     if request.method == 'DELETE':
-        SlaveModel.objects.filter(id=id).delete() #i can't find any exeptions that can be thrown in our case
+        #i can't find any exeptions that can be thrown in our case
+        SlaveModel.objects.filter(id=id).delete()
         return JsonResponse({})
+
+    elif request.method == 'PUT':
+        # create form from a new QueryDict made from the request body
+        # (request.PUT is unsupported) as an update (instance) of the
+        # existing slave
+        model = SlaveModel.objects.get(id=id)
+        form = SlaveForm(QueryDict(request.body), instance=model)
+
+        if form.is_valid():
+            form.save()
+            return JsonResponse({})
+        else:
+            return JsonResponse(form.errors)
     else:
         return HttpResponseForbidden()

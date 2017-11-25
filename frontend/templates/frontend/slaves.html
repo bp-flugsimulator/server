@@ -206,10 +206,18 @@
         //opens the slaveModal to add a new slave
         $('.add-slave-btn').click(function () {
             slaveModal = $('#slaveModal');
+
+            //modify the form for the submit button
             slaveForm = slaveModal.children().find('#slaveForm');
             slaveForm.attr('action','/api/slaves');
             slaveForm.attr('method','POST');
             slaveForm.children().find('.submit-btn').text('Add');
+
+            //clear input fields
+            slaveForm.find("input[name='name']").val("");
+            slaveForm.find("input[name='ip_address']").val("");
+            slaveForm.find("input[name='mac_address']").val("");
+
             slaveModal.modal('toggle');
         });
 
@@ -227,7 +235,7 @@
             //modify the form for the submit button
             slaveForm = slaveModal.children().find('#slaveForm');
             slaveForm.attr('action','/api/slave/'+id);
-            slaveForm.attr('method','UPDATE');
+            slaveForm.attr('method','PUT');
             slaveForm.children().find('.submit-btn').text('Edit');
 
             //insert values into input field
@@ -249,7 +257,7 @@
             $.ajax({
                     type: $(this).attr('method'),
                     url: $(this).attr('action'),
-                    data:{
+                    data: {
                         name: $(this).find("input[name='name']").val(),
                         ip_address: $(this).find("input[name='ip_address']").val(),
                         mac_address: $(this).find("input[name='mac_address']").val()
