@@ -27,7 +27,7 @@
 
         <div class="modal fade" id="registerSlaveModal" role="dialog">
             <div class="modal-dialog">
-                <form action="/api/slaves/" method="post" id="form_slave">
+                <form action="/api/slaves/" method="POST" id="slaveForm">
                     <div class="modal-content">
                         <div class="modal-header">
                             <button type="button" class="close" data-dismiss="modal">&times;</button>
@@ -196,52 +196,53 @@
 
         // Error Display for Slave-Kontextmenu
         function throw_error(id, err) {
-            $("#collapse"+id).append('<div class="alert alert-danger"><strong>Error!</strong> '+err+'</div>');
+            $('#collapse'+id).append('<div class="alert alert-danger"><strong>Error!</strong> '+err+'</div>');
         }
 
         $(function () {
             $('[data-toggle="tooltip"]').tooltip()
         });
         // Form Handler
-        $("#form_slave").submit(function (event) {
+        $('#slaveForm').submit(function (event) {
             //Stop form from submitting normally
             event.preventDefault();
 
-            //get data from form
-            url = $(this).attr("action")
-            name = $(this).find("input[name='name']").val();
-            ip_address = $(this).find("input[name='ip_address']").val();
-            mac_address = $(this).find("input[name='mac_address']").val();
+            //send request to given url and with given method
+            //data field contains information about the slave
+            $.ajax({
+                    type: $(this).attr('method'),
+                    url: $(this).attr('action'),
+                    data:{
+                        name: $(this).find("input[name='name']").val(),
+                        ip_address: $(this).find("input[name='ip_address']").val(),
+                        mac_address: $(this).find("input[name='mac_address']").val()
+                    },
+                    beforeSend: function (xhr) {
+                        xhr.setRequestHeader('X-CSRFToken', '{{ csrf_token }}');
+                    },
+                    success: function(err){
+                        if($.isEmptyObject(err)){
+                            window.location.reload();
+                        } else {
+                            $("#slaveForm").find("div[class='invalid-feedback']").each(function (index, item) {
+                                item.remove();
+                            });
 
-            $.post(url,
-             {
-                csrfmiddlewaretoken:'{{ csrf_token }}',
-                name: name,
-                ip_address: ip_address,
-                mac_address: mac_address
-            },
-            function(err){
-                if($.isEmptyObject(err)){
-                    window.location.reload();
-                } else {
-                    $("#form_slave").find("div[class='invalid-feedback']").each(function (index, item) {
-                        item.remove();
-                    });
+                            $("#slaveForm").find(".is-invalid").each(function (index, item) {
+                                console.log(item);
+                                $(item).addClass("is-valid");
+                                $(item).removeClass("is-invalid");
+                            });
 
-                    $("#form_slave").find(".is-invalid").each(function (index, item) {
-                        console.log(item);
-                        $(item).addClass("is-valid");
-                        $(item).removeClass("is-invalid");
-                    });
-
-                    $.each(err, function (id, msg) {
-                        node = $("#form_slave").find("input[name=" + id +"]");
-                        node.addClass("is-invalid");
-                        node.parent().append('<div class="invalid-feedback">' + msg + '</div>');
-                    });
-                }
+                            $.each(err, function (id, msg) {
+                                node = $("#slaveForm").find("input[name=" + id +"]");
+                                node.addClass("is-invalid");
+                                node.parent().append('<div class="invalid-feedback">' + msg + '</div>');
+                            });
+                        }
+                    },
             });
         })
-    })
+    });
 </script>
 {% endblock %}
