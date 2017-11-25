@@ -23,11 +23,7 @@ def add_slave(request):
     if request.method == 'POST':
         form = SlaveForm(request.POST)
         if form.is_valid():
-            name = form.cleaned_data['name']
-            ip = form.cleaned_data['ip_address']
-            mac = form.cleaned_data['mac_address']
-            model = SlaveModel(name=name, ip_address=ip,mac_address=mac)
-            model.save()
+            form.save()
         return JsonResponse(form.errors)
     else:
         return HttpResponseForbidden()
