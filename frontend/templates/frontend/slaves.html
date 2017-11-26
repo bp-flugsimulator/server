@@ -218,6 +218,14 @@
             slaveForm.find("input[name='ip_address']").val("");
             slaveForm.find("input[name='mac_address']").val("");
 
+            //clear errormessages
+            slaveForm.find("div[class='invalid-feedback']").each(function (index, item) {
+                item.remove();
+            });
+            slaveForm.find(".is-invalid").each(function (index, item) {
+                $(item).removeClass("is-invalid");
+            });
+
             slaveModal.modal('toggle');
         });
 
@@ -242,6 +250,14 @@
             slaveForm.find("input[name='name']").val(name);
             slaveForm.find("input[name='ip_address']").val(ip);
             slaveForm.find("input[name='mac_address']").val(mac);
+
+            //clear errormessages
+            slaveForm.find("div[class='invalid-feedback']").each(function (index, item) {
+                item.remove();
+            });
+            slaveForm.find(".is-invalid").each(function (index, item) {
+                $(item).removeClass("is-invalid");
+            });
 
             //open modal
             slaveModal.modal('toggle');
@@ -274,8 +290,6 @@
                             });
 
                             $("#slaveForm").find(".is-invalid").each(function (index, item) {
-                                console.log(item);
-                                $(item).addClass("is-valid");
                                 $(item).removeClass("is-invalid");
                             });
 
