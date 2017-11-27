@@ -267,20 +267,20 @@ class ApiTests(TestCase):
         test_model.save()
         # invalid action
         res = self.client.post(
-            path=reverse('frontend:manage_slave', args=[test_model.id]),
+            path=reverse('frontend:wol_slave', args=[test_model.id]),
             data={'action': 'wal'})
         self.assertEqual(res.status_code, 403)
 
         # non existent slave
         res = self.client.post(
-            path=reverse('frontend:manage_slave', args=[99999]),
+            path=reverse('frontend:wol_slave', args=[99999]),
             data={'action': 'wol'})
         self.assertEqual(res.status_code, 500)
         self.assertEqual(res.json()['status'], 'fail')
         self.assertEqual(res.json()['error'], "DoesNotExist('Slave matching query does not exist.',)")
 
         res = self.client.post(
-            path=reverse('frontend:manage_slave', args=[test_model.id]),
+            path=reverse('frontend:wol_slave', args=[test_model.id]),
             data={'action': 'wol'})
         self.assertEqual(res.status_code, 200)
         self.assertEqual(res.json()['status'], 'success')

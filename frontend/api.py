@@ -65,7 +65,27 @@ def manage_slave(request, id):
             return JsonResponse({})
         else:
             return JsonResponse(form.errors)
-    elif request.method == 'POST':
+    else:
+        return HttpResponseForbidden()
+
+def wol_slave(request, id):
+    """
+    answers a request to wake a slave with
+    the given id
+    ----------
+    request: HttpRequest
+        a POST request
+    id: int
+        the id of the slave which will be modified
+    Returns
+    -------
+    A HttpResponse with a JSON object which
+    can contain errors.
+    If the request method is something other
+    than POST, then a HttpResponseForbidden()
+    will be returned.
+    """
+    if request.method == 'POST':
         if request.POST['action'] == 'wol':
             try:
                 wakeSlave(SlaveModel.objects.get(id=id).mac_address)
@@ -74,5 +94,3 @@ def manage_slave(request, id):
             return JsonResponse({'status':'success'})
         else:
             return HttpResponseForbidden()
-    else:
-        return HttpResponseForbidden()

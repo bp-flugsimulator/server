@@ -361,7 +361,7 @@
 	    $('#start').click(function(){
             	    var id = $(this).parents('.card').attr("id");
 		    $.post({
-			    url: '/api/slave/' + id,
+			    url: '/api/slave/' + id + '/wol',
 			    data:{
 				    action: 'wol'
 			    },
