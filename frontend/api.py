@@ -4,6 +4,8 @@ from .models import Slave as SlaveModel
 from .models import Program as ProgramModel
 from .forms import SlaveForm
 
+from .queue import wakeSlave
+
 def add_slave(request):
     """
     Answers a POST request to add a new slave
@@ -63,5 +65,14 @@ def manage_slave(request, id):
             return JsonResponse({})
         else:
             return JsonResponse(form.errors)
+    elif request.method == 'POST':
+        if request.POST['action'] == 'wol':
+            try:
+                wakeSlave(SlaveModel.objects.get(id=id).mac_address)
+            except Exception as err:
+                return JsonResponse({'status': 'fail', 'error': repr(err)}, status=500)
+            return JsonResponse({'status':'success'})
+        else:
+            return HttpResponseForbidden()
     else:
         return HttpResponseForbidden()
