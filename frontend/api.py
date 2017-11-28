@@ -74,7 +74,7 @@ def wol_slave(request, id):
     the given id
     ----------
     request: HttpRequest
-        a POST request
+        a GET request
     id: int
         the id of the slave which will be modified
     Returns
@@ -82,15 +82,14 @@ def wol_slave(request, id):
     A HttpResponse with a JSON object which
     can contain errors.
     If the request method is something other
-    than POST, then a HttpResponseForbidden()
+    than GET, then a HttpResponseForbidden()
     will be returned.
     """
-    if request.method == 'POST':
-        if request.POST['action'] == 'wol':
-            try:
-                wakeSlave(SlaveModel.objects.get(id=id).mac_address)
-            except Exception as err:
-                return JsonResponse({'status': 'fail', 'error': repr(err)}, status=500)
-            return JsonResponse({'status':'success'})
-        else:
-            return HttpResponseForbidden()
+    if request.method == 'GET':
+        try:
+            wakeSlave(SlaveModel.objects.get(id=id).mac_address)
+        except Exception as err:
+            return JsonResponse({'status': 'fail', 'error': repr(err)}, status=500)
+        return JsonResponse({'status':'success'})
+    else:
+        return HttpResponseForbidden()

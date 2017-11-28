@@ -360,11 +360,8 @@
         })
 	    $('#start').click(function(){
             	    var id = $(this).parents('.card').attr("id");
-		    $.post({
+		    $.get({
 			    url: '/api/slave/' + id + '/wol',
-			    data:{
-				    action: 'wol'
-			    },
 			    beforeSend: function(xhr){
 				    xhr.setRequestHeader('X-CSRFToken', '{{ csrf_token }}')
 			}

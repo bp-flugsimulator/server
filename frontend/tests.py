@@ -265,23 +265,21 @@ class ApiTests(TestCase):
             ip_address='0.0.5.0',
             mac_address='00:00:00:00:05:00')
         test_model.save()
-        # invalid action
-        res = self.client.post(
-            path=reverse('frontend:wol_slave', args=[test_model.id]),
-            data={'action': 'wal'})
-        self.assertEqual(res.status_code, 403)
 
         # non existent slave
-        res = self.client.post(
-            path=reverse('frontend:wol_slave', args=[99999]),
-            data={'action': 'wol'})
+        res = self.client.get(
+            path=reverse('frontend:wol_slave', args=[999999]))
         self.assertEqual(res.status_code, 500)
         self.assertEqual(res.json()['status'], 'fail')
         self.assertEqual(res.json()['error'], "DoesNotExist('Slave matching query does not exist.',)")
 
+        # wrong http method
         res = self.client.post(
-            path=reverse('frontend:wol_slave', args=[test_model.id]),
-            data={'action': 'wol'})
+            path=reverse('frontend:wol_slave', args=[test_model.id]))
+        self.assertEqual(res.status_code, 403)
+
+        res = self.client.get(
+            path=reverse('frontend:wol_slave', args=[test_model.id]))
         self.assertEqual(res.status_code, 200)
         self.assertEqual(res.json()['status'], 'success')
 
