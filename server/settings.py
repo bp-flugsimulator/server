@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'base',
     'frontend',
     'widget_tweaks',
+    'channels',
 ]
 
 MIDDLEWARE = [
@@ -133,3 +134,10 @@ Q_CLUSTER = {
     'orm': 'default'
 }
 
+# channels settings
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "asgiref.inmemory.ChannelLayer",
+        "ROUTING": "frontend.routing.channel_routing",
+    },
+}
