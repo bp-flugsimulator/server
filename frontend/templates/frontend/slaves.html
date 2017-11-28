@@ -37,15 +37,15 @@
                     <div class="modal-body">
                             {% csrf_token %}
 
-                            {% for hidden_field in form.hidden_fields %}
+                            {% for hidden_field in slave_form.hidden_fields %}
                                 {{ hidden_field }}
                             {% endfor %}
 
-                            {% for field in form.visible_fields %}
+                            {% for field in slave_form.visible_fields %}
                                 <div class="form-group">
                                     {{ field.label_tag }}
 
-                                    {% if form.is_bound %}
+                                    {% if slave_form.is_bound %}
                                         {% render_field field class="form-control is-valid" %}
                                     {% else %}
                                         {% render_field field class="form-control" %}

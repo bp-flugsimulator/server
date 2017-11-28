@@ -1,6 +1,4 @@
 from django.views.generic import TemplateView, ListView
-from django.views.generic.edit import FormMixin
-
 
 from .models import Slave as SlaveModel
 from .forms import SlaveForm
@@ -8,8 +6,13 @@ from .forms import SlaveForm
 class WelcomeView(TemplateView):
     template_name = 'frontend/welcome.html'
 
-class SlavesView(FormMixin, ListView):
+class SlavesView(ListView):
     template_name = "frontend/slaves.html"
     model = SlaveModel
     context_object_name = "slaves"
-    form_class = SlaveForm
+    slave_form = SlaveForm
+
+    def get_context_data(self, **kwargs):
+        context = super(SlavesView, self).get_context_data(**kwargs)
+        context['slave_form'] = self.slave_form()
+        return context
