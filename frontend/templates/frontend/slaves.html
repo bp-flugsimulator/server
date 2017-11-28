@@ -9,17 +9,17 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="modal-title">Warnung!</h4>
+                    <h4 class="modal-title">Deletion Warning!</h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
                 </div>
                 <div class="modal-body">
-                    <a>Wollen Sie wirklich Slave </a>
+                    <a>Are you sure you want to delete clients </a>
                     <a id="deleteSlaveName" type="hidden"></a>
-                    <a>löschen?</a>
-
+                    <a>?</a>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" id="deleteSlaveModalButton">Ja</button>
-                    <button type="reset" class="btn btn-primary" data-dismiss="modal">Nein</button>
+                    <button type="button" class="btn btn-primary" id="deleteSlaveModalButton">OK</button>
+                    <button type="reset" class="btn btn-danger" data-dismiss="modal">Cancel</button>
                 </div>
             </div>
         </div>
@@ -30,6 +30,7 @@
             <form id="slaveForm">
                 <div class="modal-content">
                     <div class="modal-header">
+                        <h4 class="modal-title">Create/Modify Client</h4>
                         <button type="button" class="close" data-dismiss="modal">&times;</button>
                     </div>
 
@@ -57,8 +58,8 @@
                             {% endfor %}
                     </div>
                     <div class="modal-footer">
-                        <button type="reset" class="btn btn-primary" data-dismiss="modal">Cancel</button>
                         <button type="submit" class="btn btn-primary submit-btn"></button>
+                        <button type="reset" class="btn btn-danger" data-dismiss="modal">Cancel</button>
                     </div>
                 </div>
             </form>
@@ -194,7 +195,7 @@
         {% empty %}
         <div class="card">
             <div class="alert alert-info">
-                <strong>Info!</strong> No Slaves in System. Press  <button type="button" class="btn btn-default add-slave-btn">
+                <strong>Info!</strong> No clients in system. Press  <button type="button" class="btn btn-default add-slave-btn">
                         <i class="material-icons">add</i>
                     </button> to add the first one!
             </div>
