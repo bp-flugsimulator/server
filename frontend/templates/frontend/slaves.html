@@ -169,7 +169,7 @@
             <div id="collapse{{ slave.id }}" class="collapse" role="tabpanel" data-parent="#accordion">
                 <div class="card-body">
                     <div class="btn-group" role="group">
-                        <button type="button" id="start" class="btn btn-primary"
+                        <button type="button" class="btn btn-primary start"
                         data-toggle="tooltip" data-placement="top" title="Start/Stop">
                             <i class="material-icons">power_settings_new</i>
                         </button>
@@ -358,7 +358,7 @@
                 }
             });
         })
-	    $('#start').click(function(){
+	    $('.start').click(function(){
             	    var id = $(this).parents('.card').attr("id");
 		    $.get({
 			    url: '/api/slave/' + id + '/wol',
