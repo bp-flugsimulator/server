@@ -4,6 +4,9 @@ from .models import Slave as SlaveModel
 from .models import Program as ProgramModel
 from .forms import SlaveForm
 
+import json
+
+from channels import Group
 from .queue import wakeSlave
 
 def add_slave(request):
@@ -90,6 +93,8 @@ def wol_slave(request, id):
             wakeSlave(SlaveModel.objects.get(id=id).mac_address)
         except Exception as err:
             return JsonResponse({'status': 'fail', 'error': repr(err)}, status=500)
-        return JsonResponse({'status':'success'})
+        Group('notifications').send({'text': json.dumps(
+            {'message': 'Succesful, Client Start queued', 'type': 'danger'})})
+        return JsonResponse({'status': 'success'})
     else:
         return HttpResponseForbidden()

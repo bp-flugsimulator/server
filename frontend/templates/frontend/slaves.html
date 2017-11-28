@@ -206,7 +206,10 @@
         </button>
     </div>
 </div>
-{% endblock %} {% block script %}
+{% endblock %}
+
+{% block script %}
+	<script src="{% static 'frontend/ws.js' %}"></script>
 <script>
     $(document).ready(function(){
 	    // set defaults for notifications
@@ -360,6 +363,7 @@
         })
 	    $('.start').click(function(){
             	    var id = $(this).parents('.card').attr("id");
+		    var el = $(this);
 		    $.get({
 			    url: '/api/slave/' + id + '/wol',
 			    beforeSend: function(xhr){
@@ -367,8 +371,9 @@
 			}
 		    }).done(function(data){
 			    if (data.status == 'success'){
-				    $.notify({
-					    message: 'Succesful, Client Start queued'
+				    el.addClass('animated pulse');
+				    el.one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend', function(){
+					    el.removeClass('animated pulse');
 				    });
 			    }
 			    else{
