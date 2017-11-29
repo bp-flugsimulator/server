@@ -1,6 +1,7 @@
 from django.http import HttpResponseForbidden, JsonResponse
 from django.http.request import QueryDict
 from .models import Slave as SlaveModel
+from .models import Program as ProgramModel
 from .forms import SlaveForm
 
 def add_slave(request):

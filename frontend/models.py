@@ -55,10 +55,13 @@ class Slave(models.Model):
     id: int
         The unique ID which can be referenced to this object.
 
+    name: str
+        The name of the slave
+
     ip_address: GenericIPAddressField
         The IP address of the slave.
 
-    mac_address: String
+    mac_address: str
         The MAC address of the slave.
 
     """
@@ -67,3 +70,32 @@ class Slave(models.Model):
     ip_address = models.GenericIPAddressField(unique=True)
     mac_address = models.CharField(
         unique=True, max_length=17, validators=[validate_mac_address])
+
+
+class Program(models.Model):
+    """
+    Represents a program on a slave
+    This is stored in a database.
+
+    Attributes
+    ----------
+    id: int
+        The unique ID which can be referenced to this object.
+
+    name: str
+        The name of the program
+
+    command: str
+        The command which will be executed when the
+        user runs the program
+
+    slave: Slave
+        The slave on which the command will be executed
+    """
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(max_length=200)
+    command = models.CharField(max_length=200)
+    slave = models.ForeignKey(Slave, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ('name','slave')
