@@ -227,33 +227,23 @@
 
         /*function for deleting a slave, it is added to the delete_slave button*/
         $(".delete_slave").click(function () {
-<<<<<<< HEAD
 
             //get id and name of the slave and create deletion message
-=======
->>>>>>> added warning and form changes
             var id = $(this).parents(".slave-card").attr("id");
             var name = $(this).parents(".slave-card").children().find('.slave-name').text();
             var message = "<a>Are you sure you want to remove client </a><b>" + name +"</b>?</a>";
 
-<<<<<<< HEAD
             //changing button visibility and message of the delete modal
-=======
->>>>>>> added warning and form changes
             $('#deleteWarning .modal-footer #deleteProgramModalButton').hide();
             $('#deleteWarning .modal-footer #deleteSlaveModalButton').show();
             $('#deleteWarning .modal-body').empty(message);
             $('#deleteWarning .modal-body').append(message);
-
-<<<<<<< HEAD
-            //adding id to modal and set it visible
-=======
->>>>>>> added warning and form changes
+		
+	    //adding id to modal and set it visible
             $('#deleteWarning').data('slaveId', id);
             $('#deleteWarning').modal('toggle');
         });
 
-<<<<<<< HEAD
         /*function for deleting a program, it is added to the delete_program button*/
         $(".delete_program").click(function () {
 
@@ -263,26 +253,13 @@
             var message = "<a>Are you sure you want to remove program </a><b>" + name +"</b>?</a>";
 
             //changing button visibility and message of the delete modal
-=======
-        $(".delete_program").click(function () {
-            var program = $(this).parents(".program-card").attr("data-id");
-            var slave = $(this).parents(".slave-card").attr("id");
-            var name = $(this).parents(".program-card").children().find('.program-name').text();
-            var message = "<a>Are you sure you want to remove program </a><b>" + name +"</b>?</a>";
-
->>>>>>> added warning and form changes
             $('#deleteWarning .modal-footer #deleteSlaveModalButton').hide();
             $('#deleteWarning .modal-footer #deleteProgramModalButton').show();
             $('#deleteWarning .modal-body').empty(message);
             $('#deleteWarning .modal-body').append(message);
 
-<<<<<<< HEAD
             //adding id to modal and set it visible
             $('#deleteWarning').data('programId', id);
-=======
-            $('#deleteWarning').data('slaveId', slave);
-            $('#deleteWarning').data('programId', program);
->>>>>>> added warning and form changes
             $('#deleteWarning').modal('toggle');
 
         });
@@ -306,18 +283,10 @@
         });
 
         $('#deleteProgramModalButton').click(function () {
-<<<<<<< HEAD
             var id = $('#deleteWarning').data('programId');
             $.ajax({
                 type: 'DELETE',
                 url: '/api/program/' + id,
-=======
-            var slave = $('#deleteWarning').data('slaveId');
-            var program = $('#deleteWarning').data('programId');
-            $.ajax({
-                type: 'DELETE',
-                url: '/api/slave/' + slave + '/program/' + program,
->>>>>>> added warning and form changes
                 beforeSend: function (xhr) {
                     xhr.setRequestHeader("X-CSRFToken", '{{ csrf_token }}');
                 },
@@ -327,8 +296,8 @@
                     } else {
                         throw_error(id, JSON.stringify(err));
                     }
-                }
-            })
+		}
+	    })
         });
 
         // Error Display for Slave-Kontextmenu

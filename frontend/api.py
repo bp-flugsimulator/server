@@ -101,7 +101,10 @@ def wol_slave(request, id):
     else:
         return HttpResponseForbidden()
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> changed the url to api/program/$programId in all contexts
 def manage_program(request, programId):
     """
     answers a request to manipulate a program with
