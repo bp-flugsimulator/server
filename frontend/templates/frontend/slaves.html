@@ -238,8 +238,7 @@
         });
 
         $(".delete_program").click(function () {
-            var program = $(this).parents(".program-card").attr("data-id");
-            var slave = $(this).parents(".slave-card").attr("id");
+            var id = $(this).parents(".program-card").attr("data-id");
             var name = $(this).parents(".program-card").children().find('.program-name').text();
             var message = "<a>Are you sure you want to remove program </a><b>" + name +"</b>?</a>";
 
@@ -248,8 +247,7 @@
             $('#deleteWarning .modal-body').empty(message);
             $('#deleteWarning .modal-body').append(message);
 
-            $('#deleteWarning').data('slaveId', slave);
-            $('#deleteWarning').data('programId', program);
+            $('#deleteWarning').data('programId', id);
             $('#deleteWarning').modal('toggle');
 
         });
@@ -273,11 +271,10 @@
         });
 
         $('#deleteProgramModalButton').click(function () {
-            var slave = $('#deleteWarning').data('slaveId');
-            var program = $('#deleteWarning').data('programId');
+            var id = $('#deleteWarning').data('programId');
             $.ajax({
                 type: 'DELETE',
-                url: '/api/slave/' + slave + '/program/' + program,
+                url: '/api/program/' + id,
                 beforeSend: function (xhr) {
                     xhr.setRequestHeader("X-CSRFToken", '{{ csrf_token }}');
                 },

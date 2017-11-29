@@ -102,7 +102,7 @@ def wol_slave(request, id):
         return HttpResponseForbidden()
 
 
-def manage_program(request, slaveId, programId):
+def manage_program(request, programId):
     """
     answers a request to manipulate a program with
     the given programId from a slave with the given slaveId

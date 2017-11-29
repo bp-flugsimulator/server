@@ -326,7 +326,7 @@ class ApiTests(TestCase):
 
         # make a request to delete the program entry
         for data in data_in_database_set:
-            api_response = c.delete('/api/slave/' + str(slave_in_database.id) + '/program/' + str(data.id))
+            api_response = c.delete('/api/program/' + str(data.id))
             self.assertEqual(api_response.status_code, 200)
             self.assertJSONEqual(api_response.content.decode('utf-8'), "{}")
             self.assertFalse(ProgramModel.objects.filter(id=data.id).exists())
