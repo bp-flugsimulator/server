@@ -1,8 +1,7 @@
 from django.http import HttpResponseForbidden, JsonResponse
 from django.http.request import QueryDict
 from .models import Slave as SlaveModel
-from .models import Program as ProgramModel
-from .forms import SlaveForm
+from .forms import SlaveForm, ProgramForm
 
 def add_slave(request):
     """
@@ -47,7 +46,7 @@ def manage_slave(request, id):
     will be returned.
     """
     if request.method == 'DELETE':
-        #i can't find any exeptions that can be thrown in our case
+        # i can't find any exeptions that can be thrown in our case
         SlaveModel.objects.filter(id=id).delete()
         return JsonResponse({})
 
@@ -65,3 +64,19 @@ def manage_slave(request, id):
             return JsonResponse(form.errors)
     else:
         return HttpResponseForbidden()
+
+def add_program(request, id):
+    if request.method == 'POST':
+        form = ProgramForm(request.POST or None)
+
+        if form.is_valid():
+            program = form.save(commit=False)
+            program.slave = SlaveModel.objects.get(id=id)
+            form.save()
+            return JsonResponse({'status': 'success'})
+        else:
+            return JsonResponse({'status': 'error','errors': form.errors})
+    else:
+        return HttpResponseForbidden()
+
+

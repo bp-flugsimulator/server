@@ -93,9 +93,6 @@ class Program(models.Model):
         The slave on which the command will be executed
     """
     id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=200)
-    command = models.CharField(max_length=200)
+    name = models.CharField(unique=False, max_length=200)
+    command = models.CharField(unique=False, max_length=200)
     slave = models.ForeignKey(Slave, on_delete=models.CASCADE)
-
-    class Meta:
-        unique_together = ('name','slave')

@@ -338,11 +338,11 @@
             var ip = card.children().find('.slave-ip').text().trim();
             var mac = card.children().find('.slave-mac').text().trim();
 
-            slaveModal = $('#slaveModal');
+            var slaveModal = $('#slaveModal');
             slaveModal.children().find('.modal-title').text("Edit Client");
 
             //modify the form for the submit button
-            slaveForm = slaveModal.children().find('#slaveForm');
+            var slaveForm = slaveModal.children().find('#slaveForm');
             slaveForm.attr('action', '/api/slave/' + id);
             slaveForm.attr('method', 'PUT');
             slaveForm.children().find('.submit-btn').text('Edit');
@@ -381,11 +381,11 @@
                 beforeSend: function (xhr) {
                     xhr.setRequestHeader('X-CSRFToken', '{{ csrf_token }}');
                 },
-                success: function (err) {
-                    if ($.isEmptyObject(err)) {
+                success: function (response) {
+                    if (response.status === 'success') {
                         window.location.reload();
                     } else {
-                        programForm = $('#programForm');
+                        var programForm = $('#programForm');
                         programForm.find("div[class='invalid-feedback']").each(function (index, item) {
                             item.remove();
                         });
@@ -394,8 +394,8 @@
                             $(item).removeClass("is-invalid");
                         });
 
-                        $.each(err, function (id, msg) {
-                            node = programForm.find("input[name=" + id + "]");
+                        $.each(response.errors, function (id, msg) {
+                            var node = programForm.find("input[name=" + id + "]");
                             node.addClass("is-invalid");
                             node.parent().append('<div class="invalid-feedback">' + msg + '</div>');
                         });
