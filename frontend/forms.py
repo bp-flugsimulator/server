@@ -9,5 +9,5 @@ class SlaveForm(ModelForm):
 
 class ProgramForm(ModelForm):
     class Meta:
-        model = SlaveModel
+        model = ProgramModel
         fields = ['name','command']
