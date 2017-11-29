@@ -65,13 +65,13 @@ def manage_slave(request, id):
     else:
         return HttpResponseForbidden()
 
-def add_program(request, id):
+def add_program(request):
     if request.method == 'POST':
         form = ProgramForm(request.POST or None)
 
         if form.is_valid():
             program = form.save(commit=False)
-            program.slave = SlaveModel.objects.get(id=id)
+            program.slave = SlaveModel.objects.get(id=request.POST["slave_id"])
             form.save()
             return JsonResponse({'status': 'success'})
         else:

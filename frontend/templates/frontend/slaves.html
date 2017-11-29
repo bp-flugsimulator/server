@@ -277,13 +277,10 @@
             programModal = $('#programModal');
             programModal.children().find('.modal-title').text("Add Program");
 
-            //find slave id
-            var card = $(this).parents('.slave-card');
-            var id = card.attr("id");
 
             //modify the form for the submit button
             programForm = programModal.children().find('#programForm');
-            programForm.attr('action', '/api/slave/'+id+'/programs');
+            programForm.attr('action', '/api/programs');
             programForm.attr('method', 'POST');
             programForm.children().find('.submit-btn').text('Add');
 
@@ -298,6 +295,11 @@
             programForm.find(".is-invalid").each(function (index, item) {
                 $(item).removeClass("is-invalid");
             });
+
+            //find slave id and store it in the form
+            var card = $(this).parents('.slave-card');
+            var id = card.attr("id");
+            programForm.data('slave_id',id);
 
             programModal.modal('toggle');
         });
@@ -377,6 +379,7 @@
                 data: {
                     name: $(this).find("input[name='name']").val(),
                     command: $(this).find("input[name='command']").val(),
+                    slave_id: $(this).data('slave_id')
                 },
                 beforeSend: function (xhr) {
                     xhr.setRequestHeader('X-CSRFToken', '{{ csrf_token }}');
