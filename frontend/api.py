@@ -42,7 +42,7 @@ def manage_slave(request, id):
     A HttpResponse with a JSON object which
     can contain errors.
     If the request method is something other
-    than DELETE, then HttpResponseForbidden()
+    than DELETE or PUT, then HttpResponseForbidden()
     will be returned.
     """
     if request.method == 'DELETE':
@@ -66,6 +66,22 @@ def manage_slave(request, id):
         return HttpResponseForbidden()
 
 def add_program(request):
+    """
+    Answers a POST request to add a new slave
+    Parameters
+    ----------
+    request: HttpRequest
+        a POST request containing a ProgramForm
+        and a slave_id
+    Returns
+    -------
+    A HttpResponse with a JSON object, which contains
+    a status. If the status is 'error' the datafield
+    errors contains the errors.
+    If the request method is something other
+    than POST, then HttpResponseForbidden()
+    will be returned.
+    """
     if request.method == 'POST':
         form = ProgramForm(request.POST or None)
 
