@@ -35,47 +35,27 @@
                     </div>
 
                     <div class="modal-body">
-<<<<<<< HEAD
                         {% csrf_token %}
-                        {% for hidden_field in form.hidden_fields %}
+
+                        {% for hidden_field in slave_form.hidden_fields %}
                             {{ hidden_field }}
                         {% endfor %}
-                        {% for field in form.visible_fields %}
-                        <div class="form-group">
-                            {{ field.label_tag }} 
-                            {% if form.is_bound %}
-                                {% render_field field class="form-control is-valid" %} 
-                            {% else %} 
-                                {% render_field field class="form-control" %}
-                            {% endif %}
-                            {% if field.help_text %}
-                            <small class="form-text text-muted">{{ field.help_text }}</small>
-                            {% endif %}
-                        </div>
+
+                        {% for field in slave_form.visible_fields %}
+                            <div class="form-group">
+                                {{ field.label_tag }}
+
+                                {% if slave_form.is_bound %}
+                                    {% render_field field class="form-control is-valid" %}
+                                {% else %}
+                                    {% render_field field class="form-control" %}
+                                {% endif %}
+
+                                {% if field.help_text %}
+                                    <small class="form-text text-muted">{{ field.help_text }}</small>
+                                {% endif %}
+                            </div>
                         {% endfor %}
-=======
-                            {% csrf_token %}
-
-                            {% for hidden_field in slave_form.hidden_fields %}
-                                {{ hidden_field }}
-                            {% endfor %}
-
-                            {% for field in slave_form.visible_fields %}
-                                <div class="form-group">
-                                    {{ field.label_tag }}
-
-                                    {% if slave_form.is_bound %}
-                                        {% render_field field class="form-control is-valid" %}
-                                    {% else %}
-                                        {% render_field field class="form-control" %}
-                                    {% endif %}
-
-                                    {% if field.help_text %}
-                                        <small class="form-text text-muted">{{ field.help_text }}</small>
-                                    {% endif %}
-                                </div>
-                            {% endfor %}
->>>>>>> 5f7850c384b50d97bcc339711aa52d5f678bb2ba
                     </div>
                     <div class="modal-footer">
                         <button type="submit" class="btn btn-info submit-btn"></button>
