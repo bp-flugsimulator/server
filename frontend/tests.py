@@ -1,4 +1,4 @@
-from django.test import TestCase, Client
+from django.test import TestCase
 from django.urls import reverse
 from django.core.exceptions import ValidationError
 from urllib.parse import urlencode
@@ -37,16 +37,14 @@ def fill_database_slaves_set_1():
 
 class FrontendTests(TestCase):
     def test_welcome_get(self):
-        c = Client()
-        response = c.get(reverse('frontend:welcome'))
+        response = self.client.get(reverse('frontend:welcome'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "welcome")
 
     def test_slave_get(self):
         data_set = fill_database_slaves_set_1()
 
-        c = Client()
-        response = c.get(reverse('frontend:slaves'))
+        response = self.client.get(reverse('frontend:slaves'))
         self.assertEqual(response.status_code, 200)
 
         for data in data_set:
@@ -75,17 +73,16 @@ class ApiTests(TestCase):
                 mac_address="00:00:00:00:01:03"),
 
         ]
-        c = Client()
 
         #make a request for every slave in the data_set
         for data in data_set:
-            api_response = c.post(reverse('frontend:add_slaves'),{'name': data.name, 'ip_address': data.ip_address, 'mac_address':data.mac_address})
+            api_response = self.client.post(reverse('frontend:add_slaves'),{'name': data.name, 'ip_address': data.ip_address, 'mac_address':data.mac_address})
 
             self.assertEqual(api_response.status_code, 200)
             self.assertJSONEqual(api_response.content.decode('utf-8'), "{}")
 
         #test if all slaves get displayed
-        view_response =  c.get(reverse('frontend:slaves'))
+        view_response =  self.client.get(reverse('frontend:slaves'))
         for data in data_set:
             self.assertContains(view_response, data.name)
             self.assertContains(view_response, data.ip_address)
@@ -95,15 +92,14 @@ class ApiTests(TestCase):
     def test_add_slave_double_entry_fail(self):
         data = SlaveModel(name="add_slave_4", ip_address="0.0.1.4",mac_address="00:00:00:00:01:04")
 
-        c = Client()
 
         #add first slave
-        api_response = c.post(reverse('frontend:add_slaves'),{'name': data.name, 'ip_address': data.ip_address, 'mac_address':data.mac_address})
+        api_response = self.client.post(reverse('frontend:add_slaves'),{'name': data.name, 'ip_address': data.ip_address, 'mac_address':data.mac_address})
         self.assertEqual(api_response.status_code, 200)
         self.assertJSONEqual(api_response.content.decode('utf-8'), "{}")
 
         #insert data a second time
-        api_response = c.post(reverse('frontend:add_slaves'),{'name': data.name, 'ip_address': data.ip_address, 'mac_address':data.mac_address})
+        api_response = self.client.post(reverse('frontend:add_slaves'),{'name': data.name, 'ip_address': data.ip_address, 'mac_address':data.mac_address})
 
         #test if the response contains a JSONobject with the error
         self.assertEqual(api_response.status_code, 200)
@@ -115,8 +111,7 @@ class ApiTests(TestCase):
     def test_add_slave_false_input_fail(self):
         data = SlaveModel(name="add_slave_5", ip_address="ip address",mac_address="mac address")
 
-        c = Client()
-        api_response = c.post(reverse('frontend:add_slaves'),{'name':data.name , 'ip_address': data.ip_address, 'mac_address':data.mac_address})
+        api_response = self.client.post(reverse('frontend:add_slaves'),{'name':data.name , 'ip_address': data.ip_address, 'mac_address':data.mac_address})
         #test if response was successfull
         self.assertEqual(api_response.status_code, 200)
 
@@ -129,13 +124,11 @@ class ApiTests(TestCase):
     def test_add_slave_no_post(self):
         data = SlaveModel(name="add_slave_5", ip_address="ip address",mac_address="mac address")
 
-        c = Client()
-        api_response = c.get(reverse('frontend:add_slaves'))
+        api_response = self.client.get(reverse('frontend:add_slaves'))
         self.assertEqual(api_response.status_code,403)
 
     def test_manage_slave_forbidden(self):
-        c = Client()
-        api_response = c.get("/api/slave/0")
+        api_response = self.client.get("/api/slave/0")
         self.assertEqual(api_response.status_code,403)
 
 
@@ -159,11 +152,10 @@ class ApiTests(TestCase):
                 mac_address="00:00:00:00:02:03"),
 
         ]
-        c = Client()
 
         #make a request for every slave in the data_set
         for data in data_set:
-            api_response = c.post(reverse('frontend:add_slaves'),{'name': data.name, 'ip_address': data.ip_address, 'mac_address':data.mac_address})
+            api_response = self.client.post(reverse('frontend:add_slaves'),{'name': data.name, 'ip_address': data.ip_address, 'mac_address':data.mac_address})
 
             self.assertEqual(api_response.status_code, 200)
             self.assertJSONEqual(api_response.content.decode('utf-8'), "{}")
@@ -175,7 +167,7 @@ class ApiTests(TestCase):
 
         #make a request to delete the slave entry
         for data in data_in_database_set:
-            api_response = c.delete('/api/slave/'+ str(data.id))
+            api_response = self.client.delete('/api/slave/'+ str(data.id))
             self.assertEqual(api_response.status_code, 200)
             self.assertJSONEqual(api_response.content.decode('utf-8'), "{}")
             self.assertFalse(SlaveModel.objects.filter(id=data.id).exists())
@@ -218,11 +210,10 @@ class ApiTests(TestCase):
                 ip_address="0.0.3.7",
                 mac_address="00:00:00:00:03:07"),
         ]
-        c = Client()
 
         #make a request for every slave in the data_set
         for data in data_set_1:
-            api_response = c.post(reverse('frontend:add_slaves'),{'name': data.name, 'ip_address': data.ip_address, 'mac_address':data.mac_address})
+            api_response = self.client.post(reverse('frontend:add_slaves'),{'name': data.name, 'ip_address': data.ip_address, 'mac_address':data.mac_address})
             self.assertEqual(api_response.status_code, 200)
             self.assertJSONEqual(api_response.content.decode('utf-8'), "{}")
 
@@ -233,7 +224,7 @@ class ApiTests(TestCase):
 
         #make an edit request for every entry in data_set_1 with the data from dataset 2
         for (data,new_data) in zip(data_in_database_set,data_set_2):
-            api_response = c.put('/api/slave/' + str(data.id),data=urlencode({'name': new_data.name, 'ip_address':new_data.ip_address, 'mac_address':new_data.mac_address}))
+            api_response = self.client.put('/api/slave/' + str(data.id),data=urlencode({'name': new_data.name, 'ip_address':new_data.ip_address, 'mac_address':new_data.mac_address}))
             self.assertEqual(api_response.status_code, 200)
             self.assertJSONEqual(api_response.content.decode('utf-8'), "{}")
 
@@ -243,20 +234,19 @@ class ApiTests(TestCase):
             self.assertTrue(SlaveModel.objects.filter(name=new_data.name,ip_address=new_data.ip_address,mac_address=new_data.mac_address).exists())
 
     def test_edit_slave_already_exists(self):
-        c = Client()
-        api_response = c.post(reverse('frontend:add_slaves'),{'name': 'edit_slave_fail_0', 'ip_address': '0.0.4.0', 'mac_address':'00:00:00:00:04:00'})
+
+        api_response = self.client.post(reverse('frontend:add_slaves'),{'name': 'edit_slave_fail_0', 'ip_address': '0.0.4.0', 'mac_address':'00:00:00:00:04:00'})
         self.assertEqual(api_response.status_code, 200)
         self.assertJSONEqual(api_response.content.decode('utf-8'), "{}")
 
-        api_response = c.post(reverse('frontend:add_slaves'),{'name': 'edit_slave_fail_1', 'ip_address': '0.0.4.1', 'mac_address':'00:00:00:00:04:01'})
+        api_response = self.client.post(reverse('frontend:add_slaves'),{'name': 'edit_slave_fail_1', 'ip_address': '0.0.4.1', 'mac_address':'00:00:00:00:04:01'})
         self.assertEqual(api_response.status_code, 200)
         self.assertJSONEqual(api_response.content.decode('utf-8'), "{}")
 
         data = SlaveModel.objects.filter(name='edit_slave_fail_0',ip_address='0.0.4.0',mac_address='00:00:00:00:04:00').get()
-        api_response = c.put("/api/slave/"+str(data.id),data=urlencode({'name': 'edit_slave_fail_1', 'ip_address': '0.0.4.1', 'mac_address':'00:00:00:00:04:01'}))
+        api_response = self.client.put("/api/slave/"+str(data.id),data=urlencode({'name': 'edit_slave_fail_1', 'ip_address': '0.0.4.1', 'mac_address':'00:00:00:00:04:01'}))
         self.assertEqual(api_response.status_code, 200)
         self.assertJSONEqual(api_response.content.decode('utf-8'), '{"ip_address":["Slave with this Ip address already exists."],"mac_address":["Slave with this Mac address already exists."],"name":["Slave with this Name already exists."]}')
-
 
 
 
