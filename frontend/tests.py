@@ -3,7 +3,9 @@ from django.urls import reverse
 from django.core.exceptions import ValidationError
 from urllib.parse import urlencode
 
-from .models import Slave as SlaveModel, validate_mac_address
+from .models import Slave as SlaveModel
+from .models import Program as ProgramModel
+from .models import validate_mac_address
 
 def fill_database_slaves_set_1():
     data_set = [
@@ -234,7 +236,6 @@ class ApiTests(TestCase):
             self.assertTrue(SlaveModel.objects.filter(name=new_data.name,ip_address=new_data.ip_address,mac_address=new_data.mac_address).exists())
 
     def test_edit_slave_already_exists(self):
-
         api_response = self.client.post(reverse('frontend:add_slaves'),{'name': 'edit_slave_fail_0', 'ip_address': '0.0.4.0', 'mac_address':'00:00:00:00:04:00'})
         self.assertEqual(api_response.status_code, 200)
         self.assertJSONEqual(api_response.content.decode('utf-8'), "{}")
@@ -248,7 +249,33 @@ class ApiTests(TestCase):
         self.assertEqual(api_response.status_code, 200)
         self.assertJSONEqual(api_response.content.decode('utf-8'), '{"ip_address":["Slave with this Ip address already exists."],"mac_address":["Slave with this Mac address already exists."],"name":["Slave with this Name already exists."]}')
 
+    def test_add_program(self):
+        SlaveModel(name='add_program',ip_address='0.0.5.0',mac_address='00:00:00:00:04:00').save()
+        model = SlaveModel.objects.get(name='add_program')
 
+        #add all programs
+        for id in range(100):
+            api_response = self.client.post("/api/slave/" + str(model.id) + '/programs',{'name':'name'+str(id),'command':'command'+str(id)})
+            self.assertEqual(api_response.status_code, 200)
+            self.assertJSONEqual(api_response.content.decode('utf-8'), '{"status":"success"}')
+
+        #test if all programs are in the database
+        for id in range(100):
+            self.assertTrue(ProgramModel.objects.filter(name= 'name' + str(id),command= 'command' + str(id)))
+
+    # TODO + JS reformat + hold accordeon open on reload
+    def test_add_program_fail(self):
+        SlaveModel(name='add_program_fail',ip_address='0.0.6.0',mac_address='00:00:00:00:06:00').save()
+        model = SlaveModel.objects.get(name='add_program_fail')
+
+        long_str = ''
+
+        for _ in range(2000):
+            long_str += 'a'
+
+        api_response = self.client.post("/api/slave/" + str(model.id) + '/programs',{'name':long_str, 'command': long_str})
+        self.assertEqual(api_response.status_code, 200)
+        self.assertJSONEqual(api_response.content.decode('utf-8'), '{"errors": {"command": ["Ensure this value has at most 200 characters (it has 2000)."], "name": ["Ensure this value has at most 200 characters (it has 2000)."]},"status":"error"}')
 
 class DatabaseTests(TestCase):
     def test_slave_insert_valid(self):
