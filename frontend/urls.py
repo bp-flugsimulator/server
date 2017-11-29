@@ -10,5 +10,6 @@ urlpatterns = [
     url(r'^slaves/$', views.SlavesView.as_view(), name='slaves'),
     url(r'^api/slaves', api.add_slave, name='add_slaves'),
     url(r'^api/slave/([0-9]+)/wol$', api.wol_slave, name='wol_slave'),
-    url(r'^api/slave/([0-9]+)', api.manage_slave, name='manage_slave'),
+    url(r'^api/slave/([0-9]+)$', api.manage_slave, name='manage_slave'),
+    url(r'^api/slave/([0-9]+)/program/([0-9]+)$', api.manage_program, name='manage_program'),
 ]
