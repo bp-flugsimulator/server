@@ -7,5 +7,6 @@ omit =
 	*/apps.py
 	manage.py
 	*/wsgi.py
+	install.py
 source =
 	.
