@@ -5,6 +5,8 @@
 {% block premain %} {% endblock %}
 {% block content %}
 <div class="jumbotron">
+
+    <!-- Modal for deletion warnings used for slave and program deletion-->
     <div id="deleteWarning" class="modal fade" role="dialog">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -223,30 +225,40 @@
 		    }
 	    });
 
+        /*function for deleting a slave, it is added to the delete_slave button*/
         $(".delete_slave").click(function () {
+
+            //get id and name of the slave and create deletion message
             var id = $(this).parents(".slave-card").attr("id");
             var name = $(this).parents(".slave-card").children().find('.slave-name').text();
             var message = "<a>Are you sure you want to remove client </a><b>" + name +"</b>?</a>";
 
+            //changing button visibility and message of the delete modal
             $('#deleteWarning .modal-footer #deleteProgramModalButton').hide();
             $('#deleteWarning .modal-footer #deleteSlaveModalButton').show();
             $('#deleteWarning .modal-body').empty(message);
             $('#deleteWarning .modal-body').append(message);
 
+            //adding id to modal and set it visible
             $('#deleteWarning').data('slaveId', id);
             $('#deleteWarning').modal('toggle');
         });
 
+        /*function for deleting a program, it is added to the delete_program button*/
         $(".delete_program").click(function () {
+
+            //get id and name of the program and create deletion message
             var id = $(this).parents(".program-card").attr("data-id");
             var name = $(this).parents(".program-card").children().find('.program-name').text();
             var message = "<a>Are you sure you want to remove program </a><b>" + name +"</b>?</a>";
 
+            //changing button visibility and message of the delete modal
             $('#deleteWarning .modal-footer #deleteSlaveModalButton').hide();
             $('#deleteWarning .modal-footer #deleteProgramModalButton').show();
             $('#deleteWarning .modal-body').empty(message);
             $('#deleteWarning .modal-body').append(message);
 
+            //adding id to modal and set it visible
             $('#deleteWarning').data('programId', id);
             $('#deleteWarning').modal('toggle');
 
