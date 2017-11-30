@@ -94,7 +94,7 @@ def wol_slave(request, id):
         except Exception as err:
             return JsonResponse({'status': 'fail', 'error': repr(err)}, status=500)
         Group('notifications').send({'text': json.dumps(
-            {'message': 'Succesful, Client Start queued', 'type': 'danger'})})
+            {'message': 'Succesful, Client Start queued'})})
         return JsonResponse({'status': 'success'})
     else:
         return HttpResponseForbidden()

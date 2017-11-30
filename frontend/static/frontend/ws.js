@@ -1,4 +1,4 @@
-socket = new WebSocket("ws://" + window.location.host + "/chat/");
+socket = new WebSocket("ws://" + window.location.host);
 socket.onmessage = function(e) {
 	var data = JSON.parse(e.data);
 	$.notify({
