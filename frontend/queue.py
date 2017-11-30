@@ -4,4 +4,13 @@ from wakeonlan.wol import send_magic_packet
 
 
 def wakeSlave(mac_address):
+    """
+    wake a slave with a given
+    mac address
+    ----------
+    mac_address: str
+        the mac address of a slave to wake
+    Returns
+    -------
+    """
     async(send_magic_packet, mac_address)
