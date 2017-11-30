@@ -286,7 +286,8 @@
 
             //clear input fields
             programForm.find("input[name='name']").val("");
-            programForm.find("input[name='command']").val("");
+            programForm.find("input[name='path']").val("");
+            programForm.find("input[name='arguments']").val("");
 
             //clear errormessages
             programForm.find("div[class='invalid-feedback']").each(function (index, item) {
@@ -378,7 +379,8 @@
                 url: $(this).attr('action'),
                 data: {
                     name: $(this).find("input[name='name']").val(),
-                    command: $(this).find("input[name='command']").val(),
+                    path: $(this).find("input[name='path']").val(),
+                    arguments: $(this).find("input[name='arguments']").val(),
                     slave_id: $(this).data('slave_id')
                 },
                 beforeSend: function (xhr) {

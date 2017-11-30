@@ -255,13 +255,13 @@ class ApiTests(TestCase):
 
         #add all programs
         for id in range(100):
-            api_response = self.client.post('/api/programs',{'name':'name'+str(id),'command':'command'+str(id), 'slave_id':str(model.id)})
+            api_response = self.client.post('/api/programs',{'name':'name'+str(id),'path':'path'+str(id), 'arguments': 'arguments'+str(id), 'slave_id':str(model.id)})
             self.assertEqual(api_response.status_code, 200)
             self.assertJSONEqual(api_response.content.decode('utf-8'), '{"status":"success"}')
 
         #test if all programs are in the database
         for id in range(100):
-            self.assertTrue(ProgramModel.objects.filter(name= 'name' + str(id),command= 'command' + str(id),slave=model))
+            self.assertTrue(ProgramModel.objects.filter(name= 'name' + str(id),path= 'path' + str(id), arguments= 'arguments' + str(id),slave=model))
 
     def test_add_program_fail(self):
         SlaveModel(name='add_program_fail',ip_address='0.0.6.0',mac_address='00:00:00:00:06:00').save()
@@ -272,9 +272,12 @@ class ApiTests(TestCase):
         for _ in range(2000):
             long_str += 'a'
 
-        api_response = self.client.post('/api/programs',{'name':long_str, 'command': long_str, 'slave_id': str(model.id)})
+        api_response = self.client.post('/api/programs',{'name':long_str, 'path': long_str, 'arguments': long_str, 'slave_id': str(model.id)})
         self.assertEqual(api_response.status_code, 200)
-        self.assertJSONEqual(api_response.content.decode('utf-8'), '{"errors": {"command": ["Ensure this value has at most 200 characters (it has 2000)."], "name": ["Ensure this value has at most 200 characters (it has 2000)."]},"status":"error"}')
+        self.assertJSONEqual(api_response.content.decode('utf-8'), '{"status": "error", "errors": {\
+                                       "name": ["Ensure this value has at most 200 characters (it has 2000)."],\
+                                       "path": ["Ensure this value has at most 200 characters (it has 2000)."],\
+                                       "arguments": ["Ensure this value has at most 200 characters (it has 2000)."]}}')
 
     def test_add_program_unsupported_function(self):
         SlaveModel(name='add_program_unsupported',ip_address='0.0.7.0',mac_address='00:00:00:00:07:00').save()

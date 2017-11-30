@@ -10,4 +10,4 @@ class SlaveForm(ModelForm):
 class ProgramForm(ModelForm):
     class Meta:
         model = ProgramModel
-        fields = ['name','command']
+        fields = ['name','path', 'arguments']
