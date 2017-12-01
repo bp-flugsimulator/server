@@ -2,7 +2,6 @@ import pip
 import os
 from platform import system, architecture
 from sys import stderr, version_info
-from termcolor import colored
 
 
 def install_local(lib_name):
@@ -15,16 +14,14 @@ def install_local(lib_name):
 def install(lib_name):
     # try to install libary from file
     if install_local(lib_name) != 0:
-        stderr.write(
-            colored('could not install ' + lib_name + ' from file\n:'), 'red')
+        stderr.write('could not install ' + lib_name + ' from file\n:')
 
         # try to download libary and then install from file
         if pip.main(['download', lib_name, '-d', './libs']) == 0:
             install_local(lib_name)
         else:
-            stderr.write(
-                colored('could not download and then install ' + lib_name +
-                        ' from file:\n', 'red'))
+            stderr.write('could not download and then install ' + lib_name +
+                         ' from file:\n')
 
 
 # try to update pip'
