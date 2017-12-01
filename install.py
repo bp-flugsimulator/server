@@ -2,24 +2,33 @@ import pip
 import os
 from platform import system, architecture
 from sys import stderr, version_info
+from termcolor import colored
+
 
 def install_local(lib_name):
-    return pip.main(['install', lib_name, '--no-index', '--find-links', 'file://' + os.getcwd() + '/libs'])
+    return pip.main([
+        'install', lib_name, '--no-index', '--find-links',
+        'file://' + os.getcwd() + '/libs'
+    ])
+
 
 def install(lib_name):
     # try to install libary from file
     if install_local(lib_name) != 0:
-        stderr.write('could not install ' + lib_name + ' from file')
-        # try to download libary and then install from file 
+        stderr.write(
+            colored('could not install ' + lib_name + ' from file\n:'), 'red')
+
+        # try to download libary and then install from file
         if pip.main(['download', lib_name, '-d', './libs']) == 0:
             install_local(lib_name)
         else:
-            stderr.write('could not download and install ' + lib_name + ' from file:')       
+            stderr.write(
+                colored('could not download and then install ' + lib_name +
+                        ' from file:\n', 'red'))
 
 
 # try to update pip'
 pip.main(['install', '-U', 'pip'])
-
 
 # on windows install wheel variant of twisted
 if system() == 'Windows':
