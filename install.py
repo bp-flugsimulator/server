@@ -31,21 +31,21 @@ def install(lib_name):
 if __name__ == "__main__":
     # try to update pip'
     pip.main(['install', '-U', 'pip'])
+    
+    #install wheel
+    install('wheel')
 
     # try to download all normal dependecies
     with open('requirements.txt') as requirements:
         for libary in requirements:
             if download(libary) != 0:
                 break
-
     # on windows install wheel variant of twisted
     if system() == 'Windows':
-        # update wheel
-        install('wheel')
-
         # install pypiwin32
         install('pypiwin32')
 
+        """
         # install twisted from static file
         twisted = 'Twisted-17.9.0-'
         if version_info.minor == 6:
@@ -65,6 +65,7 @@ if __name__ == "__main__":
             raise Exception('This Software only supports 32 and 64 bit OS\n')
 
         pip.main(["install",'file://' + os.getcwd() + '/libs/' + twisted])
+        """
 
     elif system() == 'Linux':
         pass
