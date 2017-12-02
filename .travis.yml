@@ -21,6 +21,7 @@ matrix:
     - env: $DENV="pip install --upgrade --pre Django"
 
 install:
+  - python -c "import platform; print(platform.architecture())"
   - python install.py 
   - $DENV
   - pip install coverage
