@@ -7,7 +7,7 @@ from .forms import SlaveForm
 import json
 
 from channels import Group
-from .queue import wakeSlave
+from .queue import wake_Slave
 
 def add_slave(request):
     """
@@ -90,7 +90,7 @@ def wol_slave(request, id):
     """
     if request.method == 'GET':
         try:
-            wakeSlave(SlaveModel.objects.get(id=id).mac_address)
+            wake_Slave(SlaveModel.objects.get(id=id).mac_address)
         except Exception as err:
             return JsonResponse({'status': 'fail', 'error': repr(err)}, status=500)
         Group('notifications').send({'text': json.dumps(

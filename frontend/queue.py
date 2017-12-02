@@ -3,7 +3,7 @@ from django_q.tasks import async
 from wakeonlan.wol import send_magic_packet
 
 
-def wakeSlave(mac_address):
+def wake_Slave(mac_address):
     """
     wake a slave with a given
     mac address
