@@ -9,7 +9,8 @@ python:
 
 env:
     # the Django version from requirements.txt is used
-  - $DENV=""
+  - PYTHON_ARCH="32"
+  - PYTHON_ARCH="64"
     # the latest Django development version is used
   - $DENV="pip install --upgrade --pre Django"
 
