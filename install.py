@@ -64,7 +64,7 @@ if __name__ == "__main__":
         else:
             raise Exception('This Software only supports 32 and 64 bit OS\n')
 
-        pip.main(["install",'file://' + os.getcwd() + '/libs' + twisted])
+        pip.main(["install",'file://' + os.getcwd() + '/libs/' + twisted])
 
     elif system() == 'Linux':
         pass
