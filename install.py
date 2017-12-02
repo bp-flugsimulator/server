@@ -1,76 +1,53 @@
 import pip
 import os
 from platform import system, architecture
-from sys import stderr, version_info
+from sys import stderr, version_info, argv
 
 
 def install_local(lib_name):
-    return pip.main([
+    if pip.main([
         'install', lib_name, '--no-index', '--find-links',
         'file://' + os.getcwd() + '/libs'
-    ])
+    ]) != 0:
+        raise Exception('could not install ' + lib_name + ' from file')
 
 
 def download(lib_name):
-    return pip.main(['download', lib_name, '-d', './libs'])
+    if pip.main(['download', lib_name, '-d', './libs']) != 0:
+        raise Exception('could not download ' + lib_name)
 
 
 def install(lib_name):
     # try to install libary from file
-    if install_local(lib_name) != 0:
-        stderr.write('could not install ' + lib_name + ' from file\n:')
-
+    try:
+        install_local(lib_name)
+    except Exception as err:
+        stderr.write("{}".format(err))
         # try to download libary and then install from file
-        if download(lib_name) == 0:
-            install_local(lib_name)
-        else:
-            stderr.write('could not download and then install ' + lib_name +
-                         ' from file:\n')
+        download(lib_name)
+        install_local(lib_name)
 
 
 if __name__ == "__main__":
+
     # try to update pip'
     pip.main(['install', '-U', 'pip'])
-    
+   
+    if len(argv) > 1 and argv[1] == '--update':
+        with open('requirements.txt') as requirements:
+            for libary in requirements:
+                download(libary)
+        
     #install wheel
     install('wheel')
 
-    # try to download all normal dependecies
-    with open('requirements.txt') as requirements:
-        for libary in requirements:
-            if download(libary) != 0:
-                break
-    # on windows install wheel variant of twisted
+    # on windows install pypiwin32
     if system() == 'Windows':
-        # install pypiwin32
         install('pypiwin32')
-
-        """
-        # install twisted from static file
-        twisted = 'Twisted-17.9.0-'
-        if version_info.minor == 6:
-            twisted += 'cp36-cp36m'
-        elif version_info.minor == 5:
-            twisted += 'cp35-cp35m'
-        elif version_info.minor == 4:
-            twisted += 'cp34-cp34m'
-        else:
-            raise Exception('This Software only supports Python 3.4 - 3.6 \n')
-
-        if architecture()[0] == '64bit':
-            twisted += '-win_amd64.whl'
-        elif architecture()[0] == '32bit':
-            twisted += '-win32.whl'
-        else:
-            raise Exception('This Software only supports 32 and 64 bit OS\n')
-
-        pip.main(["install",'file://' + os.getcwd() + '/libs/' + twisted])
-        """
-
     elif system() == 'Linux':
         pass
     else:
-        raise Exception(system() + ' is not supported\n')
+        stderr.write(system() + ' is not officaly supported but may work\n')
 
     # install all other dependecies
     with open('requirements.txt') as requirements:
