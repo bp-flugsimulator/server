@@ -2,15 +2,22 @@ language: python
 
 cache: pip
 
-python: 
-  - "3.4"
-  - "3.5"
-  - "3.6"
-
 env:
     # the Django version from requirements.txt is used
-  - PYTHON_ARCH="32"
-  - PYTHON_ARCH="64"
+  - os: linux
+    env: PYTHON_VERSION="3.4" PYTHON_ARCH="32"
+  - os: linux
+    env: PYTHON_VERSION="3.4" PYTHON_ARCH="64"
+  - os: linux
+    env: PYTHON_VERSION="3.5" PYTHON_ARCH="32"
+  - os: linux
+    env: PYTHON_VERSION="3.5" PYTHON_ARCH="64"
+  - os: linux
+    env: PYTHON_VERSION="3.6" PYTHON_ARCH="32"
+  - os: linux
+    env: PYTHON_VERSION="3.6" PYTHON_ARCH="64"
+
+
     # the latest Django development version is used
   - $DENV="pip install --upgrade --pre Django"
 
