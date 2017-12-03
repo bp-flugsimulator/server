@@ -270,8 +270,8 @@ class ApiTests(TestCase):
         res = self.client.get(
             path=reverse('frontend:wol_slave', args=[999999]))
         self.assertEqual(res.status_code, 500)
-        self.assertEqual(res.json()['status'], 'fail')
-        self.assertEqual(res.json()['error'], "DoesNotExist('Slave matching query does not exist.',)")
+        self.assertEqual(res.json()['status'], 'err')
+        self.assertEqual(res.json()['payload'], "DoesNotExist('Slave matching query does not exist.',)")
 
         # wrong http method
         res = self.client.post(
@@ -281,7 +281,7 @@ class ApiTests(TestCase):
         res = self.client.get(
             path=reverse('frontend:wol_slave', args=[test_model.id]))
         self.assertEqual(res.status_code, 200)
-        self.assertEqual(res.json()['status'], 'success')
+        self.assertEqual(res.json()['status'], 'ok')
 
 
 class DatabaseTests(TestCase):

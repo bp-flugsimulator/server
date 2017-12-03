@@ -3,11 +3,13 @@ from django.http.request import QueryDict
 from .models import Slave as SlaveModel
 from .models import Program as ProgramModel
 from .forms import SlaveForm
+from server.utils import StatusResponse
 
 import json
 
 from channels import Group
 from .queue import wake_Slave
+from utils.status import Status
 
 def add_slave(request):
     """
@@ -92,9 +94,9 @@ def wol_slave(request, id):
         try:
             wake_Slave(SlaveModel.objects.get(id=id).mac_address)
         except Exception as err:
-            return JsonResponse({'status': 'fail', 'error': repr(err)}, status=500)
+            return StatusResponse(Status.err(repr(err)), status=500)
         Group('notifications').send({'text': json.dumps(
             {'message': 'Succesful, Client Start queued'})})
-        return JsonResponse({'status': 'success'})
+        return StatusResponse(Status.ok(''))
     else:
         return HttpResponseForbidden()

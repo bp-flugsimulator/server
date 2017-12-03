@@ -83,7 +83,7 @@
                         </div>
 
                         <div class="btn-group mr-2" role="group">
-                            <button type="button" class="btn btn-info" data-toggle="tooltip" data-placement="top" title="Start/Stop">
+                            <button type="button" class="btn btn-info start" data-toggle="tooltip" data-placement="top" title="Start/Stop">
                                 <i class="material-icons">power_settings_new</i>
                             </button>
                             <button type="button" class="btn btn-info" data-toggle="tooltip" data-placement="top" title="Restart">
@@ -370,7 +370,7 @@
 				    xhr.setRequestHeader('X-CSRFToken', '{{ csrf_token }}')
 			}
 		    }).done(function(data){
-			    if (data.status == 'success'){
+			    if (data.status == 'ok'){
 				    el.addClass('animated pulse');
 				    el.one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend', function(){
 					    el.removeClass('animated pulse');
@@ -378,7 +378,7 @@
 			    }
 			    else{
 				    $.notify({
-					    message: 'Error: ' + data.error
+					    message: 'Error: ' + data.payload
 				    },{
 					    type: 'danger'
 				    });
