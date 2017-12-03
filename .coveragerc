@@ -1,0 +1,12 @@
+[run]
+# do not test certain directories
+omit = 
+	*/migrations*
+	*/pyenv*
+	*/tests*
+	*/apps.py
+	manage.py
+	*/wsgi.py
+	install.py
+source =
+	.

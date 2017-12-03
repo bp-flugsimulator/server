@@ -35,9 +35,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_q',
     'base',
     'frontend',
     'widget_tweaks',
+    'channels',
 ]
 
 MIDDLEWARE = [
@@ -126,3 +128,16 @@ STATICFILES_DIRS = [
 
 # Message Storage
 MESSAGE_STORAGE = 'django.contrib.messages.storage.cookie.CookieStorage'
+
+# Cluster
+Q_CLUSTER = {
+    'orm': 'default'
+}
+
+# channels settings
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "asgiref.inmemory.ChannelLayer",
+        "ROUTING": "frontend.routing.channel_routing",
+    },
+}

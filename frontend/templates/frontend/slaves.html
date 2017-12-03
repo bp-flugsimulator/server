@@ -1,7 +1,7 @@
 {% extends "base/base.html" %}
 {% load staticfiles %}
 {% load widget_tweaks %}
-{% block title %} Slaves {% endblock %} 
+{% block title %} Slaves {% endblock %}
 {% block premain %} {% endblock %}
 {% block content %}
 <div class="jumbotron">
@@ -83,7 +83,7 @@
                         </div>
 
                         <div class="btn-group mr-2" role="group">
-                            <button type="button" class="btn btn-info" data-toggle="tooltip" data-placement="top" title="Start/Stop">
+                            <button type="button" class="btn btn-info start" data-toggle="tooltip" data-placement="top" title="Start/Stop">
                                 <i class="material-icons">power_settings_new</i>
                             </button>
                             <button type="button" class="btn btn-info" data-toggle="tooltip" data-placement="top" title="Restart">
@@ -163,6 +163,20 @@
                                 </div>
                             </div>
                         </div>
+                    </h5>
+                </a>
+            </div>
+            <div id="collapse{{ slave.id }}" class="collapse" role="tabpanel" data-parent="#accordion">
+                <div class="card-body">
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-primary start"
+                        data-toggle="tooltip" data-placement="top" title="Start/Stop">
+                            <i class="material-icons">power_settings_new</i>
+                        </button>
+                        <button type="button" class="btn btn-primary"
+                         data-toggle="tooltip" data-placement="top" title="Restart">
+                            <i class="material-icons">refresh</i>
+                        </button>
                     </div>
                     {% empty %}
                     <div class="card">
@@ -192,9 +206,25 @@
         </button>
     </div>
 </div>
-{% endblock %} {% block script %}
+{% endblock %}
+
+{% block script %}
+	<script src="{% static 'frontend/ws.js' %}"></script>
 <script>
-    $(document).ready(function () {
+    $(document).ready(function(){
+	    // set defaults for notifications
+	    $.notifyDefaults({
+		    type: 'success',
+		    placement: {
+			    from: 'bottom',
+			    align: 'right'
+		    },
+		    animate: {
+			    enter: 'animated fadeInRight',
+			    exit: 'animated fadeOutRight'
+		    }
+	    });
+
         $(".delete_slave").click(function () {
             var id = $(this).parents(".card").attr("id");
             var name = $(this).parents(".card").children().find('.slave-name').text();
@@ -331,6 +361,36 @@
                 }
             });
         })
+	    $('.start').click(function(){
+            	    var id = $(this).parents('.card').attr("id");
+		    var el = $(this);
+		    $.get({
+			    url: '/api/slave/' + id + '/wol',
+			    beforeSend: function(xhr){
+				    xhr.setRequestHeader('X-CSRFToken', '{{ csrf_token }}')
+			}
+		    }).done(function(data){
+			    if (data.status == 'ok'){
+				    el.addClass('animated pulse');
+				    el.one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend', function(){
+					    el.removeClass('animated pulse');
+				    });
+			    }
+			    else{
+				    $.notify({
+					    message: 'Error: ' + data.payload
+				    },{
+					    type: 'danger'
+				    });
+			    }
+		    }).fail(function(){
+			    $.notify({
+				    message: 'Error in Ajax Request.'
+			    },{
+				    type: 'danger'
+			    });
+		    });
+	    });
     });
-</script> 
+</script>
 {% endblock %}

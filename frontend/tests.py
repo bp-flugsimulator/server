@@ -257,7 +257,31 @@ class ApiTests(TestCase):
         self.assertEqual(api_response.status_code, 200)
         self.assertJSONEqual(api_response.content.decode('utf-8'), '{"ip_address":["Slave with this Ip address already exists."],"mac_address":["Slave with this Mac address already exists."],"name":["Slave with this Name already exists."]}')
 
+    # test wake on lan
+    def test_wol(self):
+        # add a test slave
+        test_model = SlaveModel(
+            name='wol_client',
+            ip_address='0.0.5.0',
+            mac_address='00:00:00:00:05:00')
+        test_model.save()
 
+        # non existent slave
+        res = self.client.get(
+            path=reverse('frontend:wol_slave', args=[999999]))
+        self.assertEqual(res.status_code, 500)
+        self.assertEqual(res.json()['status'], 'err')
+        self.assertEqual(res.json()['payload'], "DoesNotExist('Slave matching query does not exist.',)")
+
+        # wrong http method
+        res = self.client.post(
+            path=reverse('frontend:wol_slave', args=[test_model.id]))
+        self.assertEqual(res.status_code, 403)
+
+        res = self.client.get(
+            path=reverse('frontend:wol_slave', args=[test_model.id]))
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.json()['status'], 'ok')
 
 
 class DatabaseTests(TestCase):

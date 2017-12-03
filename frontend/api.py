@@ -3,6 +3,13 @@ from django.http.request import QueryDict
 from .models import Slave as SlaveModel
 from .models import Program as ProgramModel
 from .forms import SlaveForm
+from server.utils import StatusResponse
+
+import json
+
+from channels import Group
+from .queue import wake_Slave
+from utils.status import Status
 
 def add_slave(request):
     """
@@ -63,5 +70,33 @@ def manage_slave(request, id):
             return JsonResponse({})
         else:
             return JsonResponse(form.errors)
+    else:
+        return HttpResponseForbidden()
+
+def wol_slave(request, id):
+    """
+    answers a request to wake a slave with
+    the given id
+    ----------
+    request: HttpRequest
+        a GET request
+    id: int
+        the id of the slave which will be modified
+    Returns
+    -------
+    A HttpResponse with a JSON object which
+    can contain errors.
+    If the request method is something other
+    than GET, then a HttpResponseForbidden()
+    will be returned.
+    """
+    if request.method == 'GET':
+        try:
+            wake_Slave(SlaveModel.objects.get(id=id).mac_address)
+        except Exception as err:
+            return StatusResponse(Status.err(repr(err)), status=500)
+        Group('notifications').send({'text': json.dumps(
+            {'message': 'Succesful, Client Start queued'})})
+        return StatusResponse(Status.ok(''))
     else:
         return HttpResponseForbidden()

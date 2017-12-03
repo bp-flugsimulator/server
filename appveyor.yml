@@ -12,11 +12,15 @@ environment:
     - PYTHON: "C:\\Python35-x64"
     - PYTHON: "C:\\Python36-x64"
 
+
 install:
-  # We need wheel installed to build wheels
-  - "%PYTHON%\\python.exe -m pip install -r requirements.txt"
+  - "%PYTHON%\\python.exe install.py"
+  - choco install redis-64
+  - redis-server --service-install
+  - redis-server --service-start
 
 build: off
+
 
 test_script:
   - "%PYTHON%\\python.exe manage.py test"
