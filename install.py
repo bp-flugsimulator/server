@@ -1,7 +1,17 @@
-import pip
-import os
+"""
+This script is used to install all requirements listed in requirements.txt from
+./libs. If a library is not present, use the flag "--update" to download the
+system specific version from the internet into ./libs.
+
+Example
+-------
+    $python install.py --update
+"""
+
+from sys import stderr, argv
 from platform import system, architecture
-from sys import stderr, version_info, argv
+import os
+import pip
 
 
 def install_local(lib_name):
