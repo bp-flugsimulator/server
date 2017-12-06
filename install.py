@@ -5,13 +5,13 @@ from sys import stderr, version_info, argv
 
 
 def install_local(lib_name):
-    """ 
-    Installes a libary from a local file in ./libs
-    
-    Parameters 
+    """
+    Installes a library from a local file in ./libs
+
+    Parameters
     ----------
     lib_name: str
-        the name of the libary that will be installed
+        the name of the library that will be installed
 
     Returns
     -------
@@ -19,24 +19,24 @@ def install_local(lib_name):
 
     Exception
     ---------
-    Raises an Exception if the libary can't be installed
+    Raises an Exception if the library can't be installed
     from a local file
     """
     if pip.main([
-        'install', lib_name, '--no-index', '--find-links',
-        'file://' + os.getcwd() + '/libs'
+            'install', lib_name, '--no-index', '--find-links',
+            'file://' + os.getcwd() + '/libs'
     ]) != 0:
         raise Exception('could not install ' + lib_name + ' from file')
 
 
 def download(lib_name):
-    """ 
-    Downloads a libary to ./libs
-    
-    Parameters 
+    """
+    Downloads a library to ./libs
+
+    Parameters
     ----------
     lib_name: str
-        the name of the libary that will be downloaded
+        the name of the library that will be downloaded
 
     Returns
     -------
@@ -44,7 +44,7 @@ def download(lib_name):
 
     Exception
     ---------
-    Raises an Exception if the libary can't be 
+    Raises an Exception if the library can't be
     downloaded from a local file
     """
     if pip.main(['download', lib_name, '-d', './libs']) != 0:
@@ -52,14 +52,14 @@ def download(lib_name):
 
 
 def install(lib_name):
-    """ 
-    Installes a libary from ./libs or downloads it from the 
+    """
+    Installes a library from ./libs or downloads it from the
     Internet to ./libs and then install it from there
 
-    Parameters 
+    Parameters
     ----------
     lib_name: str
-        the name of the libary that will be installed
+        the name of the library that will be installed
 
     Returns
     -------
@@ -67,16 +67,16 @@ def install(lib_name):
 
     Exception
     ---------
-    Raises an Exception if the libary can't be installed
+    Raises an Exception if the library can't be installed
     from a local file or from the internet
     """
 
-    # try to install libary from file
+    # try to install library from file
     try:
         install_local(lib_name)
     except Exception as err:
         stderr.write("{}".format(err))
-        # try to download libary and then install from file
+        # try to download library and then install from file
         download(lib_name)
         install_local(lib_name)
 
@@ -84,14 +84,14 @@ def install(lib_name):
 if __name__ == "__main__":
     # try to update pip'
     pip.main(['install', '-U', 'pip'])
-  
-    # if --update flage is set update all dependecies 
+
+    # if --update flag is set update all dependencies
     # from requirements.txt in ./libs
     if len(argv) > 1 and argv[1] == '--update':
         with open('requirements.txt') as requirements:
-            for libary in requirements:
-                download(libary)
-        
+            for library in requirements:
+                download(library)
+
     # install wheel
     install('wheel')
 
@@ -99,11 +99,13 @@ if __name__ == "__main__":
     if system() == 'Windows':
         install('pypiwin32')
     elif system() == 'Linux':
-        pass
+        if architecture()[0] != '64bit':
+            stderr.write(architecture()[0] +
+                         ' is not officially supported but may work\n')
     else:
-        stderr.write(system() + ' is not officaly supported but may work\n')
+        stderr.write(system() + ' is not officially supported but may work\n')
 
-    # install all other dependecies
+    # install all other dependencies
     with open('requirements.txt') as requirements:
-        for libary in requirements:
-            install_local(libary)
+        for library in requirements:
+            install_local(library)
