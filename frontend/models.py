@@ -85,17 +85,18 @@ class Program(models.Model):
     name: str
         The name of the program
 
-    command: str
-        The command which will be executed when the
-        user runs the program
+    path: str
+        The path to the binaryfile that will be executed
+
+    arguments: str
+        The arguments which will be passed to the
+        executable on execution
 
     slave: Slave
         The slave on which the command will be executed
     """
     id = models.AutoField(primary_key=True)
-    name = models.CharField(max_length=200)
-    command = models.CharField(max_length=200)
+    name = models.CharField(unique=False, max_length=200)
+    path = models.CharField(unique=False, max_length=200)
+    arguments = models.CharField(unique=False, max_length=200)
     slave = models.ForeignKey(Slave, on_delete=models.CASCADE)
-
-    class Meta:
-        unique_together = ('name','slave')

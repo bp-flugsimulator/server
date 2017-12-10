@@ -25,6 +25,48 @@
         </div>
     </div>
 
+    <div class="modal fade" id="programModal" role="dialog">
+        <div class="modal-dialog">
+            <form id="programForm">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title"></h4>
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    </div>
+
+                    <div class="modal-body">
+                        {% csrf_token %}
+
+                        {% for hidden_field in program_form.hidden_fields %}
+                            {{ hidden_field }}
+                        {% endfor %}
+
+                        {% for field in program_form.visible_fields %}
+                            <div class="form-group">
+                                {{ field.label_tag }}
+
+                                {% if program_form.is_bound %}
+                                    {% render_field field class="form-control is-valid" %}
+                                {% else %}
+                                    {% render_field field class="form-control" %}
+                                {% endif %}
+
+                                {% if field.help_text %}
+                                    <small class="form-text text-muted">{{ field.help_text }}</small>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-info submit-btn"></button>
+                        <button type="reset" class="btn btn-danger" data-dismiss="modal">Cancel</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
     <div class="modal fade" id="slaveModal" role="dialog">
         <div class="modal-dialog">
             <form id="slaveForm">
@@ -185,7 +227,7 @@
                         </div>
                     </div>
                     {% endfor %}
-                    <button type="button" class="btn btn-info float-right mr-2 mt-2 mb-2" data-toggle="tooltip" data-placement="top" title="Add program">
+                    <button type="button" class="btn btn-info float-right mr-2 mt-2 mb-2 add-program-btn" data-toggle="tooltip" data-placement="top" title="Add program">
                         <span>Program</span>
                         <i class="material-icons" style="font-size:30px; vertical-align: middle;">add</i>
                     </button>
@@ -273,11 +315,15 @@
                 beforeSend: function (xhr) {
                     xhr.setRequestHeader("X-CSRFToken", '{{ csrf_token }}');
                 },
-                success: function (err) {
-                    if ($.isEmptyObject(err)) {
+                success: function (response) {
+                    if (response.status === "ok") {
                         window.location.reload();
                     } else {
-                        throw_error(id, JSON.stringify(err));
+                        $.notify({
+                            message: JSON.stringify(response.payload)
+                        },{
+                            type: 'danger'
+                        });
                     }
                 }
             })
@@ -308,6 +354,39 @@
 
         $(function () {
             $('[data-toggle="tooltip"]').tooltip()
+        });
+
+        //opens the programModal to add a new program
+        $('.add-program-btn').click(function () {
+            programModal = $('#programModal');
+            programModal.children().find('.modal-title').text("Add Program");
+
+
+            //modify the form for the submit button
+            programForm = programModal.children().find('#programForm');
+            programForm.attr('action', '/api/programs');
+            programForm.attr('method', 'POST');
+            programForm.children().find('.submit-btn').text('Add');
+
+            //clear input fields
+            programForm.find("input[name='name']").val("");
+            programForm.find("input[name='path']").val("");
+            programForm.find("input[name='arguments']").val("");
+
+            //clear errormessages
+            programForm.find("div[class='invalid-feedback']").each(function (index, item) {
+                item.remove();
+            });
+            programForm.find(".is-invalid").each(function (index, item) {
+                $(item).removeClass("is-invalid");
+            });
+
+            //find slave id and store it in the form
+            var card = $(this).parents('.slave-card');
+            var id = card.attr("id");
+            programForm.data('slave_id',id);
+
+            programModal.modal('toggle');
         });
 
         //opens the slaveModal to add a new slave
@@ -346,11 +425,11 @@
             var ip = card.children().find('.slave-ip').text().trim();
             var mac = card.children().find('.slave-mac').text().trim();
 
-            slaveModal = $('#slaveModal');
+            var slaveModal = $('#slaveModal');
             slaveModal.children().find('.modal-title').text("Edit Client");
 
             //modify the form for the submit button
-            slaveForm = slaveModal.children().find('#slaveForm');
+            var slaveForm = slaveModal.children().find('#slaveForm');
             slaveForm.attr('action', '/api/slave/' + id);
             slaveForm.attr('method', 'PUT');
             slaveForm.children().find('.submit-btn').text('Edit');
@@ -372,11 +451,59 @@
             slaveModal.modal('toggle');
         });
 
-        // Form Handler
-        $('#slaveForm').submit(function (event) {
+        // programForm Handler
+        $('#programForm').submit(function (event) {
             //Stop form from submitting normally
             event.preventDefault();
 
+            //send request to given url and with given method
+            //data field contains information about the slave
+            $.ajax({
+                type: $(this).attr('method'),
+                url: $(this).attr('action'),
+                data: {
+                    name: $(this).find("input[name='name']").val(),
+                    path: $(this).find("input[name='path']").val(),
+                    arguments: $(this).find("input[name='arguments']").val(),
+                    slave_id: $(this).data('slave_id')
+                },
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader('X-CSRFToken', '{{ csrf_token }}');
+                },
+                success: function (response) {
+                    if (response.status === 'ok') {
+                        window.location.reload();
+                    } else {
+                        var programForm = $('#programForm');
+                        programForm.find("div[class='invalid-feedback']").each(function (index, item) {
+                            item.remove();
+                        });
+
+                        programForm.find(".is-invalid").each(function (index, item) {
+                            $(item).removeClass("is-invalid");
+                        });
+
+                        $.each(JSON.parse(response.payload) , function (id, msg) {
+                            var node = programForm.find("input[name=" + id + "]");
+                            node.addClass("is-invalid");
+                            node.parent().append('<div class="invalid-feedback">' + msg + '</div>');
+                        });
+                    }
+                },
+                error: function(){
+                    $.notify({
+                        message: 'Error in Ajax Request.'
+                    },{
+                        type: 'danger'
+                    });
+                }
+            });
+        });
+
+        // slaveForm Handler
+        $('#slaveForm').submit(function (event) {
+            //Stop form from submitting normally
+            event.preventDefault();
             //send request to given url and with given method
             //data field contains information about the slave
             $.ajax({
@@ -390,27 +517,37 @@
                 beforeSend: function (xhr) {
                     xhr.setRequestHeader('X-CSRFToken', '{{ csrf_token }}');
                 },
-                success: function (err) {
-                    if ($.isEmptyObject(err)) {
+                success: function(response){
+                    if(response.status === 'ok'){
                         window.location.reload();
                     } else {
-                        $("#slaveForm").find("div[class='invalid-feedback']").each(function (index, item) {
+                        slaveForm = $('#slaveForm');
+                        slaveForm.find("div[class='invalid-feedback']").each(function (index, item) {
                             item.remove();
                         });
 
-                        $("#slaveForm").find(".is-invalid").each(function (index, item) {
+                        slaveForm.find(".is-invalid").each(function (index, item) {
                             $(item).removeClass("is-invalid");
                         });
 
-                        $.each(err, function (id, msg) {
-                            node = $("#slaveForm").find("input[name=" + id + "]");
+                        $.each(JSON.parse(response.payload), function (id, msg) {
+                            node = slaveForm.find('input[name='+id+']');
+                            console.log(node);
                             node.addClass("is-invalid");
                             node.parent().append('<div class="invalid-feedback">' + msg + '</div>');
                         });
                     }
+                },
+                error: function(){
+                    $.notify({
+                        message: 'Error in Ajax Request.'
+                    },{
+                        type: 'danger'
+                    });
                 }
             });
-        })
+        });
+
 	    $('.start').click(function(){
             	    var id = $(this).parents('.card').attr("id");
 		    var el = $(this);
