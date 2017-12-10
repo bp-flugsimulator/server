@@ -282,7 +282,7 @@ class ApiTests(TestCase):
             path=reverse('frontend:wol_slave', args=[test_model.id]))
         self.assertEqual(res.status_code, 200)
         self.assertEqual(res.json()['status'], 'ok')
-    
+
     def test_remove_program(self):
         slave = SlaveModel(
             name="program_remove_slave_0",
@@ -328,7 +328,7 @@ class ApiTests(TestCase):
         for data in data_in_database_set:
             api_response = c.delete('/api/program/' + str(data.id))
             self.assertEqual(api_response.status_code, 200)
-            self.assertJSONEqual(api_response.content.decode('utf-8'), "{}")
+            self.assertEquals(api_response.json()['status'],'ok')
             self.assertFalse(ProgramModel.objects.filter(id=data.id).exists())
 
 
