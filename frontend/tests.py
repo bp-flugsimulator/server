@@ -231,7 +231,7 @@ class ApiTests(TestCase):
         for (data,new_data) in zip(data_in_database_set,data_set_2):
             api_response = self.client.put('/api/slave/' + str(data.id),data=urlencode({'name': new_data.name, 'ip_address':new_data.ip_address, 'mac_address':new_data.mac_address}))
             self.assertEqual(api_response.status_code, 200)
-            self.assertJSONEqual(api_response.content.decode('utf-8'), "{}")
+            self.assertJSONEqual(api_response.content.decode('utf-8'), Status(Status.ID_OK, "").to_json())
 
         #test if the changes have affected the database
         for (data, new_data) in zip(data_set_1, data_set_2):
@@ -249,8 +249,8 @@ class ApiTests(TestCase):
 
         data = SlaveModel.objects.filter(name='edit_slave_fail_0',ip_address='0.0.4.0',mac_address='00:00:00:00:04:00').get()
         api_response = self.client.put("/api/slave/"+str(data.id),data=urlencode({'name': 'edit_slave_fail_1', 'ip_address': '0.0.4.1', 'mac_address':'00:00:00:00:04:01'}))
-        self.assertEqual(api_response.status_code, 200)
-        self.assertJSONEqual(api_response.content.decode('utf-8'), '{"ip_address":["Slave with this Ip address already exists."],"mac_address":["Slave with this Mac address already exists."],"name":["Slave with this Name already exists."]}')
+        self.assertEqual(api_response.status_code, 500)
+        self.assertJSONEqual(api_response.content.decode('utf-8'), Status(Status.ID_ERR, "{\"name\": [\"Slave with this Name already exists.\"], \"ip_address\": [\"Slave with this Ip address already exists.\"], \"mac_address\": [\"Slave with this Mac address already exists.\"]}").to_json())
 
     def test_add_program(self):
         SlaveModel(name='add_program',ip_address='0.0.5.0',mac_address='00:00:00:00:04:00').save()
@@ -266,6 +266,9 @@ class ApiTests(TestCase):
         for id in range(100):
             self.assertTrue(ProgramModel.objects.filter(name= 'name' + str(id),path= 'path' + str(id), arguments= 'arguments' + str(id),slave=model))
 
+        #delete all entries
+        model.delete()
+
     def test_add_program_fail(self):
         SlaveModel(name='add_program_fail',ip_address='0.0.6.0',mac_address='00:00:00:00:06:00').save()
         model = SlaveModel.objects.get(name='add_program_fail')
@@ -277,7 +280,10 @@ class ApiTests(TestCase):
 
         api_response = self.client.post('/api/programs',{'name':long_str, 'path': long_str, 'arguments': long_str, 'slave_id': str(model.id)})
         self.assertEqual(api_response.status_code, 500)
-        self.assertJSONEqual(api_response.content.decode('utf-8'), Status(Status.ID_ERR, "{\"name\": [{\"message\": \"Ensure this value has at most 200 characters (it has 2000).\", \"code\": \"max_length\"}], \"path\": [{\"message\": \"Ensure this value has at most 200 characters (it has 2000).\", \"code\": \"max_length\"}], \"arguments\": [{\"message\": \"Ensure this value has at most 200 characters (it has 2000).\", \"code\": \"max_length\"}]}").to_json())
+        self.assertJSONEqual(api_response.content.decode('utf-8'), Status(Status.ID_ERR, "{\"name\": [\"Ensure this value has at most 200 characters (it has 2000).\"], \"path\": [\"Ensure this value has at most 200 characters (it has 2000).\"], \"arguments\": [\"Ensure this value has at most 200 characters (it has 2000).\"]}").to_json())
+
+        #delete slave
+        model.delete()
 
     def test_add_program_unsupported_function(self):
         SlaveModel(name='add_program_unsupported',ip_address='0.0.7.0',mac_address='00:00:00:00:07:00').save()
@@ -285,6 +291,9 @@ class ApiTests(TestCase):
 
         api_response = self.client.delete('/api/programs')
         self.assertEqual(api_response.status_code, 403)
+        SlaveModel.objects.get(name='add_program_unsupported',ip_address='0.0.7.0',mac_address='00:00:00:00:07:00').delete()
+
+        model.delete()
 
     # test wake on lan
     def test_wol(self):

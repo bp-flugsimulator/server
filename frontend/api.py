@@ -68,9 +68,9 @@ def manage_slave(request, id):
 
         if form.is_valid():
             form.save()
-            return JsonResponse({})
+            return StatusResponse(Status.ok(''))
         else:
-            return JsonResponse(form.errors)
+            return StatusResponse(Status.err(json.dumps(form.errors)), status=500)
     else:
         return HttpResponseForbidden()
 
@@ -100,7 +100,7 @@ def add_program(request):
             form.save()
             return StatusResponse(Status.ok(''))
         else:
-            return StatusResponse(Status.err(form.errors.as_json()), status=500)
+            return StatusResponse(Status.err(json.dumps(form.errors)), status=500)
     else:
         return HttpResponseForbidden()
 
