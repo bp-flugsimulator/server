@@ -250,7 +250,7 @@ class ApiTests(TestCase):
         data = SlaveModel.objects.filter(name='edit_slave_fail_0',ip_address='0.0.4.0',mac_address='00:00:00:00:04:00').get()
         api_response = self.client.put("/api/slave/"+str(data.id),data=urlencode({'name': 'edit_slave_fail_1', 'ip_address': '0.0.4.1', 'mac_address':'00:00:00:00:04:01'}))
         self.assertEqual(api_response.status_code, 200)
-        self.assertJSONEqual(api_response.content.decode('utf-8'), Status(Status.ID_ERR, "{\"name\": [\"Slave with this Name already exists.\"], \"ip_address\": [\"Slave with this Ip address already exists.\"], \"mac_address\": [\"Slave with this Mac address already exists.\"]}").to_json())
+        self.assertJSONEqual(api_response.content.decode('utf-8'), Status(Status.ID_ERR, '{"name": ["Slave with this Name already exists."], "ip_address": ["Slave with this Ip address already exists."], "mac_address": ["Slave with this Mac address already exists."]}').to_json())
 
     def test_add_program(self):
         SlaveModel(name='add_program',ip_address='0.0.5.0',mac_address='00:00:00:00:04:00').save()
@@ -280,7 +280,8 @@ class ApiTests(TestCase):
 
         api_response = self.client.post('/api/programs',{'name':long_str, 'path': long_str, 'arguments': long_str, 'slave_id': str(model.id)})
         self.assertEqual(api_response.status_code, 200)
-        self.assertJSONEqual(api_response.content.decode('utf-8'), Status(Status.ID_ERR, "{\"name\": [\"Ensure this value has at most 200 characters (it has 2000).\"], \"path\": [\"Ensure this value has at most 200 characters (it has 2000).\"], \"arguments\": [\"Ensure this value has at most 200 characters (it has 2000).\"]}").to_json())
+        print()
+        self.assertJSONEqual(api_response.content.decode('utf-8'), Status(Status.ID_ERR, '{"name": ["Ensure this value has at most 200 characters (it has 2000)."], "path": ["Ensure this value has at most 200 characters (it has 2000)."], "arguments": ["Ensure this value has at most 200 characters (it has 2000)."]}').to_json())
 
         #delete slave
         model.delete()
