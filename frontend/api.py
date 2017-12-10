@@ -1,9 +1,8 @@
-from django.http import HttpResponseForbidden, JsonResponse
+from django.http import HttpResponseForbidden
 from django.http.request import QueryDict
 from .models import Slave as SlaveModel
 
 from .forms import SlaveForm, ProgramForm
-from .models import Program as ProgramModel
 from server.utils import StatusResponse
 
 import json
@@ -32,7 +31,8 @@ def add_slave(request):
         form = SlaveForm(request.POST)
         if form.is_valid():
             form.save()
-        return JsonResponse(form.errors)
+            return StatusResponse(Status.ok(""))
+        return StatusResponse(Status.err(json.dumps(form.errors)))
     else:
         return HttpResponseForbidden()
 
@@ -57,7 +57,7 @@ def manage_slave(request, id):
     if request.method == 'DELETE':
         # i can't find any exeptions that can be thrown in our case
         SlaveModel.objects.filter(id=id).delete()
-        return JsonResponse({})
+        return StatusResponse(Status.ok(''))
 
     elif request.method == 'PUT':
         # create form from a new QueryDict made from the request body
@@ -70,7 +70,7 @@ def manage_slave(request, id):
             form.save()
             return StatusResponse(Status.ok(''))
         else:
-            return StatusResponse(Status.err(json.dumps(form.errors)), status=500)
+            return StatusResponse(Status.err(json.dumps(form.errors)))
     else:
         return HttpResponseForbidden()
 
@@ -100,7 +100,7 @@ def add_program(request):
             form.save()
             return StatusResponse(Status.ok(''))
         else:
-            return StatusResponse(Status.err(json.dumps(form.errors)), status=500)
+            return StatusResponse(Status.err(json.dumps(form.errors)))
     else:
         return HttpResponseForbidden()
 

@@ -283,11 +283,15 @@
                 beforeSend: function (xhr) {
                     xhr.setRequestHeader("X-CSRFToken", '{{ csrf_token }}');
                 },
-                success: function (err) {
-                    if ($.isEmptyObject(err)) {
+                success: function (response) {
+                    if (response.status === "ok") {
                         window.location.reload();
                     } else {
-                        throw_error(id, JSON.stringify(err));
+                        $.notify({
+                            message: JSON.stringify(response.payload)
+                        },{
+                            type: 'danger'
+                        });
                     }
                 }
             })
@@ -417,7 +421,7 @@
                     xhr.setRequestHeader('X-CSRFToken', '{{ csrf_token }}');
                 },
                 success: function (response) {
-                    if (response.status === 'success') {
+                    if (response.status === 'ok') {
                         window.location.reload();
                     } else {
                         var programForm = $('#programForm');
@@ -429,12 +433,19 @@
                             $(item).removeClass("is-invalid");
                         });
 
-                        $.each(response.errors, function (id, msg) {
+                        $.each(JSON.parse(response.payload) , function (id, msg) {
                             var node = programForm.find("input[name=" + id + "]");
                             node.addClass("is-invalid");
                             node.parent().append('<div class="invalid-feedback">' + msg + '</div>');
                         });
                     }
+                },
+                error: function(){
+                    $.notify({
+                        message: 'Error in Ajax Request.'
+                    },{
+                        type: 'danger'
+                    });
                 }
             });
         });
@@ -443,7 +454,6 @@
         $('#slaveForm').submit(function (event) {
             //Stop form from submitting normally
             event.preventDefault();
-
             //send request to given url and with given method
             //data field contains information about the slave
             $.ajax({
@@ -457,11 +467,11 @@
                 beforeSend: function (xhr) {
                     xhr.setRequestHeader('X-CSRFToken', '{{ csrf_token }}');
                 },
-                success: function (err) {
-                    if ($.isEmptyObject(err)) {
+                success: function(response){
+                    if(response.status === 'ok'){
                         window.location.reload();
                     } else {
-                        slaveForm = $('slaveForm');
+                        slaveForm = $('#slaveForm');
                         slaveForm.find("div[class='invalid-feedback']").each(function (index, item) {
                             item.remove();
                         });
@@ -470,15 +480,24 @@
                             $(item).removeClass("is-invalid");
                         });
 
-                        $.each(err, function (id, msg) {
-                            node = slaveForm.find("input[name=" + id + "]");
+                        $.each(JSON.parse(response.payload), function (id, msg) {
+                            node = slaveForm.find('input[name='+id+']');
+                            console.log(node);
                             node.addClass("is-invalid");
                             node.parent().append('<div class="invalid-feedback">' + msg + '</div>');
                         });
                     }
+                },
+                error: function(){
+                    $.notify({
+                        message: 'Error in Ajax Request.'
+                    },{
+                        type: 'danger'
+                    });
                 }
             });
-        })
+        });
+
 	    $('.start').click(function(){
             	    var id = $(this).parents('.card').attr("id");
 		    var el = $(this);
