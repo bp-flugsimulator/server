@@ -8,7 +8,7 @@ Es bietet sich an, die Abhängigkeiten in ein virtualenv zu installieren, sodass
 ```
 virtualenv3 venv
 source venv/bin/activate
-pip3 install -r requirements.txt
+python3 install.py
 npm install
 python3 manage.py migrate
 ```

@@ -11,4 +11,5 @@ urlpatterns = [
     url(r'^api/slaves', api.add_slave, name='add_slaves'),
     url(r'^api/slave/([0-9]+)$', api.manage_slave, name='manage_slave'),
     url(r'^api/programs$', api.add_program, name='add_program'),
+    url(r'^api/slave/([0-9]+)/wol$', api.wol_slave, name='wol_slave'),
 ]
