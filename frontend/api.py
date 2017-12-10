@@ -32,7 +32,7 @@ def add_slave(request):
         if form.is_valid():
             form.save()
             return StatusResponse(Status.ok(""))
-        return StatusResponse(Status.err(json.dumps(form.errors)))
+        return StatusResponse(Status.err(form.errors))
     else:
         return HttpResponseForbidden()
 
@@ -70,7 +70,7 @@ def manage_slave(request, id):
             form.save()
             return StatusResponse(Status.ok(''))
         else:
-            return StatusResponse(Status.err(json.dumps(form.errors)))
+            return StatusResponse(Status.err(form.errors))
     else:
         return HttpResponseForbidden()
 
@@ -100,7 +100,7 @@ def add_program(request):
             form.save()
             return StatusResponse(Status.ok(''))
         else:
-            return StatusResponse(Status.err(json.dumps(form.errors)))
+            return StatusResponse(Status.err(form.errors))
     else:
         return HttpResponseForbidden()
 
