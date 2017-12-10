@@ -1,6 +1,6 @@
 from django.http import HttpResponseForbidden
 from django.http.request import QueryDict
-from .models import Slave as SlaveModel
+from .models import Slave as SlaveModel, Program as ProgramModel
 
 from .forms import SlaveForm, ProgramForm
 from server.utils import StatusResponse
@@ -10,6 +10,7 @@ import json
 from channels import Group
 from .queue import wake_Slave
 from utils.status import Status
+
 
 def add_slave(request):
     """
@@ -35,6 +36,7 @@ def add_slave(request):
         return StatusResponse(Status.err(form.errors))
     else:
         return HttpResponseForbidden()
+
 
 def manage_slave(request, id):
     """
@@ -73,6 +75,7 @@ def manage_slave(request, id):
             return StatusResponse(Status.err(form.errors))
     else:
         return HttpResponseForbidden()
+
 
 def add_program(request):
     """
@@ -127,11 +130,16 @@ def wol_slave(request, id):
             wake_Slave(SlaveModel.objects.get(id=id).mac_address)
         except Exception as err:
             return StatusResponse(Status.err(repr(err)), status=500)
-        Group('notifications').send({'text': json.dumps(
-            {'message': 'Succesful, Client Start queued'})})
+        Group('notifications').send({
+            'text':
+            json.dumps({
+                'message': 'Succesful, Client Start queued'
+            })
+        })
         return StatusResponse(Status.ok(''))
     else:
         return HttpResponseForbidden()
+
 
 def manage_program(request, programId):
     """
