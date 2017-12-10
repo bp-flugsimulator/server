@@ -331,6 +331,11 @@ class ApiTests(TestCase):
             self.assertEquals(api_response.json()['status'],'ok')
             self.assertFalse(ProgramModel.objects.filter(id=data.id).exists())
 
+    def test_manage_program_wrong_http_method(self):
+        c = Client()
+        api_response = c.get("/api/program/0")
+        self.assertEqual(api_response.status_code,403)
+
 
 
 class DatabaseTests(TestCase):
