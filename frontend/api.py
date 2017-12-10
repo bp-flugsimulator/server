@@ -132,3 +132,28 @@ def wol_slave(request, id):
         return StatusResponse(Status.ok(''))
     else:
         return HttpResponseForbidden()
+
+def manage_program(request, programId):
+    """
+    answers a request to manipulate a program with
+    the given programId from a slave with the given slaveId
+    ----------
+    request: HttpRequest
+        a DELETE request
+    slaveId: int
+        the id of the slave
+    programId: int
+        the id of the program which will be modified
+    Returns
+    -------
+    A HttpResponse with a JSON object which
+    can contain errors.
+    If the request method is something other
+    than DELETE, then HttpResponseForbidden()
+    will be returned.
+    """
+    if request.method == 'DELETE':
+        ProgramModel.objects.filter(id=programId).delete()
+        return StatusResponse(Status.ok(''))
+    else:
+        return HttpResponseForbidden()
