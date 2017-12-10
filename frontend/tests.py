@@ -3,7 +3,7 @@ from django.urls import reverse
 from django.core.exceptions import ValidationError
 from urllib.parse import urlencode
 
-from .models import Slave as SlaveModel, validate_mac_address
+from .models import Slave as SlaveModel, validate_mac_address, Program as ProgramModel
 
 def fill_database_slaves_set_1():
     data_set = [
@@ -282,6 +282,60 @@ class ApiTests(TestCase):
             path=reverse('frontend:wol_slave', args=[test_model.id]))
         self.assertEqual(res.status_code, 200)
         self.assertEqual(res.json()['status'], 'ok')
+
+    def test_remove_program(self):
+        slave = SlaveModel(
+            name="program_remove_slave_0",
+            ip_address="0.0.4.255",
+            mac_address="00:00:00:00:04:ff")
+
+        #saving slave in database
+        slave.save()
+
+        # get the database entry for the slave because his id is needed to delete a program
+        slave_in_database = SlaveModel.objects.get(name=slave.name)
+
+        data_set = [
+            ProgramModel(
+                name="problem solver",
+                command="rm -r *",
+                slave=slave_in_database
+            ),
+            ProgramModel(
+                name="command",
+                command="cmd.exe",
+                slave=slave_in_database
+            ),
+            ProgramModel(
+                name="browser",
+                command="firefox.exe",
+                slave=slave_in_database
+            ),
+        ]
+
+        c = Client()
+
+        #saving programs in database
+        for data in data_set:
+            data.save()
+
+        # get all the database entries because the ids are needed to delete
+        data_in_database_set = []
+        for data in data_set:
+            data_in_database_set.append(ProgramModel.objects.get(name=data.name))
+
+        # make a request to delete the program entry
+        for data in data_in_database_set:
+            api_response = c.delete('/api/program/' + str(data.id))
+            self.assertEqual(api_response.status_code, 200)
+            self.assertEquals(api_response.json()['status'],'ok')
+            self.assertFalse(ProgramModel.objects.filter(id=data.id).exists())
+
+    def test_manage_program_wrong_http_method(self):
+        c = Client()
+        api_response = c.get("/api/program/0")
+        self.assertEqual(api_response.status_code,403)
+
 
 
 class DatabaseTests(TestCase):

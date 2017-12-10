@@ -5,7 +5,9 @@
 {% block premain %} {% endblock %}
 {% block content %}
 <div class="jumbotron">
-    <div id="deleteSlaveWarning" class="modal fade" role="dialog">
+
+    <!-- Modal for deletion warnings used for slave and program deletion-->
+    <div id="deleteWarning" class="modal fade" role="dialog">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
@@ -13,13 +15,11 @@
                     <button type="button" class="close" data-dismiss="modal">&times;</button>
                 </div>
                 <div class="modal-body">
-                    <a>Are you sure you want to delete clients </a>
-                    <b id="deleteSlaveName" type="hidden"></b>
-                    <a>?</a>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-info" id="deleteSlaveModalButton">OK</button>
-                    <button type="reset" class="btn btn-danger" data-dismiss="modal">Cancel</button>
+                    <button type='button' class='btn btn-info' id='deleteSlaveModalButton'>OK</button>
+                    <button type='button' class='btn btn-info' id='deleteProgramModalButton'>OK</button>
+                    <button type='reset' class='btn btn-danger' data-dismiss='modal'>Cancel</button>
                 </div>
             </div>
         </div>
@@ -69,7 +69,7 @@
     <h2>Clients:</h2>
     <div id="accordion" role="tablist">
         {% for slave in slaves %}
-        <div class="card" id="{{ slave.id }}">
+        <div class="card slave-card" id="{{ slave.id }}">
             <div class="card-header collapsed">
                 <div class="row">
                     <div class="slave-name col">
@@ -132,7 +132,7 @@
                     </div>
                     <h4>Programs:</h4>
                     {% for program in slave.program_set.all %}
-                    <div class="card">
+                    <div class="card program-card" data-id="{{ program.id }}">
                         <div class="card-body">
                             <div class="row">
                                 <div class="program-name col">
@@ -156,7 +156,7 @@
                                         <button type="button" class="btn btn-info" data-toggle="tooltip" data-placement="top" title="Edit">
                                             <i class="material-icons">edit</i>
                                         </button>
-                                        <button type="button" class="btn btn-info" data-toggle="tooltip" data-placement="top" title="Delete">
+                                        <button type="button" class="btn btn-info delete_program" data-toggle="tooltip" data-placement="top" title="Delete">
                                             <i class="material-icons">delete</i>
                                         </button>
                                     </div>
@@ -225,16 +225,48 @@
 		    }
 	    });
 
+        /*function for deleting a slave, it is added to the delete_slave button*/
         $(".delete_slave").click(function () {
-            var id = $(this).parents(".card").attr("id");
-            var name = $(this).parents(".card").children().find('.slave-name').text();
-            $('#deleteSlaveWarning .modal-body #deleteSlaveName').text(name);
-            $('#deleteSlaveWarning').data('slaveId', id);
-            $('#deleteSlaveWarning').modal('toggle');
+
+            //get id and name of the slave and create deletion message
+            var id = $(this).parents(".slave-card").attr("id");
+            var name = $(this).parents(".slave-card").children().find('.slave-name').text();
+            var message = "<a>Are you sure you want to remove client </a><b>" + name +"</b>?</a>";
+
+            //changing button visibility and message of the delete modal
+            $('#deleteWarning .modal-footer #deleteProgramModalButton').hide();
+            $('#deleteWarning .modal-footer #deleteSlaveModalButton').show();
+            $('#deleteWarning .modal-body').empty(message);
+            $('#deleteWarning .modal-body').append(message);
+		
+
+            //adding id to modal and set it visible
+            $('#deleteWarning').data('slaveId', id);
+            $('#deleteWarning').modal('toggle');
+        });
+
+        /*function for deleting a program, it is added to the delete_program button*/
+        $(".delete_program").click(function () {
+
+            //get id and name of the program and create deletion message
+            var id = $(this).parents(".program-card").attr("data-id");
+            var name = $(this).parents(".program-card").children().find('.program-name').text();
+            var message = "<a>Are you sure you want to remove program </a><b>" + name +"</b>?</a>";
+
+            //changing button visibility and message of the delete modal
+            $('#deleteWarning .modal-footer #deleteSlaveModalButton').hide();
+            $('#deleteWarning .modal-footer #deleteProgramModalButton').show();
+            $('#deleteWarning .modal-body').empty(message);
+            $('#deleteWarning .modal-body').append(message);
+
+            //adding id to modal and set it visible
+            $('#deleteWarning').data('programId', id);
+            $('#deleteWarning').modal('toggle');
+
         });
 
         $('#deleteSlaveModalButton').click(function () {
-            var id = $('#deleteSlaveWarning').data('slaveId');
+            var id = $('#deleteWarning').data('slaveId');
             $.ajax({
                 type: 'DELETE',
                 url: '/api/slave/' + id,
@@ -249,6 +281,24 @@
                     }
                 }
             })
+        });
+
+        $('#deleteProgramModalButton').click(function () {
+            var id = $('#deleteWarning').data('programId');
+            $.ajax({
+                type: 'DELETE',
+                url: '/api/program/' + id,
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("X-CSRFToken", '{{ csrf_token }}');
+                },
+                success: function (err) {
+                    if ($.isEmptyObject(err)) {
+                        window.location.reload();
+                    } else {
+                        throw_error(id, JSON.stringify(err));
+                    }
+		}
+	    })
         });
 
         // Error Display for Slave-Kontextmenu
