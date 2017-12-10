@@ -122,6 +122,6 @@ def manage_program(request, programId):
     """
     if request.method == 'DELETE':
         ProgramModel.objects.filter(id=programId).delete()
-        return JsonResponse({})
+        return StatusResponse(Status.ok(''))
     else:
         return HttpResponseForbidden()
