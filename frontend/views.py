@@ -17,3 +17,4 @@ class SlavesView(ListView):
         context['slave_form'] = SlaveForm()
         context['program_form'] = ProgramForm()
         return context
+    
