@@ -98,9 +98,9 @@ def add_program(request):
             program = form.save(commit=False)
             program.slave = SlaveModel.objects.get(id=request.POST["slave_id"])
             form.save()
-            return JsonResponse({'status': 'success'})
+            return StatusResponse(Status.ok(''))
         else:
-            return JsonResponse({'status': 'error','errors': form.errors})
+            return StatusResponse(Status.err(form.errors.as_json()), status=500)
     else:
         return HttpResponseForbidden()
 

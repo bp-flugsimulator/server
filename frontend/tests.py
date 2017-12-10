@@ -2,6 +2,9 @@ from django.test import TestCase
 from django.urls import reverse
 from django.core.exceptions import ValidationError
 from urllib.parse import urlencode
+from utils import Status
+
+import json
 
 from .models import Slave as SlaveModel
 from .models import Program as ProgramModel
@@ -257,7 +260,7 @@ class ApiTests(TestCase):
         for id in range(100):
             api_response = self.client.post('/api/programs',{'name':'name'+str(id),'path':'path'+str(id), 'arguments': 'arguments'+str(id), 'slave_id':str(model.id)})
             self.assertEqual(api_response.status_code, 200)
-            self.assertJSONEqual(api_response.content.decode('utf-8'), '{"status":"success"}')
+            self.assertJSONEqual(api_response.content.decode('utf-8'), Status(Status.ID_OK, "").to_json())
 
         #test if all programs are in the database
         for id in range(100):
@@ -273,11 +276,8 @@ class ApiTests(TestCase):
             long_str += 'a'
 
         api_response = self.client.post('/api/programs',{'name':long_str, 'path': long_str, 'arguments': long_str, 'slave_id': str(model.id)})
-        self.assertEqual(api_response.status_code, 200)
-        self.assertJSONEqual(api_response.content.decode('utf-8'), '{"status": "error", "errors": {\
-                                       "name": ["Ensure this value has at most 200 characters (it has 2000)."],\
-                                       "path": ["Ensure this value has at most 200 characters (it has 2000)."],\
-                                       "arguments": ["Ensure this value has at most 200 characters (it has 2000)."]}}')
+        self.assertEqual(api_response.status_code, 500)
+        self.assertJSONEqual(api_response.content.decode('utf-8'), Status(Status.ID_ERR, "{\"name\": [{\"message\": \"Ensure this value has at most 200 characters (it has 2000).\", \"code\": \"max_length\"}], \"path\": [{\"message\": \"Ensure this value has at most 200 characters (it has 2000).\", \"code\": \"max_length\"}], \"arguments\": [{\"message\": \"Ensure this value has at most 200 characters (it has 2000).\", \"code\": \"max_length\"}]}").to_json())
 
     def test_add_program_unsupported_function(self):
         SlaveModel(name='add_program_unsupported',ip_address='0.0.7.0',mac_address='00:00:00:00:07:00').save()
