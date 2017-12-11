@@ -163,5 +163,16 @@ def manage_program(request, programId):
     if request.method == 'DELETE':
         ProgramModel.objects.filter(id=programId).delete()
         return StatusResponse(Status.ok(''))
+    elif request.method == 'PUT':
+        # create form from a new QueryDict made from the request body
+        # (request.PUT is unsupported) as an update (instance) of the
+        # existing slave
+        model = ProgramModel.objects.get(id=programId)
+        form = ProgramForm(QueryDict(request.body), instance=model)
+        if form.is_valid():
+            form.save()
+            return StatusResponse(Status.ok(''))
+        else:
+            return StatusResponse(Status.err(form.errors))
     else:
         return HttpResponseForbidden()
