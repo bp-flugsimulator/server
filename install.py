@@ -1,43 +1,121 @@
-import pip
-import os
+"""
+This script is used to install all requirements listed in requirements.txt from
+./libs. If a library is not present, use the flag "--update" to download the
+system specific version from the internet into ./libs.
+
+Example
+-------
+    $python install.py --update
+"""
+
+from sys import stderr, argv
 from platform import system, architecture
-from sys import stderr, version_info
+import os
+import pip
 
-# update pip
-pip.main(['install', '-U', 'pip'])
 
-# on windows install wheel variant of twisted
-if system() == 'Windows':
-    # update wheel
-    pip.main(['install', '-U', 'wheel'])
+def install_local(lib_name):
+    """
+    Installes a library from a local file in ./libs
 
-    # install pypiwin32
-    pip.main(['install', 'pypiwin32'])
+    Parameters
+    ----------
+    lib_name: str
+        the name of the library that will be installed
 
-    # install twisted from static file
-    twisted = 'Twisted-17.9.0-'
-    if version_info.minor == 6:
-        twisted += 'cp36-cp36m'
-    elif version_info.minor == 5:
-        twisted += 'cp35-cp35m'
-    elif version_info.minor == 4:
-        twisted += 'cp34-cp34m'
+    Returns
+    -------
+    nothing
+
+    Exception
+    ---------
+    Raises an Exception if the library can't be installed
+    from a local file
+    """
+    if pip.main([
+            'install', lib_name, '--no-index', '--find-links',
+            'file://' + os.getcwd() + '/libs'
+    ]) != 0:
+        raise Exception('could not install ' + lib_name + ' from file')
+
+
+def download(lib_name):
+    """
+    Downloads a library to ./libs
+
+    Parameters
+    ----------
+    lib_name: str
+        the name of the library that will be downloaded
+
+    Returns
+    -------
+    nothing
+
+    Exception
+    ---------
+    Raises an Exception if the library can't be
+    downloaded from a local file
+    """
+    if pip.main(['download', lib_name, '-d', './libs']) != 0:
+        raise Exception('could not download ' + lib_name)
+
+
+def install(lib_name):
+    """
+    Installes a library from ./libs or downloads it from the
+    Internet to ./libs and then install it from there
+
+    Parameters
+    ----------
+    lib_name: str
+        the name of the library that will be installed
+
+    Returns
+    -------
+    nothing
+
+    Exception
+    ---------
+    Raises an Exception if the library can't be installed
+    from a local file or from the internet
+    """
+
+    # try to install library from file
+    try:
+        install_local(lib_name)
+    except Exception as err:
+        stderr.write("{}".format(err))
+        # try to download library and then install from file
+        download(lib_name)
+        install_local(lib_name)
+
+
+if __name__ == "__main__":
+    # try to update pip'
+    pip.main(['install', '-U', 'pip'])
+
+    # if --update flag is set update all dependencies
+    # from requirements.txt in ./libs
+    if len(argv) > 1 and argv[1] == '--update':
+        with open('requirements.txt') as requirements:
+            for library in requirements:
+                download(library)
+
+    # install wheel
+    install('wheel')
+
+    # on windows install pypiwin32
+    if system() == 'Windows':
+        install('pypiwin32')
+    elif system() == 'Linux':
+        if architecture()[0] != '64bit':
+            stderr.write(architecture()[0] +
+                         ' is not officially supported but may work\n')
     else:
-        raise Exception('This Software only supports Python 3.4 - 3.6 \n')
+        stderr.write(system() + ' is not officially supported but may work\n')
 
-    if architecture()[0] == '64bit':
-        twisted += '-win_amd64.whl'
-    elif architecture()[0] == '32bit':
-        twisted += '-win32.whl'
-    else:
-        raise Exception('This Software only supports 32 and 64 bit OS\n')
-
-    pip.main(['install', './libs/' + twisted])
-
-elif system() == 'Linux':
-    pass
-else:
-    raise Exception(system() + ' is not supported\n')
-
-# install all other dependecies
-pip.main(['install', '-r', 'requirements.txt'])
+    # install all other dependencies
+    with open('requirements.txt') as requirements:
+        for library in requirements:
+            install_local(library)
