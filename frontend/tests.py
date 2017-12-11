@@ -427,7 +427,6 @@ class ApiTests(TestCase):
                 'slave_id': str(model.id)
             })
         self.assertEqual(api_response.status_code, 200)
-        print()
         self.assertJSONEqual(
             api_response.content.decode('utf-8'),
             json.loads(
@@ -540,6 +539,105 @@ class ApiTests(TestCase):
     def test_manage_program_wrong_http_method(self):
         api_response = self.client.get("/api/program/0")
         self.assertEqual(api_response.status_code, 403)
+
+    def test_modify_program(self):
+        #fill database
+        SlaveModel(
+            name="test_modify_program",
+            ip_address='0.0.7.0',
+            mac_address='00:00:00:00:07:00').save()
+        slave = SlaveModel.objects.get(
+            name="test_modify_program",
+            ip_address='0.0.7.0',
+            mac_address='00:00:00:00:07:00')
+
+        programs = []
+        for i in range(100):
+            ProgramModel(
+                name="name_" + str(i),
+                path="path_" + str(i),
+                arguments="arguments_" + str(i),
+                slave=slave).save()
+            programs.append(
+                ProgramModel.objects.get(
+                    name="name_" + str(i),
+                    path="path_" + str(i),
+                    arguments="arguments_" + str(i),
+                    slave=slave))
+
+        for i in range(100):
+            api_response = self.client.put(
+                "/api/program/" + str(programs[i].id),
+                data=urlencode({
+                    'name': str(i),
+                    'path': str(i),
+                    'arguments': str(i),
+                    'slave_id': str(slave.id)
+                }))
+
+            self.assertEqual(api_response.status_code, 200)
+            self.assertJSONEqual(
+                api_response.content.decode('utf-8'),
+                json.loads(Status.ok("").to_json()))
+
+        #clear database
+        slave.delete()
+
+    def test_modify_program_fail(self):
+        #fill database
+        SlaveModel(
+            name="test_modify_program_fail",
+            ip_address='0.0.7.1',
+            mac_address='00:00:00:00:07:01').save()
+        slave = SlaveModel.objects.get(
+            name="test_modify_program_fail",
+            ip_address='0.0.7.1',
+            mac_address='00:00:00:00:07:01')
+
+        ProgramModel(
+            name="",
+            path="",
+            arguments="",
+            slave=slave
+        ).save()
+
+        program = ProgramModel.objects.get(
+            name="",
+            path="",
+            arguments="",
+            slave=slave
+        )
+
+        long_str = ''
+        for _ in range(2000):
+            long_str += 'a'
+
+        api_response = self.client.put(
+            "/api/program/" + str(program.id),
+                data=urlencode({
+                    'name': long_str,
+                    'path': long_str,
+                    'arguments': long_str,
+                    'slave_id': str(slave.id)
+                }))
+
+        self.assertEqual(api_response.status_code, 200)
+        self.assertJSONEqual(
+            api_response.content.decode('utf-8'),
+            json.loads(
+                Status.err({
+                    "name": [
+                        "Ensure this value has at most 200 characters (it has 2000)."
+                    ],
+                    "path": [
+                        "Ensure this value has at most 200 characters (it has 2000)."
+                    ],
+                    "arguments": [
+                        "Ensure this value has at most 200 characters (it has 2000)."
+                    ]
+                }).to_json()))
+        slave.delete()
+
 
 
 class DatabaseTests(TestCase):
