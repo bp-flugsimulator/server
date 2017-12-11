@@ -148,6 +148,7 @@ def manage_program(request, programId):
     ----------
     request: HttpRequest
         a DELETE request
+        or a PUT request
     slaveId: int
         the id of the slave
     programId: int
@@ -157,7 +158,7 @@ def manage_program(request, programId):
     A HttpResponse with a JSON object which
     can contain errors.
     If the request method is something other
-    than DELETE, then HttpResponseForbidden()
+    than DELETE or PUT, then HttpResponseForbidden()
     will be returned.
     """
     if request.method == 'DELETE':
