@@ -388,11 +388,13 @@
             programForm = programModal.children().find('#programForm');
 
             //get info of program
-            var card = $(this).parents('.card');
+            var card = $(this).parents('.program-card');
             var id = card.attr('data-id');
             var name = card.children().find('.program-name').text().trim();
             var path = card.children().find('.program-path').text().trim();
             var arguments = card.children().find('.program-arguments').text().trim();
+
+            console.log("id:" + id + " name:" + name + " path:" + path + " args:" + arguments);
 
             //modify the form for the submit button
             programModal.children().find('.modal-title').text("Edit Program");
