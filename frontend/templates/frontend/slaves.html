@@ -111,142 +111,127 @@
     <h2>Clients:</h2>
     <div id="accordion" role="tablist">
         {% for slave in slaves %}
-        <div class="card slave-card" id="{{ slave.id }}">
-            <div class="card-header collapsed">
-                <div class="row">
-                    <div class="slave-name col">
-                        <h2>{{ slave.name }}</h2>
-                    </div>
-                    <div class="btn-toolbar" role="toolbar">
-                        <div class="btn-group mr-2" role="group">
-                            <button type="button" class="btn btn-danger" data-toggle="tooltip" data-placement="top" title="Status">
-                                <i class="material-icons">error</i>
-                            </button>
+            <div class="card slave-card" id="{{ slave.id }}">
+                <div class="card-header collapsed">
+                    <div class="row">
+                        <div class="slave-name col">
+                            <h2>{{ slave.name }}</h2>
                         </div>
+                        <div class="btn-toolbar" role="toolbar">
+                            <div class="btn-group mr-2" role="group">
+                                <button type="button" class="btn btn-danger" data-toggle="tooltip" data-placement="top" title="Status">
+                                    <i class="material-icons">error</i>
+                                </button>
+                            </div>
 
-                        <div class="btn-group mr-2" role="group">
-                            <button type="button" class="btn btn-info start" data-toggle="tooltip" data-placement="top" title="Start/Stop">
-                                <i class="material-icons">power_settings_new</i>
-                            </button>
-                            <button type="button" class="btn btn-info" data-toggle="tooltip" data-placement="top" title="Restart">
-                                <i class="material-icons">refresh</i>
-                            </button>
-                        </div>
+                            <div class="btn-group mr-2" role="group">
+                                <button type="button" class="btn btn-info start" data-toggle="tooltip" data-placement="top" title="Start/Stop">
+                                    <i class="material-icons">power_settings_new</i>
+                                </button>
+                                <button type="button" class="btn btn-info" data-toggle="tooltip" data-placement="top" title="Restart">
+                                    <i class="material-icons">refresh</i>
+                                </button>
+                            </div>
 
-                        <div class="btn-group mr-2" role="group">
-                            <button type="button" class="btn btn-info" data-toggle="tooltip" data-placement="top" title="Delete File">
-                                <i class="material-icons">signal_cellular_no_sim</i>
-                            </button>
-                            <button type="button" class="btn btn-info" data-toggle="tooltip" data-placement="top" title="Copy File">
-                                <i class="material-icons">insert_drive_file</i>
-                            </button>
-                        </div>
+                            <div class="btn-group mr-2" role="group">
+                                <button type="button" class="btn btn-info" data-toggle="tooltip" data-placement="top" title="Delete File">
+                                    <i class="material-icons">signal_cellular_no_sim</i>
+                                </button>
+                                <button type="button" class="btn btn-info" data-toggle="tooltip" data-placement="top" title="Copy File">
+                                    <i class="material-icons">insert_drive_file</i>
+                                </button>
+                            </div>
 
-                        <div class="btn-group mr-4" role="group">
-                            <button type="button" class="btn btn-info modify-slave-btn" data-toggle="tooltip" data-placement="top" title="Edit">
-                                <i class="material-icons">edit</i>
-                            </button>
-                            <button type="button" class="btn btn-info delete_slave" data-toggle="tooltip" data-placement="top" title="Delete">
-                                <i class="material-icons">delete</i>
-                            </button>
-                        </div>
-                        <div class="btn-group mr-2" role="group" data-toggle="collapse" href="#collapse{{ slave.id }}">
-                            <button type="button" class="btn btn-default" data-toggle="tooltip" data-placement="top" title="Show More" id="headingOne">
-                                <i class="material-icons">expand_more</i>
-                            </button>
+                            <div class="btn-group mr-4" role="group">
+                                <button type="button" class="btn btn-info modify-slave-btn" data-toggle="tooltip" data-placement="top" title="Edit">
+                                    <i class="material-icons">edit</i>
+                                </button>
+                                <button type="button" class="btn btn-info delete_slave" data-toggle="tooltip" data-placement="top" title="Delete">
+                                    <i class="material-icons">delete</i>
+                                </button>
+                            </div>
+                            <div class="btn-group mr-2" role="group" data-toggle="collapse" href="#collapse{{ slave.id }}">
+                                <button type="button" class="btn btn-default" data-toggle="tooltip" data-placement="top" title="Show More" id="headingOne">
+                                    <i class="material-icons">expand_more</i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            <div id="collapse{{ slave.id }}" class="collapse" role="tabpanel">
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col">
-                            <h4>IP:
-                                <b class="slave-ip">{{ slave.ip_address }}</b>
-                            </h4>
+                <div id="collapse{{ slave.id }}" class="collapse" role="tabpanel">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col">
+                                <h4>IP:
+                                    <b class="slave-ip">{{ slave.ip_address }}</b>
+                                </h4>
+                            </div>
+                            <div class="col">
+                                <h4>MAC:
+                                    <b class="slave-mac">{{ slave.mac_address }}</b>
+                                </h4>
+                            </div>
                         </div>
-                        <div class="col">
-                            <h4>MAC:
-                                <b class="slave-mac">{{ slave.mac_address }}</b>
-                            </h4>
-                        </div>
-                    </div>
-                    <h4>Programs:</h4>
-                    {% for program in slave.program_set.all %}
-                    <div class="card program-card" data-id="{{ program.id }}">
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="program-name col">
-                                    <h2>{{ program.name }}</h2>
-                                </div>
-                                <div class="btn-toolbar" role="toolbar">
-                                    <div class="btn-group mr-2" role="group">
-                                        <button type="button" class="btn btn-danger" data-toggle="tooltip" data-placement="top" title="Status">
-                                            <i class="material-icons">error</i>
-                                        </button>
-                                    </div>
-                                    <div class="btn-group mr-2" role="group">
-                                        <button type="button" class="btn btn-info" data-toggle="tooltip" data-placement="top" title="Start/Stop">
-                                            <i class="material-icons">power_settings_new</i>
-                                        </button>
-                                        <button type="button" class="btn btn-info" data-toggle="tooltip" data-placement="top" title="Restart">
-                                            <i class="material-icons">refresh</i>
-                                        </button>
-                                    </div>
-                                    <div class="btn-group mr-2" role="group">
-                                        <button type="button" class="btn btn-info" data-toggle="tooltip" data-placement="top" title="Edit">
-                                            <i class="material-icons">edit</i>
-                                        </button>
-                                        <button type="button" class="btn btn-info delete_program" data-toggle="tooltip" data-placement="top" title="Delete">
-                                            <i class="material-icons">delete</i>
-                                        </button>
+                        <h4>Programs:</h4>
+                        {% for program in slave.program_set.all %}
+                            <div class="card program-card" data-id="{{ program.id }}">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="program-name col">
+                                            <h2>{{ program.name }}</h2>
+                                        </div>
+                                        <div class="btn-toolbar" role="toolbar">
+                                            <div class="btn-group mr-2" role="group">
+                                                <button type="button" class="btn btn-danger" data-toggle="tooltip" data-placement="top" title="Status">
+                                                    <i class="material-icons">error</i>
+                                                </button>
+                                            </div>
+                                            <div class="btn-group mr-2" role="group">
+                                                <button type="button" class="btn btn-info" data-toggle="tooltip" data-placement="top" title="Start/Stop">
+                                                    <i class="material-icons">power_settings_new</i>
+                                                </button>
+                                                <button type="button" class="btn btn-info" data-toggle="tooltip" data-placement="top" title="Restart">
+                                                    <i class="material-icons">refresh</i>
+                                                </button>
+                                            </div>
+                                            <div class="btn-group mr-2" role="group">
+                                                <button type="button" class="btn btn-info" data-toggle="tooltip" data-placement="top" title="Edit">
+                                                    <i class="material-icons">edit</i>
+                                                </button>
+                                                <button type="button" class="btn btn-info delete_program" data-toggle="tooltip" data-placement="top" title="Delete">
+                                                    <i class="material-icons">delete</i>
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    </h5>
-                </a>
-            </div>
-            <div id="collapse{{ slave.id }}" class="collapse" role="tabpanel" data-parent="#accordion">
-                <div class="card-body">
-                    <div class="btn-group" role="group">
-                        <button type="button" class="btn btn-primary start"
-                        data-toggle="tooltip" data-placement="top" title="Start/Stop">
-                            <i class="material-icons">power_settings_new</i>
-                        </button>
-                        <button type="button" class="btn btn-primary"
-                         data-toggle="tooltip" data-placement="top" title="Restart">
-                            <i class="material-icons">refresh</i>
+                        {% empty %}
+                            <div class="card">
+                                <div class="alert alert-info">
+                                    <strong>Info!</strong> No programs for this client in system.
+                                </div>
+                            </div>
+                        {% endfor %}
+                        <button type="button" class="btn btn-info float-right mr-2 mt-2 mb-2 add-program-btn" data-toggle="tooltip" data-placement="top" title="Add program">
+                            <span>Program</span>
+                            <i class="material-icons" style="font-size:30px; vertical-align: middle;">add</i>
                         </button>
                     </div>
-                    {% empty %}
-                    <div class="card">
-                        <div class="alert alert-info">
-                            <strong>Info!</strong> No programs for this client in system.
-                        </div>
-                    </div>
-                    {% endfor %}
-                    <button type="button" class="btn btn-info float-right mr-2 mt-2 mb-2 add-program-btn" data-toggle="tooltip" data-placement="top" title="Add program">
-                        <span>Program</span>
-                        <i class="material-icons" style="font-size:30px; vertical-align: middle;">add</i>
-                    </button>
                 </div>
             </div>
-        </div>
         {% empty %}
-        <div class="card">
-            <div class="alert alert-info">
-                <strong>Info!</strong> No clients in system.
+            <div class="card">
+                <div class="alert alert-info">
+                    <strong>Info!</strong> No clients in system.
+                </div>
             </div>
-        </div>
         {% endfor %}
-        <button type="button" class="btn btn-info add-slave-btn float-right mt-2 mr-2" data-toggle="tooltip" data-placement="top"
-            title="Add client">
+    </div>
+    <button type="button" class="btn btn-info add-slave-btn float-right mt-2 mr-2" data-toggle="tooltip" data-placement="top" title="Add client">
             <span>Client</span>
             <i class="material-icons" style="font-size:30px; vertical-align: middle;">add</i>
-        </button>
-    </div>
+    </button>
 </div>
 {% endblock %}
 
@@ -337,14 +322,18 @@
                 beforeSend: function (xhr) {
                     xhr.setRequestHeader("X-CSRFToken", '{{ csrf_token }}');
                 },
-                success: function (err) {
-                    if ($.isEmptyObject(err)) {
+                success: function (response) {
+                    if (response.status === 'ok'){
                         window.location.reload();
                     } else {
-                        throw_error(id, JSON.stringify(err));
+                        $.notify({
+                            message: JSON.stringify(response.payload)
+                        },{
+                            type: 'danger'
+                        });
                     }
-		}
-	    })
+		        }
+	        });
         });
 
         // Error Display for Slave-Kontextmenu
@@ -483,7 +472,7 @@
                             $(item).removeClass("is-invalid");
                         });
 
-                        $.each(JSON.parse(response.payload) , function (id, msg) {
+                        $.each(response.payload , function (id, msg) {
                             var node = programForm.find("input[name=" + id + "]");
                             node.addClass("is-invalid");
                             node.parent().append('<div class="invalid-feedback">' + msg + '</div>');
@@ -530,7 +519,7 @@
                             $(item).removeClass("is-invalid");
                         });
 
-                        $.each(JSON.parse(response.payload), function (id, msg) {
+                        $.each(response.payload, function (id, msg) {
                             node = slaveForm.find('input[name='+id+']');
                             console.log(node);
                             node.addClass("is-invalid");
