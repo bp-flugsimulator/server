@@ -302,8 +302,9 @@
                 beforeSend: function (xhr) {
                     xhr.setRequestHeader("X-CSRFToken", '{{ csrf_token }}');
                 },
-                success: function (response) {
-                    if (response.status === "ok") {
+                converters:{"text json": Status.from_json},
+                success: function (status) {
+                    if (status.is_ok()) {
                         window.location.reload();
                     } else {
                         $.notify({
@@ -324,8 +325,9 @@
                 beforeSend: function (xhr) {
                     xhr.setRequestHeader("X-CSRFToken", '{{ csrf_token }}');
                 },
-                success: function (response) {
-                    if (response.status === 'ok'){
+                converters:{"text json": Status.from_json},
+                success: function (status) {
+                    if (status.is_ok()){
                         window.location.reload();
                     } else {
                         $.notify({
@@ -493,11 +495,12 @@
                     arguments: $(this).find("input[name='arguments']").val(),
                     slave_id: $(this).data('slave_id')
                 },
+                converters:{"text json": Status.from_json},
                 beforeSend: function (xhr) {
                     xhr.setRequestHeader('X-CSRFToken', '{{ csrf_token }}');
                 },
-                success: function (response) {
-                    if (response.status === 'ok') {
+                success: function (status) {
+                    if (status.is_ok()) {
                         window.location.reload();
                     } else {
                         var programForm = $('#programForm');
@@ -509,7 +512,7 @@
                             $(item).removeClass("is-invalid");
                         });
 
-                        $.each(response.payload , function (id, msg) {
+                        $.each(status.payload , function (id, msg) {
                             var node = programForm.find("input[name=" + id + "]");
                             node.addClass("is-invalid");
                             node.parent().append('<div class="invalid-feedback">' + msg + '</div>');
@@ -543,8 +546,9 @@
                 beforeSend: function (xhr) {
                     xhr.setRequestHeader('X-CSRFToken', '{{ csrf_token }}');
                 },
-                success: function(response){
-                    if(response.status === 'ok'){
+                converters:{"text json": Status.from_json},
+                success: function(status){
+                    if(status.is_ok()){
                         window.location.reload();
                     } else {
                         slaveForm = $('#slaveForm');
@@ -556,9 +560,8 @@
                             $(item).removeClass("is-invalid");
                         });
 
-                        $.each(response.payload, function (id, msg) {
-                            node = slaveForm.find('input[name='+id+']');
-                            console.log(node);
+                        $.each(status.payload, function (id, msg) {
+                            var node = slaveForm.find('input[name='+id+']');
                             node.addClass("is-invalid");
                             node.parent().append('<div class="invalid-feedback">' + msg + '</div>');
                         });
@@ -583,7 +586,8 @@
 				    xhr.setRequestHeader('X-CSRFToken', '{{ csrf_token }}')
 			}
 		    }).done(function(data){
-			    if (data.status == 'ok'){
+                var status = Status.from_json(JSON.stringify(data));
+			    if (status.is_ok()){
 				    el.addClass('animated pulse');
 				    el.one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend', function(){
 					    el.removeClass('animated pulse');
