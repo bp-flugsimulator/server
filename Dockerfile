@@ -2,9 +2,7 @@ FROM python:3
 
 WORKDIR /usr/src/app
 
-COPY requirements.txt ./
-RUN python install.py
-
 COPY . .
+RUN python install.py
 
 CMD [ "python", "./manage.py", "test" ]
