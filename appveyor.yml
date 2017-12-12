@@ -22,9 +22,9 @@ install:
 build: off
 
 cache:
-  - C:\ProgramData\chocolatey\bin -> appveyor.yml
-  - C:\ProgramData\chocolatey\lib -> appveyor.yml
-  - $(PYTHON) -> requirements.txt, libs\*
+  - C:\ProgramData\chocolatey\bin
+  - C:\ProgramData\chocolatey\lib
+  - $(PYTHON)\Scripts
 
 
 test_script:
