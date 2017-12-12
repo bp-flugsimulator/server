@@ -24,7 +24,7 @@ build: off
 cache:
   - C:\ProgramData\chocolatey\bin
   - C:\ProgramData\chocolatey\lib
-  - $(PYTHON)\Scripts
+  - $(PYTHON)\lib\site-packages
 
 
 test_script:
