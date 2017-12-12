@@ -8,7 +8,6 @@ from .forms import SlaveForm, ProgramForm
 from server.utils import StatusResponse
 
 import json
-import inspect
 
 from channels import Group
 from .queue import wake_Slave
