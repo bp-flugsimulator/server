@@ -24,6 +24,7 @@ build: off
 cache:
   - C:\ProgramData\chocolatey\bin -> appveyor.yml
   - C:\ProgramData\chocolatey\lib -> appveyor.yml
+  - "%PYTHON%" -> requirements.txt
 
 test_script:
   - "%PYTHON%\\python.exe manage.py test"
