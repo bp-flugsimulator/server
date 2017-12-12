@@ -83,7 +83,7 @@ class Program(models.Model):
         The unique ID which can be referenced to this object.
 
     name: str
-        The name of the program
+        The name of the program (has to be unique for every slave)
 
     path: str
         The path to the binaryfile that will be executed
@@ -98,5 +98,8 @@ class Program(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(unique=False, max_length=200)
     path = models.CharField(unique=False, max_length=200)
-    arguments = models.CharField(unique=False, max_length=200)
+    arguments = models.CharField(unique=False, blank=True, max_length=200)
     slave = models.ForeignKey(Slave, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = (('name', 'slave'),)

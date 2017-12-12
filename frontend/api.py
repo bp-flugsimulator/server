@@ -1,11 +1,14 @@
 from django.http import HttpResponseForbidden
 from django.http.request import QueryDict
+from django.core.exceptions import ValidationError
+
 from .models import Slave as SlaveModel, Program as ProgramModel
 
 from .forms import SlaveForm, ProgramForm
 from server.utils import StatusResponse
 
 import json
+import inspect
 
 from channels import Group
 from .queue import wake_Slave
@@ -100,8 +103,16 @@ def add_program(request):
         if form.is_valid():
             program = form.save(commit=False)
             program.slave = SlaveModel.objects.get(id=request.POST["slave_id"])
-            form.save()
-            return StatusResponse(Status.ok(''))
+            try:
+                program.full_clean()
+                form.save()
+                return StatusResponse(Status.ok(''))
+            except ValidationError as _:
+                error_dict = {
+                    'name':
+                    ['Program with this Name already exists on this Client.']
+                }
+                return StatusResponse(Status.err(error_dict))
         else:
             return StatusResponse(Status.err(form.errors))
     else:
@@ -171,8 +182,17 @@ def manage_program(request, programId):
         model = ProgramModel.objects.get(id=programId)
         form = ProgramForm(QueryDict(request.body), instance=model)
         if form.is_valid():
-            form.save()
-            return StatusResponse(Status.ok(''))
+            program = form.save(commit=False)
+            try:
+                program.full_clean()
+                form.save()
+                return StatusResponse(Status.ok(''))
+            except ValidationError as _:
+                error_dict = {
+                    'name':
+                    ['Program with this Name already exists on this Client.']
+                }
+                return StatusResponse(Status.err(error_dict))
         else:
             return StatusResponse(Status.err(form.errors))
     else:
