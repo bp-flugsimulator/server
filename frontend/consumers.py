@@ -16,3 +16,4 @@ def ws_message(message): #pragma: no cover
 # Connected to websocket.disconnect
 def ws_disconnect(message): #pragma: no cover
     Group('notifications').discard(message.reply_channel)
+
