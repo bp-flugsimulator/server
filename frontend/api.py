@@ -167,15 +167,14 @@ def manage_program(request, programId):
         return StatusResponse(Status.ok(''))
     if request.method == 'POST':
         program = ProgramModel.objects.get(id=programId)
-        Group('commands_' + str(program.slave.id)).send(
-            {'text':Command(
+        Group('commands_' + str(program.slave.id)).send({
+            'text':
+            Command(
                 method="execute",
                 pid=program.id,
                 path=program.path,
-                arguments=split(program.arguments)
-            ).to_json()
-            }
-            )
+                arguments=split(program.arguments)).to_json()
+        })
         return StatusResponse(Status.ok(''))
     else:
         return HttpResponseForbidden()
