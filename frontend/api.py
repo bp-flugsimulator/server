@@ -159,8 +159,9 @@ def manage_program(request, programId):
     the given programId from a slave with the given slaveId
     ----------
     request: HttpRequest
-        a DELETE request
-        or a PUT request
+        a DELETE request to delete a database entry
+        or a PUT request to update a database entry
+        or a POST request to execute the program on the slave
     slaveId: int
         the id of the slave
     programId: int

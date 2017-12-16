@@ -2,7 +2,9 @@ from django.test import TestCase
 from django.urls import reverse
 from django.core.exceptions import ValidationError
 from urllib.parse import urlencode
-from utils import Status
+from utils import Status, Command
+from channels.test import WSClient
+from shlex import split
 
 import json
 
@@ -705,6 +707,40 @@ class ApiTests(TestCase):
                     ["Program with this Name already exists on this Client."]
                 }).to_json()))
 
+        slave.delete()
+
+    def test_execute_program(self):
+        SlaveModel(
+            name="test_execute_program",
+            ip_address='0.0.8.2',
+            mac_address='00:00:00:00:08:02').save()
+        slave = SlaveModel.objects.get(
+            name="test_execute_program",
+            ip_address='0.0.8.2',
+            mac_address='00:00:00:00:08:02')
+
+        ProgramModel(
+            name="name", path="path", arguments="", slave=slave).save()
+
+        ProgramModel(name="", path="path", arguments="", slave=slave).save()
+
+        program = ProgramModel.objects.get(
+            name="", path="path", arguments="", slave=slave)
+
+        client = WSClient()
+        client.join_group("commands_" + str(slave.id))
+
+        api_response = self.client.post("/api/program/" + str(program.id))
+        self.assertEqual(api_response.status_code, 200)
+
+        ws_response = client.receive()
+        self.assertJSONEqual(
+                Command(
+                    method='execute',
+                    pid=program.id,
+                    path=program.path,
+                    arguments=split(program.arguments)).to_json(),
+            ws_response)
         slave.delete()
 
 
