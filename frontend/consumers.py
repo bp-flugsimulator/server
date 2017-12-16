@@ -20,6 +20,8 @@ def ws_add_rpc_commands(message):  #pragma: no cover
         message.reply_channel.send({"accept": True})
         # Add to the chat group
         Group('commands').add(message.reply_channel)
+        Group('commands_{}'.format(query.first().id)).add(
+            message.reply_channel)
     else:
         message.reply_channel.send({"accept": False})
 
