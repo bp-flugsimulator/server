@@ -22,6 +22,7 @@ matrix:
 install:
   - python install.py 
   - $DENV
+  - pip install coverage
   - pip install coveralls
 
 script:
