@@ -1,6 +1,6 @@
 class Status {
 	constructor (status, payload) {
-		if (status != "ok" && status != "err") {
+		if (status !== "ok" && status !== "err") {
 			throw new TypeError("Status only accept a string with `ok` or `err`..");
 		} else {
 			this._status = status;
@@ -9,8 +9,8 @@ class Status {
 	}
 
 	equals(other) {
-		return this.status == other.status &&
-			this.payload == other.payload;
+		return this.status === other.status &&
+			this.payload === other.payload;
 	}
 
 	get status() {
@@ -22,11 +22,11 @@ class Status {
 	}
 
 	is_ok() {
-		return this.status == "ok";
+		return this.status === "ok";
 	}
 
 	is_err() {
-		return this.status == "err";
+		return this.status === "err";
 	}
 
 	static ok(payload) {

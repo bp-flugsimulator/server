@@ -37,7 +37,7 @@ def ws_message(message):  #pragma: no cover
 def ws_disconnect(message):  #pragma: no cover
     Group('notifications').discard(message.reply_channel)
 
-
+    
 # Connected to websocket.disconnect
 def ws_rpc_disconnect(message):  #pragma: no cover
     Group('commands').discard(message.reply_channel)

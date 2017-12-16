@@ -1,5 +1,7 @@
 from django.http import HttpResponseForbidden
 from django.http.request import QueryDict
+from django.core.exceptions import ValidationError
+
 from .models import Slave as SlaveModel, Program as ProgramModel
 
 from .forms import SlaveForm, ProgramForm
@@ -102,8 +104,16 @@ def add_program(request):
         if form.is_valid():
             program = form.save(commit=False)
             program.slave = SlaveModel.objects.get(id=request.POST["slave_id"])
-            form.save()
-            return StatusResponse(Status.ok(''))
+            try:
+                program.full_clean()
+                form.save()
+                return StatusResponse(Status.ok(''))
+            except ValidationError as _:
+                error_dict = {
+                    'name':
+                    ['Program with this Name already exists on this Client.']
+                }
+                return StatusResponse(Status.err(error_dict))
         else:
             return StatusResponse(Status.err(form.errors))
     else:
@@ -150,6 +160,7 @@ def manage_program(request, programId):
     ----------
     request: HttpRequest
         a DELETE request
+        or a PUT request
     slaveId: int
         the id of the slave
     programId: int
@@ -159,7 +170,7 @@ def manage_program(request, programId):
     A HttpResponse with a JSON object which
     can contain errors.
     If the request method is something other
-    than DELETE, then HttpResponseForbidden()
+    than DELETE or PUT, then HttpResponseForbidden()
     will be returned.
     """
     if request.method == 'DELETE':
@@ -177,5 +188,25 @@ def manage_program(request, programId):
             }
             )
         return StatusResponse(Status.ok(''))
+    elif request.method == 'PUT':
+        # create form from a new QueryDict made from the request body
+        # (request.PUT is unsupported) as an update (instance) of the
+        # existing slave
+        model = ProgramModel.objects.get(id=programId)
+        form = ProgramForm(QueryDict(request.body), instance=model)
+        if form.is_valid():
+            program = form.save(commit=False)
+            try:
+                program.full_clean()
+                form.save()
+                return StatusResponse(Status.ok(''))
+            except ValidationError as _:
+                error_dict = {
+                    'name':
+                    ['Program with this Name already exists on this Client.']
+                }
+                return StatusResponse(Status.err(error_dict))
+        else:
+            return StatusResponse(Status.err(form.errors))
     else:
         return HttpResponseForbidden()
