@@ -130,9 +130,7 @@ STATICFILES_DIRS = [
 MESSAGE_STORAGE = 'django.contrib.messages.storage.cookie.CookieStorage'
 
 # Cluster
-Q_CLUSTER = {
-    'orm': 'default'
-}
+Q_CLUSTER = {'orm': 'default'}
 
 # channels settings
 CHANNEL_LAYERS = {

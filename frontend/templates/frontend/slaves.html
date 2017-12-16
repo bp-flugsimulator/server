@@ -1,8 +1,9 @@
-{% extends "base/base.html" %}
-{% load staticfiles %}
-{% load widget_tweaks %}
-{% block title %} Slaves {% endblock %}
-{% block premain %} {% endblock %}
+{% extends "base/base.html" %} 
+{% load staticfiles %} 
+{% load widget_tweaks %} 
+{% block title %} Slaves {% endblock %} 
+{% block premain %} 
+{% endblock %} 
 {% block content %}
 <div class="jumbotron">
 
@@ -36,25 +37,21 @@
 
                     <div class="modal-body">
                         {% csrf_token %}
-
                         {% for hidden_field in program_form.hidden_fields %}
                             {{ hidden_field }}
                         {% endfor %}
-
                         {% for field in program_form.visible_fields %}
-                            <div class="form-group">
-                                {{ field.label_tag }}
-
-                                {% if program_form.is_bound %}
-                                    {% render_field field class="form-control is-valid" %}
-                                {% else %}
-                                    {% render_field field class="form-control" %}
-                                {% endif %}
-
-                                {% if field.help_text %}
-                                    <small class="form-text text-muted">{{ field.help_text }}</small>
-                                {% endif %}
-                            </div>
+                        <div class="form-group">
+                            {{ field.label_tag }}
+                            {% if program_form.is_bound %}
+                                {% render_field field class="form-control is-valid" %}
+                            {% else %}
+                                {% render_field field class="form-control" %}
+                            {% endif %}
+                            {% if field.help_text %}
+                                <small class="form-text text-muted">{{ field.help_text }}</small>
+                            {% endif %}
+                        </div>
                         {% endfor %}
                     </div>
                     <div class="modal-footer">
@@ -78,21 +75,17 @@
 
                     <div class="modal-body">
                         {% csrf_token %}
-
                         {% for hidden_field in slave_form.hidden_fields %}
                             {{ hidden_field }}
                         {% endfor %}
-
                         {% for field in slave_form.visible_fields %}
                             <div class="form-group">
                                 {{ field.label_tag }}
-
                                 {% if slave_form.is_bound %}
                                     {% render_field field class="form-control is-valid" %}
                                 {% else %}
                                     {% render_field field class="form-control" %}
                                 {% endif %}
-
                                 {% if field.help_text %}
                                     <small class="form-text text-muted">{{ field.help_text }}</small>
                                 {% endif %}
@@ -111,145 +104,147 @@
     <h2>Clients:</h2>
     <div id="accordion" role="tablist">
         {% for slave in slaves %}
-            <div class="card slave-card" id="{{ slave.id }}">
-                <div class="card-header collapsed">
-                    <div class="row">
-                        <div class="slave-name col">
-                            <h2>{{ slave.name }}</h2>
+        <div class="card slave-card" id="{{ slave.id }}">
+            <div class="card-header collapsed">
+                <div class="row">
+                    <div class="slave-name col">
+                        <h2>{{ slave.name }}</h2>
+                    </div>
+                    <div class="btn-toolbar" role="toolbar">
+                        <div class="btn-group mr-2" role="group">
+                            <button type="button" class="btn btn-danger" data-toggle="tooltip" data-placement="top" title="Status">
+                                <i class="material-icons">error</i>
+                            </button>
                         </div>
-                        <div class="btn-toolbar" role="toolbar">
-                            <div class="btn-group mr-2" role="group">
-                                <button type="button" class="btn btn-danger" data-toggle="tooltip" data-placement="top" title="Status">
-                                    <i class="material-icons">error</i>
-                                </button>
-                            </div>
 
-                            <div class="btn-group mr-2" role="group">
-                                <button type="button" class="btn btn-info start" data-toggle="tooltip" data-placement="top" title="Start/Stop">
-                                    <i class="material-icons">power_settings_new</i>
-                                </button>
-                                <button type="button" class="btn btn-info" data-toggle="tooltip" data-placement="top" title="Restart">
-                                    <i class="material-icons">refresh</i>
-                                </button>
-                            </div>
+                        <div class="btn-group mr-2" role="group">
+                            <button type="button" class="btn btn-info start" data-toggle="tooltip" data-placement="top" title="Start/Stop">
+                                <i class="material-icons">power_settings_new</i>
+                            </button>
+                            <button type="button" class="btn btn-info" data-toggle="tooltip" data-placement="top" title="Restart">
+                                <i class="material-icons">refresh</i>
+                            </button>
+                        </div>
 
-                            <div class="btn-group mr-2" role="group">
-                                <button type="button" class="btn btn-info" data-toggle="tooltip" data-placement="top" title="Delete File">
-                                    <i class="material-icons">signal_cellular_no_sim</i>
-                                </button>
-                                <button type="button" class="btn btn-info" data-toggle="tooltip" data-placement="top" title="Copy File">
-                                    <i class="material-icons">insert_drive_file</i>
-                                </button>
-                            </div>
+                        <div class="btn-group mr-2" role="group">
+                            <button type="button" class="btn btn-info" data-toggle="tooltip" data-placement="top" title="Delete File">
+                                <i class="material-icons">signal_cellular_no_sim</i>
+                            </button>
+                            <button type="button" class="btn btn-info" data-toggle="tooltip" data-placement="top" title="Copy File">
+                                <i class="material-icons">insert_drive_file</i>
+                            </button>
+                        </div>
 
-                            <div class="btn-group mr-4" role="group">
-                                <button type="button" class="btn btn-info modify-slave-btn" data-toggle="tooltip" data-placement="top" title="Edit">
-                                    <i class="material-icons">edit</i>
-                                </button>
-                                <button type="button" class="btn btn-info delete_slave" data-toggle="tooltip" data-placement="top" title="Delete">
-                                    <i class="material-icons">delete</i>
-                                </button>
-                            </div>
-                            <div class="btn-group mr-2" role="group" data-toggle="collapse" href="#collapse{{ slave.id }}">
-                                <button type="button" class="btn btn-default" data-toggle="tooltip" data-placement="top" title="Show More" id="headingOne">
-                                    <i class="material-icons">expand_more</i>
-                                </button>
-                            </div>
+                        <div class="btn-group mr-4" role="group">
+                            <button type="button" class="btn btn-info modify-slave-btn" data-toggle="tooltip" data-placement="top" title="Edit">
+                                <i class="material-icons">edit</i>
+                            </button>
+                            <button type="button" class="btn btn-info delete_slave" data-toggle="tooltip" data-placement="top" title="Delete">
+                                <i class="material-icons">delete</i>
+                            </button>
+                        </div>
+                        <div class="btn-group mr-2" role="group" data-toggle="collapse" href="#collapse{{ slave.id }}">
+                            <button type="button" class="btn btn-default" data-toggle="tooltip" data-placement="top" title="Show More" id="headingOne">
+                                <i class="material-icons">expand_more</i>
+                            </button>
                         </div>
                     </div>
                 </div>
-                <div id="collapse{{ slave.id }}" class="collapse" role="tabpanel">
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col">
-                                <h4>IP:
-                                    <b class="slave-ip">{{ slave.ip_address }}</b>
-                                </h4>
-                            </div>
-                            <div class="col">
-                                <h4>MAC:
-                                    <b class="slave-mac">{{ slave.mac_address }}</b>
-                                </h4>
-                            </div>
+            </div>
+            <div id="collapse{{ slave.id }}" class="collapse" role="tabpanel">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col">
+                            <h4>IP:
+                                <b class="slave-ip">{{ slave.ip_address }}</b>
+                            </h4>
                         </div>
-                        <h4>Programs:</h4>
-                        {% for program in slave.program_set.all %}
-                            <div class="card program-card" data-id="{{ program.id }}">
-                                <div class="card-body">
-                                    <div class="row">
-                                        <div class="program-name col">
-                                            <h2>{{ program.name }}</h2>
-                                        </div>
-                                        <div class="btn-toolbar" role="toolbar">
-                                            <div class="btn-group mr-2" role="group">
-                                                <button type="button" class="btn btn-danger" data-toggle="tooltip" data-placement="top" title="Status">
-                                                    <i class="material-icons">error</i>
-                                                </button>
-                                            </div>
-                                            <div class="btn-group mr-2" role="group">
-                                                <button type="button" class="btn btn-info" data-toggle="tooltip" data-placement="top" title="Start/Stop">
-                                                    <i class="material-icons">power_settings_new</i>
-                                                </button>
-                                                <button type="button" class="btn btn-info" data-toggle="tooltip" data-placement="top" title="Restart">
-                                                    <i class="material-icons">refresh</i>
-                                                </button>
-                                            </div>
-                                            <div class="btn-group mr-2" role="group">
-                                                <button type="button" class="btn btn-info" data-toggle="tooltip" data-placement="top" title="Edit">
-                                                    <i class="material-icons">edit</i>
-                                                </button>
-                                                <button type="button" class="btn btn-info delete_program" data-toggle="tooltip" data-placement="top" title="Delete">
-                                                    <i class="material-icons">delete</i>
-                                                </button>
-                                            </div>
-                                        </div>
+                        <div class="col">
+                            <h4>MAC:
+                                <b class="slave-mac">{{ slave.mac_address }}</b>
+                            </h4>
+                        </div>
+                    </div>
+                    <h4>Programs:</h4>
+                    {% for program in slave.program_set.all %}
+                    <div class="card program-card" data-id="{{ program.id }}">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="program-name col">
+                                    <h2>{{ program.name }}</h2>
+                                </div>
+                                <div class="btn-toolbar" role="toolbar">
+                                    <div class="btn-group mr-2" role="group">
+                                        <button type="button" class="btn btn-danger" data-toggle="tooltip" data-placement="top" title="Status">
+                                            <i class="material-icons">error</i>
+                                        </button>
+                                    </div>
+                                    <div class="btn-group mr-2" role="group">
+                                        <button type="button" class="btn btn-info start-program-btn" data-toggle="tooltip" data-placement="top" title="Start/Stop">
+                                            <i class="material-icons">power_settings_new</i>
+                                        </button>
+                                        <button type="button" class="btn btn-info" data-toggle="tooltip" data-placement="top" title="Restart">
+                                            <i class="material-icons">refresh</i>
+                                        </button>
+                                    </div>
+                                    <div class="btn-group mr-2" role="group">
+                                        <button type="button" class="btn btn-info" data-toggle="tooltip" data-placement="top" title="Edit">
+                                            <i class="material-icons">edit</i>
+                                        </button>
+                                        <button type="button" class="btn btn-info delete_program" data-toggle="tooltip" data-placement="top" title="Delete">
+                                            <i class="material-icons">delete</i>
+                                        </button>
                                     </div>
                                 </div>
                             </div>
-                        {% empty %}
-                            <div class="card">
-                                <div class="alert alert-info">
-                                    <strong>Info!</strong> No programs for this client in system.
-                                </div>
-                            </div>
-                        {% endfor %}
-                        <button type="button" class="btn btn-info float-right mr-2 mt-2 mb-2 add-program-btn" data-toggle="tooltip" data-placement="top" title="Add program">
-                            <span>Program</span>
-                            <i class="material-icons" style="font-size:30px; vertical-align: middle;">add</i>
-                        </button>
+                        </div>
                     </div>
+                    {% empty %}
+                    <div class="card">
+                        <div class="alert alert-info">
+                            <strong>Info!</strong> No programs for this client in system.
+                        </div>
+                    </div>
+                    {% endfor %}
+                    <button type="button" class="btn btn-info float-right mr-2 mt-2 mb-2 add-program-btn" data-toggle="tooltip" data-placement="top"
+                        title="Add program">
+                        <span>Program</span>
+                        <i class="material-icons" style="font-size:30px; vertical-align: middle;">add</i>
+                    </button>
                 </div>
             </div>
+        </div>
         {% empty %}
-            <div class="card">
-                <div class="alert alert-info">
-                    <strong>Info!</strong> No clients in system.
-                </div>
+        <div class="card">
+            <div class="alert alert-info">
+                <strong>Info!</strong> No clients in system.
             </div>
+        </div>
         {% endfor %}
     </div>
-    <button type="button" class="btn btn-info add-slave-btn float-right mt-2 mr-2" data-toggle="tooltip" data-placement="top" title="Add client">
-            <span>Client</span>
-            <i class="material-icons" style="font-size:30px; vertical-align: middle;">add</i>
+    <button type="button" class="btn btn-info add-slave-btn float-right mt-2 mr-2" data-toggle="tooltip" data-placement="top"
+        title="Add client">
+        <span>Client</span>
+        <i class="material-icons" style="font-size:30px; vertical-align: middle;">add</i>
     </button>
 </div>
 {% endblock %}
 
 {% block script %}
 <script>
-    $(document).ready(function(){
-	    // set defaults for notifications
-	    $.notifyDefaults({
-		    type: 'success',
-		    placement: {
-			    from: 'bottom',
-			    align: 'right'
-		    },
-		    animate: {
-			    enter: 'animated fadeInRight',
-			    exit: 'animated fadeOutRight'
-		    }
-	    });
+    $(document).ready(function () {
+        // set defaults for notifications
+        $.notifyDefaults({
+            type: 'success',
+            placement: {
+                from: 'bottom',
+                align: 'right'
+            },
+            animate: {
+                enter: 'animated fadeInRight',
+                exit: 'animated fadeOutRight'
+            }
+        });
 
         /*function for deleting a slave, it is added to the delete_slave button*/
         $(".delete_slave").click(function () {
@@ -257,14 +252,14 @@
             //get id and name of the slave and create deletion message
             var id = $(this).parents(".slave-card").attr("id");
             var name = $(this).parents(".slave-card").children().find('.slave-name').text();
-            var message = "<a>Are you sure you want to remove client </a><b>" + name +"</b>?</a>";
+            var message = "<a>Are you sure you want to remove client </a><b>" + name + "</b>?</a>";
 
             //changing button visibility and message of the delete modal
             $('#deleteWarning .modal-footer #deleteProgramModalButton').hide();
             $('#deleteWarning .modal-footer #deleteSlaveModalButton').show();
             $('#deleteWarning .modal-body').empty(message);
             $('#deleteWarning .modal-body').append(message);
-		
+
 
             //adding id to modal and set it visible
             $('#deleteWarning').data('slaveId', id);
@@ -277,7 +272,7 @@
             //get id and name of the program and create deletion message
             var id = $(this).parents(".program-card").attr("data-id");
             var name = $(this).parents(".program-card").children().find('.program-name').text();
-            var message = "<a>Are you sure you want to remove program </a><b>" + name +"</b>?</a>";
+            var message = "<a>Are you sure you want to remove program </a><b>" + name + "</b>?</a>";
 
             //changing button visibility and message of the delete modal
             $('#deleteWarning .modal-footer #deleteSlaveModalButton').hide();
@@ -305,9 +300,9 @@
                     } else {
                         $.notify({
                             message: JSON.stringify(response.payload)
-                        },{
-                            type: 'danger'
-                        });
+                        }, {
+                                type: 'danger'
+                            });
                     }
                 }
             })
@@ -322,17 +317,17 @@
                     xhr.setRequestHeader("X-CSRFToken", '{{ csrf_token }}');
                 },
                 success: function (response) {
-                    if (response.status === 'ok'){
+                    if (response.status === 'ok') {
                         window.location.reload();
                     } else {
                         $.notify({
                             message: JSON.stringify(response.payload)
-                        },{
-                            type: 'danger'
-                        });
+                        }, {
+                                type: 'danger'
+                            });
                     }
-		        }
-	        });
+                }
+            });
         });
 
         // Error Display for Slave-Kontextmenu
@@ -342,6 +337,24 @@
 
         $(function () {
             $('[data-toggle="tooltip"]').tooltip()
+        });
+
+        $('.start-program-btn').click(function () {
+            var id = $(this).parents(".program-card").attr("data-id");
+            $.ajax({
+                type: 'POST',
+                url: '/api/program/' + id,
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader("X-CSRFToken", '{{ csrf_token }}');
+                },
+                error: function () {
+                    $.notify({
+                        message: 'Error in Ajax Request.'
+                    }, {
+                            type: 'danger'
+                        });
+                }
+            });
         });
 
         //opens the programModal to add a new program
@@ -372,7 +385,7 @@
             //find slave id and store it in the form
             var card = $(this).parents('.slave-card');
             var id = card.attr("id");
-            programForm.data('slave_id',id);
+            programForm.data('slave_id', id);
 
             programModal.modal('toggle');
         });
@@ -471,19 +484,19 @@
                             $(item).removeClass("is-invalid");
                         });
 
-                        $.each(response.payload , function (id, msg) {
+                        $.each(response.payload, function (id, msg) {
                             var node = programForm.find("input[name=" + id + "]");
                             node.addClass("is-invalid");
                             node.parent().append('<div class="invalid-feedback">' + msg + '</div>');
                         });
                     }
                 },
-                error: function(){
+                error: function () {
                     $.notify({
                         message: 'Error in Ajax Request.'
-                    },{
-                        type: 'danger'
-                    });
+                    }, {
+                            type: 'danger'
+                        });
                 }
             });
         });
@@ -505,8 +518,8 @@
                 beforeSend: function (xhr) {
                     xhr.setRequestHeader('X-CSRFToken', '{{ csrf_token }}');
                 },
-                success: function(response){
-                    if(response.status === 'ok'){
+                success: function (response) {
+                    if (response.status === 'ok') {
                         window.location.reload();
                     } else {
                         slaveForm = $('#slaveForm');
@@ -519,53 +532,53 @@
                         });
 
                         $.each(response.payload, function (id, msg) {
-                            node = slaveForm.find('input[name='+id+']');
+                            node = slaveForm.find('input[name=' + id + ']');
                             console.log(node);
                             node.addClass("is-invalid");
                             node.parent().append('<div class="invalid-feedback">' + msg + '</div>');
                         });
                     }
                 },
-                error: function(){
+                error: function () {
                     $.notify({
                         message: 'Error in Ajax Request.'
-                    },{
-                        type: 'danger'
-                    });
+                    }, {
+                            type: 'danger'
+                        });
                 }
             });
         });
 
-	    $('.start').click(function(){
-            	    var id = $(this).parents('.card').attr("id");
-		    var el = $(this);
-		    $.get({
-			    url: '/api/slave/' + id + '/wol',
-			    beforeSend: function(xhr){
-				    xhr.setRequestHeader('X-CSRFToken', '{{ csrf_token }}')
-			}
-		    }).done(function(data){
-			    if (data.status == 'ok'){
-				    el.addClass('animated pulse');
-				    el.one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend', function(){
-					    el.removeClass('animated pulse');
-				    });
-			    }
-			    else{
-				    $.notify({
-					    message: 'Error: ' + data.payload
-				    },{
-					    type: 'danger'
-				    });
-			    }
-		    }).fail(function(){
-			    $.notify({
-				    message: 'Error in Ajax Request.'
-			    },{
-				    type: 'danger'
-			    });
-		    });
-	    });
+        $('.start').click(function () {
+            var id = $(this).parents('.card').attr("id");
+            var el = $(this);
+            $.get({
+                url: '/api/slave/' + id + '/wol',
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader('X-CSRFToken', '{{ csrf_token }}')
+                }
+            }).done(function (data) {
+                if (data.status == 'ok') {
+                    el.addClass('animated pulse');
+                    el.one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend', function () {
+                        el.removeClass('animated pulse');
+                    });
+                }
+                else {
+                    $.notify({
+                        message: 'Error: ' + data.payload
+                    }, {
+                            type: 'danger'
+                        });
+                }
+            }).fail(function () {
+                $.notify({
+                    message: 'Error in Ajax Request.'
+                }, {
+                        type: 'danger'
+                    });
+            });
+        });
     });
 </script>
 {% endblock %}

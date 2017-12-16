@@ -1,6 +1,7 @@
 from django_q.tasks import async
 
 from wakeonlan.wol import send_magic_packet
+from channels import Group
 
 
 def wake_Slave(mac_address):

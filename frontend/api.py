@@ -10,6 +10,8 @@ import json
 from channels import Group
 from .queue import wake_Slave
 from utils.status import Status
+from utils import Command
+from shlex import split
 
 
 def add_slave(request):
@@ -162,6 +164,18 @@ def manage_program(request, programId):
     """
     if request.method == 'DELETE':
         ProgramModel.objects.filter(id=programId).delete()
+        return StatusResponse(Status.ok(''))
+    if request.method == 'POST':
+        program = ProgramModel.objects.get(id=programId)
+        Group('commands_' + str(program.slave.id)).send(
+            {'text':Command(
+                method="execute",
+                pid=program.id,
+                path=program.path,
+                arguments=split(program.arguments)
+            ).to_json()
+            }
+            )
         return StatusResponse(Status.ok(''))
     else:
         return HttpResponseForbidden()
