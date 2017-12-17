@@ -133,6 +133,7 @@ class SlaveStatus(models.Model):
     Arguments
     ---------
         id: Slave ID.
+        booted: Timestamp, when the slave was started.
         online: If the Slave has connected to the server.
     """
     id = models.OneToOneField(
