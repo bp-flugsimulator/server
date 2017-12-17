@@ -1,0 +1,2 @@
+libsass==0.13.4
+django-compressor==2.2

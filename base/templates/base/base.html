@@ -1,5 +1,7 @@
 
-<!DOCTYPE html>{% load staticfiles %}
+<!DOCTYPE html>
+{% load staticfiles %}
+{% load sass_tags %}
 <html>
 
 	<head>
@@ -7,15 +9,16 @@
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-		<link rel="stylesheet" href="{% static 'node/bootstrap/dist/css/bootstrap.min.css' %}" />
+		{% comment %} <link rel="stylesheet" href="{% static 'node/bootstrap/dist/css/bootstrap.min.css' %}" /> {% endcomment %}
 		<link rel="stylesheet" href="{% static 'node/animate.css/animate.min.css' %}" />
 		<!--Import Google Icon Font-->
-        <link rel="stylesheet" href="{% static 'node/material-design-icons/iconfont/material-icons.css' %}">
+		<link rel="stylesheet" href="{% static 'node/material-design-icons/iconfont/material-icons.css' %}">
+		<link href="{% sass_src 'css/custom.scss' %}" rel="stylesheet" type="text/css" />
 	</head>
 
-	<body style="position: relative; background: #292929;">
+	<body style="position: relative;">
 		<!-- Header -->
-		<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+		<nav class="navbar navbar-expand-lg navbar bg">
 			<span class="navbar-brand mb-0 h1">Flugsimulator</span>
 		</nav>
 		{% block premain%}{% endblock %}

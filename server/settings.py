@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'frontend',
     'widget_tweaks',
     'channels',
+    'sass_processor',
 ]
 
 MIDDLEWARE = [
@@ -123,6 +124,7 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "static"),
     ('node', 'node_modules'),
 ]
 
@@ -130,9 +132,7 @@ STATICFILES_DIRS = [
 MESSAGE_STORAGE = 'django.contrib.messages.storage.cookie.CookieStorage'
 
 # Cluster
-Q_CLUSTER = {
-    'orm': 'default'
-}
+Q_CLUSTER = {'orm': 'default'}
 
 # channels settings
 CHANNEL_LAYERS = {
@@ -141,3 +141,14 @@ CHANNEL_LAYERS = {
         "ROUTING": "frontend.routing.channel_routing",
     },
 }
+
+STATICFILES_FINDERS = [
+    'django.contrib.staticfiles.finders.FileSystemFinder',
+    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+]
+
+SASS_PROCESSOR_ROOT = 'static/'
+COMPRESS_ROOT = SASS_PROCESSOR_ROOT
+SASS_PROCESSOR_INCLUDE_DIRS = [
+    os.path.join(BASE_DIR, 'node_modules'),
+]
