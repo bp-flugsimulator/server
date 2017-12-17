@@ -102,4 +102,35 @@ class Program(models.Model):
     slave = models.ForeignKey(Slave, on_delete=models.CASCADE)
 
     class Meta:
-        unique_together = (('name', 'slave'),)
+        unique_together = (('name', 'slave'), )
+
+
+class Process(models.Model):
+    """
+    Represents a process which is currently running on the slave.
+
+    Arguments
+    ---------
+        id: Program ID.
+        error: Error string if the execution was not successful.
+        started: Timestamp when the command was send.
+        stopped: Timestamp when the result of the Command was received.
+    """
+    id = models.ForeignKey(Program, on_delete=models.CASCADE)
+    error = models.CharField(max_length=200, unique=False)
+    started = models.DateTimeField(unique=False)
+    stopped = models.DateTimeField(unique=False)
+
+
+class SlaveOnline(models.Model):
+    """
+    Represents the current status of the slaves.
+
+    Arguments
+    ---------
+        id: Slave ID.
+        online: If the Slave has connected to the server.
+    """
+    id = models.ForeignKey(Slave, on_delete=models.CASCADE)
+    booted = models.DateTimeField(unique=False)
+    online = models.BooleanField(unique=False)
