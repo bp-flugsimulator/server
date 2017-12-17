@@ -112,17 +112,17 @@ class ProgramStatus(models.Model):
     Arguments
     ---------
         id: Program ID.
-        error: Error string if the execution was not successful.
+        error: Error message if the execution was not successful.
         started: Timestamp when the command was send.
         stopped: Timestamp when the result of the Command was received.
     """
-    id = models.OneToOneField(
+    program = models.OneToOneField(
         Program,
         on_delete=models.CASCADE,
         primary_key=True,
     )
     error = models.CharField(max_length=200, unique=False)
-    started = models.DateTimeField(unique=False)
+    started = models.DateTimeField(unique=False, blank=False)
     stopped = models.DateTimeField(unique=False)
 
 
@@ -133,13 +133,13 @@ class SlaveStatus(models.Model):
     Arguments
     ---------
         id: Slave ID.
-        booted: Timestamp, when the slave was started.
+        booted: Timestamp, when the slave was started via uptime command
         online: If the Slave has connected to the server.
     """
-    id = models.OneToOneField(
+    slave = models.OneToOneField(
         Slave,
         on_delete=models.CASCADE,
         primary_key=True,
     )
-    booted = models.DateTimeField(unique=False)
-    online = models.BooleanField(unique=False)
+    boottime = models.DateTimeField(unique=False)
+    reply_channel = models.CharField(max_length=200)
