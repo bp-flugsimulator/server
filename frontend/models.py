@@ -105,7 +105,7 @@ class Program(models.Model):
         unique_together = (('name', 'slave'), )
 
 
-class Process(models.Model):
+class ProgramStatus(models.Model):
     """
     Represents a process which is currently running on the slave.
 
@@ -126,7 +126,7 @@ class Process(models.Model):
     stopped = models.DateTimeField(unique=False)
 
 
-class SlaveOnline(models.Model):
+class SlaveStatus(models.Model):
     """
     Represents the current status of the slaves.
 
