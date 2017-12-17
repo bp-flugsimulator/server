@@ -1,5 +1,5 @@
 from channels import Group
-from .models import SlaveStatus as SlaveStatusModel, Slave as SlaveModel
+from .models import SlaveStatus as SlaveStatusModel, Slave as SlaveModel, Program as ProgramModel
 from utils import Command, Status
 from channels.sessions import channel_session
 
@@ -46,13 +46,22 @@ def ws_add_rpc_commands(message):
 
 # Connected to websocket.receive
 def ws_message(message):
-    print(message.content)
+    """
+    Handels incomming messages on /.
+    """
     status = Status.from_json(message.content['text'])
-    if (status.is_ok()):
-        slave = SlaveModel.objects.get(id=status.payload['sid'])
-        boottime = datetime.strptime(status.payload['boottime'],'%Y-%m-%d %H:%M:%S')
-        SlaveStatusModel(slave=slave,boottime=boottime).save()
-        message.reply_channel.send({"accept": True})
+    if status.is_ok():
+        if status.payload['method'] == 'boottime':
+            slave = SlaveModel.objects.get(id=status.payload['sid'])
+            boottime = datetime.strptime(status.payload['boottime'],'%Y-%m-%d %H:%M:%S')
+            SlaveStatusModel(slave=slave,boottime=boottime).save()
+            message.reply_channel.send({"accept": True})
+        elif status.payload['method'] == 'execute':
+            program_status = ProgramModel.objects.get(id=status.payload['pid']).programstatus
+            program_status.code = status.payload['code']
+            program_status.stopped = datetime.now()
+        else:
+            message.reply_channel.send({"accept": False})
     else:
         message.reply_channel.send({"accept": False})
 

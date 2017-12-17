@@ -121,9 +121,9 @@ class ProgramStatus(models.Model):
         on_delete=models.CASCADE,
         primary_key=True,
     )
-    error = models.CharField(max_length=200, unique=False)
+    code = models.CharField(max_length=200, unique=False, blank=True)
     started = models.DateTimeField(unique=False, blank=False)
-    stopped = models.DateTimeField(unique=False)
+    stopped = models.DateTimeField(unique=False, null=True)
 
 
 class SlaveStatus(models.Model):
@@ -133,8 +133,7 @@ class SlaveStatus(models.Model):
     Arguments
     ---------
         id: Slave ID.
-        booted: Timestamp, when the slave was started via uptime command
-        online: If the Slave has connected to the server.
+        boottime: Timestamp, when the slave was started via uptime command
     """
     slave = models.OneToOneField(
         Slave,
@@ -142,4 +141,3 @@ class SlaveStatus(models.Model):
         primary_key=True,
     )
     boottime = models.DateTimeField(unique=False)
-    reply_channel = models.CharField(max_length=200)

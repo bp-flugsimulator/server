@@ -2,11 +2,10 @@ from django.http import HttpResponseForbidden
 from django.http.request import QueryDict
 from django.core.exceptions import ValidationError
 
-from .models import Slave as SlaveModel, Program as ProgramModel
+from .models import Slave as SlaveModel, Program as ProgramModel, ProgramStatus as ProgramStatusModel, SlaveStatus as SlaveStatusModel
 
 from .forms import SlaveForm, ProgramForm
 from server.utils import StatusResponse
-
 import json
 
 from channels import Group
@@ -14,7 +13,7 @@ from .queue import wake_Slave
 from utils.status import Status
 from utils import Command
 from shlex import split
-
+from datetime import datetime
 
 def add_slave(request):
     """
@@ -179,15 +178,19 @@ def manage_program(request, programId):
         return StatusResponse(Status.ok(''))
     if request.method == 'POST':
         program = ProgramModel.objects.get(id=programId)
-        Group('commands_' + str(program.slave.id)).send({
-            'text':
-            Command(
-                method="execute",
-                pid=program.id,
-                path=program.path,
-                arguments=split(program.arguments)).to_json()
-        })
-        return StatusResponse(Status.ok(''))
+        if SlaveStatusModel.objects.filter(slave=program.slave).exists():
+            ProgramStatusModel(program=program, started=datetime.now()).save()
+            Group('commands_' + str(program.slave.id)).send({
+                'text':
+                Command(
+                    method="execute",
+                    pid=program.id,
+                    path=program.path,
+                    arguments=split(program.arguments)).to_json()
+            })
+            return StatusResponse(Status.ok(''))
+        else:
+            return StatusResponse(Status.err('Can not start {} because {} is offline!'.format(program.name,program.slave.name)))
     elif request.method == 'PUT':
         # create form from a new QueryDict made from the request body
         # (request.PUT is unsupported) as an update (instance) of the
@@ -210,3 +213,4 @@ def manage_program(request, programId):
             return StatusResponse(Status.err(form.errors))
     else:
         return HttpResponseForbidden()
+

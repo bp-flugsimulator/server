@@ -351,12 +351,22 @@
                 beforeSend: function (xhr) {
                     xhr.setRequestHeader("X-CSRFToken", '{{ csrf_token }}');
                 },
+                converters:{"text json": Status.from_json},
+                success: function (status) {
+                    if(status.is_err()){
+                        $.notify({
+                            message: status.payload
+                        }, {
+                            type: 'danger'
+                        });
+                    }
+                },
                 error: function () {
                     $.notify({
                         message: 'Error in Ajax Request.'
                     }, {
-                            type: 'danger'
-                        });
+                        type: 'danger'
+                    });
                 }
             });
         });
