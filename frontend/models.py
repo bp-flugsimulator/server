@@ -116,7 +116,11 @@ class Process(models.Model):
         started: Timestamp when the command was send.
         stopped: Timestamp when the result of the Command was received.
     """
-    id = models.ForeignKey(Program, on_delete=models.CASCADE)
+    id = models.OneToOneField(
+        Program,
+        on_delete=models.CASCADE,
+        primary_key=True,
+    )
     error = models.CharField(max_length=200, unique=False)
     started = models.DateTimeField(unique=False)
     stopped = models.DateTimeField(unique=False)
@@ -131,6 +135,10 @@ class SlaveOnline(models.Model):
         id: Slave ID.
         online: If the Slave has connected to the server.
     """
-    id = models.ForeignKey(Slave, on_delete=models.CASCADE)
+    id = models.OneToOneField(
+        Slave,
+        on_delete=models.CASCADE,
+        primary_key=True,
+    )
     booted = models.DateTimeField(unique=False)
     online = models.BooleanField(unique=False)
