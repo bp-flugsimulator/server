@@ -13,7 +13,8 @@ from .queue import wake_Slave
 from utils.status import Status
 from utils import Command
 from shlex import split
-from datetime import datetime
+from django.utils import timezone
+
 
 def add_slave(request):
     """
@@ -179,7 +180,7 @@ def manage_program(request, programId):
     if request.method == 'POST':
         program = ProgramModel.objects.get(id=programId)
         if SlaveStatusModel.objects.filter(slave=program.slave).exists():
-            ProgramStatusModel(program=program, started=datetime.now()).save()
+            ProgramStatusModel(program=program, started=timezone.now()).save()
             Group('commands_' + str(program.slave.id)).send({
                 'text':
                 Command(
@@ -190,7 +191,9 @@ def manage_program(request, programId):
             })
             return StatusResponse(Status.ok(''))
         else:
-            return StatusResponse(Status.err('Can not start {} because {} is offline!'.format(program.name,program.slave.name)))
+            return StatusResponse(
+                Status.err('Can not start {} because {} is offline!'.format(
+                    program.name, program.slave.name)))
     elif request.method == 'PUT':
         # create form from a new QueryDict made from the request body
         # (request.PUT is unsupported) as an update (instance) of the
@@ -213,4 +216,3 @@ def manage_program(request, programId):
             return StatusResponse(Status.err(form.errors))
     else:
         return HttpResponseForbidden()
-

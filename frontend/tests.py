@@ -5,10 +5,11 @@ from urllib.parse import urlencode
 from utils import Status, Command
 from channels.test import WSClient
 from shlex import split
+from django.utils import timezone
 
 import json
 
-from .models import Slave as SlaveModel, validate_mac_address, Program as ProgramModel
+from .models import Slave as SlaveModel, validate_mac_address, Program as ProgramModel, SlaveStatus as SlaveStatusModel
 
 
 def fill_database_slaves_set_1():
@@ -720,12 +721,46 @@ class ApiTests(TestCase):
             mac_address='00:00:00:00:08:02')
 
         ProgramModel(
-            name="name", path="path", arguments="", slave=slave).save()
-
-        ProgramModel(name="", path="path", arguments="", slave=slave).save()
+            name="program", path="path", arguments="", slave=slave).save()
 
         program = ProgramModel.objects.get(
-            name="", path="path", arguments="", slave=slave)
+            name="program", path="path", arguments="", slave=slave)
+
+        SlaveStatusModel(slave=slave, boottime=timezone.now()).save()
+
+        client = WSClient()
+        client.join_group("commands_" + str(slave.id))
+
+        api_response = self.client.post("/api/program/" + str(program.id))
+        self.assertEqual(api_response.status_code, 200)
+        self.assertJSONEqual(
+            api_response.content.decode('utf-8'),
+            json.loads(Status.ok("").to_json()))
+
+        ws_response = client.receive()
+        self.assertJSONEqual(
+            Command(
+                method='execute',
+                pid=program.id,
+                path=program.path,
+                arguments=split(program.arguments)).to_json(), ws_response)
+        slave.delete()
+
+    def test_execute_program_fail_slave_offline(self):
+        SlaveModel(
+            name="test_execute_program",
+            ip_address='0.0.8.2',
+            mac_address='00:00:00:00:08:02').save()
+        slave = SlaveModel.objects.get(
+            name="test_execute_program",
+            ip_address='0.0.8.2',
+            mac_address='00:00:00:00:08:02')
+
+        ProgramModel(
+            name="program", path="path", arguments="", slave=slave).save()
+
+        program = ProgramModel.objects.get(
+            name="program", path="path", arguments="", slave=slave)
 
         client = WSClient()
         client.join_group("commands_" + str(slave.id))
@@ -733,14 +768,14 @@ class ApiTests(TestCase):
         api_response = self.client.post("/api/program/" + str(program.id))
         self.assertEqual(api_response.status_code, 200)
 
-        ws_response = client.receive()
         self.assertJSONEqual(
-                Command(
-                    method='execute',
-                    pid=program.id,
-                    path=program.path,
-                    arguments=split(program.arguments)).to_json(),
-            ws_response)
+            api_response.content.decode('utf-8'),
+            json.loads(
+                Status.err('Can not start {} because {} is offline!'.format(
+                    program.name, slave.name)).to_json()))
+
+        ws_response = client.receive()
+        self.assertEqual(None, ws_response)
         slave.delete()
 
 
