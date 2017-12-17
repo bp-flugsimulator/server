@@ -103,3 +103,34 @@ class Program(models.Model):
 
     class Meta:
         unique_together = (('name', 'slave'),)
+
+class File(models.Model):
+    """
+    Represents a file on a slave
+    This is stored in a database.
+
+    Attributes
+    ----------
+    id: int
+        The unique ID which can be referenced to this object.
+
+    name: str
+        The name of the file (has to be unique for every slave)
+
+    sourcePath: str
+        The path to the source of the file
+
+    destinationPath: str
+        The path there the file should be used in the file system
+
+    slave: Slave
+        The slave on which the file belongs to
+    """
+    id = models.AutoField(primary_key=True)
+    name = models.CharField(unique=False, max_length=200)
+    sourcePath = models.CharField(unique=False, max_length=200)
+    destinationPath = models.CharField(unique=False, max_length=200)
+    slave = models.ForeignKey(Slave, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = (('name', 'slave'),)
