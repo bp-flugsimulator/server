@@ -119,3 +119,4 @@ if __name__ == "__main__":
     with open('requirements.txt') as requirements:
         for library in requirements:
             install_local(library)
+
