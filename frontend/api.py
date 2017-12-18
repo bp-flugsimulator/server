@@ -9,11 +9,11 @@ from server.utils import StatusResponse
 import json
 
 from channels import Group
-from .queue import wake_Slave
 from utils.status import Status
 from utils import Command
 from shlex import split
 from django.utils import timezone
+from wakeonlan.wol import send_magic_packet
 
 
 def add_slave(request):
@@ -139,7 +139,7 @@ def wol_slave(request, id):
     """
     if request.method == 'GET':
         try:
-            wake_Slave(SlaveModel.objects.get(id=id).mac_address)
+            send_magic_packet(SlaveModel.objects.get(id=id).mac_address)
         except Exception as err:
             return StatusResponse(Status.err(repr(err)), status=500)
         Group('notifications').send({
