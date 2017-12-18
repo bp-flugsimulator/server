@@ -15,6 +15,17 @@ logger = logging.getLogger('django.request')
 
 @channel_session
 def ws_add_rpc_commands(message):
+    """
+    Handels websockets.connect requests of '/commands'.
+    Connections only get accepted if the ip of the sender is the ip of a known client.
+    Adds the reply_channel to the groups 'clients' and 'client_$slave.id' and sends a
+    boottime request to the client.
+
+    Arguments
+    ---------
+        message: channels.message.Message that contains the connection request  on /commands
+
+    """
     ip_address, port = message.get('client')
     message.channel_session['ip_address'] = ip_address
     query = SlaveModel.objects.filter(ip_address=ip_address)
@@ -42,9 +53,18 @@ def ws_add_rpc_commands(message):
         message.reply_channel.send({"accept": False})
 
 
-# Connected to websocket.disconnect
 @channel_session
 def ws_rpc_disconnect(message):
+    """
+    Handels websockets.disconnect requests of '/commands'.
+    Only disconnects known clients.
+    Removes the reply_channel from 'clients' and 'clients_$slave.id' and deletes the SlaveStatus entry in the database
+
+    Arguments
+    ---------
+        message: channels.message.Message that contains the disconnect request  on /commands
+
+    """
     query = SlaveModel.objects.filter(
         ip_address=message.channel_session['ip_address'])
 
@@ -57,19 +77,41 @@ def ws_rpc_disconnect(message):
         logger.info("Client with ip {} disconnected from /commands!".format(
             message.channel_session['ip_address']))
 
-# Connected to websocket.connect
+
 def ws_notifications_add(message):
+    """
+    Handels websockets.connect requests of '/'.
+    Connections only get accepted if the ip of the sender is the ip of a known slave.
+    Adds the reply_channel to the group 'notifications'
+
+    Arguments
+    ---------
+        message: channels.message.Message that contains the connection request  on '/'.
+
+    """
     # Add to the notification group
     Group('notifications').add(message.reply_channel)
     # Accept the connection
     message.reply_channel.send({"accept": True})
 
 
-# Connected to websocket.receive
 def ws_notifications_receive(message):
     """
-    Handels incomming messages on /.
+    Handels websockets.receive requests of '/'.
+    Connections only get accepted if the ip of the sender is the ip of a known slave.
+
+    If the status contains the result of a boottime request a corresponding SlaveStatus
+    will be created in in the database.
+
+    If the status contains the result of an execute request the corresponding ProgramStatus will
+    get updated in the database and the message gets republished to the 'notifications' group.
+
+    Arguments
+    ---------
+        message: channels.message.Message that contains a Status in the 'text' field
+
     """
+
     try:
         status = Status.from_json(message.content['text'])
         if status.is_ok():
@@ -117,6 +159,15 @@ def ws_notifications_receive(message):
                 format(err), 'red'))
 
 
-# Connected to websocket.disconnect
 def ws_notifications_disconnect(message):
+    """
+    Handels websockets.disconenct requests of '/'.
+    Removes the reply_channel from the 'notifications' group
+
+    Arguments
+    ---------
+        message: channels.message.Message that contains the disconnect request  on '/'
+
+    """
+
     Group('notifications').discard(message.reply_channel)
