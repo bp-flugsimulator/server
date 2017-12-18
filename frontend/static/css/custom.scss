@@ -15,7 +15,6 @@
     @return map-get($grays, $key);
 }
 
-
 // Brand Colors
 $blue: #007bff;
 $indigo: #6610f2;
@@ -39,7 +38,7 @@ $gray-800: #262626;
 $gray-900: #212121;
 $black: #000;
 $grays: (100: $gray-100, 200: $gray-200, 300: $gray-300, 400: $gray-400, 500: $gray-500, 600: $gray-600, 700: $gray-700, 800: $gray-800, 900: $gray-900);
-$theme-colors: (primary: $teal, secondary: $purple,  success: $green, info: $cyan, warning: $orange, danger: $red, light: $gray-400, dark: $gray-900);
+$theme-colors: (primary: $teal, secondary: $purple,  success: $green, info: $cyan, warning: $orange, danger: $red, light: $gray-100, dark: $gray-900);
 $colors: (blue: $blue, indigo: $indigo, purple: $purple, pink: $pink, red: $red, orange: $orange, yellow: $yellow, green: $green, teal: $teal, cyan: $cyan, white: $white, gray: $gray-600,gray-dark: $gray-800);
 $theme-color-interval: 8%;
 
@@ -51,7 +50,7 @@ $sizes: (25: 25%, 50: 50%, 75: 75%, 100: 100%);
 
 
 // Options
-$enable-rounded: true;
+$enable-rounded: false;
 $enable-shadows: false;
 $enable-gradients: false;
 $enable-transitions: true;
@@ -164,20 +163,20 @@ $btn-transition: all 0.15s ease-in-out;
 
 
 // Forms
-$input-bg: $white;
+$input-bg: $gray-700;
 $input-disabled-bg: $gray-400;
 $input-color: $white;
-$input-border-color: rgba($black, 0.15);
+$input-border-color: $gray-800;
 $input-btn-border-width: $border-width;
 $input-box-shadow: inset 0 1px 1px rgba($black, 0.075);
 $input-border-radius: $border-radius;
 $input-border-radius-lg: $border-radius-lg;
 $input-border-radius-sm: $border-radius-sm;
 $input-focus-bg: $input-bg;
-$input-focus-border-color: lighten(theme-color('primary'), 25%);
+$input-focus-border-color: theme-color('primary');
 $input-focus-box-shadow: $input-box-shadow, $btn-focus-box-shadow;
-$input-focus-color: $input-color;
-$input-placeholder-color: $gray-600;
+$input-focus-color: $white;
+$input-placeholder-color: $gray-100;
 $input-height-border: $input-btn-border-width * 2;
 $input-height-inner: ($font-size-base * $input-btn-line-height) + ($input-btn-padding-y * 2);
 $input-height: calc(#{$input-height-inner} + #{$input-height-border});
@@ -203,7 +202,7 @@ $custom-control-indicator-bg: #ddd;
 $custom-control-indicator-bg-size: 50% 50%;
 $custom-control-indicator-box-shadow: inset 0 0.25rem 0.25rem rgba($black, 0.1);
 $custom-control-indicator-disabled-bg: $gray-200;
-$custom-control-description-disabled-color: $gray-600;
+$custom-control-description-disabled-color: $gray-400;
 $custom-control-indicator-checked-color: $white;
 $custom-control-indicator-checked-bg: theme-color('primary');
 $custom-control-indicator-checked-box-shadow: none;
@@ -386,7 +385,7 @@ $card-columns-margin: $card-spacer-y;
 
 // Tooltip
 $tooltip-max-width: 200px;
-$tooltip-color: $gray-600;
+$tooltip-color: $white;
 $tooltip-bg: $black;
 $tooltip-opacity: 0.9;
 $tooltip-padding-y: 3px;
@@ -559,4 +558,5 @@ $enable-grid-classes: true;
 $enable-print-styles: true;
 
 
+// My Variables
 @import "node_modules/bootstrap/scss/bootstrap";
