@@ -56,11 +56,6 @@ def ws_rpc_disconnect(message):
 
         logger.info("Client with ip {} disconnected from /commands!".format(
             message.channel_session['ip_address']))
-    else:
-        logger.info(
-            colored("Unknown client with ip {} disconnected from /commands!".
-                    format(message.channel_session['ip_address']), 'red'))
-
 
 # Connected to websocket.connect
 def ws_notifications_add(message):

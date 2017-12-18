@@ -871,7 +871,8 @@ class WebsocketTests(TestCase):
 
         slave.delete()
 
-    def test_ws_add_and_ws_disconnect(self):
+
+    def test_ws_notifications_add_and_ws_disconnect(self):
         ws_client = WSClient()
         ws_client.send_and_consume('websocket.connect')
         ws_client.send_and_consume('websocket.disconnect')
