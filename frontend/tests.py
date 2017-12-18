@@ -819,10 +819,10 @@ class WebsocketTests(TestCase):
             Command(method="boottime", sid=slave.id).to_json())
 
         # test if the client is now part of the right groups
-        Group('commands').send({'text': 'ok'}, immediately=True)
+        Group('clients').send({'text': 'ok'}, immediately=True)
         self.assertEqual(ws_client.receive(json=False), 'ok')
 
-        Group('commands_{}'.format(slave.id)).send(
+        Group('client_{}'.format(slave.id)).send(
             {
                 'text': 'ok'
             }, immediately=True)
@@ -860,14 +860,14 @@ class WebsocketTests(TestCase):
         self.assertFalse(SlaveStatusModel.objects.filter(slave=slave).exists())
 
         # test if the client was removed from the correct groups
-        Group('commands').send({'text': 'ok'}, immediately=True)
-        self.assertIsNone(ws_client.receive(json=False))
+        Group('clients').send({'text': 'ok'}, immediately=True)
+        self.assertIsNone(ws_client.receive())
 
-        Group('commands_{}'.format(slave.id)).send(
+        Group('client_{}'.format(slave.id)).send(
             {
                 'text': 'ok'
             }, immediately=True)
-        self.assertIsNone(ws_client.receive(json=False))
+        self.assertIsNone(ws_client.receive())
 
         slave.delete()
 
@@ -879,7 +879,7 @@ class WebsocketTests(TestCase):
     def test_ws_notifications_receive_fail(self):
         ws_client = WSClient()
         ws_client.send_and_consume('websocket.receive')
-        self.assertEqual({'accept': False}, ws_client.receive())
+        self.assertIsNone(ws_client.receive())
 
     def test_ws_notifications_receive_boottime(self):
         SlaveModel(
@@ -900,7 +900,7 @@ class WebsocketTests(TestCase):
                     'method':
                     'boottime',
                     'boottime':
-                    datetime.strftime(datetime.now(), '%Y-%m-%d %H:%M:%S'),
+                    datetime.strftime(timezone.now(), '%Y-%m-%d %H:%M:%S'),
                     'sid':
                     slave.id
                 }).to_json()
@@ -920,19 +920,12 @@ class WebsocketTests(TestCase):
             mac_address='00:00:00:00:10:03')
 
         ProgramModel(
-            name='program',
-            path='path',
-            arguments='',
-            slave=slave).save()
-
+            name='program', path='path', arguments='', slave=slave).save()
 
         program = ProgramModel.objects.get(
-            name='program',
-            path='path',
-            arguments='',
-            slave=slave)
+            name='program', path='path', arguments='', slave=slave)
 
-        ProgramStatusModel(program=program,started=timezone.now()).save()
+        ProgramStatusModel(program=program, started=timezone.now()).save()
 
         ws_client = WSClient()
         ws_client.send_and_consume(
@@ -940,14 +933,13 @@ class WebsocketTests(TestCase):
             content={
                 'text':
                 Status.ok({
-                    'method':
-                    'execute',
-                    'code':str(0),
+                    'method': 'execute',
+                    'code': str(0),
                     'pid': str(program.id)
                 }).to_json()
             })
 
-        query = ProgramStatusModel.objects.filter(program=program,code=0)
+        query = ProgramStatusModel.objects.filter(program=program, code=0)
         self.assertTrue(query.count() == 1)
         self.assertIsNotNone(query.first().stopped)
         slave.delete()
@@ -955,17 +947,22 @@ class WebsocketTests(TestCase):
     def test_ws_notifications_receive_status_err(self):
         ws_client = WSClient()
         ws_client.send_and_consume(
-            'websocket.receive',
-            content={'text': Status.err("").to_json()})
-        self.assertEqual({'accept':False}, ws_client.receive())
+            'websocket.receive', content={
+                'text': Status.err("").to_json()
+            })
+        self.assertIsNone(ws_client.receive())
 
     def test_ws_notifications_receive_unknown_method(self):
         ws_client = WSClient()
         ws_client.send_and_consume(
             'websocket.receive',
-            content={'text': Status.ok({'method':''}).to_json()})
+            content={
+                'text': Status.ok({
+                    'method': ''
+                }).to_json()
+            })
 
-        self.assertEqual({'accept':False}, ws_client.receive())
+        self.assertIsNone(ws_client.receive())
 
 
 class DatabaseTests(TestCase):
