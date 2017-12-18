@@ -733,7 +733,7 @@ class ApiTests(TestCase):
         SlaveStatusModel(slave=slave, boottime=timezone.now()).save()
 
         client = WSClient()
-        client.join_group("commands_" + str(slave.id))
+        client.join_group("client_" + str(slave.id))
 
         api_response = self.client.post("/api/program/" + str(program.id))
         self.assertEqual(api_response.status_code, 200)
