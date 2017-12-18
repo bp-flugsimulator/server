@@ -24,6 +24,8 @@ build: off
 cache:
   - C:\ProgramData\chocolatey\bin
   - C:\ProgramData\chocolatey\lib
+  - $(PYTHON)\lib\site-packages
+
 
 test_script:
   - "%PYTHON%\\python.exe manage.py test"
