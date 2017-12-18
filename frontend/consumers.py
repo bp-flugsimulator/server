@@ -4,7 +4,13 @@ from utils import Command, Status
 from channels.sessions import channel_session
 from datetime import datetime
 from django.utils import timezone
+from termcolor import colored
 
+# import the logging library
+import logging
+
+# Get an instance of a logger
+logger = logging.getLogger('django.server')
 
 @channel_session
 def ws_add_rpc_commands(message):
@@ -12,32 +18,42 @@ def ws_add_rpc_commands(message):
     message.channel_session['ip_address'] = ip_address
     query = SlaveModel.objects.filter(ip_address=ip_address)
 
-    if query.count() == 1:
+    if query :
         # Accept the connection
         message.reply_channel.send({"accept": True})
+        logger.debug(colored("client connected with ip {} on port {}".format(ip_address,port),'green'))
         # Add to the command group
         slave = query.first()
         Group('commands').add(message.reply_channel)
         Group('commands_{}'.format(slave.id)).add(message.reply_channel)
 
+        logger.info("send boottime request to {}".format(slave.name))
         # send boottime request
         Group('commands_{}'.format(slave.id)).send({
             'text':
             Command(method="boottime", sid=slave.id).to_json()
         })
     else:
+        logger.info(colored("Rejecting unknown client with ip {}!".format(ip_address),'red'))
         message.reply_channel.send({"accept": False})
 
 
 # Connected to websocket.disconnect
 @channel_session
 def ws_rpc_disconnect(message):
-    slave = SlaveModel.objects.get(
-        ip_address=message.channel_session['ip_address'])
-    Group('commands').discard(message.reply_channel)
-    Group('commands_{}'.format(slave.id)).discard(message.reply_channel)
-    SlaveModel.objects.get(
-        ip_address=message.channel_session['ip_address']).slavestatus.delete()
+    query = SlaveModel.objects.filter(ip_address=message.channel_session['ip_address'])
+
+    if query:
+        slave = query.first()
+        Group('commands').discard(message.reply_channel)
+        Group('commands_{}'.format(slave.id)).discard(message.reply_channel)
+        slave.slavestatus.delete()
+        logger.info("Client with ip {} disconnected from /commands!".format(message.channel_session['ip_address']))
+
+        message.reply_channel.send({"accept": False})
+    else:
+        logger.info(colored("Unknown client with ip {} disconnected from /commands!".format(message.channel_session['ip_address']),'red'))
+        message.reply_channel.send({"accept": False})
 
 
 # Connected to websocket.connect
@@ -58,24 +74,34 @@ def ws_notifications_receive(message):
         if status.is_ok():
             if status.payload['method'] == 'boottime':
                 slave = SlaveModel.objects.get(id=status.payload['sid'])
+                logger.info("Received answer on boottime request from {}.".format(slave.name))
+
                 boottime = datetime.strptime(status.payload['boottime'], '%Y-%m-%d %H:%M:%S')
                 SlaveStatusModel(slave=slave, boottime=boottime).save()
+                logger.info("Saved status of {} with boottime {}".format(slave.name, boottime))
 
             elif status.payload['method'] == 'execute':
-                program_status = ProgramModel.objects.get(
-                    id=status.payload['pid']).programstatus
+                program =  ProgramModel.objects.get(
+                    id=status.payload['pid'])
+
+                logger.info("Received answer on execute request of function {} from {}.".format(program.name, program.slave.name))
+
+                program_status = program.programstatus
                 program_status.code = status.payload['code']
                 program_status.stopped = timezone.now()
                 program_status.save()
 
+                logger.info("Saved status of {} with code {}.".format(program.name, program_status.code))
+
                 # pass on message to webinterface
-                Group('notifications').send(message)
+                Group('notifications').send({'text': message.content['text']})
             else:
-                message.reply_channel.send({"accept": False})
+                logger.info(colored('Client send answer from unknown function {}.'.format(status.payload['method']),'red'))
         else:
-            message.reply_channel.send({"accept": False})
-    except:
-        message.reply_channel.send({"accept": False})
+            logger.info(colored('Client answered with error: {}'.format(status.payload),'red'))
+    except Exception as err:
+        logger.info(colored('Exception occured while handeling an incomming request on /commands \n{}'.format(err),'red'))
+
 
 
 # Connected to websocket.disconnect
