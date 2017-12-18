@@ -128,5 +128,4 @@ if __name__ == "__main__":
             if 'git+https://github.com/' in library:
                 library = library.replace('git+https://github.com/', '')
                 library = library.replace('/', '-')
-                print(library)
             install_local(library)
