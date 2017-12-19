@@ -1,16 +1,17 @@
+
 {% extends "base/base.html" %}
 {% load staticfiles %}
 {% load widget_tweaks %}
 {% block title %} Slaves {% endblock %}
 {% block premain %} {% endblock %}
 {% block content %}
-<div class="jumbotron" style="background: #292929; color: #FFF;">
+<div class="jumbotron" style=" ">
 
     <!-- Modal for deletion warnings used for slave and program deletion-->
     <div id="deleteWarning" class="modal fade" role="dialog">
         <div class="modal-dialog">
             <div class="modal-content"
-            style="background: #292929; color: #FFF;">
+            style=" ">
                 <div class="modal-header">
                     <h4 class="modal-title">Deletion Warning!</h4>
                     <button type="button" class="close" data-dismiss="modal">&times;</button>
@@ -30,7 +31,7 @@
         <div class="modal-dialog">
             <form id="programForm">
                 <div class="modal-content"
-                style="background: #292929; color: #FFF;">
+                style=" ">
                     <div class="modal-header">
                         <h4 class="modal-title"></h4>
                         <button type="button" class="close" data-dismiss="modal">&times;</button>
@@ -73,7 +74,7 @@
         <div class="modal-dialog">
             <form id="slaveForm">
                 <div class="modal-content"
-                style="background: #292929; color: #FFF;">
+                style=" ">
                     <div class="modal-header">
                         <h4 class="modal-title"></h4>
                         <button type="button" class="close" data-dismiss="modal">&times;</button>
@@ -115,7 +116,7 @@
     <div id="accordion" role="tablist">
         {% for slave in slaves %}
             <div class="card slave-card mb-2" id="{{ slave.id }}"
-            style="background-color: rgb(73, 73, 73);">
+            style="">
                 <div class="card-header collapsed">
                     <div class="row">
                         <div class="slave-name col">
@@ -179,13 +180,13 @@
                         <h5>Programs</h5>
                         {% for program in slave.program_set.all %}
                             <div class="card program-card mb-2" data-id="{{ program.id }}"
-                            style="background-color: #292929;">
+                            style="background-">
                                 <div class="card-body">
                                     <div class="row">
                                         <div class="program-name col">
                                             <h5 class="mt-2">{{ program.name }}</h5>
                                         </div>
-                                        <div class="program-path" style="display: none">{{ program.path }}</div>
+                                        <div class="program-path" style="display: none;">{{ program.path }}</div>
                                         <div class="program-arguments" style="display: none">{{ program.arguments }}</div>
                                         <div class="btn-toolbar" role="toolbar">
                                             <div class="btn-group mr-4" role="group">
@@ -267,7 +268,7 @@
             $('#deleteWarning .modal-footer #deleteSlaveModalButton').show();
             $('#deleteWarning .modal-body').empty(message);
             $('#deleteWarning .modal-body').append(message);
-		
+
 
             //adding id to modal and set it visible
             $('#deleteWarning').data('slaveId', id);
@@ -613,3 +614,4 @@
     });
 </script>
 {% endblock %}
+
