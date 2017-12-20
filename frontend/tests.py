@@ -1009,3 +1009,25 @@ class DatabaseTests(TestCase):
     def test_mac_validator_too_short_inner(self):
         self.assertRaises(ValidationError, validate_mac_address,
                           "00:02:23:2:23:23")
+
+    def test_flush(self):
+        slave = SlaveModel(name="test", ip_address="127.0.0.1", mac_address="00:00:00:00:00:00")
+        slave.save()
+
+        prog = ProgramModel(name="test", path="None", arguments="None", slave=slave)
+        prog.save()
+
+        status_slave = SlaveStatusModel(slave=slave, boottime=datetime.now())
+        status_slave.save()
+
+        status_program = ProgramStatusModel(prog.id, "None", datetime.now())
+        status_program.save()
+
+        self.assertEqual(SlaveStatusModel.objects.count(), 1)
+        self.assertEqual(ProgramStatusModel.objects.count(), 1)
+
+        from .urls import flush
+        flush("SlaveStatus", "ProgramStatus")
+
+        self.assertEqual(SlaveStatusModel.objects.count(), 0)
+        self.assertEqual(ProgramStatusModel.objects.count(), 0)
