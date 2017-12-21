@@ -1,11 +1,11 @@
-socket = new WebSocket("ws://" + window.location.host);
-socket.onmessage = function(e) {
+socket = new WebSocket("ws://" + window.location.host + "/notifications");
+socket.onmessage = function (e) {
 	var data = JSON.parse(e.data);
 	$.notify({
 		message: data.message
 	});
 }
-socket.onopen = function() {
+socket.onopen = function () {
 	console.log('Websocket opened')
 }
 // Call onopen directly if socket is already open

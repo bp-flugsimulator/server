@@ -4,9 +4,29 @@ from frontend.consumers import ws_notifications_connect, ws_notifications_receiv
 
 # handlers for websocket events
 channel_routing = [
-    route("websocket.connect", ws_rpc_connect, path=r"^/commands$"),
-    route("websocket.disconnect", ws_rpc_disconnect, path=r"^/commands$"),
-    route("websocket.connect", ws_notifications_connect),
-    route("websocket.receive", ws_notifications_receive),
-    route("websocket.disconnect", ws_notifications_disconnect),
+    route(
+        "websocket.connect",
+        ws_rpc_connect,
+        path=r"^/commands$",
+    ),
+    route(
+        "websocket.disconnect",
+        ws_rpc_disconnect,
+        path=r"^/commands$",
+    ),
+    route(
+        "websocket.connect",
+        ws_notifications_connect,
+        path=r"^/notifications$",
+    ),
+    route(
+        "websocket.receive",
+        ws_notifications_receive,
+        path=r"^/notifications$",
+    ),
+    route(
+        "websocket.disconnect",
+        ws_notifications_disconnect,
+        path=r"^/notifications$",
+    ),
 ]

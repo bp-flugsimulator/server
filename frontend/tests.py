@@ -21,23 +21,28 @@ def fill_database_slaves_set_1():
         SlaveModel(
             name="Tommo1",
             ip_address="192.168.2.39",
-            mac_address="00:00:00:00:00:00"),
+            mac_address="00:00:00:00:00:00",
+        ),
         SlaveModel(
             name="Tommo2",
             ip_address="192.168.3.39",
-            mac_address="02:00:00:00:00:00"),
+            mac_address="02:00:00:00:00:00",
+        ),
         SlaveModel(
             name="Tommo3",
             ip_address="192.168.5.39",
-            mac_address="00:02:00:00:00:00"),
+            mac_address="00:02:00:00:00:00",
+        ),
         SlaveModel(
             name="Tommo4",
             ip_address="192.168.6.39",
-            mac_address="00:00:02:00:00:00"),
+            mac_address="00:00:02:00:00:00",
+        ),
         SlaveModel(
             name="Tommo5",
             ip_address="192.168.7.39",
-            mac_address="00:00:00:02:00:00")
+            mac_address="00:00:00:02:00:00",
+        )
     ]
 
     for data in data_set:
@@ -70,19 +75,23 @@ class ApiTests(TestCase):
             SlaveModel(
                 name="add_slave_0",
                 ip_address="0.0.1.0",
-                mac_address="00:00:00:00:01:00"),
+                mac_address="00:00:00:00:01:00",
+            ),
             SlaveModel(
                 name="add_slave_1",
                 ip_address="0.0.1.1",
-                mac_address="00:00:00:00:01:01"),
+                mac_address="00:00:00:00:01:01",
+            ),
             SlaveModel(
                 name="add_slave_2",
                 ip_address="0.0.1.2",
-                mac_address="00:00:00:00:01:02"),
+                mac_address="00:00:00:00:01:02",
+            ),
             SlaveModel(
                 name="add_slave_3",
                 ip_address="0.0.1.3",
-                mac_address="00:00:00:00:01:03"),
+                mac_address="00:00:00:00:01:03",
+            ),
         ]
 
         #make a request for every slave in the data_set
@@ -96,8 +105,7 @@ class ApiTests(TestCase):
 
             self.assertEqual(api_response.status_code, 200)
             self.assertJSONEqual(
-                api_response.content.decode('utf-8'),
-                Status.ok("").to_json())
+                api_response.content.decode('utf-8'), Status.ok("").to_json())
 
         #test if all slaves get displayed
         view_response = self.client.get(reverse('frontend:slaves'))
@@ -110,7 +118,8 @@ class ApiTests(TestCase):
         data = SlaveModel(
             name="add_slave_4",
             ip_address="0.0.1.4",
-            mac_address="00:00:00:00:01:04")
+            mac_address="00:00:00:00:01:04",
+        )
 
         #add first slave
         api_response = self.client.post(
@@ -121,8 +130,7 @@ class ApiTests(TestCase):
             })
         self.assertEqual(api_response.status_code, 200)
         self.assertJSONEqual(
-            api_response.content.decode('utf-8'),
-            Status.ok("").to_json())
+            api_response.content.decode('utf-8'), Status.ok("").to_json())
 
         #insert data a second time
         api_response = self.client.post(
@@ -156,7 +164,8 @@ class ApiTests(TestCase):
         data = SlaveModel(
             name="add_slave_5",
             ip_address="ip address",
-            mac_address="mac address")
+            mac_address="mac address",
+        )
 
         api_response = self.client.post(
             reverse('frontend:add_slaves'), {
@@ -201,19 +210,23 @@ class ApiTests(TestCase):
             SlaveModel(
                 name="remove_slave_0",
                 ip_address="0.0.2.0",
-                mac_address="00:00:00:00:02:00"),
+                mac_address="00:00:00:00:02:00",
+            ),
             SlaveModel(
                 name="remove_slave_1",
                 ip_address="0.0.2.1",
-                mac_address="00:00:00:00:02:01"),
+                mac_address="00:00:00:00:02:01",
+            ),
             SlaveModel(
                 name="remove_slave_2",
                 ip_address="0.0.2.2",
-                mac_address="00:00:00:00:02:02"),
+                mac_address="00:00:00:00:02:02",
+            ),
             SlaveModel(
                 name="remove_slave_3",
                 ip_address="0.0.2.3",
-                mac_address="00:00:00:00:02:03"),
+                mac_address="00:00:00:00:02:03",
+            ),
         ]
 
         #make a request for every slave in the data_set
@@ -227,8 +240,7 @@ class ApiTests(TestCase):
 
             self.assertEqual(api_response.status_code, 200)
             self.assertJSONEqual(
-                api_response.content.decode('utf-8'),
-                Status.ok("").to_json())
+                api_response.content.decode('utf-8'), Status.ok("").to_json())
 
         #get all the database entries because the ids are needed to delete
         data_in_database_set = []
@@ -244,8 +256,7 @@ class ApiTests(TestCase):
             api_response = self.client.delete('/api/slave/' + str(data.id))
             self.assertEqual(api_response.status_code, 200)
             self.assertJSONEqual(
-                api_response.content.decode('utf-8'),
-                Status.ok("").to_json())
+                api_response.content.decode('utf-8'), Status.ok("").to_json())
             self.assertFalse(SlaveModel.objects.filter(id=data.id).exists())
 
     def test_edit_slave(self):
@@ -253,37 +264,45 @@ class ApiTests(TestCase):
             SlaveModel(
                 name="edit_slave_0",
                 ip_address="0.0.3.0",
-                mac_address="00:00:00:00:03:00"),
+                mac_address="00:00:00:00:03:00",
+            ),
             SlaveModel(
                 name="edit_slave_1",
                 ip_address="0.0.3.1",
-                mac_address="00:00:00:00:03:01"),
+                mac_address="00:00:00:00:03:01",
+            ),
             SlaveModel(
                 name="edit_slave_2",
                 ip_address="0.0.3.2",
-                mac_address="00:00:00:00:03:02"),
+                mac_address="00:00:00:00:03:02",
+            ),
             SlaveModel(
                 name="edit_slave_3",
                 ip_address="0.0.3.3",
-                mac_address="00:00:00:00:03:03"),
+                mac_address="00:00:00:00:03:03",
+            ),
         ]
         data_set_2 = [
             SlaveModel(
                 name="edit_slave_4",
                 ip_address="0.0.3.4",
-                mac_address="00:00:00:00:03:04"),
+                mac_address="00:00:00:00:03:04",
+            ),
             SlaveModel(
                 name="edit_slave_5",
                 ip_address="0.0.3.5",
-                mac_address="00:00:00:00:03:05"),
+                mac_address="00:00:00:00:03:05",
+            ),
             SlaveModel(
                 name="edit_slave_6",
                 ip_address="0.0.3.6",
-                mac_address="00:00:00:00:03:06"),
+                mac_address="00:00:00:00:03:06",
+            ),
             SlaveModel(
                 name="edit_slave_7",
                 ip_address="0.0.3.7",
-                mac_address="00:00:00:00:03:07"),
+                mac_address="00:00:00:00:03:07",
+            ),
         ]
 
         #make a request for every slave in the data_set
@@ -296,8 +315,7 @@ class ApiTests(TestCase):
                 })
             self.assertEqual(api_response.status_code, 200)
             self.assertJSONEqual(
-                api_response.content.decode('utf-8'),
-                Status.ok("").to_json())
+                api_response.content.decode('utf-8'), Status.ok("").to_json())
 
         #get all the database entries because the ids are needed to delete
         data_in_database_set = []
@@ -344,8 +362,7 @@ class ApiTests(TestCase):
             })
         self.assertEqual(api_response.status_code, 200)
         self.assertJSONEqual(
-            api_response.content.decode('utf-8'),
-            Status.ok("").to_json())
+            api_response.content.decode('utf-8'), Status.ok("").to_json())
 
         api_response = self.client.post(
             reverse('frontend:add_slaves'), {
@@ -355,13 +372,13 @@ class ApiTests(TestCase):
             })
         self.assertEqual(api_response.status_code, 200)
         self.assertJSONEqual(
-            api_response.content.decode('utf-8'),
-            Status.ok("").to_json())
+            api_response.content.decode('utf-8'), Status.ok("").to_json())
 
         data = SlaveModel.objects.filter(
             name='edit_slave_fail_0',
             ip_address='0.0.4.0',
-            mac_address='00:00:00:00:04:00').get()
+            mac_address='00:00:00:00:04:00',
+        ).get()
         api_response = self.client.put(
             "/api/slave/" + str(data.id),
             data=urlencode({
@@ -385,7 +402,8 @@ class ApiTests(TestCase):
         SlaveModel(
             name='add_program',
             ip_address='0.0.5.0',
-            mac_address='00:00:00:00:04:00').save()
+            mac_address='00:00:00:00:04:00',
+        ).save()
         model = SlaveModel.objects.get(name='add_program')
 
         #add all programs
@@ -418,7 +436,8 @@ class ApiTests(TestCase):
         SlaveModel(
             name='add_program_fail',
             ip_address='0.0.6.0',
-            mac_address='00:00:00:00:06:00').save()
+            mac_address='00:00:00:00:06:00',
+        ).save()
         model = SlaveModel.objects.get(name='add_program_fail')
 
         long_str = ''
@@ -426,13 +445,12 @@ class ApiTests(TestCase):
         for _ in range(2000):
             long_str += 'a'
 
-        api_response = self.client.post(
-            '/api/programs', {
-                'name': long_str,
-                'path': long_str,
-                'arguments': long_str,
-                'slave_id': str(model.id)
-            })
+        api_response = self.client.post('/api/programs', {
+            'name': long_str,
+            'path': long_str,
+            'arguments': long_str,
+            'slave_id': str(model.id)
+        })
         self.assertEqual(api_response.status_code, 200)
         self.assertJSONEqual(
             api_response.content.decode('utf-8'),
@@ -456,29 +474,28 @@ class ApiTests(TestCase):
         SlaveModel(
             name='add_program_fail_not_unique',
             ip_address='0.0.6.1',
-            mac_address='00:00:00:00:06:01').save()
+            mac_address='00:00:00:00:06:01',
+        ).save()
         model = SlaveModel.objects.get(name='add_program_fail_not_unique')
 
-        api_response = self.client.post(
-            '/api/programs', {
-                'name': 'name',
-                'path': 'path',
-                'arguments': '',
-                'slave_id': str(model.id)
-            })
+        api_response = self.client.post('/api/programs', {
+            'name': 'name',
+            'path': 'path',
+            'arguments': '',
+            'slave_id': str(model.id)
+        })
         self.assertEqual(api_response.status_code, 200)
         self.assertJSONEqual(
             api_response.content.decode('utf-8'),
             json.loads(Status.ok('').to_json()))
 
         #try to add program with the same name
-        api_response = self.client.post(
-            '/api/programs', {
-                'name': 'name',
-                'path': 'path',
-                'arguments': '',
-                'slave_id': str(model.id)
-            })
+        api_response = self.client.post('/api/programs', {
+            'name': 'name',
+            'path': 'path',
+            'arguments': '',
+            'slave_id': str(model.id)
+        })
         self.assertEqual(api_response.status_code, 200)
         self.assertJSONEqual(
             api_response.content.decode('utf-8'),
@@ -495,7 +512,8 @@ class ApiTests(TestCase):
         SlaveModel(
             name='add_program_unsupported',
             ip_address='0.0.7.0',
-            mac_address='00:00:00:00:07:00').save()
+            mac_address='00:00:00:00:07:00',
+        ).save()
         model = SlaveModel.objects.get(name='add_program_unsupported')
 
         api_response = self.client.delete('/api/programs')
@@ -503,7 +521,8 @@ class ApiTests(TestCase):
         SlaveModel.objects.get(
             name='add_program_unsupported',
             ip_address='0.0.7.0',
-            mac_address='00:00:00:00:07:00').delete()
+            mac_address='00:00:00:00:07:00',
+        ).delete()
 
         model.delete()
 
@@ -523,7 +542,8 @@ class ApiTests(TestCase):
         self.assertEqual(res.json()['status'], 'err')
         self.assertEqual(
             res.json()['payload'],
-            "DoesNotExist('Slave matching query does not exist.',)")
+            "DoesNotExist('Slave matching query does not exist.',)",
+        )
 
         # wrong http method
         res = self.client.post(
@@ -539,7 +559,8 @@ class ApiTests(TestCase):
         slave = SlaveModel(
             name="program_remove_slave_0",
             ip_address="0.0.4.255",
-            mac_address="00:00:00:00:04:ff")
+            mac_address="00:00:00:00:04:ff",
+        )
 
         #saving slave in database
         slave.save()
@@ -552,17 +573,20 @@ class ApiTests(TestCase):
                 name="problem solver",
                 path="/bin/rm",
                 arguments="-rf ./*",
-                slave=slave_in_database),
+                slave=slave_in_database,
+            ),
             ProgramModel(
                 name="command",
                 path="C:\Windows\System32\cmd.exe",
                 arguments="",
-                slave=slave_in_database),
+                slave=slave_in_database,
+            ),
             ProgramModel(
                 name="browser",
                 path="firefox.exe",
                 arguments="",
-                slave=slave_in_database),
+                slave=slave_in_database,
+            ),
         ]
 
         #saving programs in database
@@ -591,11 +615,13 @@ class ApiTests(TestCase):
         SlaveModel(
             name="test_modify_program",
             ip_address='0.0.7.0',
-            mac_address='00:00:00:00:07:00').save()
+            mac_address='00:00:00:00:07:00',
+        ).save()
         slave = SlaveModel.objects.get(
             name="test_modify_program",
             ip_address='0.0.7.0',
-            mac_address='00:00:00:00:07:00')
+            mac_address='00:00:00:00:07:00',
+        )
 
         programs = []
         for i in range(100):
@@ -634,11 +660,13 @@ class ApiTests(TestCase):
         SlaveModel(
             name="test_modify_program_fail",
             ip_address='0.0.7.1',
-            mac_address='00:00:00:00:07:01').save()
+            mac_address='00:00:00:00:07:01',
+        ).save()
         slave = SlaveModel.objects.get(
             name="test_modify_program_fail",
             ip_address='0.0.7.1',
-            mac_address='00:00:00:00:07:01')
+            mac_address='00:00:00:00:07:01',
+        )
 
         ProgramModel(name="", path="", arguments="", slave=slave).save()
 
@@ -680,11 +708,13 @@ class ApiTests(TestCase):
         SlaveModel(
             name="test_edit_program_unique_fail",
             ip_address='0.0.7.2',
-            mac_address='00:00:00:00:07:02').save()
+            mac_address='00:00:00:00:07:02',
+        ).save()
         slave = SlaveModel.objects.get(
             name="test_edit_program_unique_fail",
             ip_address='0.0.7.2',
-            mac_address='00:00:00:00:07:02')
+            mac_address='00:00:00:00:07:02',
+        )
 
         ProgramModel(
             name="name", path="path", arguments="", slave=slave).save()
@@ -718,11 +748,13 @@ class ApiTests(TestCase):
         SlaveModel(
             name="test_execute_program",
             ip_address='0.0.8.2',
-            mac_address='00:00:00:00:08:02').save()
+            mac_address='00:00:00:00:08:02',
+        ).save()
         slave = SlaveModel.objects.get(
             name="test_execute_program",
             ip_address='0.0.8.2',
-            mac_address='00:00:00:00:08:02')
+            mac_address='00:00:00:00:08:02',
+        )
 
         ProgramModel(
             name="program", path="path", arguments="", slave=slave).save()
@@ -739,7 +771,8 @@ class ApiTests(TestCase):
         self.assertEqual(api_response.status_code, 200)
         self.assertJSONEqual(
             api_response.content.decode('utf-8'),
-            json.loads(Status.ok("").to_json()))
+            json.loads(Status.ok("").to_json()),
+        )
 
         ws_response = client.receive()
         self.assertJSONEqual(
@@ -747,18 +780,21 @@ class ApiTests(TestCase):
                 method='execute',
                 pid=program.id,
                 path=program.path,
-                arguments=split(program.arguments)).to_json(), ws_response)
+                arguments=split(program.arguments),
+            ).to_json(), ws_response)
         slave.delete()
 
     def test_execute_program_fail_slave_offline(self):
         SlaveModel(
             name="test_execute_program",
             ip_address='0.0.8.2',
-            mac_address='00:00:00:00:08:02').save()
+            mac_address='00:00:00:00:08:02',
+        ).save()
         slave = SlaveModel.objects.get(
             name="test_execute_program",
             ip_address='0.0.8.2',
-            mac_address='00:00:00:00:08:02')
+            mac_address='00:00:00:00:08:02',
+        )
 
         ProgramModel(
             name="program", path="path", arguments="", slave=slave).save()
@@ -792,27 +828,27 @@ class WebsocketTests(TestCase):
             ws_client.send_and_consume,
             "websocket.connect",
             path="/commands",
-            content={
-                'client': ['0.0.9.0', '00:00:00:00:09:00']
-            })
+            content={'client': ['0.0.9.0', '00:00:00:00:09:00']},
+        )
 
     def test_rpc_commands(self):
         SlaveModel(
             name="test_rpc_commands",
             ip_address='0.0.10.0',
-            mac_address='00:00:00:00:10:00').save()
+            mac_address='00:00:00:00:10:00',
+        ).save()
         slave = SlaveModel.objects.get(
             name="test_rpc_commands",
             ip_address='0.0.10.0',
-            mac_address='00:00:00:00:10:00')
+            mac_address='00:00:00:00:10:00',
+        )
 
         ws_client = WSClient()
         ws_client.send_and_consume(
             'websocket.connect',
             path='/commands',
-            content={
-                'client': ['0.0.10.0', '00:00:00:00:10:00']
-            })
+            content={'client': ['0.0.10.0', '00:00:00:00:10:00']},
+        )
 
         self.assertJSONEqual(
             json.dumps(ws_client.receive()),
@@ -825,7 +861,9 @@ class WebsocketTests(TestCase):
         Group('client_{}'.format(slave.id)).send(
             {
                 'text': 'ok'
-            }, immediately=True)
+            },
+            immediately=True,
+        )
         self.assertEqual(ws_client.receive(json=False), 'ok')
 
         slave.delete()
@@ -834,19 +872,21 @@ class WebsocketTests(TestCase):
         SlaveModel(
             name="test_ws_rpc_disconnect",
             ip_address='0.0.10.1',
-            mac_address='00:00:00:00:10:01').save()
+            mac_address='00:00:00:00:10:01',
+        ).save()
+
         slave = SlaveModel.objects.get(
             name="test_ws_rpc_disconnect",
             ip_address='0.0.10.1',
-            mac_address='00:00:00:00:10:01')
+            mac_address='00:00:00:00:10:01',
+        )
 
         ws_client = WSClient()
         ws_client.send_and_consume(
             'websocket.connect',
             path='/commands',
-            content={
-                'client': ['0.0.10.1', '00:00:00:00:10:01']
-            })
+            content={'client': ['0.0.10.1', '00:00:00:00:10:01']},
+        )
 
         self.assertJSONEqual(
             json.dumps(ws_client.receive()),
@@ -866,19 +906,30 @@ class WebsocketTests(TestCase):
         Group('client_{}'.format(slave.id)).send(
             {
                 'text': 'ok'
-            }, immediately=True)
+            },
+            immediately=True,
+        )
         self.assertIsNone(ws_client.receive())
 
         slave.delete()
 
     def test_ws_notifications_connect_and_ws_disconnect(self):
         ws_client = WSClient()
-        ws_client.send_and_consume('websocket.connect')
-        ws_client.send_and_consume('websocket.disconnect')
+        ws_client.send_and_consume(
+            'websocket.connect',
+            path='/notifications',
+        )
+        ws_client.send_and_consume(
+            'websocket.disconnect',
+            path='/notifications',
+        )
 
     def test_ws_notifications_receive_fail(self):
         ws_client = WSClient()
-        ws_client.send_and_consume('websocket.receive')
+        ws_client.send_and_consume(
+            'websocket.receive',
+            path='/notifications',
+        )
         self.assertIsNone(ws_client.receive())
 
     def test_ws_notifications_receive_boottime(self):
@@ -894,6 +945,7 @@ class WebsocketTests(TestCase):
         ws_client = WSClient()
         ws_client.send_and_consume(
             'websocket.receive',
+            path='/notifications',
             content={
                 'text':
                 Status.ok({
@@ -930,6 +982,7 @@ class WebsocketTests(TestCase):
         ws_client = WSClient()
         ws_client.send_and_consume(
             'websocket.receive',
+            path='/notifications',
             content={
                 'text':
                 Status.ok({
@@ -947,20 +1000,21 @@ class WebsocketTests(TestCase):
     def test_ws_notifications_receive_status_err(self):
         ws_client = WSClient()
         ws_client.send_and_consume(
-            'websocket.receive', content={
-                'text': Status.err("").to_json()
-            })
+            'websocket.receive',
+            path='/notifications',
+            content={'text': Status.err("").to_json()},
+        )
         self.assertIsNone(ws_client.receive())
 
     def test_ws_notifications_receive_unknown_method(self):
         ws_client = WSClient()
         ws_client.send_and_consume(
             'websocket.receive',
-            content={
-                'text': Status.ok({
-                    'method': ''
-                }).to_json()
-            })
+            path='/notifications',
+            content={'text': Status.ok({
+                'method': ''
+            }).to_json()},
+        )
 
         self.assertIsNone(ws_client.receive())
 
@@ -970,7 +1024,8 @@ class DatabaseTests(TestCase):
         mod = SlaveModel(
             name="Tommo3",
             ip_address="192.168.5.39",
-            mac_address="00:02:00:00:00:00")
+            mac_address="00:02:00:00:00:00",
+        )
         mod.full_clean()
         mod.save()
         self.assertTrue(SlaveModel.objects.filter(name="Tommo3").exists())
@@ -996,25 +1051,43 @@ class DatabaseTests(TestCase):
         self.assertTrue(True)
 
     def test_mac_validator_too_short(self):
-        self.assertRaises(ValidationError, validate_mac_address, "00:02:23")
+        self.assertRaises(
+            ValidationError,
+            validate_mac_address,
+            "00:02:23",
+        )
 
     def test_mac_validator_too_long(self):
-        self.assertRaises(ValidationError, validate_mac_address,
-                          "00:02:23:23:23:23:32")
+        self.assertRaises(
+            ValidationError,
+            validate_mac_address,
+            "00:02:23:23:23:23:32",
+        )
 
     def test_mac_validator_too_long_inner(self):
-        self.assertRaises(ValidationError, validate_mac_address,
-                          "00:02:23:223:23:23")
+        self.assertRaises(
+            ValidationError,
+            validate_mac_address,
+            "00:02:23:223:23:23",
+        )
 
     def test_mac_validator_too_short_inner(self):
-        self.assertRaises(ValidationError, validate_mac_address,
-                          "00:02:23:2:23:23")
+        self.assertRaises(
+            ValidationError,
+            validate_mac_address,
+            "00:02:23:2:23:23",
+        )
 
     def test_flush(self):
-        slave = SlaveModel(name="test", ip_address="127.0.0.1", mac_address="00:00:00:00:00:00")
+        slave = SlaveModel(
+            name="test",
+            ip_address="127.0.0.1",
+            mac_address="00:00:00:00:00:00",
+        )
         slave.save()
 
-        prog = ProgramModel(name="test", path="None", arguments="None", slave=slave)
+        prog = ProgramModel(
+            name="test", path="None", arguments="None", slave=slave)
         prog.save()
 
         status_slave = SlaveStatusModel(slave=slave, boottime=datetime.now())
