@@ -13,7 +13,7 @@ from channels import Group
 import json
 
 from .models import Slave as SlaveModel, validate_mac_address, Program as ProgramModel, SlaveStatus as SlaveStatusModel, ProgramStatus as ProgramStatusModel
-from .consumers import ws_add_rpc_commands
+from .consumers import ws_rpc_connect
 
 
 def fill_database_slaves_set_1():
@@ -871,7 +871,7 @@ class WebsocketTests(TestCase):
 
         slave.delete()
 
-    def test_ws_notifications_add_and_ws_disconnect(self):
+    def test_ws_notifications_connect_and_ws_disconnect(self):
         ws_client = WSClient()
         ws_client.send_and_consume('websocket.connect')
         ws_client.send_and_consume('websocket.disconnect')

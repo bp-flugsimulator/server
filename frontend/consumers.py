@@ -14,7 +14,7 @@ logger = logging.getLogger('django.request')
 
 
 @channel_session
-def ws_add_rpc_commands(message):
+def ws_rpc_connect(message):
     """
     Handels websockets.connect requests of '/commands'.
     Connections only get accepted if the ip of the sender is the ip of a known client.
@@ -78,7 +78,7 @@ def ws_rpc_disconnect(message):
             message.channel_session['ip_address']))
 
 
-def ws_notifications_add(message):
+def ws_notifications_connect(message):
     """
     Handels websockets.connect requests of '/'.
     Connections only get accepted if the ip of the sender is the ip of a known slave.
