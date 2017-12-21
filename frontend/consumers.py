@@ -80,7 +80,7 @@ def ws_rpc_disconnect(message):
 
 def ws_notifications_connect(message):
     """
-    Handels websockets.connect requests of '/'.
+    Handels websockets.connect requests of '/notifications'.
     Connections only get accepted if the ip of the sender is the ip of a known slave.
     Adds the reply_channel to the group 'notifications'
 
@@ -97,7 +97,7 @@ def ws_notifications_connect(message):
 
 def ws_notifications_receive(message):
     """
-    Handels websockets.receive requests of '/'.
+    Handels websockets.receive requests of '/notifications'.
     Connections only get accepted if the ip of the sender is the ip of a known slave.
 
     If the status contains the result of a boottime request a corresponding SlaveStatus
@@ -155,13 +155,13 @@ def ws_notifications_receive(message):
     except Exception as err:
         logger.info(
             colored(
-                'Exception occured while handeling an incomming request on /commands \n{}'.
+                'Exception occurred while handeling an incoming request on /commands \n{}'.
                 format(err), 'red'))
 
 
 def ws_notifications_disconnect(message):
     """
-    Handels websockets.disconenct requests of '/'.
+    Handels websockets.disconnected requests of '/notifications'.
     Removes the reply_channel from the 'notifications' group
 
     Arguments
