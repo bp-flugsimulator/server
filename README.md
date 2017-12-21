@@ -14,3 +14,19 @@ python3 manage.py migrate
 ```
 
 Der Server kann dann über `python3 manage.py runserver` gestartet werden.
+
+## CSS (SASS)
+
+Um das Aussehen zu ändern müssen zuerst die Abhängigkeiten installiert werden.
+
+```sh
+pip install -r requirements_css.txt
+```
+
+Danach kann die Datei in `static/css/custom.scss` bearbeitet werden.
+Um das ganze auf dem Produktionserver laufen zu lassen muss man die Dateien
+compilen.
+
+```sh
+python manage.py compilescss
+```
