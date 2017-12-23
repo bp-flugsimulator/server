@@ -52,9 +52,6 @@ class Slave(models.Model):
 
     Attributes
     ----------
-    id: int
-        The unique ID which can be referenced to this object.
-
     name: str
         The name of the slave
 
@@ -65,7 +62,6 @@ class Slave(models.Model):
         The MAC address of the slave.
 
     """
-    id = models.AutoField(primary_key=True)
     name = models.CharField(unique=True, max_length=200)
     ip_address = models.GenericIPAddressField(unique=True)
     mac_address = models.CharField(
@@ -79,9 +75,6 @@ class Program(models.Model):
 
     Attributes
     ----------
-    id: int
-        The unique ID which can be referenced to this object.
-
     name: str
         The name of the program (has to be unique for every slave)
 
@@ -95,11 +88,48 @@ class Program(models.Model):
     slave: Slave
         The slave on which the command will be executed
     """
-    id = models.AutoField(primary_key=True)
     name = models.CharField(unique=False, max_length=200)
     path = models.CharField(unique=False, max_length=200)
     arguments = models.CharField(unique=False, blank=True, max_length=200)
     slave = models.ForeignKey(Slave, on_delete=models.CASCADE)
 
     class Meta:
-        unique_together = (('name', 'slave'),)
+        unique_together = (('name', 'slave'), )
+
+
+class ProgramStatus(models.Model):
+    """
+    Represents a process which is currently running on the slave.
+
+    Arguments
+    ---------
+        id: Program ID.
+        error: Error message if the execution was not successful.
+        started: Timestamp when the command was send.
+        stopped: Timestamp when the result of the Command was received.
+    """
+    program = models.OneToOneField(
+        Program,
+        on_delete=models.CASCADE,
+        primary_key=True,
+    )
+    code = models.CharField(max_length=200, unique=False, blank=True)
+    started = models.DateTimeField(unique=False, blank=False)
+    stopped = models.DateTimeField(unique=False, null=True)
+
+
+class SlaveStatus(models.Model):
+    """
+    Represents the current status of the slaves.
+
+    Arguments
+    ---------
+        id: Slave ID.
+        boottime: Timestamp, when the slave was started via uptime command
+    """
+    slave = models.OneToOneField(
+        Slave,
+        on_delete=models.CASCADE,
+        primary_key=True,
+    )
+    boottime = models.DateTimeField(unique=False)

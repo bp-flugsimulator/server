@@ -10,6 +10,8 @@ Example
 
 from sys import stderr, argv
 from platform import system, architecture
+from distutils.version import LooseVersion
+
 import os
 import pip
 
@@ -92,10 +94,14 @@ def install(lib_name):
 
 
 if __name__ == "__main__":
-    # try to update pip'
-    pip.main(['install', '-U', 'pip'])
+    # update pip to local file
+    if LooseVersion(pip.__version__) < LooseVersion('8.0.0'):
+        if pip.main([
+                'install', '--upgrade', 'pip', '--no-index', '--find-links',
+                'file://' + os.getcwd() + '/libs'
+        ]) != 0:
+            raise Exception('could not install pip from file')
 
-    # if --update flag is set update all dependencies
     # from requirements.txt in ./libs
     if len(argv) > 1 and argv[1] == '--update':
         with open('requirements.txt') as requirements:
@@ -103,11 +109,11 @@ if __name__ == "__main__":
                 download(library)
 
     # install wheel
-    install('wheel')
+    install_local('wheel')
 
     # on windows install pypiwin32
     if system() == 'Windows':
-        install('pypiwin32')
+        install_local('pypiwin32')
     elif system() == 'Linux':
         if architecture()[0] != '64bit':
             stderr.write(architecture()[0] +
@@ -118,4 +124,8 @@ if __name__ == "__main__":
     # install all other dependencies
     with open('requirements.txt') as requirements:
         for library in requirements:
+            # if github dependecy only install from file
+            if 'git+https://github.com/' in library:
+                library = library.replace('git+https://github.com/', '')
+                library = library.replace('/', '-')
             install_local(library)
