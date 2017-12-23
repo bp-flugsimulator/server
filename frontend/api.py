@@ -103,7 +103,7 @@ def add_program(request):
 
         if form.is_valid():
             program = form.save(commit=False)
-            program.slave = SlaveModel.objects.get(id=request.POST["slave_id"])
+            program.slave = form.cleaned_data['slave']
             try:
                 program.full_clean()
                 form.save()
@@ -111,7 +111,7 @@ def add_program(request):
             except ValidationError as _:
                 error_dict = {
                     'name':
-                    ['Program with this Name already exists on this Client.']
+                    ["Program with this Name already exists on this Client."]
                 }
                 return StatusResponse(Status.err(error_dict))
         else:

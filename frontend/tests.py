@@ -413,7 +413,7 @@ class ApiTests(TestCase):
                     'name': 'name' + str(id),
                     'path': 'path' + str(id),
                     'arguments': 'arguments' + str(id),
-                    'slave_id': str(model.id)
+                    'slave': str(model.id)
                 })
             self.assertEqual(api_response.status_code, 200)
             self.assertJSONEqual(
@@ -449,7 +449,7 @@ class ApiTests(TestCase):
             'name': long_str,
             'path': long_str,
             'arguments': long_str,
-            'slave_id': str(model.id)
+            'slave': str(model.id)
         })
         self.assertEqual(api_response.status_code, 200)
         self.assertJSONEqual(
@@ -482,7 +482,7 @@ class ApiTests(TestCase):
             'name': 'name',
             'path': 'path',
             'arguments': '',
-            'slave_id': str(model.id)
+            'slave': str(model.id)
         })
         self.assertEqual(api_response.status_code, 200)
         self.assertJSONEqual(
@@ -494,7 +494,7 @@ class ApiTests(TestCase):
             'name': 'name',
             'path': 'path',
             'arguments': '',
-            'slave_id': str(model.id)
+            'slave': str(model.id)
         })
         self.assertEqual(api_response.status_code, 200)
         self.assertJSONEqual(
@@ -644,7 +644,7 @@ class ApiTests(TestCase):
                     'name': str(i),
                     'path': str(i),
                     'arguments': str(i),
-                    'slave_id': str(slave.id)
+                    'slave': str(slave.id)
                 }))
 
             self.assertEqual(api_response.status_code, 200)
@@ -683,7 +683,7 @@ class ApiTests(TestCase):
                 'name': long_str,
                 'path': long_str,
                 'arguments': long_str,
-                'slave_id': str(slave.id)
+                'slave': str(slave.id)
             }))
 
         self.assertEqual(api_response.status_code, 200)
@@ -730,7 +730,7 @@ class ApiTests(TestCase):
                 'name': 'name',
                 'path': 'path',
                 'arguments': '',
-                'slave_id': str(slave.id)
+                'slave': str(slave.id)
             }))
 
         self.assertEqual(api_response.status_code, 200)
