@@ -16,7 +16,8 @@ def slave_entry(slave, programs):
 
     Returns
     -------
-        A context which maps the slave object to slave and the arry of programs to programs.
+        A context which maps the slave object to slave and the array of
+        programs to programs.
     """
     return {
         'slave': slave,
