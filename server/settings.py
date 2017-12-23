@@ -24,8 +24,7 @@ SECRET_KEY = ')%6g_4%cxu0hr34b-!!ki1-^opbxam4-h+yhdq&a8*wx(h+vh*'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = ["172.18.0.0", "localhost", "127.0.0.1"]
 # Application definition
 
 INSTALLED_APPS = [
@@ -35,7 +34,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django_q',
     'base',
     'frontend',
     'widget_tweaks',
@@ -115,7 +113,7 @@ USE_I18N = True
 
 USE_L10N = True
 
-USE_TZ = True
+USE_TZ = False
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
@@ -130,9 +128,7 @@ STATICFILES_DIRS = [
 MESSAGE_STORAGE = 'django.contrib.messages.storage.cookie.CookieStorage'
 
 # Cluster
-Q_CLUSTER = {
-    'orm': 'default'
-}
+Q_CLUSTER = {'orm': 'default'}
 
 # channels settings
 CHANNEL_LAYERS = {

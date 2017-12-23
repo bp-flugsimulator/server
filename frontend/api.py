@@ -2,16 +2,18 @@ from django.http import HttpResponseForbidden
 from django.http.request import QueryDict
 from django.core.exceptions import ValidationError
 
-from .models import Slave as SlaveModel, Program as ProgramModel
+from .models import Slave as SlaveModel, Program as ProgramModel, ProgramStatus as ProgramStatusModel, SlaveStatus as SlaveStatusModel
 
 from .forms import SlaveForm, ProgramForm
 from server.utils import StatusResponse
-
 import json
 
 from channels import Group
-from .queue import wake_Slave
 from utils.status import Status
+from utils import Command
+from shlex import split
+from django.utils import timezone
+from wakeonlan.wol import send_magic_packet
 
 
 def add_slave(request):
@@ -137,7 +139,7 @@ def wol_slave(request, id):
     """
     if request.method == 'GET':
         try:
-            wake_Slave(SlaveModel.objects.get(id=id).mac_address)
+            send_magic_packet(SlaveModel.objects.get(id=id).mac_address)
         except Exception as err:
             return StatusResponse(Status.err(repr(err)), status=500)
         Group('notifications').send({
@@ -157,8 +159,9 @@ def manage_program(request, programId):
     the given programId from a slave with the given slaveId
     ----------
     request: HttpRequest
-        a DELETE request
-        or a PUT request
+        a DELETE request to delete a database entry
+        or a PUT request to update a database entry
+        or a POST request to execute the program on the slave
     slaveId: int
         the id of the slave
     programId: int
@@ -174,6 +177,23 @@ def manage_program(request, programId):
     if request.method == 'DELETE':
         ProgramModel.objects.filter(id=programId).delete()
         return StatusResponse(Status.ok(''))
+    if request.method == 'POST':
+        program = ProgramModel.objects.get(id=programId)
+        if SlaveStatusModel.objects.filter(slave=program.slave).exists():
+            ProgramStatusModel(program=program, started=timezone.now()).save()
+            Group('client_' + str(program.slave.id)).send({
+                'text':
+                Command(
+                    method="execute",
+                    pid=program.id,
+                    path=program.path,
+                    arguments=split(program.arguments)).to_json()
+            })
+            return StatusResponse(Status.ok(''))
+        else:
+            return StatusResponse(
+                Status.err('Can not start {} because {} is offline!'.format(
+                    program.name, program.slave.name)))
     elif request.method == 'PUT':
         # create form from a new QueryDict made from the request body
         # (request.PUT is unsupported) as an update (instance) of the

@@ -14,3 +14,25 @@ urlpatterns = [
     url(r'^api/slave/([0-9]+)/wol$', api.wol_slave, name='wol_slave'),
     url(r'^api/program/([0-9]+)$', api.manage_program, name='manage_program'),
 ]
+
+
+def flush(*tables):
+    """
+    Deletes all entries in the given tables.
+
+    Arguments
+    ---------
+        tables: List of table names (as string)
+
+    """
+    from frontend import models
+
+    for table in tables:
+        try:
+            getattr(models, table).objects.all().delete()
+        except:
+            pass
+
+
+# Flush status tables DO NOT DELETE!
+flush("SlaveStatus", "ProgramStatus")

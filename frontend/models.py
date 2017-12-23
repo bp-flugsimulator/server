@@ -94,4 +94,42 @@ class Program(models.Model):
     slave = models.ForeignKey(Slave, on_delete=models.CASCADE)
 
     class Meta:
-        unique_together = (('name', 'slave'),)
+        unique_together = (('name', 'slave'), )
+
+
+class ProgramStatus(models.Model):
+    """
+    Represents a process which is currently running on the slave.
+
+    Arguments
+    ---------
+        id: Program ID.
+        error: Error message if the execution was not successful.
+        started: Timestamp when the command was send.
+        stopped: Timestamp when the result of the Command was received.
+    """
+    program = models.OneToOneField(
+        Program,
+        on_delete=models.CASCADE,
+        primary_key=True,
+    )
+    code = models.CharField(max_length=200, unique=False, blank=True)
+    started = models.DateTimeField(unique=False, blank=False)
+    stopped = models.DateTimeField(unique=False, null=True)
+
+
+class SlaveStatus(models.Model):
+    """
+    Represents the current status of the slaves.
+
+    Arguments
+    ---------
+        id: Slave ID.
+        boottime: Timestamp, when the slave was started via uptime command
+    """
+    slave = models.OneToOneField(
+        Slave,
+        on_delete=models.CASCADE,
+        primary_key=True,
+    )
+    boottime = models.DateTimeField(unique=False)
