@@ -27,7 +27,7 @@ function getCookie(name) {
  * single object by it's id.
  */
 function modalDeleteAction(form, route) {
-    var id = $('#deleteWarning').data('sqlId');
+    let id = $('#deleteWarning').data('sqlId');
 
     $.ajax({
         type: 'DELETE',
@@ -78,12 +78,28 @@ function handleFormStatus(form, status) {
 
         // insert new feedback
         $.each(status.payload, function (id, msg) {
-            var node = form.find("input[name=" + id + "]");
+            let node = form.find("input[name=" + id + "]");
             node.addClass("is-invalid");
             node.parent().append('<div class="invalid-feedback">' + msg + '</div>');
         });
     }
 }
+
+/**
+ * Cleares the errorfields of a given form
+ *
+ * @param {HTMLElement} form
+ */
+function clearErrorMessages(form){
+    form.find("div[class='invalid-feedback']").each(function (index, item) {
+        item.remove();
+    });
+
+    form.find(".is-invalid").each(function (index, item) {
+        $(item).removeClass("is-invalid");
+    });
+}
+
 
 $(document).ready(function () {
     // set defaults for notifications
@@ -108,9 +124,9 @@ $(document).ready(function () {
     $(".delete_slave").click(function () {
 
         //get id and name of the slave and create deletion message
-        var id = $(this).parents(".slave-card").attr("id");
-        var name = $(this).parents(".slave-card").children().find('.slave-name').text();
-        var message = "<a>Are you sure you want to remove client </a><b>" + name + "</b>?</a>";
+        let id = $(this).parents(".slave-card").attr("id");
+        let name = $(this).parents(".slave-card").children().find('.slave-name').text();
+        let message = "<a>Are you sure you want to remove client </a><b>" + name + "</b>?</a>";
 
         //changing button visibility and message of the delete modal
         $('#deleteWarning .modal-footer #deleteProgramModalButton').hide();
@@ -128,9 +144,9 @@ $(document).ready(function () {
     $(".delete_program").click(function () {
 
         //get id and name of the program and create deletion message
-        var id = $(this).parents(".program-card").attr("data-id");
-        var name = $(this).parents(".program-card").children().find('.program-name').text();
-        var message = "<a>Are you sure you want to remove program </a><b>" + name + "</b>?</a>";
+        let id = $(this).parents(".program-card").attr("data-id");
+        let name = $(this).parents(".program-card").children().find('.program-name').text();
+        let message = "<a>Are you sure you want to remove program </a><b>" + name + "</b>?</a>";
 
         //changing button visibility and message of the delete modal
         $('#deleteWarning .modal-footer #deleteSlaveModalButton').hide();
@@ -153,7 +169,7 @@ $(document).ready(function () {
     });
 
     $('.start-program-btn').click(function () {
-        var id = $(this).parents(".program-card").attr("data-id");
+        let id = $(this).parents(".program-card").attr("data-id");
         $.ajax({
             type: 'POST',
             url: '/api/program/' + id,
@@ -200,15 +216,10 @@ $(document).ready(function () {
         programForm.find("input[name='arguments']").val("");
 
         //clear error messages
-        programForm.find("div[class='invalid-feedback']").each(function (index, item) {
-            item.remove();
-        });
-        programForm.find(".is-invalid").each(function (index, item) {
-            $(item).removeClass("is-invalid");
-        });
+        clearErrorMessages(programForm);
 
         //find slave id and store it in the form
-        var card = $(this).parents('.slave-card');
+        let card = $(this).parents('.slave-card');
         programForm.find("input[name='slave']").val(card.attr("id"));
 
         programModal.modal('toggle');
@@ -220,11 +231,11 @@ $(document).ready(function () {
         programForm = programModal.children().find('#programForm');
 
         //get info of program
-        var card = $(this).parents('.program-card');
-        var id = card.attr('data-id');
-        var name = card.children().find('.program-name').text().trim();
-        var path = card.children().find('.program-path').text().trim();
-        var args = card.children().find('.program-arguments').text().trim();
+        let card = $(this).parents('.program-card');
+        let id = card.attr('data-id');
+        let name = card.children().find('.program-name').text().trim();
+        let path = card.children().find('.program-path').text().trim();
+        let args = card.children().find('.program-arguments').text().trim();
 
         console.log("id:" + id + " name:" + name + " path:" + path + " args:" + args);
 
@@ -240,12 +251,7 @@ $(document).ready(function () {
         programForm.find("input[name='arguments']").val(args);
 
         //clear errormessages
-        programForm.find("div[class='invalid-feedback']").each(function (index, item) {
-            item.remove();
-        });
-        programForm.find(".is-invalid").each(function (index, item) {
-            $(item).removeClass("is-invalid");
-        });
+        clearErrorMessages(slaveForm);
 
         //find slave id and store it in the form
         programModal.modal('toggle');
@@ -267,13 +273,8 @@ $(document).ready(function () {
         slaveForm.find("input[name='ip_address']").val("");
         slaveForm.find("input[name='mac_address']").val("");
 
-        //clear errormessages
-        slaveForm.find("div[class='invalid-feedback']").each(function (index, item) {
-            item.remove();
-        });
-        slaveForm.find(".is-invalid").each(function (index, item) {
-            $(item).removeClass("is-invalid");
-        });
+        //clear error messages
+        clearErrorMessages(slaveForm);
 
         slaveModal.modal('toggle');
     });
@@ -281,17 +282,17 @@ $(document).ready(function () {
     //opens the slaveModal to modify an existing slave
     $('.modify-slave-btn').click(function () {
         //get info of slave
-        var card = $(this).parents('.card');
-        var id = card.attr("id");
-        var name = card.children().find('.slave-name').text().trim();
-        var ip = card.children().find('.slave-ip').text().trim();
-        var mac = card.children().find('.slave-mac').text().trim();
+        let card = $(this).parents('.card');
+        let id = card.attr("id");
+        let name = card.children().find('.slave-name').text().trim();
+        let ip = card.children().find('.slave-ip').text().trim();
+        let mac = card.children().find('.slave-mac').text().trim();
 
-        var slaveModal = $('#slaveModal');
+        let slaveModal = $('#slaveModal');
         slaveModal.children().find('.modal-title').text("Edit Client");
 
         //modify the form for the submit button
-        var slaveForm = slaveModal.children().find('#slaveForm');
+        let slaveForm = slaveModal.children().find('#slaveForm');
         slaveForm.attr('action', '/api/slave/' + id);
         slaveForm.attr('method', 'PUT');
         slaveForm.children().find('.submit-btn').text('Edit');
@@ -302,12 +303,7 @@ $(document).ready(function () {
         slaveForm.find("input[name='mac_address']").val(mac);
 
         //clear errormessages
-        slaveForm.find("div[class='invalid-feedback']").each(function (index, item) {
-            item.remove();
-        });
-        slaveForm.find(".is-invalid").each(function (index, item) {
-            $(item).removeClass("is-invalid");
-        });
+        clearErrorMessages(slaveForm);
 
         //open modal
         slaveModal.modal('toggle');
@@ -374,15 +370,15 @@ $(document).ready(function () {
     });
 
     $('.startSlave').click(function () {
-        var id = $(this).parents('.card').attr("id");
-        var el = $(this);
+        let id = $(this).parents('.card').attr("id");
+        let el = $(this);
         $.get({
             url: '/api/slave/' + id + '/wol',
             beforeSend: function (xhr) {
                 xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'))
             }
         }).done(function (data) {
-            var status = Status.from_json(JSON.stringify(data));
+            let status = Status.from_json(JSON.stringify(data));
             if (status.is_ok()) {
                 el.addClass('animated pulse');
                 el.one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend', function () {
