@@ -129,35 +129,37 @@ $(document).ready(function () {
         let message = "<a>Are you sure you want to remove client </a><b>" + name + "</b>?</a>";
 
         //changing button visibility and message of the delete modal
-        $('#deleteWarning .modal-footer #deleteProgramModalButton').hide();
-        $('#deleteWarning .modal-footer #deleteSlaveModalButton').show();
-        $('#deleteWarning .modal-body').empty(message);
-        $('#deleteWarning .modal-body').append(message);
+        let deleteWarning = $('#deleteWarning');
+        deleteWarning.children().find('#deleteProgramModalButton').hide();
+        deleteWarning.children().find('#deleteSlaveModalButton').show();
+        deleteWarning.children().find('.modal-body').empty(message);
+        deleteWarning.children().find('.modal-body').append(message);
 
 
         //adding id to modal and set it visible
-        $('#deleteWarning').data('sqlId', id);
-        $('#deleteWarning').modal('toggle');
+        deleteWarning.data('sqlId', id);
+        deleteWarning.modal('toggle');
     });
 
     /*function for deleting a program, it is added to the delete_program button*/
-    $(".delete_program").click(function () {
-
+    $('.delete_program').click(function () {
         //get id and name of the program and create deletion message
         let id = $(this).parents(".program-card").attr("data-id");
         let name = $(this).parents(".program-card").children().find('.program-name').text();
         let message = "<a>Are you sure you want to remove program </a><b>" + name + "</b>?</a>";
 
-        //changing button visibility and message of the delete modal
-        $('#deleteWarning .modal-footer #deleteSlaveModalButton').hide();
-        $('#deleteWarning .modal-footer #deleteProgramModalButton').show();
-        $('#deleteWarning .modal-body').empty(message);
-        $('#deleteWarning .modal-body').append(message);
+        //
+               //changing button visibility and message of the delete modal
+        let deleteWarning = $('#deleteWarning');
+        deleteWarning.children().find('#deleteSlaveModalButton').hide();
+        deleteWarning.children().find('#deleteProgramModalButton').show();
+        deleteWarning.children().find('.modal-body').empty(message);
+        deleteWarning.children().find('.modal-body').append(message);
+
 
         //adding id to modal and set it visible
-        $('#deleteWarning').data('sqlId', id);
-        $('#deleteWarning').modal('toggle');
-
+        deleteWarning.data('sqlId', id);
+        deleteWarning.modal('toggle');
     });
 
     $('#deleteSlaveModalButton').click(function () {
