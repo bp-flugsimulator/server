@@ -2,8 +2,6 @@ from django.core.management.base import BaseCommand
 
 import sass
 
-from server.settings import BASE_DIR
-
 class Command(BaseCommand):
     help = 'Compiles the custom sass to css'
 
