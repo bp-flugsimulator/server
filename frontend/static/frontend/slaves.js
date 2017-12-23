@@ -202,12 +202,12 @@ $(document).ready(function () {
 
     //opens the programModal to add a new program
     $('.add-program-btn').click(function () {
-        programModal = $('#programModal');
+        let programModal = $('#programModal');
         programModal.children().find('.modal-title').text('Add Program');
 
 
         //modify the form for the submit button
-        programForm = programModal.children().find('#programForm');
+        let programForm = programModal.children().find('#programForm');
         programForm.attr('action', '/api/programs');
         programForm.attr('method', 'POST');
         programForm.children().find('.submit-btn').text('Add');
@@ -229,8 +229,8 @@ $(document).ready(function () {
 
     //opens the programModal to modify a program
     $('.modify-program-btn').click(function () {
-        programModal = $('#programModal');
-        programForm = programModal.children().find('#programForm');
+        let programModal = $('#programModal');
+        let programForm = programModal.children().find('#programForm');
 
         //get info of program
         let card = $(this).parents('.program-card');
@@ -252,8 +252,13 @@ $(document).ready(function () {
         programForm.find("input[name='path']").val(path);
         programForm.find("input[name='arguments']").val(args);
 
-        //clear errormessages
-        clearErrorMessages(slaveForm);
+        //clear error messages
+        clearErrorMessages(programForm);
+
+        //find slave id and store it in the form
+        let slaveCard = $(this).parents('.slave-card');
+        programForm.find("input[name='slave']").val(slaveCard.attr('id'));
+
 
         //find slave id and store it in the form
         programModal.modal('toggle');
@@ -261,11 +266,11 @@ $(document).ready(function () {
 
     //opens the slaveModal to add a new slave
     $('.add-slave-btn').click(function () {
-        slaveModal = $('#slaveModal');
+        let slaveModal = $('#slaveModal');
         slaveModal.children().find('.modal-title').text('Add Client');
 
         //modify the form for the submit button
-        slaveForm = slaveModal.children().find('#slaveForm');
+        let slaveForm = slaveModal.children().find('#slaveForm');
         slaveForm.attr('action', '/api/slaves');
         slaveForm.attr('method', 'POST');
         slaveForm.children().find('.submit-btn').text('Add');
@@ -315,14 +320,14 @@ $(document).ready(function () {
     $('#programForm').submit(function (event) {
         //Stop form from submitting normally
         event.preventDefault();
-        console.log($('#programForm').serialize());
+        console.log($(this).serialize());
 
         //send request to given url and with given method
         //data field contains information about the slave
         $.ajax({
             type: $(this).attr('method'),
             url: $(this).attr('action'),
-            data: $('#programForm').serialize(),
+            data: $(this).serialize(),
             converters: {
                 'text json': Status.from_json
             },
