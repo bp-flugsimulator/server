@@ -24,6 +24,7 @@ install:
   - $DENV
   - pip install coverage
   - pip install coveralls
+  - npm install
 
 script:
   - export PYTHONWARNINGS=all
