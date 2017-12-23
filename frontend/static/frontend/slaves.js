@@ -230,9 +230,9 @@ $(document).ready(function () {
         var id = card.attr('data-id');
         var name = card.children().find('.program-name').text().trim();
         var path = card.children().find('.program-path').text().trim();
-        var arguments = card.children().find('.program-arguments').text().trim();
+        var args = card.children().find('.program-arguments').text().trim();
 
-        console.log("id:" + id + " name:" + name + " path:" + path + " args:" + arguments);
+        console.log("id:" + id + " name:" + name + " path:" + path + " args:" + args);
 
         //modify the form for the submit button
         programModal.children().find('.modal-title').text("Edit Program");
@@ -243,7 +243,7 @@ $(document).ready(function () {
         //clear input fields
         programForm.find("input[name='name']").val(name);
         programForm.find("input[name='path']").val(path);
-        programForm.find("input[name='arguments']").val(arguments);
+        programForm.find("input[name='arguments']").val(args);
 
         //clear errormessages
         programForm.find("div[class='invalid-feedback']").each(function (index, item) {
