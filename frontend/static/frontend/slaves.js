@@ -1,22 +1,20 @@
 /**
- * Get a cookie by it the name. If the cookie is not present null will be
+ * Get a cookie by it the name. If the cookie is not present "null" will be
  * returned.
  * @param {string} name Cookie name
  */
 function getCookie(name) {
     if (document.cookie && document.cookie != '') {
-        var cookie = document.cookie.split(',').find(function (cookie) {
-            var cookie = jQuery.trim(cookies[i]);
-            // Does this cookie string begin with the name we want?
-            if (cookie.substring(0, name.length + 1) == (name + '=')) {
-                return cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-            }
+        let cookie = document.cookie.split(',').find(function (raw_cookie) {
+            let cookie = jQuery.trim(raw_cookie);
+            return cookie.substring(0, name.length + 1) == (name + '=');
         });
 
-        return cookie;
-    } else {
-        return null;
+        if (cookie != null) {
+            return decodeURIComponent(cookie.substring(name.length + 1));
+        }
     }
+    return null;
 }
 
 /**
@@ -45,22 +43,51 @@ function modalDeleteAction(form, route) {
         beforeSend: function (xhr) {
             xhr.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
         },
-        converters: { "text json": Status.from_json },
+        converters: {
+            "text json": Status.from_json
+        },
         success: function (status) {
             if (status.is_ok()) {
                 window.location.reload();
             } else {
-                $.notify(
-                    {
-                        message: JSON.stringify(response.payload)
-                    },
-                    {
-                        type: 'danger'
-                    }
-                );
+                $.notify({
+                    message: JSON.stringify(response.payload)
+                }, {
+                    type: 'danger'
+                });
             }
         }
     });
+}
+
+/**
+ * Handles the incoming status from a form request. The page will be reloaded or
+ * the errors will be marked in the input field.
+ *
+ * @param {HTMLElement} form
+ * @param {Status} status
+ */
+function handleFormStatus(form, status) {
+    if (status.is_ok()) {
+        window.location.reload();
+    } else {
+        // remove previous feedback
+        form.find("div[class='invalid-feedback']").each(function (index, item) {
+            item.remove();
+        });
+
+        // remove previous feedback
+        form.find(".is-invalid").each(function (index, item) {
+            $(item).removeClass("is-invalid");
+        });
+
+        // insert new feedback
+        $.each(status.payload, function (id, msg) {
+            var node = form.find("input[name=" + id + "]");
+            node.addClass("is-invalid");
+            node.parent().append('<div class="invalid-feedback">' + msg + '</div>');
+        });
+    }
 }
 
 $(document).ready(function () {
@@ -138,22 +165,24 @@ $(document).ready(function () {
             beforeSend: function (xhr) {
                 xhr.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
             },
-            converters: { "text json": Status.from_json },
+            converters: {
+                "text json": Status.from_json
+            },
             success: function (status) {
                 if (status.is_err()) {
                     $.notify({
                         message: status.payload
                     }, {
-                            type: 'danger'
-                        });
+                        type: 'danger'
+                    });
                 }
             },
             error: function () {
                 $.notify({
                     message: 'Error in Ajax Request.'
                 }, {
-                        type: 'danger'
-                    });
+                    type: 'danger'
+                });
             }
         });
     });
@@ -306,40 +335,21 @@ $(document).ready(function () {
                 arguments: $(this).find("input[name='arguments']").val(),
                 slave_id: $(this).data('slave_id')
             },
-            converters: { "text json": Status.from_json },
+            converters: {
+                "text json": Status.from_json
+            },
             beforeSend: function (xhr) {
                 xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
             },
             success: function (status) {
-                if (status.is_ok()) {
-                    window.location.reload();
-                } else {
-                    var programForm = $('#programForm');
-                    programForm.find("div[class='invalid-feedback']").each(function (index, item) {
-                        item.remove();
-                    });
-
-                    programForm.find(".is-invalid").each(function (index, item) {
-                        $(item).removeClass("is-invalid");
-                    });
-
-
-                    $.each(status.payload, function (id, msg) {
-                        var node = programForm.find("input[name=" + id + "]");
-                        node.addClass("is-invalid");
-                        node.parent().append('<div class="invalid-feedback">' + msg + '</div>');
-                    });
-                }
+                handleFormStatus($('#programForm'), status);
             },
             error: function () {
-                $.notify(
-                    {
-                        message: 'Error in Ajax Request.'
-                    },
-                    {
-                        type: 'danger'
-                    }
-                );
+                $.notify({
+                    message: 'Error in Ajax Request.'
+                }, {
+                    type: 'danger'
+                });
             }
         });
     });
@@ -361,37 +371,18 @@ $(document).ready(function () {
             beforeSend: function (xhr) {
                 xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
             },
-
-            converters: { "text json": Status.from_json },
+            converters: {
+                "text json": Status.from_json
+            },
             success: function (status) {
-                if (status.is_ok()) {
-                    window.location.reload();
-                } else {
-                    slaveForm = $('#slaveForm');
-                    slaveForm.find("div[class='invalid-feedback']").each(function (index, item) {
-                        item.remove();
-                    });
-
-                    slaveForm.find(".is-invalid").each(function (index, item) {
-                        $(item).removeClass("is-invalid");
-                    });
-
-                    $.each(status.payload, function (id, msg) {
-                        var node = slaveForm.find('input[name=' + id + ']');
-                        node.addClass("is-invalid");
-                        node.parent().append('<div class="invalid-feedback">' + msg + '</div>');
-                    });
-                }
+                handleFormStatus($('#slaveForm'), status);
             },
             error: function () {
-                $.notify(
-                    {
-                        message: 'Error in Ajax Request.'
-                    },
-                    {
-                        type: 'danger'
-                    }
-                );
+                $.notify({
+                    message: 'Error in Ajax Request.'
+                }, {
+                    type: 'danger'
+                });
             }
         });
     });
@@ -411,20 +402,19 @@ $(document).ready(function () {
                 el.one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend', function () {
                     el.removeClass('animated pulse');
                 });
-            }
-            else {
+            } else {
                 $.notify({
                     message: 'Error: ' + data.payload
                 }, {
-                        type: 'danger'
-                    });
+                    type: 'danger'
+                });
             }
         }).fail(function () {
             $.notify({
                 message: 'Error in Ajax Request.'
             }, {
-                    type: 'danger'
-                });
+                type: 'danger'
+            });
         });
     });
 });
