@@ -17,14 +17,6 @@ function getCookie(name) {
     return null;
 }
 
-/**
- * Displays an error in the alert container. For a specific collapse.
- * @param {int} id Collapse ID
- * @param {string} err Error message
- */
-function displayError(id, err) {
-    $('#collapse' + id).append('<div class="alert alert-danger"><strong>Error!</strong> ' + err + '</div>');
-}
 
 /**
  * This function can be used for any kind delete actions. Insert the ID into the
