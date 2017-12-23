@@ -80,7 +80,7 @@ function handleFormStatus(form, status) {
         $.each(status.payload, function (id, msg) {
             let node = form.find('input[name=' + id + ']');
             node.addClass('is-invalid');
-            node.parent().append("<div class='invalid-feedback'>' + msg + '</div>");
+            node.parent().append("<div class='invalid-feedback'>" + msg + "</div>");
         });
     }
 }
