@@ -1,5 +1,5 @@
 /**
- * Get a cookie by it the name. If the cookie is not present "null" will be
+ * Get a cookie by it the name. If the cookie is not present 'null' will be
  * returned.
  * @param {string} name Cookie name
  */
@@ -33,10 +33,10 @@ function modalDeleteAction(form, route) {
         type: 'DELETE',
         url: '/api/' + route + '/' + id,
         beforeSend: function (xhr) {
-            xhr.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+            xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
         },
         converters: {
-            "text json": Status.from_json
+            'text json': Status.from_json
         },
         success: function (status) {
             if (status.is_ok()) {
@@ -61,10 +61,10 @@ function modalDeleteAction(form, route) {
  */
 function handleFormStatus(form, status) {
     if (status.is_ok()) {
-        console.log("OK");
+        console.log('OK');
         window.location.reload();
     } else {
-        console.log("Err");
+        console.log('Err');
         console.log(status.to_json());
         // remove previous feedback
         form.find("div[class='invalid-feedback']").each(function (index, item) {
@@ -72,15 +72,15 @@ function handleFormStatus(form, status) {
         });
 
         // remove previous feedback
-        form.find(".is-invalid").each(function (index, item) {
-            $(item).removeClass("is-invalid");
+        form.find('.is-invalid').each(function (index, item) {
+            $(item).removeClass('is-invalid');
         });
 
         // insert new feedback
         $.each(status.payload, function (id, msg) {
-            let node = form.find("input[name=" + id + "]");
-            node.addClass("is-invalid");
-            node.parent().append('<div class="invalid-feedback">' + msg + '</div>');
+            let node = form.find('input[name=' + id + ']');
+            node.addClass('is-invalid');
+            node.parent().append("<div class='invalid-feedback'>' + msg + '</div>");
         });
     }
 }
@@ -95,8 +95,8 @@ function clearErrorMessages(form){
         item.remove();
     });
 
-    form.find(".is-invalid").each(function (index, item) {
-        $(item).removeClass("is-invalid");
+    form.find('.is-invalid').each(function (index, item) {
+        $(item).removeClass('is-invalid');
     });
 }
 
@@ -117,16 +117,16 @@ $(document).ready(function () {
 
     // Enable tool tips.
     $(function () {
-        $('[data-toggle="tooltip"]').tooltip()
+        $("[data-toggle='tooltip']").tooltip()
     });
 
     /*function for deleting a slave, it is added to the delete_slave button*/
-    $(".delete_slave").click(function () {
+    $('.delete_slave').click(function () {
 
         //get id and name of the slave and create deletion message
-        let id = $(this).parents(".slave-card").attr("id");
-        let name = $(this).parents(".slave-card").children().find('.slave-name').text();
-        let message = "<a>Are you sure you want to remove client </a><b>" + name + "</b>?</a>";
+        let id = $(this).parents('.slave-card').attr('id');
+        let name = $(this).parents('.slave-card').children().find('.slave-name').text();
+        let message = '<a>Are you sure you want to remove client </a><b>' + name + '</b>?</a>';
 
         //changing button visibility and message of the delete modal
         let deleteWarning = $('#deleteWarning');
@@ -144,9 +144,9 @@ $(document).ready(function () {
     /*function for deleting a program, it is added to the delete_program button*/
     $('.delete_program').click(function () {
         //get id and name of the program and create deletion message
-        let id = $(this).parents(".program-card").attr("data-id");
-        let name = $(this).parents(".program-card").children().find('.program-name').text();
-        let message = "<a>Are you sure you want to remove program </a><b>" + name + "</b>?</a>";
+        let id = $(this).parents('.program-card').attr('data-id');
+        let name = $(this).parents('.program-card').children().find('.program-name').text();
+        let message = '<a>Are you sure you want to remove program </a><b>' + name + '</b>?</a>';
 
         //
                //changing button visibility and message of the delete modal
@@ -163,23 +163,23 @@ $(document).ready(function () {
     });
 
     $('#deleteSlaveModalButton').click(function () {
-        modalDeleteAction($('#slaveForm'), "slave");
+        modalDeleteAction($('#slaveForm'), 'slave');
     });
 
     $('#deleteProgramModalButton').click(function () {
-        modalDeleteAction($('#programForm'), "program")
+        modalDeleteAction($('#programForm'), 'program')
     });
 
     $('.start-program-btn').click(function () {
-        let id = $(this).parents(".program-card").attr("data-id");
+        let id = $(this).parents('.program-card').attr('data-id');
         $.ajax({
             type: 'POST',
             url: '/api/program/' + id,
             beforeSend: function (xhr) {
-                xhr.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+                xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
             },
             converters: {
-                "text json": Status.from_json
+                'text json': Status.from_json
             },
             success: function (status) {
                 if (status.is_err()) {
@@ -203,7 +203,7 @@ $(document).ready(function () {
     //opens the programModal to add a new program
     $('.add-program-btn').click(function () {
         programModal = $('#programModal');
-        programModal.children().find('.modal-title').text("Add Program");
+        programModal.children().find('.modal-title').text('Add Program');
 
 
         //modify the form for the submit button
@@ -213,16 +213,16 @@ $(document).ready(function () {
         programForm.children().find('.submit-btn').text('Add');
 
         //clear input fields
-        programForm.find("input[name='name']").val("");
-        programForm.find("input[name='path']").val("");
-        programForm.find("input[name='arguments']").val("");
+        programForm.find("input[name='name']").val('');
+        programForm.find("input[name='path']").val('');
+        programForm.find("input[name='arguments']").val('');
 
         //clear error messages
         clearErrorMessages(programForm);
 
         //find slave id and store it in the form
         let card = $(this).parents('.slave-card');
-        programForm.find("input[name='slave']").val(card.attr("id"));
+        programForm.find("input[name='slave']").val(card.attr('id'));
 
         programModal.modal('toggle');
     });
@@ -239,10 +239,10 @@ $(document).ready(function () {
         let path = card.children().find('.program-path').text().trim();
         let args = card.children().find('.program-arguments').text().trim();
 
-        console.log("id:" + id + " name:" + name + " path:" + path + " args:" + args);
+        console.log('id:' + id + ' name:' + name + ' path:' + path + ' args:' + args);
 
         //modify the form for the submit button
-        programModal.children().find('.modal-title').text("Edit Program");
+        programModal.children().find('.modal-title').text('Edit Program');
         programForm.attr('action', '/api/program/' + id);
         programForm.attr('method', 'PUT');
         programForm.children().find('.submit-btn').text('Edit');
@@ -262,7 +262,7 @@ $(document).ready(function () {
     //opens the slaveModal to add a new slave
     $('.add-slave-btn').click(function () {
         slaveModal = $('#slaveModal');
-        slaveModal.children().find('.modal-title').text("Add Client");
+        slaveModal.children().find('.modal-title').text('Add Client');
 
         //modify the form for the submit button
         slaveForm = slaveModal.children().find('#slaveForm');
@@ -271,9 +271,9 @@ $(document).ready(function () {
         slaveForm.children().find('.submit-btn').text('Add');
 
         //clear input fields
-        slaveForm.find("input[name='name']").val("");
-        slaveForm.find("input[name='ip_address']").val("");
-        slaveForm.find("input[name='mac_address']").val("");
+        slaveForm.find("input[name='name']").val('');
+        slaveForm.find("input[name='ip_address']").val('');
+        slaveForm.find("input[name='mac_address']").val('');
 
         //clear error messages
         clearErrorMessages(slaveForm);
@@ -285,13 +285,13 @@ $(document).ready(function () {
     $('.modify-slave-btn').click(function () {
         //get info of slave
         let card = $(this).parents('.card');
-        let id = card.attr("id");
+        let id = card.attr('id');
         let name = card.children().find('.slave-name').text().trim();
         let ip = card.children().find('.slave-ip').text().trim();
         let mac = card.children().find('.slave-mac').text().trim();
 
         let slaveModal = $('#slaveModal');
-        slaveModal.children().find('.modal-title').text("Edit Client");
+        slaveModal.children().find('.modal-title').text('Edit Client');
 
         //modify the form for the submit button
         let slaveForm = slaveModal.children().find('#slaveForm');
@@ -324,7 +324,7 @@ $(document).ready(function () {
             url: $(this).attr('action'),
             data: $('#programForm').serialize(),
             converters: {
-                "text json": Status.from_json
+                'text json': Status.from_json
             },
             beforeSend: function (xhr) {
                 xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
@@ -356,7 +356,7 @@ $(document).ready(function () {
                 xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
             },
             converters: {
-                "text json": Status.from_json
+                'text json': Status.from_json
             },
             success: function (status) {
                 handleFormStatus($('#slaveForm'), status);
@@ -372,7 +372,7 @@ $(document).ready(function () {
     });
 
     $('.startSlave').click(function () {
-        let id = $(this).parents('.card').attr("id");
+        let id = $(this).parents('.card').attr('id');
         let el = $(this);
         $.get({
             url: '/api/slave/' + id + '/wol',
