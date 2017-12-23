@@ -5,6 +5,8 @@
 {% block premain %}
 {% endblock %}
 {% block content %}
+
+
 <div class="jumbotron" style="background: #292929; color: #FFF;">
 
     <!-- Modal for deletion warnings used for slave and program deletion-->
@@ -33,7 +35,7 @@
     <h4>Clients</h4>
     <div id="accordion" role="tablist">
         {% for slave in slaves %}
-            {% slave_entry slave slave.programs %}
+            {% slave_entry slave slave.program_set.all %}
         {% empty %}
             <div class="card alert alert-info">
                 <strong>Info!</strong> No clients in system.
