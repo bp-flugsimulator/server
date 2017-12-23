@@ -108,8 +108,11 @@ def add_program(request):
                 program.full_clean()
                 form.save()
                 return StatusResponse(Status.ok(''))
-            except ValidationError as err:
-                error_dict = {'name': [str(err)]}
+            except ValidationError as _:
+                error_dict = {
+                    'name':
+                    ["Program with this Name already exists on this Client."]
+                }
                 return StatusResponse(Status.err(error_dict))
         else:
             return StatusResponse(Status.err(form.errors))
