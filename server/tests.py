@@ -7,7 +7,7 @@ from server.management.commands.compilesass import Command
 import json
 from os import remove
 from os.path import isfile, isdir
-from unittest import skipIf
+from unittest import skipUnless
 
 class StatusResponseTest(TestCase):
     def test_status_init(self):
@@ -21,7 +21,7 @@ class StatusResponseTest(TestCase):
                                  StatusResponse.__init__,'data','args')
 
 
-@skipIf(not isdir('node_modules'), 'There is no nodes folder')
+@skipUnless(isdir('node_modules'), 'There is no nodes folder')
 class ManagementTest(TestCase):
     CSS_PATH = 'base/static/base/css/custom.css'
     def test_css_generation(self):
