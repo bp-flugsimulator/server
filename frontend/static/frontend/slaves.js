@@ -69,8 +69,11 @@ function modalDeleteAction(form, route) {
  */
 function handleFormStatus(form, status) {
     if (status.is_ok()) {
+        console.log("OK");
         window.location.reload();
     } else {
+        console.log("Err");
+        console.log(status.to_json());
         // remove previous feedback
         form.find("div[class='invalid-feedback']").each(function (index, item) {
             item.remove();
@@ -204,7 +207,7 @@ $(document).ready(function () {
         programForm.find("input[name='path']").val("");
         programForm.find("input[name='arguments']").val("");
 
-        //clear errormessages
+        //clear error messages
         programForm.find("div[class='invalid-feedback']").each(function (index, item) {
             item.remove();
         });
@@ -214,8 +217,7 @@ $(document).ready(function () {
 
         //find slave id and store it in the form
         var card = $(this).parents('.slave-card');
-        var id = card.attr("id");
-        programForm.data('slave_id', id);
+        programForm.find("input[name='slave']").val(card.attr("id"));
 
         programModal.modal('toggle');
     });
@@ -323,18 +325,14 @@ $(document).ready(function () {
     $('#programForm').submit(function (event) {
         //Stop form from submitting normally
         event.preventDefault();
+        console.log($('#programForm').serialize());
 
         //send request to given url and with given method
         //data field contains information about the slave
         $.ajax({
             type: $(this).attr('method'),
             url: $(this).attr('action'),
-            data: {
-                name: $(this).find("input[name='name']").val(),
-                path: $(this).find("input[name='path']").val(),
-                arguments: $(this).find("input[name='arguments']").val(),
-                slave_id: $(this).data('slave_id')
-            },
+            data: $('#programForm').serialize(),
             converters: {
                 "text json": Status.from_json
             },
@@ -363,11 +361,7 @@ $(document).ready(function () {
         $.ajax({
             type: $(this).attr('method'),
             url: $(this).attr('action'),
-            data: {
-                name: $(this).find("input[name='name']").val(),
-                ip_address: $(this).find("input[name='ip_address']").val(),
-                mac_address: $(this).find("input[name='mac_address']").val()
-            },
+            data: $('#slaveForm').serialize(),
             beforeSend: function (xhr) {
                 xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
             },
