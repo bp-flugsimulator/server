@@ -105,7 +105,8 @@ class ApiTests(TestCase):
 
             self.assertEqual(api_response.status_code, 200)
             self.assertJSONEqual(
-                api_response.content.decode('utf-8'), Status.ok("").to_json())
+                api_response.content.decode('utf-8'),
+                Status.ok("").to_json())
 
         #test if all slaves get displayed
         view_response = self.client.get(reverse('frontend:slaves'))
@@ -130,7 +131,8 @@ class ApiTests(TestCase):
             })
         self.assertEqual(api_response.status_code, 200)
         self.assertJSONEqual(
-            api_response.content.decode('utf-8'), Status.ok("").to_json())
+            api_response.content.decode('utf-8'),
+            Status.ok("").to_json())
 
         #insert data a second time
         api_response = self.client.post(
@@ -240,7 +242,8 @@ class ApiTests(TestCase):
 
             self.assertEqual(api_response.status_code, 200)
             self.assertJSONEqual(
-                api_response.content.decode('utf-8'), Status.ok("").to_json())
+                api_response.content.decode('utf-8'),
+                Status.ok("").to_json())
 
         #get all the database entries because the ids are needed to delete
         data_in_database_set = []
@@ -256,7 +259,8 @@ class ApiTests(TestCase):
             api_response = self.client.delete('/api/slave/' + str(data.id))
             self.assertEqual(api_response.status_code, 200)
             self.assertJSONEqual(
-                api_response.content.decode('utf-8'), Status.ok("").to_json())
+                api_response.content.decode('utf-8'),
+                Status.ok("").to_json())
             self.assertFalse(SlaveModel.objects.filter(id=data.id).exists())
 
     def test_edit_slave(self):
@@ -315,7 +319,8 @@ class ApiTests(TestCase):
                 })
             self.assertEqual(api_response.status_code, 200)
             self.assertJSONEqual(
-                api_response.content.decode('utf-8'), Status.ok("").to_json())
+                api_response.content.decode('utf-8'),
+                Status.ok("").to_json())
 
         #get all the database entries because the ids are needed to delete
         data_in_database_set = []
@@ -362,7 +367,8 @@ class ApiTests(TestCase):
             })
         self.assertEqual(api_response.status_code, 200)
         self.assertJSONEqual(
-            api_response.content.decode('utf-8'), Status.ok("").to_json())
+            api_response.content.decode('utf-8'),
+            Status.ok("").to_json())
 
         api_response = self.client.post(
             reverse('frontend:add_slaves'), {
@@ -372,7 +378,8 @@ class ApiTests(TestCase):
             })
         self.assertEqual(api_response.status_code, 200)
         self.assertJSONEqual(
-            api_response.content.decode('utf-8'), Status.ok("").to_json())
+            api_response.content.decode('utf-8'),
+            Status.ok("").to_json())
 
         data = SlaveModel.objects.filter(
             name='edit_slave_fail_0',
@@ -445,12 +452,13 @@ class ApiTests(TestCase):
         for _ in range(2000):
             long_str += 'a'
 
-        api_response = self.client.post('/api/programs', {
-            'name': long_str,
-            'path': long_str,
-            'arguments': long_str,
-            'slave': str(model.id)
-        })
+        api_response = self.client.post(
+            '/api/programs', {
+                'name': long_str,
+                'path': long_str,
+                'arguments': long_str,
+                'slave': str(model.id)
+            })
         self.assertEqual(api_response.status_code, 200)
         self.assertJSONEqual(
             api_response.content.decode('utf-8'),
@@ -478,24 +486,26 @@ class ApiTests(TestCase):
         ).save()
         model = SlaveModel.objects.get(name='add_program_fail_not_unique')
 
-        api_response = self.client.post('/api/programs', {
-            'name': 'name',
-            'path': 'path',
-            'arguments': '',
-            'slave': str(model.id)
-        })
+        api_response = self.client.post(
+            '/api/programs', {
+                'name': 'name',
+                'path': 'path',
+                'arguments': '',
+                'slave': str(model.id)
+            })
         self.assertEqual(api_response.status_code, 200)
         self.assertJSONEqual(
             api_response.content.decode('utf-8'),
             json.loads(Status.ok('').to_json()))
 
         #try to add program with the same name
-        api_response = self.client.post('/api/programs', {
-            'name': 'name',
-            'path': 'path',
-            'arguments': '',
-            'slave': str(model.id)
-        })
+        api_response = self.client.post(
+            '/api/programs', {
+                'name': 'name',
+                'path': 'path',
+                'arguments': '',
+                'slave': str(model.id)
+            })
         self.assertEqual(api_response.status_code, 200)
         self.assertJSONEqual(
             api_response.content.decode('utf-8'),

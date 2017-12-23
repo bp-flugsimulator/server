@@ -4,10 +4,10 @@
  * @param {string} name Cookie name
  */
 function getCookie(name) {
-    if (document.cookie && document.cookie != '') {
+    if (document.cookie && document.cookie !== '') {
         let cookie = document.cookie.split(',').find(function (raw_cookie) {
             let cookie = jQuery.trim(raw_cookie);
-            return cookie.substring(0, name.length + 1) == (name + '=');
+            return cookie.substring(0, name.length + 1) === (name + '=');
         });
 
         if (cookie != null) {
