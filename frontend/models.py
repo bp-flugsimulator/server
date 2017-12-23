@@ -52,9 +52,6 @@ class Slave(models.Model):
 
     Attributes
     ----------
-    id: int
-        The unique ID which can be referenced to this object.
-
     name: str
         The name of the slave
 
@@ -65,7 +62,6 @@ class Slave(models.Model):
         The MAC address of the slave.
 
     """
-    id = models.AutoField(primary_key=True)
     name = models.CharField(unique=True, max_length=200)
     ip_address = models.GenericIPAddressField(unique=True)
     mac_address = models.CharField(
@@ -79,9 +75,6 @@ class Program(models.Model):
 
     Attributes
     ----------
-    id: int
-        The unique ID which can be referenced to this object.
-
     name: str
         The name of the program (has to be unique for every slave)
 
@@ -95,7 +88,6 @@ class Program(models.Model):
     slave: Slave
         The slave on which the command will be executed
     """
-    id = models.AutoField(primary_key=True)
     name = models.CharField(unique=False, max_length=200)
     path = models.CharField(unique=False, max_length=200)
     arguments = models.CharField(unique=False, blank=True, max_length=200)
