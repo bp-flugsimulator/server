@@ -17,7 +17,6 @@ function getCookie(name) {
     return null;
 }
 
-
 /**
  * This function can be used for any kind delete actions. Insert the ID into the
  * #deleteWarning with .data('sqlId', id).
@@ -66,6 +65,7 @@ function handleFormStatus(form, status) {
     } else {
         console.log('Err');
         console.log(status.to_json());
+      
         // remove previous feedback
         form.find("div[class='invalid-feedback']").each(function (index, item) {
             item.remove();
@@ -85,6 +85,7 @@ function handleFormStatus(form, status) {
     }
 }
 
+
 /**
  * Cleares the errorfields of a given form
  *
@@ -99,7 +100,6 @@ function clearErrorMessages(form){
         $(item).removeClass('is-invalid');
     });
 }
-
 
 $(document).ready(function () {
     // set defaults for notifications
@@ -213,6 +213,7 @@ $(document).ready(function () {
         programForm.children().find('.submit-btn').text('Add');
 
         //clear input fields
+
         programForm.find("input[name='name']").val('');
         programForm.find("input[name='path']").val('');
         programForm.find("input[name='arguments']").val('');
@@ -223,7 +224,6 @@ $(document).ready(function () {
         //find slave id and store it in the form
         let card = $(this).parents('.slave-card');
         programForm.find("input[name='slave']").val(card.attr('id'));
-
         programModal.modal('toggle');
     });
 
@@ -258,8 +258,6 @@ $(document).ready(function () {
         //find slave id and store it in the form
         let slaveCard = $(this).parents('.slave-card');
         programForm.find("input[name='slave']").val(slaveCard.attr('id'));
-
-
         //find slave id and store it in the form
         programModal.modal('toggle');
     });
@@ -282,7 +280,6 @@ $(document).ready(function () {
 
         //clear error messages
         clearErrorMessages(slaveForm);
-
         slaveModal.modal('toggle');
     });
 

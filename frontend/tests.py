@@ -459,6 +459,7 @@ class ApiTests(TestCase):
                 'arguments': long_str,
                 'slave': str(model.id)
             })
+
         self.assertEqual(api_response.status_code, 200)
         self.assertJSONEqual(
             api_response.content.decode('utf-8'),
@@ -486,6 +487,7 @@ class ApiTests(TestCase):
         ).save()
         model = SlaveModel.objects.get(name='add_program_fail_not_unique')
 
+
         api_response = self.client.post(
             '/api/programs', {
                 'name': 'name',
@@ -493,12 +495,14 @@ class ApiTests(TestCase):
                 'arguments': '',
                 'slave': str(model.id)
             })
+
         self.assertEqual(api_response.status_code, 200)
         self.assertJSONEqual(
             api_response.content.decode('utf-8'),
             json.loads(Status.ok('').to_json()))
 
         #try to add program with the same name
+
         api_response = self.client.post(
             '/api/programs', {
                 'name': 'name',
@@ -506,6 +510,7 @@ class ApiTests(TestCase):
                 'arguments': '',
                 'slave': str(model.id)
             })
+
         self.assertEqual(api_response.status_code, 200)
         self.assertJSONEqual(
             api_response.content.decode('utf-8'),
