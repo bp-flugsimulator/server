@@ -1,5 +1,6 @@
 socket = new WebSocket("ws://" + window.location.host + "/notifications");
 socket.onmessage = function (e) {
+	console.log(e);
 	let data = JSON.parse(e.data);
 	$.notify({
 		message: data.message
