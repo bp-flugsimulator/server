@@ -7,9 +7,10 @@ style="background-color: rgb(73, 73, 73);">
             <div class="slave-name col">
                 <h5 class="mt-2">{{ slave.name }}</h5>
             </div>
-            <div class="btn-toolbar" role="toolbar">
+            <div class="btn-toolbar " role="toolbar">
                 <div class="btn-group mr-4" role="group">
-                        <button type="button" class="btn
+                        <button type="button" id="slaveStatus_{{ slave.id }}"
+                                class="btn
                             {% if slave.slavestatus.bootime != ''%}
                                 btn-success
                             {% else %}
