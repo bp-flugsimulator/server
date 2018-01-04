@@ -16,7 +16,12 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='ProgramStatus',
             fields=[
-                ('program', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, primary_key=True, serialize=False, to='frontend.Program')),
+                ('program',
+                 models.OneToOneField(
+                     on_delete=django.db.models.deletion.CASCADE,
+                     primary_key=True,
+                     serialize=False,
+                     to='frontend.Program')),
                 ('error', models.CharField(max_length=200)),
                 ('started', models.DateTimeField()),
                 ('stopped', models.DateTimeField()),
@@ -25,7 +30,12 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='SlaveStatus',
             fields=[
-                ('slave', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, primary_key=True, serialize=False, to='frontend.Slave')),
+                ('slave',
+                 models.OneToOneField(
+                     on_delete=django.db.models.deletion.CASCADE,
+                     primary_key=True,
+                     serialize=False,
+                     to='frontend.Slave')),
                 ('boottime', models.DateTimeField()),
                 ('reply_channel', models.CharField(max_length=200)),
             ],
