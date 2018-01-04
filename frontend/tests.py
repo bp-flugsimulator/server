@@ -487,7 +487,6 @@ class ApiTests(TestCase):
         ).save()
         model = SlaveModel.objects.get(name='add_program_fail_not_unique')
 
-
         api_response = self.client.post(
             '/api/programs', {
                 'name': 'name',
