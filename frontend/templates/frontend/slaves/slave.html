@@ -1,0 +1,90 @@
+{% load components %}
+
+<div class="card slave-card mb-2" id="{{ slave.id }}"
+style="background-color: rgb(73, 73, 73);">
+    <div class="card-header collapsed">
+        <div class="row">
+            <div class="slave-name col">
+                <h5 class="mt-2">{{ slave.name }}</h5>
+            </div>
+            <div class="btn-toolbar" role="toolbar">
+                <div class="btn-group mr-4" role="group">
+                    <button type="button" class="btn btn-danger" data-toggle="tooltip" data-placement="top" title="Status">
+                        <i class="material-icons">error_outline</i>
+                    </button>
+                </div>
+
+                <div class="btn-group mr-2" role="group">
+                    <button type="button" class="btn btn-outline-light startSlave" data-toggle="tooltip" data-placement="top" title="Start/Stop">
+                        <i class="material-icons">power_settings_new</i>
+                    </button>
+                    <button type="button" class="btn btn-outline-light" data-toggle="tooltip" data-placement="top" title="Restart">
+                        <i class="material-icons">refresh</i>
+                    </button>
+                </div>
+
+                <div class="btn-group mr-2" role="group">
+                    <button type="button" class="btn btn-outline-info" data-toggle="tooltip" data-placement="top" title="Delete File">
+                        <i class="material-icons">signal_cellular_no_sim</i>
+                    </button>
+                    <button type="button" class="btn btn-outline-info" data-toggle="tooltip" data-placement="top" title="Copy File">
+                        <i class="material-icons">insert_drive_file</i>
+                    </button>
+                </div>
+
+                <div class="btn-group mr-4" role="group">
+                    <button type="button" class="btn btn-outline-danger modify-slave-btn" data-toggle="tooltip" data-placement="top" title="Edit">
+                        <i class="material-icons">edit</i>
+                    </button>
+                    <button type="button" class="btn btn-outline-danger delete_slave" data-toggle="tooltip" data-placement="top" title="Delete">
+                        <i class="material-icons">delete</i>
+                    </button>
+                </div>
+                <div class="btn-group mr-2" role="group" data-toggle="collapse" href="#collapse{{ slave.id }}">
+                    <button type="button" class="btn btn-outline-secondary" data-toggle="tooltip" data-placement="top" title="Show More" id="headingOne">
+                        <i class="material-icons">expand_more</i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="collapse{{ slave.id }}" class="collapse" role="tabpanel">
+        <div class="card-body card-inverse">
+            <div class="row">
+                <div class="col">
+                    <p>IP:
+                        <b class="slave-ip">{{ slave.ip_address }}</b>
+                    </p>
+                </div>
+                <div class="col">
+                    <p>MAC:
+                        <b class="slave-mac">{{ slave.mac_address }}</b>
+                    </p>
+                </div>
+            </div>
+
+            <h5>Programs</h5>
+            {% for program in programs %}
+                {% program_entry program %}
+            {% empty %}
+                <div class="card alert alert-info">
+                    <strong>Info!</strong> No programs for this client in system.
+                </div>
+	    {% endfor %}
+
+	    <h5>Files</h5>
+	    {% for file in files %}
+	    	{% file_entry files %}
+	    {% empty %}
+	    	<div class="card alert alert-info">
+		    <strong>Info!</strong> No files for this client in system.
+		</div>
+	    {% endfor %}
+
+            <button type="button" class="btn btn-outline-info float-right add-program-btn mb-4 mt-2 col" data-toggle="tooltip" data-placement="top" title="Add program">
+                <span></span>
+                <i class="material-icons" style="font-size:30px; vertical-align: middle;">add</i>
+            </button>
+        </div>
+    </div>
+</div>

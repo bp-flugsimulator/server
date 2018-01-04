@@ -1,0 +1,36 @@
+
+<div class="card program-card mb-2" data-id="{{ program.id }}"
+style="background-color: #292929;">
+    <div class="card-body">
+        <div class="row">
+            <div class="program-name col">
+                <h5 class="mt-2">{{ program.name }}</h5>
+            </div>
+            <div class="program-path" style="display: none">{{ program.path }}</div>
+            <div class="program-arguments" style="display: none">{{ program.arguments }}</div>
+            <div class="btn-toolbar" role="toolbar">
+                <div class="btn-group mr-4" role="group">
+                    <button type="button" class="btn btn-danger" data-toggle="tooltip" data-placement="top" title="Status">
+                        <i class="material-icons">error_outline</i>
+                    </button>
+                </div>
+                <div class="btn-group mr-2" role="group">
+                    <button type="button" class="btn btn-outline-light start-program-btn" data-toggle="tooltip" data-placement="top" title="Start/Stop">
+                        <i class="material-icons">power_settings_new</i>
+                    </button>
+                    <button type="button" class="btn btn-outline-light" data-toggle="tooltip" data-placement="top" title="Restart">
+                        <i class="material-icons">refresh</i>
+                    </button>
+                </div>
+                <div class="btn-group mr-2" role="group">
+                    <button type="button" class="btn btn-outline-danger modify-program-btn" data-toggle="tooltip" data-placement="top" title="Edit">
+                        <i class="material-icons">edit</i>
+                    </button>
+                    <button type="button" class="btn btn-outline-danger delete_program" data-toggle="tooltip" data-placement="top" title="Delete">
+                        <i class="material-icons">delete</i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

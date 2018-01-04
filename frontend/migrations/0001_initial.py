@@ -11,8 +11,7 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
@@ -30,12 +29,18 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(primary_key=True, serialize=False)),
                 ('name', models.CharField(max_length=200, unique=True)),
                 ('ip_address', models.GenericIPAddressField(unique=True)),
-                ('mac_address', models.CharField(max_length=17, unique=True, validators=[frontend.models.validate_mac_address])),
+                ('mac_address',
+                 models.CharField(
+                     max_length=17,
+                     unique=True,
+                     validators=[frontend.models.validate_mac_address])),
             ],
         ),
         migrations.AddField(
             model_name='program',
             name='slave',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='frontend.Slave'),
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                to='frontend.Slave'),
         ),
     ]
