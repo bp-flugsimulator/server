@@ -1,0 +1,28 @@
+
+<div class="card file-card mb-2" data-id="{{ file.id }}"
+style="background-color: #292929;">
+    <div class="card-body">
+        <div class="row">
+            <div class="file-name col">
+                <h5 class="mt-2">{{ file.name }}</h5>
+            </div>
+            <div class="file-sourcePath" style="display: none">{{ file.sourcePath }}</div>
+            <div class="file-destinationPath" style="display: none">{{ file.destinationPath }}</div>
+            <div class="btn-toolbar" role="toolbar">
+                <div class="btn-group mr-4" role="group">
+                    <button type="button" class="btn btn-danger" data-toggle="tooltip" data-placement="top" title="Status">
+                        <i class="material-icons">error_outline</i>
+                    </button>
+                </div>
+                <div class="btn-group mr-2" role="group">
+                    <button type="button" class="btn btn-outline-danger modify-file-btn" data-toggle="tooltip" data-placement="top" title="Edit">
+                        <i class="material-icons">edit</i>
+                    </button>
+                    <button type="button" class="btn btn-outline-danger delete_file" data-toggle="tooltip" data-placement="top" title="Delete">
+                        <i class="material-icons">delete</i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

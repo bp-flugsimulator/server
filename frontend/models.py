@@ -94,7 +94,34 @@ class Program(models.Model):
     slave = models.ForeignKey(Slave, on_delete=models.CASCADE)
 
     class Meta:
-        unique_together = (('name', 'slave'), )
+        unique_together = (('name', 'slave'),)
+
+class File(models.Model):
+    """
+    Represents a file on a slave
+    This is stored in a database.
+
+    Attributes
+    ----------
+    name: str
+        The name of the file (has to be unique for every slave)
+
+    sourcePath: str
+        The path to the source of the file
+
+    destinationPath: str
+        The path there the file should be used in the file system
+
+    slave: Slave
+        The slave on which the file belongs to
+    """
+    name = models.CharField(unique=False, max_length=200)
+    sourcePath = models.CharField(unique=False, max_length=200)
+    destinationPath = models.CharField(unique=False, max_length=200)
+    slave = models.ForeignKey(Slave, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = (('name', 'slave'),)
 
 
 class ProgramStatus(models.Model):
@@ -103,7 +130,6 @@ class ProgramStatus(models.Model):
 
     Arguments
     ---------
-        id: Program ID.
         error: Error message if the execution was not successful.
         started: Timestamp when the command was send.
         stopped: Timestamp when the result of the Command was received.
@@ -124,7 +150,6 @@ class SlaveStatus(models.Model):
 
     Arguments
     ---------
-        id: Slave ID.
         boottime: Timestamp, when the slave was started via uptime command
     """
     slave = models.OneToOneField(

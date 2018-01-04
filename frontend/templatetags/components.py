@@ -33,7 +33,7 @@ def program_entry(program):
 
     Arguments
     ---------
-        programs: Program object
+        program: Program object
 
     Returns
     -------
@@ -45,7 +45,7 @@ def program_entry(program):
 @register.inclusion_tag('frontend/slaves/modal_form.html', takes_context=True)
 def modal_form(context, form, prefix):
     """
-    Template tag {% modal_form form prefix %} to generate a model wich has a
+    Template tag {% modal_form form prefix %} to generate a model which has a
     form inside.
 
     Arguments
@@ -64,3 +64,21 @@ def modal_form(context, form, prefix):
         'prefix': prefix,
         'csrf_token': context['csrf_token']
     }
+
+@register.inclusion_tag('frontend/slaves/file.html')
+def file_entry(file):
+    """
+    File tag {% file_entry file %} is used to display a single
+    file.
+
+    Arguments
+    ---------
+        file: File object
+
+    Returns
+    -------
+        A context which maps the file object to file.
+    """
+    return {'file': file}
+
+
