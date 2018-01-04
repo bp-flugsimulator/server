@@ -414,9 +414,9 @@ $(document).ready(function () {
 
     // Save Class when opening/closing accordion for every Slave
     $('#accordion').children().each(function () {
-        var child_id = this.id;
-        var collapse_id = "#collapse" + child_id;
-        var status = "collapseStatus" + child_id;
+        let child_id = this.id;
+        let collapse_id = "#collapse" + child_id;
+        let status = "collapseStatus" + child_id;
 
         $(collapse_id).on('show.bs.collapse', function () {
             localStorage.setItem(status, "show");
