@@ -403,4 +403,33 @@ $(document).ready(function () {
             });
         });
     });
+
+    // Save Class when opening/closing accordion for every Slave
+    $('#accordion').children().each(function () {
+        let child_id = this.id;
+        let collapse_id = "#collapse" + child_id;
+        let status = "collapseStatus" + child_id;
+
+        $(collapse_id).on('show.bs.collapse', function () {
+            localStorage.setItem(status, "show");
+            $('div[href="' + collapse_id + '"]').children(".btn")
+                .attr('data-original-title', "Show Less")
+                .tooltip('show')
+                .html('<i class="material-icons">expand_less</i>');
+        });
+        $(collapse_id).on('hide.bs.collapse', function () {
+            localStorage.setItem(status, "");
+            $('div[href="' + collapse_id + '"]').children()
+                .attr('data-original-title', "Show More")
+                .tooltip('show')
+                .html('<i class="material-icons">expand_more</i>');
+        });
+        // restore saved class
+        $(collapse_id).addClass(localStorage.getItem(status));
+    });
+
+    // fixes the tooltip from staying after button is pressed
+    $('[data-toggle="tooltip"]').tooltip({
+        trigger: 'hover'
+    })
 });
