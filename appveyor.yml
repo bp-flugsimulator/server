@@ -19,7 +19,7 @@ install:
 build: off
 
 cache:
-  - $(PYTHON)\lib\site-packages
+  #- $(PYTHON)\lib\site-packages
 
 
 test_script:

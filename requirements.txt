@@ -1,7 +1,7 @@
 Django==2.0.1
 django-widget-tweaks==1.4.1
 wakeonlan==0.2.2
-channels
+channels==1.1.8
 git+https://github.com/bp-flugsimulator/utils
 libsass==0.13.4
 termcolor==1.1.0
