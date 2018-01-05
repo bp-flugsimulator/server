@@ -11,11 +11,11 @@ style="background-color: #292929;">
             <div class="btn-toolbar" role="toolbar">
                 <div class="btn-group mr-4" role="group">
                         {% if program.programstatus.started != '' and program.programstatus.code == '' %}
-                            <button type="button" class="btn btn-success" data-toggle="tooltip" data-placement="top" title="Running">
+                            <button id="programStatus_{{ program.id }}" type="button" class="btn btn-success" data-toggle="tooltip" data-placement="top" title="Running">
                         {% elif program.programstatus.started != '' and program.programstatus.code != '' %}
-                            <button type="button" class="btn btn-danger" data-toggle="tooltip" data-placement="top" title="Stopped with Code {{ program.programstatus.code }} ">
+                            <button id="programStatus_{{ program.id }}" type="button" class="btn btn-danger" data-toggle="tooltip" data-placement="top" title="Stopped with Code {{ program.programstatus.code }} ">
                         {% else %}
-                            <button type="button" class="btn btn-danger" data-toggle="tooltip" data-placement="top" title="Status">
+                            <button id="programStatus_{{ program.id }}" type="button" class="btn btn-danger" data-toggle="tooltip" data-placement="top" title="Status">
                         {% endif %}
                         <i class="material-icons">error_outline</i>
                     </button>
