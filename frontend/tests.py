@@ -15,6 +15,8 @@ import json
 from .models import Slave as SlaveModel, validate_mac_address, Program as ProgramModel, SlaveStatus as SlaveStatusModel, ProgramStatus as ProgramStatusModel
 from .consumers import ws_rpc_connect
 
+from .scripts import Script, ScriptEntry
+
 
 def fill_database_slaves_set_1():
     data_set = [
@@ -68,6 +70,10 @@ class FrontendTests(TestCase):
             self.assertContains(response, data.mac_address)
             self.assertContains(response, data.ip_address)
 
+    def test_script_get(self):
+        response = self.client.get(reverse('frontend:scripts'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Scripts")
 
 class ApiTests(TestCase):
     def test_add_slave_success(self):
@@ -1119,3 +1125,39 @@ class DatabaseTests(TestCase):
 
         self.assertEqual(SlaveStatusModel.objects.count(), 0)
         self.assertEqual(ProgramStatusModel.objects.count(), 0)
+
+class ComponentTests(TestCase):
+    def test_script_entry(self):
+        from .templatetags.components import script_entry
+        response = script_entry("test")
+        self.assertEqual({"script": "test"}, response)
+
+
+class ScriptTests(TestCase):
+    def test_script_wrong_type_name(self):
+        self.assertRaises(ValueError, Script, [], [])
+
+    def test_script_wrong_type_program(self):
+        self.assertRaises(ValueError, ScriptEntry, "a name", "whoops", 0, "program")
+
+    def test_script_entry_wrong_type_index(self):
+        self.assertRaises(ValueError, ScriptEntry, [], "whoops", 0, "program")
+
+    def test_script_entry_wrong_type_name(self):
+        self.assertRaises(ValueError, ScriptEntry, 0, [], 0, "program")
+
+    def test_script_entry_wrong_type_slave(self):
+        self.assertRaises(ValueError, ScriptEntry, 0, [], 0, "whoops")
+
+    def test_script_entry_wrong_type_type(self):
+        self.assertRaises(ValueError, ScriptEntry, 0, "a name", 0, "whoops")
+
+    def test_script_json(self):
+        string = '{"name": "test", "programs": [{"index": 0, "slave": 0, "type": "program", "name": "no name"}]}'
+
+        self.assertEqual(Script.from_json(string), Script("test", [ScriptEntry(0, "no name", 0, "program")]))
+
+    def test_script_entry_json(self):
+        string = '{"index": 0, "slave": 0, "type": "program", "name": "no name"}'
+
+        self.assertEqual(ScriptEntry.from_json(string), ScriptEntry(0, "no name", 0, "program"))
