@@ -778,8 +778,13 @@ class ApiTests(TestCase):
 
         SlaveStatusModel(slave=slave, boottime=timezone.now()).save()
 
+        # connect client
         client = WSClient()
         client.join_group("client_" + str(slave.id))
+
+        # connect webinterface to /notifications
+        webinterface = WSClient()
+        webinterface.join_group('notifications')
 
         api_response = self.client.post("/api/program/" + str(program.id))
         self.assertEqual(api_response.status_code, 200)
@@ -788,14 +793,22 @@ class ApiTests(TestCase):
             json.loads(Status.ok("").to_json()),
         )
 
-        ws_response = client.receive()
+        # test if the client receives the command
         self.assertJSONEqual(
             Command(
                 method='execute',
                 pid=program.id,
                 path=program.path,
                 arguments=split(program.arguments),
-            ).to_json(), ws_response)
+            ).to_json(), client.receive())
+
+        #test if the webinterface gets the "started" message
+        self.assertJSONEqual(
+            Status.ok({
+                'program_status': 'started',
+                'pid': program.id
+            }).to_json(), webinterface.receive())
+
         slave.delete()
 
     def test_execute_program_fail_slave_offline(self):
@@ -1022,6 +1035,13 @@ class WebsocketTests(TestCase):
 
         ProgramStatusModel(program=program, started=timezone.now()).save()
 
+        # connect webinterface
+        webinterface = WSClient()
+        webinterface.send_and_consume(
+            'websocket.connect',
+            path='/notifications',
+        )
+
         ws_client = WSClient()
         ws_client.send_and_consume(
             'websocket.receive',
@@ -1038,6 +1058,15 @@ class WebsocketTests(TestCase):
         query = ProgramStatusModel.objects.filter(program=program, code=0)
         self.assertTrue(query.count() == 1)
         self.assertIsNotNone(query.first().stopped)
+
+        # test if the webinterface gets the "finished" message
+        self.assertJSONEqual(
+            Status.ok({
+                'program_status': 'finished',
+                'pid': str(program.id),
+                'code': str(0)
+            }).to_json(), webinterface.receive())
+
         slave.delete()
 
     def test_ws_notifications_receive_status_err(self):

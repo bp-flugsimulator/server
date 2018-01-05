@@ -18,13 +18,15 @@ class ProgramForm(ModelForm):
 
     class Meta:
         model = ProgramModel
-        fields = ['name','path', 'arguments']
+        fields = ['name', 'path', 'arguments']
+
 
 class FileForm(ModelForm):
     file = ModelChoiceField(
         queryset=SlaveModel.objects.all(),
         widget=HiddenInput(),
     )
+
     class Meta:
         model = FileModel
-        fields = ['name','sourcePath', 'destinationPath']
+        fields = ['name', 'sourcePath', 'destinationPath']

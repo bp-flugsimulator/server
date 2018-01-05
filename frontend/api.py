@@ -181,6 +181,8 @@ def manage_program(request, programId):
         program = ProgramModel.objects.get(id=programId)
         if SlaveStatusModel.objects.filter(slave=program.slave).exists():
             ProgramStatusModel(program=program, started=timezone.now()).save()
+
+            # send command to the client
             Group('client_' + str(program.slave.id)).send({
                 'text':
                 Command(
