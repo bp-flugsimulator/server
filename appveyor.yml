@@ -14,7 +14,6 @@ environment:
 
 
 install:
-  - "%PYTHON%\\python.exe -m pip uninstall -r requirements.txt -y"
   - "%PYTHON%\\python.exe install.py"
 
 build: off
