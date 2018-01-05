@@ -1136,6 +1136,9 @@ class ComponentTests(TestCase):
 class ScriptTests(TestCase):
     def test_script_wrong_type_name(self):
         self.assertRaises(ValueError, Script, [], [])
+        
+    def test_script_wrong_type_program(self):
+        self.assertRaises(ValueError, Script, "name", "not a list")
 
     def test_script_wrong_type_program(self):
         self.assertRaises(ValueError, ScriptEntry, "a name", "whoops", 0, "program")
@@ -1147,7 +1150,7 @@ class ScriptTests(TestCase):
         self.assertRaises(ValueError, ScriptEntry, 0, [], 0, "program")
 
     def test_script_entry_wrong_type_slave(self):
-        self.assertRaises(ValueError, ScriptEntry, 0, [], 0, "whoops")
+        self.assertRaises(ValueError, ScriptEntry, 0, "", [], "whoops")
 
     def test_script_entry_wrong_type_type(self):
         self.assertRaises(ValueError, ScriptEntry, 0, "a name", 0, "whoops")
