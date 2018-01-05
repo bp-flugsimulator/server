@@ -189,6 +189,15 @@ def manage_program(request, programId):
                     path=program.path,
                     arguments=split(program.arguments)).to_json()
             })
+
+            # tell webinterface that the program has ended
+            Group('notifications').send({
+                'text':
+                Status.ok({
+                    "program_status": "started",
+                    "pid": program.id,
+                }).to_json()
+            })
             return StatusResponse(Status.ok(''))
         else:
             return StatusResponse(
