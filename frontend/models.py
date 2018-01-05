@@ -94,7 +94,8 @@ class Program(models.Model):
     slave = models.ForeignKey(Slave, on_delete=models.CASCADE)
 
     class Meta:
-        unique_together = (('name', 'slave'),)
+        unique_together = (('name', 'slave'), )
+
 
 class File(models.Model):
     """
@@ -121,7 +122,30 @@ class File(models.Model):
     slave = models.ForeignKey(Slave, on_delete=models.CASCADE)
 
     class Meta:
-        unique_together = (('name', 'slave'),)
+        unique_together = (('name', 'slave'), )
+
+
+class Script(models.Model):
+    """
+    Represents a script file in a json format.
+
+    Attributes
+    ----------
+    name: str
+        The name of the script (has to be unique for every slave)
+
+    payload: str
+        The json encoded string.
+
+    slave: Slave
+        The slave on which the file belongs to
+    """
+    name = models.CharField(unique=False, max_length=200)
+    payload = models.TextField(blank=False, null=False)
+    slave = models.ForeignKey(Slave, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = (('name', 'slave'), )
 
 
 class ProgramStatus(models.Model):

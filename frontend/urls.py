@@ -8,6 +8,7 @@ app_name = 'frontend'
 urlpatterns = [
     url(r'^welcome$', views.WelcomeView.as_view(), name='welcome'),
     url(r'^slaves/$', views.SlavesView.as_view(), name='slaves'),
+    url(r'^scripts/$', views.ScriptView.as_view(), name='scripts'),
     url(r'^api/slaves', api.add_slave, name='add_slaves'),
     url(r'^api/slave/([0-9]+)$', api.manage_slave, name='manage_slave'),
     url(r'^api/programs$', api.add_program, name='add_program'),
