@@ -42,7 +42,7 @@ class Status {
 	}
 
 	static from_json(data) {
-		var json = JSON.parse(data);
+		let json = JSON.parse(data);
 		return new Status(json["status"], json["payload"]);
 	}
 }

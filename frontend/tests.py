@@ -487,7 +487,6 @@ class ApiTests(TestCase):
         ).save()
         model = SlaveModel.objects.get(name='add_program_fail_not_unique')
 
-
         api_response = self.client.post(
             '/api/programs', {
                 'name': 'name',
@@ -896,6 +895,7 @@ class WebsocketTests(TestCase):
             mac_address='00:00:00:00:10:01',
         )
 
+        #connect client on /commands
         ws_client = WSClient()
         ws_client.send_and_consume(
             'websocket.connect',
@@ -903,6 +903,14 @@ class WebsocketTests(TestCase):
             content={'client': ['0.0.10.1', '00:00:00:00:10:01']},
         )
 
+        #connect webinterface on /notifications
+        webinterface = WSClient()
+        webinterface.send_and_consume(
+            'websocket.connect',
+            path='/notifications',
+        )
+
+        #test for boottime request on client
         self.assertJSONEqual(
             json.dumps(ws_client.receive()),
             Command(method="boottime", sid=slave.id).to_json())
@@ -925,6 +933,13 @@ class WebsocketTests(TestCase):
             immediately=True,
         )
         self.assertIsNone(ws_client.receive())
+
+        # test if a "disconnected" message has been send to the webinterface
+        self.assertJSONEqual(
+            Status.ok({
+                'slave_status': 'disconnected',
+                'sid': str(slave.id)
+            }).to_json(), webinterface.receive())
 
         slave.delete()
 
@@ -957,6 +972,12 @@ class WebsocketTests(TestCase):
             ip_address='0.0.10.2',
             mac_address='00:00:00:00:10:02')
 
+        #connect webinterface on /notifications
+        webinterface = WSClient()
+        webinterface.send_and_consume(
+            'websocket.connect', path='/notifications')
+
+        #send bootime answer
         ws_client = WSClient()
         ws_client.send_and_consume(
             'websocket.receive',
@@ -972,8 +993,15 @@ class WebsocketTests(TestCase):
                     slave.id
                 }).to_json()
             })
-
         self.assertTrue(SlaveStatusModel.objects.filter(slave=slave).exists())
+
+        #test if a connected message was send on /notifications
+        self.assertJSONEqual(
+            Status.ok({
+                'slave_status': 'connected',
+                'sid': str(slave.id)
+            }).to_json(), webinterface.receive())
+
         slave.delete()
 
     def test_ws_notifications_receive_execute(self):

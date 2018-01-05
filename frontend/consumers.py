@@ -6,6 +6,8 @@ from datetime import datetime
 from django.utils import timezone
 from termcolor import colored
 
+import json
+
 # import the logging library
 import logging
 
@@ -74,6 +76,15 @@ def ws_rpc_disconnect(message):
         Group('client_{}'.format(slave.id)).discard(message.reply_channel)
         slave.slavestatus.delete()
 
+        # tell the webinterface that the client has disconnected
+        Group('notifications').send({
+            'text':
+            Status.ok({
+                "slave_status": "disconnected",
+                "sid": str(slave.id)
+            }).to_json()
+        })
+
         logger.info("Client with ip {} disconnected from /commands!".format(
             message.channel_session['ip_address']))
 
@@ -126,6 +137,14 @@ def ws_notifications_receive(message):
                 logger.info("Saved status of {} with boottime {}".format(
                     slave.name, boottime))
 
+                # tell webinterface that the client has been connected
+                Group('notifications').send({
+                    'text':
+                    Status.ok({
+                        "slave_status": "connected",
+                        "sid": str(slave.id)
+                    }).to_json()
+                })
             elif status.payload['method'] == 'execute':
                 program = ProgramModel.objects.get(id=status.payload['pid'])
 
