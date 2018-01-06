@@ -4,7 +4,7 @@ register = template.Library()
 
 
 @register.inclusion_tag('frontend/slaves/slave.html')
-def slave_entry(slave, programs):
+def slave_entry(slave, programs, files):
     """
     Template tag {% slave_entry slave programms %} is used to display a single
     slave.
@@ -22,6 +22,7 @@ def slave_entry(slave, programs):
     return {
         'slave': slave,
         'programs': programs,
+        'files': files,
     }
 
 

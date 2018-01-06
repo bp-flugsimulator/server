@@ -7,11 +7,18 @@ style="background-color: rgb(73, 73, 73);">
             <div class="slave-name col">
                 <h5 class="mt-2">{{ slave.name }}</h5>
             </div>
-            <div class="btn-toolbar" role="toolbar">
+            <div class="btn-toolbar " role="toolbar">
                 <div class="btn-group mr-4" role="group">
-                    <button type="button" class="btn btn-danger" data-toggle="tooltip" data-placement="top" title="Status">
-                        <i class="material-icons">error_outline</i>
-                    </button>
+                        <button type="button" id="slaveStatus_{{ slave.id }}"
+                                class="btn
+                            {% if slave.slavestatus.bootime != ''%}
+                                btn-success
+                            {% else %}
+                                btn-danger
+                            {% endif %}
+                        " data-toggle="tooltip" data-placement="top" title="Status">
+                            <i class="material-icons">error_outline</i>
+                        </button>
                 </div>
 
                 <div class="btn-group mr-2" role="group">
@@ -70,28 +77,28 @@ style="background-color: rgb(73, 73, 73);">
                 <div class="card alert alert-info">
                     <strong>Info!</strong> No programs for this client in system.
                 </div>
-	    {% endfor %}
+	        {% endfor %}
+
 
 	    
             <button type="button" class="btn btn-outline-info float-right add-program-btn mb-4 mt-2 col" data-toggle="tooltip" data-placement="top" title="Add program">
                 <span></span>
                 <i class="material-icons" style="font-size:30px; vertical-align: middle;">add</i>
-	    </button>
+	        </button>
 
-	    <h5>Files</h5>
-	    {% for file in files %}
-	    	{% file_entry files %}
-	    {% empty %}
-	    	<div class="card alert alert-info">
-		    <strong>Info!</strong> No files for this client in system.
-		</div>
-	    {% endfor %}
+	        <h5>Files</h5>
+	        {% for file in files %}
+	        	{% file_entry file %}
+	        {% empty %}
+	        	<div class="card alert alert-info">
+                    <strong>Info!</strong> No files for this client in system.
+		        </div>
+	        {% endfor %}
 		
-	    <button type="button" class="btn btn-outline-info float-right add-file-btn mb-4 mt-2 col" data-toggle="tooltip" data-placement="top" title="Add file">
+	        <button type="button" class="btn btn-outline-info float-right add-file-btn mb-4 mt-2 col" data-toggle="tooltip" data-placement="top" title="Add file">
                 <span></span>
                 <i class="material-icons" style="font-size:30px; vertical-align: middle;">add</i>
-	    </button>
-
+	        </button>
         </div>
     </div>
 </div>

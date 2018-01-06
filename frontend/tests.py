@@ -12,7 +12,8 @@ from channels import Group
 
 import json
 
-from .models import Slave as SlaveModel, validate_mac_address, Program as ProgramModel, SlaveStatus as SlaveStatusModel, ProgramStatus as ProgramStatusModel, ScriptGraphPrograms as SCP, Script as ScriptModel
+
+from .models import Slave as SlaveModel, validate_mac_address, Program as ProgramModel, SlaveStatus as SlaveStatusModel, ProgramStatus as ProgramStatusModel, ScriptGraphPrograms as SCP, Script as ScriptModel, File as FileModel
 from .consumers import ws_rpc_connect
 from .scripts import Script, ScriptEntry
 
@@ -513,7 +514,6 @@ class ApiTests(TestCase):
         ).save()
         model = SlaveModel.objects.get(name='add_program_fail_not_unique')
 
-
         api_response = self.client.post(
             '/api/programs', {
                 'name': 'name',
@@ -859,6 +859,141 @@ class ApiTests(TestCase):
         self.assertEqual(None, ws_response)
         slave.delete()
 
+    def test_add_file(self):
+        SlaveModel(
+            name='add_file',
+            ip_address='0.0.5.0',
+            mac_address='00:00:00:00:04:00',
+        ).save()
+        model = SlaveModel.objects.get(name='add_file')
+
+        #add all programs
+        for id in range(100):
+            api_response = self.client.post(
+                '/api/files', {
+                    'name': 'name' + str(id),
+                    'sourcePath': 'sourcePath' + str(id),
+                    'destinationPath': 'destinationPath' + str(id),
+                    'slave': str(model.id)
+                })
+            self.assertEqual(api_response.status_code, 200)
+            self.assertJSONEqual(
+                api_response.content.decode('utf-8'),
+                Status(Status.ID_OK, "").to_json())
+
+        #test if all programs are in the database
+        for id in range(100):
+            self.assertTrue(
+                FileModel.objects.filter(
+                    name='name' + str(id),
+                    sourcePath='sourcePath' + str(id),
+                    destinationPath='destinationPath' + str(id),
+                    slave=model))
+
+        #delete all entries
+        model.delete()
+
+    def test_add_file_fail_length(self):
+        SlaveModel(
+            name='add_file_fail',
+            ip_address='0.0.6.0',
+            mac_address='00:00:00:00:06:00',
+        ).save()
+        model = SlaveModel.objects.get(name='add_file_fail')
+
+        long_str = ''
+
+        for _ in range(2000):
+            long_str += 'a'
+
+        api_response = self.client.post(
+            '/api/files', {
+                'name': long_str,
+                'sourcePath': long_str,
+                'destinationPath': long_str,
+                'slave': str(model.id)
+            })
+
+        self.assertEqual(api_response.status_code, 200)
+        self.assertJSONEqual(
+            api_response.content.decode('utf-8'),
+            json.loads(
+                Status.err({
+                    "name": [
+                        "Ensure this value has at most 200 characters (it has 2000)."
+                    ],
+                    "sourcePath": [
+                        "Ensure this value has at most 200 characters (it has 2000)."
+                    ],
+                    "destinationPath": [
+                        "Ensure this value has at most 200 characters (it has 2000)."
+                    ]
+                }).to_json()))
+
+        #delete slave
+        model.delete()
+
+    def test_add_file_fail_not_unique(self):
+        SlaveModel(
+            name='add_file_fail_not_unique',
+            ip_address='0.0.6.1',
+            mac_address='00:00:00:00:06:01',
+        ).save()
+        model = SlaveModel.objects.get(name='add_file_fail_not_unique')
+
+
+        api_response = self.client.post(
+            '/api/files', {
+                'name': 'name',
+                'sourcePath': 'sourcePath',
+                'destinationPath': 'destinationPath',
+                'slave': str(model.id)
+            })
+
+        self.assertEqual(api_response.status_code, 200)
+        self.assertJSONEqual(
+            api_response.content.decode('utf-8'),
+            json.loads(Status.ok('').to_json()))
+
+        #try to add program with the same name
+
+        api_response = self.client.post(
+            '/api/files', {
+                'name': 'name',
+                'sourcePath': 'sourcePath',
+                'destinationPath': 'destinationPath',
+                'slave': str(model.id)
+            })
+
+        self.assertEqual(api_response.status_code, 200)
+        self.assertJSONEqual(
+            api_response.content.decode('utf-8'),
+            json.loads(
+                Status.err({
+                    'name':
+                    ['File with this Name already exists on this Client.']
+                }).to_json()))
+
+        #delete slave
+        model.delete()
+
+    def test_add_file_unsupported_function(self):
+        SlaveModel(
+            name='add_file_unsupported',
+            ip_address='0.0.7.0',
+            mac_address='00:00:00:00:07:00',
+        ).save()
+        model = SlaveModel.objects.get(name='add_file_unsupported')
+
+        api_response = self.client.delete('/api/files')
+        self.assertEqual(api_response.status_code, 403)
+        SlaveModel.objects.get(
+            name='add_file_unsupported',
+            ip_address='0.0.7.0',
+            mac_address='00:00:00:00:07:00',
+        ).delete()
+
+        model.delete()
 
 class WebsocketTests(TestCase):
     def test_rpc_commands_fails_unkown_slave(self):
@@ -922,6 +1057,7 @@ class WebsocketTests(TestCase):
             mac_address='00:00:00:00:10:01',
         )
 
+        #connect client on /commands
         ws_client = WSClient()
         ws_client.send_and_consume(
             'websocket.connect',
@@ -929,6 +1065,14 @@ class WebsocketTests(TestCase):
             content={'client': ['0.0.10.1', '00:00:00:00:10:01']},
         )
 
+        #connect webinterface on /notifications
+        webinterface = WSClient()
+        webinterface.send_and_consume(
+            'websocket.connect',
+            path='/notifications',
+        )
+
+        #test for boottime request on client
         self.assertJSONEqual(
             json.dumps(ws_client.receive()),
             Command(method="boottime", sid=slave.id).to_json())
@@ -951,6 +1095,13 @@ class WebsocketTests(TestCase):
             immediately=True,
         )
         self.assertIsNone(ws_client.receive())
+
+        # test if a "disconnected" message has been send to the webinterface
+        self.assertJSONEqual(
+            Status.ok({
+                'slave_status': 'disconnected',
+                'sid': str(slave.id)
+            }).to_json(), webinterface.receive())
 
         slave.delete()
 
@@ -983,6 +1134,12 @@ class WebsocketTests(TestCase):
             ip_address='0.0.10.2',
             mac_address='00:00:00:00:10:02')
 
+        #connect webinterface on /notifications
+        webinterface = WSClient()
+        webinterface.send_and_consume(
+            'websocket.connect', path='/notifications')
+
+        #send bootime answer
         ws_client = WSClient()
         ws_client.send_and_consume(
             'websocket.receive',
@@ -998,8 +1155,15 @@ class WebsocketTests(TestCase):
                     slave.id
                 }).to_json()
             })
-
         self.assertTrue(SlaveStatusModel.objects.filter(slave=slave).exists())
+
+        #test if a connected message was send on /notifications
+        self.assertJSONEqual(
+            Status.ok({
+                'slave_status': 'connected',
+                'sid': str(slave.id)
+            }).to_json(), webinterface.receive())
+
         slave.delete()
 
     def test_ws_notifications_receive_execute(self):
