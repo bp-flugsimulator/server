@@ -219,7 +219,25 @@ def manage_program(request, programId):
 
 def manage_file(request, fileId):
     """
-    manages a file
+    Manages the file with the fileId.
+
+    Arguments
+    ----------
+    request: HttpRequest
+        a DELETE #TODO
+        or a PUT  #TODO
+        or a POST request to copy the file with fileId
+            from sourcePath to destinationPath
+    fileId: int
+        the ID of the file
+
+    Returns
+    -------
+    A HttpResponse with a JSON object which
+    can contain errors.
+    If the request method is something other
+    than POST, then HttpResponseForbidden()
+    will be returned.
     """
     # move file
     if request.method == 'POST':
