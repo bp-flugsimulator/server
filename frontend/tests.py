@@ -1051,6 +1051,10 @@ class DatabaseTests(TestCase):
         mod.save()
         self.assertTrue(SlaveModel.objects.filter(name="Tommo3").exists())
 
+    def flush_error(self):
+        from .urls import flush
+        flush('testssss')
+
     def test_slave_insert_invalid_ip(self):
         self.assertRaises(
             ValidationError, SlaveModel(ip_address='my_cool_ip').full_clean)
@@ -1138,6 +1142,9 @@ class ScriptTests(TestCase):
         self.assertRaises(ValueError, Script, [], [])
 
     def test_script_wrong_type_program(self):
+        self.assertRaises(ValueError, Script, [], "program")
+
+    def test_script_wrong_type_program(self):
         self.assertRaises(ValueError, ScriptEntry, "a name", "whoops", 0, "program")
 
     def test_script_entry_wrong_type_index(self):
@@ -1155,9 +1162,67 @@ class ScriptTests(TestCase):
     def test_script_json(self):
         string = '{"name": "test", "programs": [{"index": 0, "slave": 0, "type": "program", "name": "no name"}]}'
 
-        self.assertEqual(Script.from_json(string), Script("test", [ScriptEntry(0, "no name", 0, "program")]))
+        script = Script("test", [ScriptEntry(0, "no name", 0, "program")])
+
+        self.assertEqual(Script.from_json(string), script)
+        self.assertEqual(Script.from_json(script.to_json()), script)
+
 
     def test_script_entry_json(self):
         string = '{"index": 0, "slave": 0, "type": "program", "name": "no name"}'
 
-        self.assertEqual(ScriptEntry.from_json(string), ScriptEntry(0, "no name", 0, "program"))
+        script =ScriptEntry(0, "no name", 0, "program")
+
+        self.assertEqual(ScriptEntry.from_json(string), script)
+        self.assertEqual(ScriptEntry.from_json(script.to_json()), script)
+
+    def test_script_name_eq(self):
+        self.assertNotEqual(Script("test", []), Script("test2", []))
+
+    def test_model_support_strings(self):
+        from .models import ScriptGraphPrograms as SCP
+        from .models import Script as ScriptModel
+
+        slave = SlaveModel(name="test_slave", ip_address="0.0.0.0", mac_address="00:00:00:00:00:00")
+        slave.save ()
+
+        program = ProgramModel(name="test_program", path="None", arguments="None", slave=slave)
+        program.save()
+
+        script = Script("test_script", [ScriptEntry(0, "test_program", "test_slave", "program")])
+        script.save()
+
+        self.assertTrue(ScriptModel.objects.filter(name="test_script").exists())
+        self.assertTrue(SCP.objects.filter(script=ScriptModel.objects.get(name="test_script"), index=0, program=program).exists())
+
+    def test_model_support_ids(self):
+        from .models import ScriptGraphPrograms as SCP
+        from .models import Script as ScriptModel
+
+        slave = SlaveModel(name="test_slave", ip_address="0.0.0.0", mac_address="00:00:00:00:00:00")
+        slave.save()
+
+        program = ProgramModel(name="test_program", path="None", arguments="None", slave=slave)
+        program.save()
+
+        script = Script("test_script", [ScriptEntry(0, program.id, slave.id, "program")])
+        script.save()
+
+        self.assertTrue(ScriptModel.objects.filter(name="test_script").exists())
+        self.assertTrue(SCP.objects.filter(script=ScriptModel.objects.get(name="test_script"), index=0, program=program).exists())
+
+    def test_model_support_error_in_entry(self):
+        from .models import ScriptGraphPrograms as SCP
+        from .models import Script as ScriptModel
+
+        slave = SlaveModel(name="test_slave", ip_address="0.0.0.0", mac_address="00:00:00:00:00:00")
+        slave.save()
+
+        program = ProgramModel(name="test_program", path="None", arguments="None", slave=slave)
+        program.save()
+
+        script = Script("test_scripts", [ScriptEntry(0, program.id, slave.id, "program"), ScriptEntry(0, program.id + 1, slave.id, "program")])
+
+        self.assertRaises(ProgramModel.DoesNotExist, script.save)
+        self.assertTrue(not ScriptModel.objects.filter(name="test_script").exists())
+        self.assertTrue(len(SCP.objects.all()) == 0)

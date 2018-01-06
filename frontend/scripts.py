@@ -1,5 +1,8 @@
 import json
 from enum import Enum
+from django.db import transaction
+from .models import Script as ScriptModel
+from .models import ScriptGraphFiles as SGFModel, ScriptGraphPrograms as SGPModel, Program as ProgramModel, File as FileMode, Slave as SlaveModel
 
 
 class Script:
@@ -33,14 +36,49 @@ class Script:
 
     @classmethod
     def from_json(cls, string):
+        """
+        Takes a JSON encoded string and build this object.
+
+        Returns
+        -------
+            Script object
+        """
         data = json.loads(string)
         return cls(
             data['name'],
             [ScriptEntry(**program) for program in data['programs']],
         )
 
+    def save(self):
+        """
+        Saves this object to the database.
+        """
+
+        first = transaction.savepoint()
+
+        script = ScriptModel(name=self.name)
+        script.save()
+
+        try:
+            programs = [obj.as_model(script) for obj in self.programs]
+
+            for prog in programs:
+                prog.save()
+
+            transaction.savepoint_commit(first)
+        except Exception as err:
+            transaction.savepoint_rollback(first)
+            raise err
+
     def to_json(self):
-        return json.dumps(self)
+        """
+        Converts this object to a JSON encoded string.
+
+        Returns
+        -------
+            str
+        """
+        return json.dumps(self, default=lambda o: o.__dict__)
 
 
 class ScriptEntry:
@@ -62,8 +100,8 @@ class ScriptEntry:
             raise ValueError("Index has to be an integer.")
         self.index = index
 
-        if not isinstance(name, str):
-            raise ValueError("Name has to be a string.")
+        if not isinstance(name, str) and not isinstance(name, int):
+            raise ValueError("Name has to be a string or int.")
         self.name = name
 
         if not isinstance(slave, str) and not isinstance(slave, int):
@@ -80,6 +118,13 @@ class ScriptEntry:
 
     @classmethod
     def from_json(cls, string):
+        """
+        Takes a JSON encoded string and build this object.
+
+        Returns
+        -------
+            Script object
+        """
         data = json.loads(string)
         return cls(
             data['index'],
@@ -88,5 +133,58 @@ class ScriptEntry:
             data['type'],
         )
 
+    def as_model(self, script):
+        """
+        Transforms this object into ScriptGraphFiles or ScriptGraphPrograms depending
+        on the given type.
+
+        Arguments
+        ---------class MyEncoder(JSONEncoder):
+        def default(self, o):
+            return o.__dict__
+
+            script: coresponding Script
+
+        Returns
+        -------
+            Django model
+        """
+        if isinstance(self.slave, str):
+            slave = SlaveModel.objects.get(name=self.slave)
+        elif isinstance(self.slave, int):
+            slave = SlaveModel.objects.get(id=self.slave)
+        else:
+            raise ValueError("Not supported value")
+
+        if self.type == 'program':
+            if isinstance(self.name, str):
+                obj = ProgramModel.objects.get(slave=slave, name=self.name)
+            elif isinstance(self.name, int):
+                obj = ProgramModel.objects.get(slave=slave, id=self.name)
+            else:
+                raise ValueError("Not supported value")
+
+            return SGPModel(script=script, index=self.index, program=obj)
+        elif self.type == 'file':
+            if isinstance(self.name, str):
+                obj = FileModel.objects.get(
+                    slave=slave, name=self.name).distinct()
+            elif isinstance(self.name, int):
+                obj = FileModel.objects.get(
+                    slave=slave, id=self.name).distinct()
+            else:
+                raise ValueError("Not supported value")
+
+            return SGFModel(script=script, index=self.index, file=obj)
+        else:
+            raise ValueError("Not supported value")
+
     def to_json(self):
-        return json.dumps(self)
+        """
+        Converts this object to a JSON encoded string.
+
+        Returns
+        -------
+            str
+        """
+        return json.dumps(self, default=lambda o: o.__dict__)
