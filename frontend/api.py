@@ -2,7 +2,9 @@ from django.http import HttpResponseForbidden
 from django.http.request import QueryDict
 from django.core.exceptions import ValidationError
 
-from .models import Slave as SlaveModel, Program as ProgramModel, ProgramStatus as ProgramStatusModel, SlaveStatus as SlaveStatusModel
+from .models import Slave as SlaveModel, Program as ProgramModel, ProgramStatus as ProgramStatusModel, SlaveStatus as SlaveStatusModel, Script as ScriptModel, ScriptGraphFiles as SGFModel, ScriptGraphPrograms as SGPModel
+
+from .scripts import Script
 
 from .forms import SlaveForm, ProgramForm
 from server.utils import StatusResponse
@@ -214,5 +216,18 @@ def manage_program(request, programId):
                 return StatusResponse(Status.err(error_dict))
         else:
             return StatusResponse(Status.err(form.errors))
+    else:
+        return HttpResponseForbidden()
+
+
+def manage_script(request, scriptId):
+    if request.method == 'GET':
+        try:
+            script = Script.from_model(scriptId)
+            return StatusResponse(Status.ok(dict(script)))
+        except ScriptModel.DoesNotExist:
+            return StatusResponse(Status.err("Script does not exist."))
+        except Exception as err:
+            return StatusResponse(Status.err(str(err)))
     else:
         return HttpResponseForbidden()

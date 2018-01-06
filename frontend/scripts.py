@@ -34,6 +34,37 @@ class Script:
 
         return len(c_other) == 0
 
+    def __iter__(self):
+        yield ("name", self.name)
+        yield ("programs", [dict(entry) for entry in self.programs])
+
+    @classmethod
+    def from_model(cls, scriptId):
+        """
+        Creates a object from a script id.
+
+        Arguments
+        ---------
+            scriptId: integer (identifier)
+
+        Returns
+        -------
+            Script object
+
+        """
+        script = ScriptModel.objects.get(id=scriptId)
+
+        a = [
+            ScriptEntry.from_query(model)
+            for model in SGPModel.objects.filter(script=script)
+        ]
+        b = [
+            ScriptEntry.from_query(model)
+            for model in SGFModel.objects.filter(script=script)
+        ]
+
+        return cls(script.name, a + b)
+
     @classmethod
     def from_json(cls, string):
         """
@@ -78,7 +109,7 @@ class Script:
         -------
             str
         """
-        return json.dumps(self, default=lambda o: o.__dict__)
+        return json.dumps(dict(self))
 
 
 class ScriptEntry:
@@ -116,6 +147,40 @@ class ScriptEntry:
     def __eq__(self, other):
         return self.index == other.index and self.name == other.name and self.slave == other.slave and self.type == other.type
 
+    def __iter__(self):
+        for k, v in vars(self).items():
+            yield (k, v)
+
+    @classmethod
+    def from_query(cls, query):
+        """
+        Retrieves values from a django query (for ScriptGraphFiles or ScriptGraphPrograms).
+
+        Arguments
+        ----------
+            query: django query
+
+        Returns
+        -------
+             ScriptEntry object
+        """
+        if hasattr(query, "file"):
+            return cls(
+                query.index,
+                query.file.id,
+                query.file.slave,
+                "file",
+            )
+        elif hasattr(query, "program"):
+            return cls(
+                query.index,
+                query.program.id,
+                query.program.slave.id,
+                "program",
+            )
+        else:
+            raise ValueError("Not supported query input.")
+
     @classmethod
     def from_json(cls, string):
         """
@@ -139,10 +204,7 @@ class ScriptEntry:
         on the given type.
 
         Arguments
-        ---------class MyEncoder(JSONEncoder):
-        def default(self, o):
-            return o.__dict__
-
+        ---------
             script: coresponding Script
 
         Returns
@@ -187,4 +249,4 @@ class ScriptEntry:
         -------
             str
         """
-        return json.dumps(self, default=lambda o: o.__dict__)
+        return json.dumps(dict(self))

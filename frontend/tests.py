@@ -12,9 +12,8 @@ from channels import Group
 
 import json
 
-from .models import Slave as SlaveModel, validate_mac_address, Program as ProgramModel, SlaveStatus as SlaveStatusModel, ProgramStatus as ProgramStatusModel
+from .models import Slave as SlaveModel, validate_mac_address, Program as ProgramModel, SlaveStatus as SlaveStatusModel, ProgramStatus as ProgramStatusModel, ScriptGraphPrograms as SCP, Script as ScriptModel
 from .consumers import ws_rpc_connect
-
 from .scripts import Script, ScriptEntry
 
 
@@ -76,6 +75,27 @@ class FrontendTests(TestCase):
         self.assertContains(response, "Scripts")
 
 class ApiTests(TestCase):
+
+    def test_get_script(self):
+        slave = SlaveModel(name="test_slave", ip_address="0.0.0.0", mac_address="00:00:00:00:00:00")
+        slave.save()
+
+        program = ProgramModel(name="test_program", path="None", arguments="None", slave=slave)
+        program.save()
+
+        script = Script("test_script", [ScriptEntry(0, program.id, slave.id, "program")])
+        script.save()
+
+        db_script = ScriptModel.objects.get(name="test_script")
+
+        response = self.client.get("/api/script/{}".format(db_script.id))
+
+        self.assertContains(response, "test_script")
+        self.assertContains(response, "program")
+        self.assertContains(response, 0)
+        self.assertContains(response, program.id)
+        self.assertContains(response, slave.id)
+
     def test_add_slave_success(self):
         data_set = [
             SlaveModel(
@@ -1183,9 +1203,6 @@ class ScriptTests(TestCase):
         self.assertNotEqual(Script("test", []), Script("test2", []))
 
     def test_model_support_strings(self):
-        from .models import ScriptGraphPrograms as SCP
-        from .models import Script as ScriptModel
-
         slave = SlaveModel(name="test_slave", ip_address="0.0.0.0", mac_address="00:00:00:00:00:00")
         slave.save ()
 
@@ -1199,9 +1216,6 @@ class ScriptTests(TestCase):
         self.assertTrue(SCP.objects.filter(script=ScriptModel.objects.get(name="test_script"), index=0, program=program).exists())
 
     def test_model_support_ids(self):
-        from .models import ScriptGraphPrograms as SCP
-        from .models import Script as ScriptModel
-
         slave = SlaveModel(name="test_slave", ip_address="0.0.0.0", mac_address="00:00:00:00:00:00")
         slave.save()
 
@@ -1215,8 +1229,6 @@ class ScriptTests(TestCase):
         self.assertTrue(SCP.objects.filter(script=ScriptModel.objects.get(name="test_script"), index=0, program=program).exists())
 
     def test_model_support_error_in_entry(self):
-        from .models import ScriptGraphPrograms as SCP
-        from .models import Script as ScriptModel
 
         slave = SlaveModel(name="test_slave", ip_address="0.0.0.0", mac_address="00:00:00:00:00:00")
         slave.save()
