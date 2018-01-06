@@ -70,6 +70,68 @@ class FrontendTests(TestCase):
 
 
 class ApiTests(TestCase):
+    def test_manage_file_forbidden(self):
+        api_response = self.client.get("/api/file/0")
+        self.assertEqual(api_response.status_code, 403)
+
+    def test_manage_file_status_error(self):
+        slave = SlaveModel(
+            name="slave_5", ip_address="ip address", mac_address="mac address")
+        slave.save()
+
+        slave_in_database = SlaveModel.objects.get(name=slave.name)
+
+        file = FileModel(
+            name="file_fail_0",
+            sourcePath="file.sourcePath",
+            destinationPath="file.destinationPath",
+            slave=slave_in_database)
+        file.save()
+
+        api_response = self.client.post("/api/file/" + str(file.id))
+        self.assertEqual(api_response.status_code, 200)
+        self.assertJSONEqual(
+            api_response.content.decode('utf-8'),
+            Status.err("Can not move file_fail_0 because slave_5 is offline!")
+            .to_json())
+
+    def test_manage_file_ok(self):
+        slave = SlaveModel(
+            name="slave_5", ip_address="ip address", mac_address="mac address")
+        slave.save()
+
+        slaveStatus = SlaveStatusModel(boottime=datetime.now())
+        slaveStatus.save()
+
+        slave_in_database = SlaveModel.objects.get(name=slave.name)
+
+        file = FileModel(
+            name="file_fail_0",
+            sourcePath="file.sourcePath",
+            destinationPath="file.destinationPath",
+            slave=slave_in_database)
+        file.save()
+
+        # connect slave to websocket
+        ws_client = WSClient()
+        ws_client.join_group('client_' + str(slave.id))
+
+        api_response = self.client.post("/api/file/" + str(file.id))
+        self.assertEqual(api_response.status_code, 200)
+
+        self.assertJSONEqual(
+            api_response.content.decode('utf-8'),
+            Status.ok('').to_json())
+        ws_response = ws_client.receive()
+
+        self.assertJSONEqual(
+            Command(
+                method='move_file',
+                fid=file.id,
+                sourcePath="file.sourcePath",
+                destinationPath="file.destinationPath").to_json(),
+                ws_response)
+
     def test_add_slave_success(self):
         data_set = [
             SlaveModel(

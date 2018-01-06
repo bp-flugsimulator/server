@@ -14,6 +14,7 @@ urlpatterns = [
     url(r'^api/slave/([0-9]+)/wol$', api.wol_slave, name='wol_slave'),
     url(r'^api/program/([0-9]+)$', api.manage_program, name='manage_program'),
     url(r'^api/files$', api.add_file, name='add_file'),
+    url(r'^api/file/([0-9]+)$', api.manage_file, name='manage_file'),
 ]
 
 
