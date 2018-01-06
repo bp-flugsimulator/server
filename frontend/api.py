@@ -2,7 +2,7 @@ from django.http import HttpResponseForbidden
 from django.http.request import QueryDict
 from django.core.exceptions import ValidationError
 
-from .models import Slave as SlaveModel, Program as ProgramModel, ProgramStatus as ProgramStatusModel, SlaveStatus as SlaveStatusModel
+from .models import Slave as SlaveModel, Program as ProgramModel, ProgramStatus as ProgramStatusModel, SlaveStatus as SlaveStatusModel, File as FileModel
 
 from .forms import SlaveForm, ProgramForm
 from server.utils import StatusResponse
@@ -217,7 +217,29 @@ def manage_program(request, programId):
     else:
         return HttpResponseForbidden()
 
-def manage_file(request, fileId)
+def manage_file(request, fileId):
     """
     manages a file
     """
+    # move file
+     if request.method == 'POST':
+        file = FileModel.objects.get(id=fileId)
+        if SlaveStatusModel.objects.filter(slave=file.slave).exists():
+            # Status der Files #TODO...
+            Group('client_' + str(program.slave.id)).send({
+                'text':
+                Command(
+                    method="move_file",
+                    fid=file.id,
+                    sourcePath=file.sourcePath,
+                    destinationPath=file.destinationPath
+            })
+            return StatusResponse(Status.ok(''))
+        else:
+            return StatusResponse(
+                Status.err('Can not move {} because {} is offline!'.format(
+                    file.name, file.slave.name)))
+    else:
+        return HttpResponseForbidden()
+
+
