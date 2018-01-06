@@ -216,3 +216,8 @@ def manage_program(request, programId):
             return StatusResponse(Status.err(form.errors))
     else:
         return HttpResponseForbidden()
+
+def manage_file(request, fileId)
+    """
+    manages a file
+    """
