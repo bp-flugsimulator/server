@@ -832,6 +832,60 @@ class ApiTests(TestCase):
         self.assertEqual(None, ws_response)
         slave.delete()
 
+    def test_shutdown_slave(self):
+        SlaveModel(
+            name='test_shutdown_slave',
+            ip_address='0.0.9.0',
+            mac_address='00:00:00:00:09:00',
+        ).save()
+        slave = SlaveModel.objects.get(name='test_shutdown_slave')
+
+        SlaveStatusModel(boottime=timezone.now(), slave=slave).save()
+
+        # connect slave to websocket
+        ws_client = WSClient()
+        ws_client.join_group('client_' + str(slave.id))
+
+        # make request
+        api_response = self.client.get(path=reverse('frontend:shutdown_slave', args=[slave.id]))
+        self.assertEqual(api_response.status_code, 200)
+        self.assertJSONEqual(
+            Status.ok('').to_json(), api_response.content.decode('utf-8'))
+
+        # test if the slave gets the shutdown request
+        self.assertJSONEqual(Command(method='shutdown').to_json(), ws_client.receive())
+
+        slave.delete()
+
+    def test_shutdown_slave_unknown_slave(self):
+        # make request
+        api_response = self.client.get('/api/slave/111/shutdown')
+        self.assertEqual(api_response.status_code, 200)
+        self.assertJSONEqual(
+            Status.err('Can not shutdown unknown Client').to_json(),
+            api_response.content.decode('utf-8'))
+
+    def test_shutdown_slave_offline_slave(self):
+        SlaveModel(
+            name='test_shutdown_slave_offline_slave',
+            ip_address='0.0.9.1',
+            mac_address='00:00:00:00:09:01',
+        ).save()
+        slave = SlaveModel.objects.get(
+            name='test_shutdown_slave_offline_slave')
+
+        # make request
+        api_response = self.client.get(reverse('frontend:shutdown_slave',args=[slave.id]))
+        self.assertEqual(api_response.status_code, 200)
+        self.assertJSONEqual(Status.err('Can not shutdown offline Client').to_json(), api_response.content.decode('utf-8'))
+
+        slave.delete()
+
+    def test_shutdown_slave_offline_slave(self):
+        api_response = self.client.post('/api/slave/100000/shutdown')
+        self.assertEqual(api_response.status_code, 403)
+
+
 
 class WebsocketTests(TestCase):
     def test_rpc_commands_fails_unkown_slave(self):

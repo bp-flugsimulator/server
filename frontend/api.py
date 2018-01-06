@@ -120,6 +120,43 @@ def add_program(request):
         return HttpResponseForbidden()
 
 
+def shutdown_slave(request, id):
+    """
+    answers a request to shutdown slave with
+    the given id
+    ----------
+    request: HttpRequest
+        a GET request
+    id: int
+        the id of the slave which will be modified
+    Returns
+    -------
+    A HttpResponse with a JSON object which
+    can contain errors.
+    If the request method is something other
+    than GET, then a HttpResponseForbidden()
+    will be returned.
+    """
+    if request.method == 'GET':
+        if SlaveModel.objects.filter(id=id).exists():
+            slave = SlaveModel.objects.get(id=id)
+            if SlaveStatusModel.objects.filter(slave=slave).exists():
+                Group('client_' + str(id)).send({
+                    'text':
+                    Command(method="shutdown").to_json()
+                })
+                return StatusResponse(Status.ok(''))
+            else:
+                return StatusResponse(
+                    Status.err('Can not shutdown offline Client'))
+        else:
+            return StatusResponse(
+                Status.err('Can not shutdown unknown Client'))
+
+    else:
+        return HttpResponseForbidden()
+
+
 def wol_slave(request, id):
     """
     answers a request to wake a slave with
