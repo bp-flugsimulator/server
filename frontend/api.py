@@ -4,7 +4,7 @@ from django.core.exceptions import ValidationError
 
 from .models import Slave as SlaveModel, Program as ProgramModel, ProgramStatus as ProgramStatusModel, SlaveStatus as SlaveStatusModel
 
-from .forms import SlaveForm, ProgramForm
+from .forms import SlaveForm, ProgramForm, FileForm
 from server.utils import StatusResponse
 import json
 
@@ -235,7 +235,7 @@ def add_file(request):
     will be returned.
     """
     if request.method == 'POST':
-        form = ProgramForm(request.POST or None)
+        form = FileForm(request.POST or None)
 
         if form.is_valid():
             file = form.save(commit=False)
