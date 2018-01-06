@@ -42,7 +42,7 @@ def program_entry(program):
     return {'program': program}
 
 
-@register.inclusion_tag('frontend/script/script.html')
+@register.inclusion_tag('frontend/scripts/script.html')
 def script_entry(script):
     """
     Template tag {% script_entry script %} is used to display a single

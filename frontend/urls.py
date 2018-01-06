@@ -8,7 +8,8 @@ app_name = 'frontend'
 urlpatterns = [
     url(r'^welcome$', views.WelcomeView.as_view(), name='welcome'),
     url(r'^slaves/$', views.SlavesView.as_view(), name='slaves'),
-    url(r'^scripts/$', views.ScriptView.as_view(), name='scripts'),
+    url(r'^scripts/$', views.ScriptsView.as_view(), name='scripts'),
+    url(r'^script/(?P<pk>[0-9]+)$', views.ScriptView.as_view(), name='script'),
     url(r'^api/slaves', api.add_slave, name='add_slaves'),
     url(r'^api/slave/([0-9]+)$', api.manage_slave, name='manage_slave'),
     url(r'^api/script/([0-9]+)$', api.manage_script, name='manage_script'),
@@ -35,6 +36,10 @@ def flush(*tables):
         except:
             pass
 
+
+from .scripts import ScriptEntry, Script
+
+# Script("test_script", [ScriptEntry(0, "Echo", "Docker", "program")]).save()
 
 # Flush status tables DO NOT DELETE!
 flush("SlaveStatus", "ProgramStatus")

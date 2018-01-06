@@ -1,0 +1,28 @@
+{% extends "base/base.html" %}
+{% load staticfiles %}
+{% load components %}
+{% block title %} Slaves {% endblock %}
+{% block premain %}
+{% endblock %}
+{% block content %}
+<div class="jumbotron" >
+    {% modal_form program_form "program" %}
+
+    <div class="form-group">
+        <h4><b>Script</b>: {{ script.name }}</h4>
+        <textarea class="form-control" rows="5" id="comment">
+        </textarea>
+    </div>
+
+    <button type="button" class="btn btn-info add-script-btn float-right mt-2 mr-2" data-toggle="tooltip" data-placement="top" title="Add Script">
+            <span>Save</span>
+    </button>
+
+    <button type="button" class="btn btn-warn add-script-btn float-right mt-2 mr-2" data-toggle="tooltip" data-placement="top" title="Add Script">
+            <span>Cancel</span>
+    </button>
+</div>
+{% endblock %}
+{% block script %}
+    <script src="{% static 'frontend/script.js'%}"></script>
+{% endblock %}
