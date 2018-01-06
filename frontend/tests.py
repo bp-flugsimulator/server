@@ -886,6 +886,10 @@ class ApiTests(TestCase):
 
         slave.delete()
 
+    def test_shutdown_slave_forbidden_function(self):
+        api_response = self.client.delete('/api/slave/1/shutdown')
+        self.assertEqual(403,api_response.status_code)
+
     def test_add_file(self):
         SlaveModel(
             name='add_file',
