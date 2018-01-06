@@ -226,7 +226,7 @@ def manage_file(request, fileId):
         file = FileModel.objects.get(id=fileId)
         if SlaveStatusModel.objects.filter(slave=file.slave).exists():
             # Status der Files #TODO...
-            Group('client_' + str(program.slave.id)).send({
+            Group('client_' + str(file.slave.id)).send({
                 'text':
                 Command(
                     method="move_file",
