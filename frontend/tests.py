@@ -1142,6 +1142,9 @@ class ScriptTests(TestCase):
         self.assertRaises(ValueError, Script, [], [])
 
     def test_script_wrong_type_program(self):
+        self.assertRaises(ValueError, Script, "name", "not a list")
+
+    def test_script_wrong_type_program(self):
         self.assertRaises(ValueError, Script, [], "program")
 
     def test_script_wrong_type_program(self):
@@ -1154,7 +1157,7 @@ class ScriptTests(TestCase):
         self.assertRaises(ValueError, ScriptEntry, 0, [], 0, "program")
 
     def test_script_entry_wrong_type_slave(self):
-        self.assertRaises(ValueError, ScriptEntry, 0, [], 0, "whoops")
+        self.assertRaises(ValueError, ScriptEntry, 0, "", [], "whoops")
 
     def test_script_entry_wrong_type_type(self):
         self.assertRaises(ValueError, ScriptEntry, 0, "a name", 0, "whoops")
