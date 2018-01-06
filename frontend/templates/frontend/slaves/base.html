@@ -31,11 +31,12 @@
 
     {% modal_form program_form "program" %}
     {% modal_form slave_form "slave" %}
+    {% modal_form file_form "file" %}
 
     <h4>Clients</h4>
     <div id="accordion" role="tablist">
         {% for slave in slaves %}
-            {% slave_entry slave slave.program_set.all %}
+            {% slave_entry slave slave.program_set.all slave.file_set.all %}
         {% empty %}
             <div class="card alert alert-info">
                 <strong>Info!</strong> No clients in system.

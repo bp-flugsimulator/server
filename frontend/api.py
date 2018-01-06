@@ -4,7 +4,7 @@ from django.core.exceptions import ValidationError
 
 from .models import Slave as SlaveModel, Program as ProgramModel, ProgramStatus as ProgramStatusModel, SlaveStatus as SlaveStatusModel
 
-from .forms import SlaveForm, ProgramForm
+from .forms import SlaveForm, ProgramForm, FileForm
 from server.utils import StatusResponse
 import json
 
@@ -83,7 +83,7 @@ def manage_slave(request, id):
 
 def add_program(request):
     """
-    Answers a POST request to add a new slave
+    Answers a POST request to add a new program
     Parameters
     ----------
     request: HttpRequest
@@ -216,3 +216,43 @@ def manage_program(request, programId):
             return StatusResponse(Status.err(form.errors))
     else:
         return HttpResponseForbidden()
+
+def add_file(request):
+    """
+    Answers a POST request to add a new file
+    Parameters
+    ----------
+    request: HttpRequest
+        a POST request containing a FileForm
+        and a slave_id
+    Returns
+    -------
+    A HttpResponse with a JSON object, which contains
+    a status. If the status is 'error' the datafield
+    errors contains the errors.
+    If the request method is something other
+    than POST, then HttpResponseForbidden()
+    will be returned.
+    """
+    if request.method == 'POST':
+        form = FileForm(request.POST or None)
+
+        if form.is_valid():
+            file = form.save(commit=False)
+            file.slave = form.cleaned_data['slave']
+            try:
+                file.full_clean()
+                form.save()
+                return StatusResponse(Status.ok(''))
+            except ValidationError as _:
+                error_dict = {
+                    'name':
+                    ["File with this Name already exists on this Client."]
+                }
+                return StatusResponse(Status.err(error_dict))
+        else:
+            return StatusResponse(Status.err(form.errors))
+    else:
+        return HttpResponseForbidden()
+
+
