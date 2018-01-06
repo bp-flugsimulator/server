@@ -373,7 +373,7 @@ $(document).ready(function () {
         });
     });
 
-    $('.startSlave').click(function () {
+    $('.start-slave').click(function () {
         let id = $(this).parents('.card').attr('id');
         let el = $(this);
         $.get({
