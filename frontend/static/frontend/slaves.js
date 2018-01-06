@@ -261,6 +261,33 @@ $(document).ready(function () {
         //find slave id and store it in the form
         programModal.modal('toggle');
     });
+    
+	//opens the fileModal to add a new program
+    $('.add-file-btn').click(function () {
+        let fileModal = $('#fileModal');
+        fileModal.children().find('.modal-title').text('Add File');
+
+
+        //modify the form for the submit button
+        let fileForm = fileModal.children().find('#fileForm');
+        fileForm.attr('action', '/api/files');
+        fileForm.attr('method', 'POST');
+        fileForm.children().find('.submit-btn').text('Add');
+
+        //clear input fields
+
+        fileForm.find("input[name='name']").val('');
+        fileForm.find("input[name='sourcePath']").val('');
+        fileForm.find("input[name='destinationPath']").val('');
+
+        //clear error messages
+        clearErrorMessages(fileForm);
+
+        //find slave id and store it in the form
+        let card = $(this).parents('.slave-card');
+        fileForm.find("input[name='slave']").val(card.attr('id'));
+        fileModal.modal('toggle');
+    });
 
     //opens the slaveModal to add a new slave
     $('.add-slave-btn').click(function () {
@@ -343,6 +370,38 @@ $(document).ready(function () {
             }
         });
     });
+
+    // fileForm Handler
+    $('#fileForm').submit(function (event) {
+        //Stop form from submitting normally
+        event.preventDefault();
+        console.log($(this).serialize());
+
+        //send request to given url and with given method
+        //data field contains information about the slave
+        $.ajax({
+            type: $(this).attr('method'),
+            url: $(this).attr('action'),
+            data: $(this).serialize(),
+            converters: {
+                'text json': Status.from_json
+            },
+            beforeSend: function (xhr) {
+                xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
+            },
+            success: function (status) {
+                handleFormStatus($('#fileForm'), status);
+            },
+            error: function () {
+                $.notify({
+                    message: 'Error in Ajax Request.'
+                }, {
+                    type: 'danger'
+                });
+            }
+        });
+    });
+
 
     // slaveForm Handler
     $('#slaveForm').submit(function (event) {

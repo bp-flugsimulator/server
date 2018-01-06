@@ -18,6 +18,5 @@ install:
 
 build: off
 
-
 test_script:
   - "%PYTHON%\\python.exe manage.py test"
