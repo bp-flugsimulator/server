@@ -847,13 +847,15 @@ class ApiTests(TestCase):
         ws_client.join_group('client_' + str(slave.id))
 
         # make request
-        api_response = self.client.get(path=reverse('frontend:shutdown_slave', args=[slave.id]))
+        api_response = self.client.get(
+            path=reverse('frontend:shutdown_slave', args=[slave.id]))
         self.assertEqual(api_response.status_code, 200)
         self.assertJSONEqual(
             Status.ok('').to_json(), api_response.content.decode('utf-8'))
 
         # test if the slave gets the shutdown request
-        self.assertJSONEqual(Command(method='shutdown').to_json(), ws_client.receive())
+        self.assertJSONEqual(
+            Command(method='shutdown').to_json(), ws_client.receive())
 
         slave.delete()
 
@@ -875,16 +877,18 @@ class ApiTests(TestCase):
             name='test_shutdown_slave_offline_slave')
 
         # make request
-        api_response = self.client.get(reverse('frontend:shutdown_slave',args=[slave.id]))
+        api_response = self.client.get(
+            reverse('frontend:shutdown_slave', args=[slave.id]))
         self.assertEqual(api_response.status_code, 200)
-        self.assertJSONEqual(Status.err('Can not shutdown offline Client').to_json(), api_response.content.decode('utf-8'))
+        self.assertJSONEqual(
+            Status.err('Can not shutdown offline Client').to_json(),
+            api_response.content.decode('utf-8'))
 
         slave.delete()
 
     def test_shutdown_slave_offline_slave(self):
         api_response = self.client.post('/api/slave/100000/shutdown')
         self.assertEqual(api_response.status_code, 403)
-
 
 
 class WebsocketTests(TestCase):

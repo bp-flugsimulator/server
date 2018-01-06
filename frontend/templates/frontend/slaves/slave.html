@@ -25,15 +25,15 @@ style="background-color: rgb(73, 73, 73);">
                     <button type="button" id="slaveStartStop_{{ slave.id }}"
                             class="btn btn-outline-light
                                 {% if slave.slavestatus.bootime != ''%}
-                                    start-slave
-                                {% else %}
                                     stop-slave
+                                {% else %}
+                                    start-slave
                                 {% endif %}
                                 " data-toggle="tooltip" data-placement="top" title="
                                 {% if slave.slavestatus.bootime != ''%}
-                                    Start
-                                {% else %}
                                     Stop
+                                {% else %}
+                                    Start
                                 {% endif %}
                             ">
                         <i class="material-icons">power_settings_new</i>
