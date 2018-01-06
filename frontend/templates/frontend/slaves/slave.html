@@ -7,11 +7,18 @@ style="background-color: rgb(73, 73, 73);">
             <div class="slave-name col">
                 <h5 class="mt-2">{{ slave.name }}</h5>
             </div>
-            <div class="btn-toolbar" role="toolbar">
+            <div class="btn-toolbar " role="toolbar">
                 <div class="btn-group mr-4" role="group">
-                    <button type="button" class="btn btn-danger" data-toggle="tooltip" data-placement="top" title="Status">
-                        <i class="material-icons">error_outline</i>
-                    </button>
+                        <button type="button" id="slaveStatus_{{ slave.id }}"
+                                class="btn
+                            {% if slave.slavestatus.bootime != ''%}
+                                btn-success
+                            {% else %}
+                                btn-danger
+                            {% endif %}
+                        " data-toggle="tooltip" data-placement="top" title="Status">
+                            <i class="material-icons">error_outline</i>
+                        </button>
                 </div>
 
                 <div class="btn-group mr-2" role="group">
@@ -72,6 +79,7 @@ style="background-color: rgb(73, 73, 73);">
                 </div>
 	        {% endfor %}
 
+
 	    
             <button type="button" class="btn btn-outline-info float-right add-program-btn mb-4 mt-2 col" data-toggle="tooltip" data-placement="top" title="Add program">
                 <span></span>
@@ -91,7 +99,6 @@ style="background-color: rgb(73, 73, 73);">
                 <span></span>
                 <i class="material-icons" style="font-size:30px; vertical-align: middle;">add</i>
 	        </button>
-
         </div>
     </div>
 </div>

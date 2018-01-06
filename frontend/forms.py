@@ -21,6 +21,7 @@ class ProgramForm(ModelForm):
         fields = ['name','path', 'arguments']
 
 class FileForm(ModelForm):
+
     slave = ModelChoiceField(
         queryset=SlaveModel.objects.all(),
         widget=HiddenInput(),
