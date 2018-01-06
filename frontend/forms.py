@@ -22,7 +22,8 @@ class ProgramForm(ModelForm):
 
 
 class FileForm(ModelForm):
-    file = ModelChoiceField(
+
+    slave = ModelChoiceField(
         queryset=SlaveModel.objects.all(),
         widget=HiddenInput(),
     )
