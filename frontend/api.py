@@ -222,7 +222,7 @@ def manage_file(request, fileId):
     manages a file
     """
     # move file
-     if request.method == 'POST':
+    if request.method == 'POST':
         file = FileModel.objects.get(id=fileId)
         if SlaveStatusModel.objects.filter(slave=file.slave).exists():
             # Status der Files #TODO...
@@ -232,7 +232,7 @@ def manage_file(request, fileId):
                     method="move_file",
                     fid=file.id,
                     sourcePath=file.sourcePath,
-                    destinationPath=file.destinationPath
+                    destinationPath=file.destinationPath).to_json()
             })
             return StatusResponse(Status.ok(''))
         else:
@@ -241,5 +241,3 @@ def manage_file(request, fileId):
                     file.name, file.slave.name)))
     else:
         return HttpResponseForbidden()
-
-
