@@ -94,7 +94,8 @@ class Program(models.Model):
     slave = models.ForeignKey(Slave, on_delete=models.CASCADE)
 
     class Meta:
-        unique_together = (('name', 'slave'),)
+        unique_together = (('name', 'slave'), )
+
 
 class File(models.Model):
     """
@@ -121,7 +122,7 @@ class File(models.Model):
     slave = models.ForeignKey(Slave, on_delete=models.CASCADE)
 
     class Meta:
-        unique_together = (('name', 'slave'),)
+        unique_together = (('name', 'slave'), )
 
 
 class ProgramStatus(models.Model):

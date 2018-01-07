@@ -66,6 +66,7 @@ def modal_form(context, form, prefix):
         'csrf_token': context['csrf_token']
     }
 
+
 @register.inclusion_tag('frontend/slaves/file.html')
 def file_entry(file):
     """
@@ -81,5 +82,3 @@ def file_entry(file):
         A context which maps the file object to file.
     """
     return {'file': file}
-
-
