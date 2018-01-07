@@ -44,11 +44,12 @@ def add_slave(request):
         query = request.GET.get('q', '')
         return StatusResponse(
             Status.ok(
-                set([
-                    obj['name']
-                    for obj in SlaveModel.objects.filter(
-                        name__contains=query).values("name")
-                ])))
+                list(
+                    set([
+                        obj['name']
+                        for obj in SlaveModel.objects.filter(
+                            name__contains=query).values("name")
+                    ]))))
     else:
         return HttpResponseForbidden()
 
@@ -131,11 +132,12 @@ def add_program(request):
         query = request.GET.get('q', '')
         return StatusResponse(
             Status.ok(
-                set([
-                    obj['name']
-                    for obj in ProgramModel.objects.filter(
-                        name__contains=query).values("name")
-                ])))
+                list(
+                    set([
+                        obj['name']
+                        for obj in ProgramModel.objects.filter(
+                            name__contains=query).values("name")
+                    ]))))
     else:
         return HttpResponseForbidden()
 
@@ -306,10 +308,11 @@ def add_file(request):
 
         return StatusResponse(
             Status.ok(
-                set([
-                    obj['name']
-                    for obj in FileModel.objects.filter(
-                        name__contains=query).values("name")
-                ])))
+                list(
+                    set([
+                        obj['name']
+                        for obj in FileModel.objects.filter(
+                            name__contains=query).values("name")
+                    ]))))
     else:
         return HttpResponseForbidden()
