@@ -160,8 +160,15 @@ def ws_notifications_receive(message):
                 logger.info("Saved status of {} with code {}.".format(
                     program.name, program_status.code))
 
-                # pass on message to webinterface
-                Group('notifications').send({'text': message.content['text']})
+                # tell webinterface that the program has ended
+                Group('notifications').send({
+                    'text':
+                    Status.ok({
+                        "program_status": "finished",
+                        "pid": status.payload['pid'],
+                        "code": status.payload['code'],
+                    }).to_json()
+                })
             else:
                 logger.info(
                     colored(
