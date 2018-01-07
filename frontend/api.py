@@ -242,8 +242,8 @@ def manage_script(request, scriptId):
             return StatusResponse(Status.ok(dict(script)))
         except ScriptModel.DoesNotExist:
             return StatusResponse(Status.err("Script does not exist."))
-        # except Exception as err:
-        #     return StatusResponse(Status.err("Internal server error."))
+        except Exception as err:
+            return StatusResponse(Status.err("Internal server error."))
     else:
         return HttpResponseForbidden()
 
