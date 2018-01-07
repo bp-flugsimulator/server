@@ -86,44 +86,40 @@ var options = {
                 console.log(text);
                 console.log(path);
                 console.log(input);
-                if (text.length > 2) {
-                    console.log("Searching " + text);
-                    switch (path[path.length - 1]) {
-                        case 'slave':
-                        case 'program':
-                        case 'file':
-                            console.log("Sending");
-                            $.ajax({
-                                url: "/api/" + path[path.length - 1] + "s?q=" + text,
-                                beforeSend: function (xhr) {
-                                    xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
-                                },
-                                converters: {
-                                    'text json': Status.from_json
-                                },
-                                success: function (status) {
-                                    if (status.is_ok()) {
-                                        console.log("Found");
-                                        console.log(status.payload);
-                                        resolve(status.payload);
-                                    } else {
-                                        console.log("Error while querying ");
-                                        console.log(status.payload);
-                                        reject();
-                                    }
-                                },
-                                error: function (error) {
-                                    console.log("Error while querying " + error);
+                console.log("Searching " + text);
+                switch (path[path.length - 1]) {
+                    case 'slave':
+                    case 'program':
+                    case 'file':
+                        console.log("Sending");
+                        $.ajax({
+                            url: "/api/" + path[path.length - 1] + "s?q=" + text,
+                            beforeSend: function (xhr) {
+                                xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
+                            },
+                            converters: {
+                                'text json': Status.from_json
+                            },
+                            success: function (status) {
+                                if (status.is_ok()) {
+                                    console.log("Found");
+                                    console.log(status.payload);
+                                    resolve(status.payload);
+                                } else {
+                                    console.log("Error while querying ");
+                                    console.log(status.payload);
                                     reject();
                                 }
-                            });
-                            break;
-                        default:
-                            reject();
-                            break;
-                    }
-                } else {
-                    reject();
+                            },
+                            error: function (error) {
+                                console.log("Error while querying " + error);
+                                reject();
+                            }
+                        });
+                        break;
+                    default:
+                        reject();
+                        break;
                 }
             });
         }

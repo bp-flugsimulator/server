@@ -42,16 +42,12 @@ def add_slave(request):
         return StatusResponse(Status.err(form.errors))
     elif request.method == 'GET':
         query = request.GET.get('q', '')
-
-        if len(query) < 3:
-            return StatusResponse(Status.err("Too less characters."))
-        else:
-            return StatusResponse(
-                Status.ok([
-                    obj['name']
-                    for obj in SlaveModel.objects.filter(
-                        name__contains=query).values("name")
-                ]))
+        return StatusResponse(
+            Status.ok([
+                obj['name']
+                for obj in SlaveModel.objects.filter(
+                    name__contains=query).values("name")
+            ]))
     else:
         return HttpResponseForbidden()
 
@@ -132,16 +128,12 @@ def add_program(request):
             return StatusResponse(Status.err(form.errors))
     elif request.method == 'GET':
         query = request.GET.get('q', '')
-
-        if len(query) < 3:
-            return StatusResponse(Status.err("Too less characters."))
-        else:
-            return StatusResponse(
-                Status.ok([
-                    obj['name']
-                    for obj in ProgramModel.objects.filter(
-                        name__contains=query).values("name")
-                ]))
+        return StatusResponse(
+            Status.ok([
+                obj['name']
+                for obj in ProgramModel.objects.filter(
+                    name__contains=query).values("name")
+            ]))
     else:
         return HttpResponseForbidden()
 
@@ -310,15 +302,11 @@ def add_file(request):
     elif request.method == 'GET':
         query = request.GET.get('q', '')
 
-        if len(query) < 3:
-            return StatusResponse(Status.err("Too less characters."))
-        else:
-
-            return StatusResponse(
-                Status.ok([
-                    obj['name']
-                    for obj in FileModel.objects.filter(
-                        name__contains=query).values("name")
-                ]))
+        return StatusResponse(
+            Status.ok([
+                obj['name']
+                for obj in FileModel.objects.filter(
+                    name__contains=query).values("name")
+            ]))
     else:
         return HttpResponseForbidden()
