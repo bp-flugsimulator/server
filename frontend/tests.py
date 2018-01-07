@@ -13,7 +13,7 @@ from channels import Group
 import json
 
 
-from .models import Slave as SlaveModel, validate_mac_address, Program as ProgramModel, SlaveStatus as SlaveStatusModel, ProgramStatus as ProgramStatusModel, ScriptGraphPrograms as SCP, Script as ScriptModel, File as FileModel
+from .models import Slave as SlaveModel, validate_mac_address, Program as ProgramModel, SlaveStatus as SlaveStatusModel, ProgramStatus as ProgramStatusModel, ScriptGraphPrograms as SGP, ScriptGraphFiles as SGF, Script as ScriptModel, File as FileModel
 from .consumers import ws_rpc_connect
 from .scripts import Script, ScriptEntryFile, ScriptEntryProgram
 
@@ -1562,23 +1562,22 @@ class ScriptTests(TestCase):
         self.assertRaises(ValueError, ScriptEntryFile, 0, "", [])
 
     def test_script_json(self):
-        string = '{"name": "test", "files": [],"programs": [{"index": 0, "slave": 0, "name": "no name"}]}'
+        string = '{"name": "test", "files": [{"index": 0, "slave": 0, "name": "no name"}],"programs": [{"index": 0, "slave": 0, "name": "no name"}]}'
 
-        script = Script("test", [ScriptEntryProgram(0, "no name", 0)], [])
+        script = Script("test", [ScriptEntryProgram(0, "no name", 0)], [ScriptEntryFile(0, "no name", 0)])
 
         self.assertEqual(Script.from_json(string), script)
         self.assertEqual(Script.from_json(script.to_json()), script)
-
 
     def test_script_entry_program_json(self):
         string = '{"index": 0, "slave": 0, "name": "no name"}'
 
         script = ScriptEntryProgram(0, "no name", 0)
 
-        self.assertEqual(ScriptEntry.from_json(string), script)
-        self.assertEqual(ScriptEntry.from_json(script.to_json()), script)
+        self.assertEqual(ScriptEntryProgram.from_json(string), script)
+        self.assertEqual(ScriptEntryProgram.from_json(script.to_json()), script)
 
-    def test_script_entry_program_json(self):
+    def test_script_entry_file_json(self):
         string = '{"index": 0, "slave": 0, "name": "no name"}'
 
         script = ScriptEntryFile(0, "no name", 0)
@@ -1596,11 +1595,16 @@ class ScriptTests(TestCase):
         program = ProgramModel(name="test_program", path="None", arguments="None", slave=slave)
         program.save()
 
-        script = Script("test_script", [ScriptEntryProgram(0, "test_program", "test_slave")], [])
+        file = FileModel(name="test_file", sourcePath="None", destinationPath="None", slave=slave)
+        file.save()
+
+        script = Script("test_script", [ScriptEntryProgram(0, "test_program", "test_slave")], [ScriptEntryFile(0, "test_file", "test_slave")])
         script.save()
 
         self.assertTrue(ScriptModel.objects.filter(name="test_script").exists())
-        self.assertTrue(SCP.objects.filter(script=ScriptModel.objects.get(name="test_script"), index=0, program=program).exists())
+        self.assertTrue(SGP.objects.filter(script=ScriptModel.objects.get(name="test_script"), index=0, program=program).exists())
+
+        self.assertTrue(SGF.objects.filter(script=ScriptModel.objects.get(name="test_script"), index=0, file=file).exists())
 
     def test_model_support_ids(self):
         slave = SlaveModel(name="test_slave", ip_address="0.0.0.0", mac_address="00:00:00:00:00:00")
@@ -1613,7 +1617,7 @@ class ScriptTests(TestCase):
         script.save()
 
         self.assertTrue(ScriptModel.objects.filter(name="test_script").exists())
-        self.assertTrue(SCP.objects.filter(script=ScriptModel.objects.get(name="test_script"), index=0, program=program).exists())
+        self.assertTrue(SGP.objects.filter(script=ScriptModel.objects.get(name="test_script"), index=0, program=program).exists())
 
     def test_model_support_error_in_entry(self):
 
@@ -1627,4 +1631,4 @@ class ScriptTests(TestCase):
 
         self.assertRaises(ProgramModel.DoesNotExist, script.save)
         self.assertTrue(not ScriptModel.objects.filter(name="test_script").exists())
-        self.assertTrue(len(SCP.objects.all()) == 0)
+        self.assertTrue(len(SGP.objects.all()) == 0)

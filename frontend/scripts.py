@@ -2,7 +2,7 @@ import json
 from enum import Enum
 from django.db import transaction
 from .models import Script as ScriptModel
-from .models import ScriptGraphFiles as SGFModel, ScriptGraphPrograms as SGPModel, Program as ProgramModel, File as FileMode, Slave as SlaveModel
+from .models import ScriptGraphFiles as SGFModel, ScriptGraphPrograms as SGPModel, Program as ProgramModel, File as FileModel, Slave as SlaveModel
 
 
 class Script:
@@ -113,9 +113,13 @@ class Script:
 
         try:
             programs = [obj.as_model(script) for obj in self.programs]
+            files = [obj.as_model(script) for obj in self.files]
 
             for prog in programs:
                 prog.save()
+
+            for fil in files:
+                fil.save()
 
             transaction.savepoint_commit(first)
         except Exception as err:
@@ -214,7 +218,7 @@ class ScriptEntryFile:
             data['slave'],
         )
 
-    def as_model(self):
+    def as_model(self, script):
         """
         Transforms this object into ScriptGraphFiles.
 
@@ -230,15 +234,11 @@ class ScriptEntryFile:
             slave = SlaveModel.objects.get(name=self.slave)
         elif isinstance(self.slave, int):
             slave = SlaveModel.objects.get(id=self.slave)
-        else:
-            raise ValueError("Not supported value")
 
         if isinstance(self.name, str):
-            obj = FileModel.objects.get(slave=slave, name=self.name).distinct()
+            obj = FileModel.objects.get(slave=slave, name=self.name)
         elif isinstance(self.name, int):
-            obj = FileModel.objects.get(slave=slave, id=self.name).distinct()
-        else:
-            raise ValueError("Not supported value")
+            obj = FileModel.objects.get(slave=slave, id=self.name)
 
         return SGFModel(script=script, index=self.index, file=obj)
 
@@ -316,7 +316,7 @@ class ScriptEntryProgram:
         -------
             str
         """
-        pass
+        return json.dumps(dict(self))
 
     @classmethod
     def from_json(cls, string):
@@ -350,14 +350,10 @@ class ScriptEntryProgram:
             slave = SlaveModel.objects.get(name=self.slave)
         elif isinstance(self.slave, int):
             slave = SlaveModel.objects.get(id=self.slave)
-        else:
-            raise ValueError("Not supported value")
 
         if isinstance(self.name, str):
             obj = ProgramModel.objects.get(slave=slave, name=self.name)
         elif isinstance(self.name, int):
             obj = ProgramModel.objects.get(slave=slave, id=self.name)
-        else:
-            raise ValueError("Not supported value")
 
         return SGPModel(script=script, index=self.index, program=obj)
