@@ -250,7 +250,7 @@ def manage_script(request, scriptId):
             if slave_key != 'str' and slave_key != 'int':
                 return StatusResponse(
                     Status.err(
-                        "slaves only allow str or int.(given {})".format(
+                        "slaves only allow str or int. (given {})".format(
                             slave_key)))
 
             if program_key != 'str' and program_key != 'int':
@@ -274,8 +274,6 @@ def manage_script(request, scriptId):
             return StatusResponse(Status.ok(dict(script)))
         except ScriptModel.DoesNotExist:
             return StatusResponse(Status.err("Script does not exist."))
-        except Exception as err:
-            return StatusResponse(Status.err("Internal server error."))
     else:
         return HttpResponseForbidden()
 

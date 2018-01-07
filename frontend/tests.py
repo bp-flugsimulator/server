@@ -114,6 +114,7 @@ class ApiTests(TestCase):
 
         response = self.client.get("/api/script/{}".format(db_script.id))
 
+        self.assertContains(response, "ok")
         self.assertContains(response, "test_script")
         self.assertContains(response, "program")
         self.assertContains(response, 0)
@@ -123,6 +124,31 @@ class ApiTests(TestCase):
         self.assertNotContains(response, program.name)
         self.assertNotContains(response, slave.name)
         self.assertNotContains(response, file.name)
+
+    def test_script_wrong_type_slaves(self):
+        response = self.client.get("/api/script/0?slaves=float")
+        self.assertContains(response, "err")
+        self.assertContains(response, "slaves only allow str or int. (given float)")
+
+    def test_script_wrong_type_programs(self):
+        response = self.client.get("/api/script/0?programs=float")
+        self.assertContains(response, "err")
+        self.assertContains(response, "programs only allow str or int. (given float)")
+
+    def test_script_wrong_type_files(self):
+        response = self.client.get("/api/script/0?files=float")
+        self.assertContains(response, "err")
+        self.assertContains(response, "files only allow str or int. (given float)")
+
+
+    def test_script_not_exist(self):
+        response = self.client.get("/api/script/0")
+        self.assertContains(response, "err")
+        self.assertContains(response, "Script does not exist.")
+
+    def test_script_404(self):
+        response = self.client.post("/api/script/0")
+        self.assertEqual(response.status_code, 403)
 
     def test_get_script_slave_type_int(self):
         fill_database_slaves_set_1()
