@@ -27,6 +27,6 @@
     <script src="{% static 'frontend/slaves.js'%}"></script>
     <script src="{% static 'frontend/script.js'%}"></script>
     <script>
-        newScript("{{ script.name }}");
+        loadScript({{ script.id }});
     </script>
 {% endblock %}

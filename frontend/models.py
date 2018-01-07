@@ -124,6 +124,7 @@ class File(models.Model):
     class Meta:
         unique_together = (('name', 'slave'), )
 
+
 class Script(models.Model):
     """
     Represents a script file in a json format.
@@ -133,7 +134,7 @@ class Script(models.Model):
     name: str
         The name of the script (has to be unique for every slave)
     """
-    name = models.CharField(unique=False, max_length=200)
+    name = models.CharField(unique=True, max_length=200)
 
 
 class ScriptGraphPrograms(models.Model):
@@ -170,6 +171,7 @@ class ScriptGraphFiles(models.Model):
 
     class Meta:
         unique_together = (('script', 'index', 'file'), )
+
 
 class ProgramStatus(models.Model):
     """

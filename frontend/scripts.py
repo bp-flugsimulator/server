@@ -1,8 +1,13 @@
 import json
-from enum import Enum
 from django.db import transaction
 from .models import Script as ScriptModel
-from .models import ScriptGraphFiles as SGFModel, ScriptGraphPrograms as SGPModel, Program as ProgramModel, File as FileModel, Slave as SlaveModel
+from .models import (
+    ScriptGraphFiles as SGFModel,
+    ScriptGraphPrograms as SGPModel,
+    Program as ProgramModel,
+    File as FileModel,
+    Slave as SlaveModel,
+)
 
 
 class Script:
@@ -59,7 +64,7 @@ class Script:
         yield ("files", [dict(entry) for entry in self.files])
 
     @classmethod
-    def from_model(cls, scriptId, slaves_type, programs_type, file_type):
+    def from_model(cls, script_id, slaves_type, programs_type, file_type):
         """
         Creates a object from a script id.
 
@@ -72,18 +77,18 @@ class Script:
             Script object
 
         """
-        script = ScriptModel.objects.get(id=scriptId)
+        script = ScriptModel.objects.get(id=script_id)
 
-        a = [
+        programs = [
             ScriptEntryProgram.from_query(model, slaves_type, programs_type)
             for model in SGPModel.objects.filter(script=script)
         ]
-        b = [
+        files = [
             ScriptEntryFile.from_query(model, slaves_type, file_type)
             for model in SGFModel.objects.filter(script=script)
         ]
 
-        return cls(script.name, a, b)
+        return cls(script.name, programs, files)
 
     @classmethod
     def from_json(cls, string):
@@ -144,29 +149,29 @@ class ScriptEntryFile:
     Fields
     ------
         index: When will this script be started.
-        name: The name of the program/file
-        slave: Location of the program/file
+        file: The name of the file
+        slave: Location of the file
     """
 
-    def __init__(self, index, name, slave):
+    def __init__(self, index, file, slave):
         if not isinstance(index, int):
             raise ValueError("Index has to be an integer.")
         self.index = index
 
-        if not isinstance(name, str) and not isinstance(name, int):
+        if not isinstance(file, str) and not isinstance(file, int):
             raise ValueError("Name has to be a string or int.")
-        self.name = name
+        self.file = file
 
         if not isinstance(slave, str) and not isinstance(slave, int):
             raise ValueError("Slave has to be a string or integer")
         self.slave = slave
 
     def __eq__(self, other):
-        return self.index == other.index and self.name == other.name and self.slave == other.slave
+        return self.index == other.index and self.file == other.file and self.slave == other.slave
 
     def __iter__(self):
-        for k, v in vars(self).items():
-            yield (k, v)
+        for key, val in vars(self).items():
+            yield (key, val)
 
     @classmethod
     def from_query(cls, query, slaves_type, programs_type):
@@ -214,7 +219,7 @@ class ScriptEntryFile:
         data = json.loads(string)
         return cls(
             data['index'],
-            data['name'],
+            data['file'],
             data['slave'],
         )
 
@@ -235,10 +240,10 @@ class ScriptEntryFile:
         elif isinstance(self.slave, int):
             slave = SlaveModel.objects.get(id=self.slave)
 
-        if isinstance(self.name, str):
-            obj = FileModel.objects.get(slave=slave, name=self.name)
-        elif isinstance(self.name, int):
-            obj = FileModel.objects.get(slave=slave, id=self.name)
+        if isinstance(self.file, str):
+            obj = FileModel.objects.get(slave=slave, name=self.file)
+        elif isinstance(self.file, int):
+            obj = FileModel.objects.get(slave=slave, id=self.file)
 
         return SGFModel(script=script, index=self.index, file=obj)
 
@@ -254,25 +259,35 @@ class ScriptEntryFile:
 
 
 class ScriptEntryProgram:
-    def __init__(self, index, name, slave):
+    """
+    Consists of the following fields
+
+    Fields
+    ------
+        index: When will this script be started.
+        programs: The name of the program
+        slave: Location of the program
+    """
+
+    def __init__(self, index, program, slave):
         if not isinstance(index, int):
             raise ValueError("Index has to be an integer.")
         self.index = index
 
-        if not isinstance(name, str) and not isinstance(name, int):
+        if not isinstance(program, str) and not isinstance(program, int):
             raise ValueError("Name has to be a string or int.")
-        self.name = name
+        self.program = program
 
         if not isinstance(slave, str) and not isinstance(slave, int):
             raise ValueError("Slave has to be a string or integer")
         self.slave = slave
 
     def __eq__(self, other):
-        return self.index == other.index and self.name == other.name and self.slave == other.slave
+        return self.index == other.index and self.program == other.program and self.slave == other.slave
 
     def __iter__(self):
-        for k, v in vars(self).items():
-            yield (k, v)
+        for key, val in vars(self).items():
+            yield (key, val)
 
     @classmethod
     def from_query(cls, query, slaves_type, programs_type):
@@ -330,7 +345,7 @@ class ScriptEntryProgram:
         data = json.loads(string)
         return cls(
             data['index'],
-            data['name'],
+            data['program'],
             data['slave'],
         )
 
@@ -351,9 +366,9 @@ class ScriptEntryProgram:
         elif isinstance(self.slave, int):
             slave = SlaveModel.objects.get(id=self.slave)
 
-        if isinstance(self.name, str):
-            obj = ProgramModel.objects.get(slave=slave, name=self.name)
-        elif isinstance(self.name, int):
-            obj = ProgramModel.objects.get(slave=slave, id=self.name)
+        if isinstance(self.program, str):
+            obj = ProgramModel.objects.get(slave=slave, name=self.program)
+        elif isinstance(self.program, int):
+            obj = ProgramModel.objects.get(slave=slave, id=self.program)
 
         return SGPModel(script=script, index=self.index, program=obj)

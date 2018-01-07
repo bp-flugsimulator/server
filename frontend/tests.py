@@ -92,7 +92,6 @@ class FrontendTests(TestCase):
 
         response = self.client.get("/script/" + str(db_script.id))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, db_script.name)
 
 class ApiTests(TestCase):
 
@@ -1657,7 +1656,7 @@ class ScriptTests(TestCase):
         self.assertRaises(ValueError, ScriptEntryFile, 0, "", [])
 
     def test_script_json(self):
-        string = '{"name": "test", "files": [{"index": 0, "slave": 0, "name": "no name"}],"programs": [{"index": 0, "slave": 0, "name": "no name"}]}'
+        string = '{"name": "test", "files": [{"index": 0, "slave": 0, "file": "no name"}],"programs": [{"index": 0, "slave": 0, "program": "no name"}]}'
 
         script = Script("test", [ScriptEntryProgram(0, "no name", 0)], [ScriptEntryFile(0, "no name", 0)])
 
@@ -1665,7 +1664,7 @@ class ScriptTests(TestCase):
         self.assertEqual(Script.from_json(script.to_json()), script)
 
     def test_script_entry_program_json(self):
-        string = '{"index": 0, "slave": 0, "name": "no name"}'
+        string = '{"index": 0, "slave": 0, "program": "no name"}'
 
         script = ScriptEntryProgram(0, "no name", 0)
 
@@ -1673,7 +1672,7 @@ class ScriptTests(TestCase):
         self.assertEqual(ScriptEntryProgram.from_json(script.to_json()), script)
 
     def test_script_entry_file_json(self):
-        string = '{"index": 0, "slave": 0, "name": "no name"}'
+        string = '{"index": 0, "slave": 0, "file": "no name"}'
 
         script = ScriptEntryFile(0, "no name", 0)
 

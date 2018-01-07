@@ -140,9 +140,27 @@ var options = {
     }
 };
 
-
 var loadScript = function (id) {
-
+    $.ajax({
+        url: "/api/script/" + id + "?programs=str&files=str&slaves=str",
+        beforeSend: function (xhr) {
+            xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
+        },
+        converters: {
+            'text json': Status.from_json
+        },
+        success: function (status) {
+            if (status.is_ok()) {
+                createEditor(status.payload);
+            } else {
+                console.log("Error while querying:");
+                console.log(status.payload);
+            }
+        },
+        error: function (error) {
+            console.log("Error while loading script: " + error);
+        }
+    });
 };
 
 var newScript = function (name) {
@@ -153,10 +171,10 @@ var newScript = function (name) {
     };
 
     createEditor(default_json);
-}
+};
 
 var createEditor = function (json) {
     var container = document.getElementById('jsoneditor');
     var editor = new JSONEditor(container, options, json);
     editor.expandAll();
-}
+};
