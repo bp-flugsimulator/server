@@ -83,15 +83,10 @@ var options = {
         //getOptions(text: string, path: string[], input: string, editor: JSONEditor)
         getOptions: function (text, path, input, editor) {
             return new Promise(function (resolve, reject) {
-                console.log(text);
-                console.log(path);
-                console.log(input);
-                console.log("Searching " + text);
                 switch (path[path.length - 1]) {
                     case 'slave':
                     case 'program':
                     case 'file':
-                        console.log("Sending");
                         $.ajax({
                             url: "/api/" + path[path.length - 1] + "s?q=" + text,
                             beforeSend: function (xhr) {
@@ -102,11 +97,9 @@ var options = {
                             },
                             success: function (status) {
                                 if (status.is_ok()) {
-                                    console.log("Found");
-                                    console.log(status.payload);
                                     resolve(status.payload);
                                 } else {
-                                    console.log("Error while querying ");
+                                    console.log("Error while querying:");
                                     console.log(status.payload);
                                     reject();
                                 }
