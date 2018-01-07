@@ -219,17 +219,34 @@ def manage_program(request, programId):
     else:
         return HttpResponseForbidden()
 
+
 def manage_script(request, scriptId):
     if request.method == 'GET':
         try:
-            script = Script.from_model(scriptId)
+            slave_key = request.GET.get('slaves', 'int')
+            program_key = request.GET.get('programs', 'int')
+
+            if slave_key != 'str' and slave_key != 'int':
+                return StatusResponse(
+                    Status.err(
+                        "slaves only allow str or int.(given {})".format(
+                            slave_key)))
+
+            if program_key != 'str' and program_key != 'int':
+                return StatusResponse(
+                    Status.err(
+                        "programs only allow str or int. (given {})".format(
+                            program_key)))
+
+            script = Script.from_model(scriptId, slave_key, program_key)
             return StatusResponse(Status.ok(dict(script)))
         except ScriptModel.DoesNotExist:
             return StatusResponse(Status.err("Script does not exist."))
-        except Exception as err:
-            return StatusResponse(Status.err(str(err)))
+        # except Exception as err:
+        #     return StatusResponse(Status.err("Internal server error."))
     else:
         return HttpResponseForbidden()
+
 
 def add_file(request):
     """
@@ -268,4 +285,3 @@ def add_file(request):
             return StatusResponse(Status.err(form.errors))
     else:
         return HttpResponseForbidden()
-

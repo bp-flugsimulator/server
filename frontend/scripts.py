@@ -59,7 +59,7 @@ class Script:
         yield ("files", [dict(entry) for entry in self.files])
 
     @classmethod
-    def from_model(cls, scriptId):
+    def from_model(cls, scriptId, slaves_type, programs_type):
         """
         Creates a object from a script id.
 
@@ -75,11 +75,11 @@ class Script:
         script = ScriptModel.objects.get(id=scriptId)
 
         a = [
-            ScriptEntryProgram.from_query(model)
+            ScriptEntryProgram.from_query(model, slaves_type, programs_type)
             for model in SGPModel.objects.filter(script=script)
         ]
         b = [
-            ScriptEntryFile.from_query(model)
+            ScriptEntryFile.from_query(model, slaves_type, programs_type)
             for model in SGFModel.objects.filter(script=script)
         ]
 
@@ -165,7 +165,7 @@ class ScriptEntryFile:
             yield (k, v)
 
     @classmethod
-    def from_query(cls, query):
+    def from_query(cls, query, slaves_type, programs_type):
         """
         Retrieves values from a django query (for ScriptGraphFiles or ScriptGraphPrograms).
 
@@ -177,10 +177,25 @@ class ScriptEntryFile:
         -------
              ScriptEntryFile object
         """
+
+        if slaves_type == 'int':
+            slave = query.file.slave.id
+        elif slaves_type == 'str':
+            slave = query.file.slave.name
+        else:
+            raise ValueError("Slave_type has to be int or str.")
+
+        if programs_type == 'int':
+            program = query.file.id
+        elif programs_type == 'str':
+            program = query.file.name
+        else:
+            raise ValueError("Program_type has to be int or str.")
+
         return cls(
             query.index,
-            query.file.id,
-            query.file.slave,
+            program,
+            slave,
         )
 
     @classmethod
@@ -199,7 +214,7 @@ class ScriptEntryFile:
             data['slave'],
         )
 
-    def as_model(self, script):
+    def as_model(self):
         """
         Transforms this object into ScriptGraphFiles.
 
@@ -260,7 +275,7 @@ class ScriptEntryProgram:
             yield (k, v)
 
     @classmethod
-    def from_query(cls, query):
+    def from_query(cls, query, slaves_type, programs_type):
         """
         Retrieves values from a django query (for ScriptGraphPrograms).
 
@@ -272,10 +287,25 @@ class ScriptEntryProgram:
         -------
              ScriptEntry object
         """
+
+        if slaves_type == 'int':
+            slave = query.program.slave.id
+        elif slaves_type == 'str':
+            slave = query.program.slave.name
+        else:
+            raise ValueError("Slave_type has to be int or str.")
+
+        if programs_type == 'int':
+            program = query.program.id
+        elif programs_type == 'str':
+            program = query.program.name
+        else:
+            raise ValueError("Program_type has to be int or str.")
+
         return cls(
             query.index,
-            query.program.id,
-            query.program.slave.id,
+            program,
+            slave,
         )
 
     def to_json(self):
