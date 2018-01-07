@@ -146,7 +146,24 @@ var options = {
         }
     }
 };
-// create the editor
-var container = document.getElementById('jsoneditor');
-var editor = new JSONEditor(container, options, default_json);
-editor.expandAll();
+
+
+var loadScript = function (id) {
+
+};
+
+var newScript = function (name) {
+    let default_json = {
+        name: name,
+        programs: [],
+        files: [],
+    };
+
+    createEditor(default_json);
+}
+
+var createEditor = function (json) {
+    var container = document.getElementById('jsoneditor');
+    var editor = new JSONEditor(container, options, json);
+    editor.expandAll();
+}
