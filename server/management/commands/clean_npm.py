@@ -21,8 +21,15 @@ class Command(BaseCommand):
                         line = line.split("'")[1]
                         if 'node/' in line:
                             line = line.replace('node/','./node_modules/')
+                            # save the whole folder
                             line = line.rsplit('/', 1)[0]
-                            dependencies.append(line)
+
+                            # if a distfolder exist save it
+                            new_line = ''
+                            for folder in line.split('/'):
+                                new_line += folder
+                                dependencies.append(new_line)
+                                new_line += '/'
 
         print(dependencies)
 
@@ -38,3 +45,4 @@ class Command(BaseCommand):
                 if not dirnames and not filenames:
                     os.rmdir(dirpath)
                     deleted = True
+                    
