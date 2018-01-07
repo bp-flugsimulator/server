@@ -59,7 +59,7 @@ class Script:
         yield ("files", [dict(entry) for entry in self.files])
 
     @classmethod
-    def from_model(cls, scriptId, slaves_type, programs_type):
+    def from_model(cls, scriptId, slaves_type, programs_type, file_type):
         """
         Creates a object from a script id.
 
@@ -79,7 +79,7 @@ class Script:
             for model in SGPModel.objects.filter(script=script)
         ]
         b = [
-            ScriptEntryFile.from_query(model, slaves_type, programs_type)
+            ScriptEntryFile.from_query(model, slaves_type, file_type)
             for model in SGFModel.objects.filter(script=script)
         ]
 

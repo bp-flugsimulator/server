@@ -245,6 +245,7 @@ def manage_script(request, scriptId):
         try:
             slave_key = request.GET.get('slaves', 'int')
             program_key = request.GET.get('programs', 'int')
+            file_key = request.GET.get('files', 'int')
 
             if slave_key != 'str' and slave_key != 'int':
                 return StatusResponse(
@@ -258,7 +259,18 @@ def manage_script(request, scriptId):
                         "programs only allow str or int. (given {})".format(
                             program_key)))
 
-            script = Script.from_model(scriptId, slave_key, program_key)
+            if file_key != 'str' and file_key != 'int':
+                return StatusResponse(
+                    Status.err(
+                        "files only allow str or int. (given {})".format(
+                            file_key)))
+
+            script = Script.from_model(
+                scriptId,
+                slave_key,
+                program_key,
+                file_key,
+            )
             return StatusResponse(Status.ok(dict(script)))
         except ScriptModel.DoesNotExist:
             return StatusResponse(Status.err("Script does not exist."))
