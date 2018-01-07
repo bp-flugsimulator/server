@@ -2,7 +2,7 @@ from django.http import HttpResponseForbidden
 from django.http.request import QueryDict
 from django.core.exceptions import ValidationError
 
-from .models import Slave as SlaveModel, Program as ProgramModel, ProgramStatus as ProgramStatusModel, SlaveStatus as SlaveStatusModel, Script as ScriptModel, ScriptGraphFiles as SGFModel, ScriptGraphPrograms as SGPModel
+from .models import Slave as SlaveModel, Program as ProgramModel, ProgramStatus as ProgramStatusModel, SlaveStatus as SlaveStatusModel, Script as ScriptModel, ScriptGraphFiles as SGFModel, ScriptGraphPrograms as SGPModel, File as FileModel
 
 from .scripts import Script
 
@@ -40,6 +40,18 @@ def add_slave(request):
             form.save()
             return StatusResponse(Status.ok(""))
         return StatusResponse(Status.err(form.errors))
+    elif request.method == 'GET':
+        query = request.GET.get('q', '')
+
+        if len(query) < 3:
+            return StatusResponse(Status.err("Too less characters."))
+        else:
+            return StatusResponse(
+                Status.ok([
+                    obj['name']
+                    for obj in SlaveModel.objects.filter(
+                        name__contains=query).values("name")
+                ]))
     else:
         return HttpResponseForbidden()
 
@@ -118,6 +130,18 @@ def add_program(request):
                 return StatusResponse(Status.err(error_dict))
         else:
             return StatusResponse(Status.err(form.errors))
+    elif request.method == 'GET':
+        query = request.GET.get('q', '')
+
+        if len(query) < 3:
+            return StatusResponse(Status.err("Too less characters."))
+        else:
+            return StatusResponse(
+                Status.ok([
+                    obj['name']
+                    for obj in ProgramModel.objects.filter(
+                        name__contains=query).values("name")
+                ]))
     else:
         return HttpResponseForbidden()
 
@@ -283,5 +307,18 @@ def add_file(request):
                 return StatusResponse(Status.err(error_dict))
         else:
             return StatusResponse(Status.err(form.errors))
+    elif request.method == 'GET':
+        query = request.GET.get('q', '')
+
+        if len(query) < 3:
+            return StatusResponse(Status.err("Too less characters."))
+        else:
+
+            return StatusResponse(
+                Status.ok([
+                    obj['name']
+                    for obj in FileModel.objects.filter(
+                        name__contains=query).values("name")
+                ]))
     else:
         return HttpResponseForbidden()

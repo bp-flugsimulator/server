@@ -10,7 +10,7 @@
 
     <div class="form-group">
         <h4><b>Script</b>: {{ script.name }}</h4>
-        <div id="jsoneditor" style="width: 400px; height: 400px; background-color: white;"></div>
+        <div id="jsoneditor" style="height: 600px; background-color: white;"></div>
     </div>
 
     <button type="button" class="btn btn-info add-script-btn float-right mt-2 mr-2" data-toggle="tooltip" data-placement="top" title="Add Script">
@@ -23,6 +23,14 @@
 </div>
 {% endblock %}
 {% block script %}
+    <script>
+    var default_json = {
+        name: "{{ script.name }}",
+        programs: [],
+        files: [],
+    };
+    </script>
     <script src="{% static 'node/jsoneditor/dist/jsoneditor.min.js' %}"></script>
+    <script src="{% static 'frontend/slaves.js'%}"></script>
     <script src="{% static 'frontend/script.js'%}"></script>
 {% endblock %}

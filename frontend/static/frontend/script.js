@@ -1,9 +1,3 @@
-var json = {
-    name: "Script",
-    programs: [],
-    files: [],
-};
-
 var schema = {
     "title": "Script",
     "type": "object",
@@ -52,7 +46,7 @@ var schema = {
         "files": {
             "type": "array",
             "items": {
-                "$ref": "#/definitions/program_entry"
+                "$ref": "#/definitions/file_entry"
             }
         }
     }
@@ -84,6 +78,56 @@ var options = {
         }
     }],
     schema: schema,
+    autocomplete: {
+        caseSensitive: false,
+        //getOptions(text: string, path: string[], input: string, editor: JSONEditor)
+        getOptions: function (text, path, input, editor) {
+            return new Promise(function (resolve, reject) {
+                console.log(text);
+                console.log(path);
+                console.log(input);
+                if (text.length > 2) {
+                    console.log("Searching " + text);
+                    switch (path[path.length - 1]) {
+                        case 'slave':
+                        case 'program':
+                        case 'file':
+                            console.log("Sending");
+                            $.ajax({
+                                url: "/api/" + path[path.length - 1] + "s?q=" + text,
+                                beforeSend: function (xhr) {
+                                    xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
+                                },
+                                converters: {
+                                    'text json': Status.from_json
+                                },
+                                success: function (status) {
+                                    if (status.is_ok()) {
+                                        console.log("Found");
+                                        console.log(status.payload);
+                                        resolve(status.payload);
+                                    } else {
+                                        console.log("Error while querying ");
+                                        console.log(status.payload);
+                                        reject();
+                                    }
+                                },
+                                error: function (error) {
+                                    console.log("Error while querying " + error);
+                                    reject();
+                                }
+                            });
+                            break;
+                        default:
+                            reject();
+                            break;
+                    }
+                } else {
+                    reject();
+                }
+            });
+        }
+    },
     onEditable: function (node) {
         switch (node.field) {
             case 'name':
@@ -108,5 +152,5 @@ var options = {
 };
 // create the editor
 var container = document.getElementById('jsoneditor');
-var editor = new JSONEditor(container, options, json);
+var editor = new JSONEditor(container, options, default_json);
 editor.expandAll();
