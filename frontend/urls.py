@@ -38,9 +38,9 @@ def flush(*tables):
             pass
 
 
-from .scripts import ScriptEntry, Script
+# from .scripts import ScriptEntryProgram, Script
 
-# Script("test_script", [ScriptEntry(0, "Echo", "Docker", "program")]).save()
+# Script("test_script", [ScriptEntryProgram(0, "Echo", "Docker")]).save()
 
 # Flush status tables DO NOT DELETE!
 flush("SlaveStatus", "ProgramStatus")

@@ -15,7 +15,7 @@ import json
 
 from .models import Slave as SlaveModel, validate_mac_address, Program as ProgramModel, SlaveStatus as SlaveStatusModel, ProgramStatus as ProgramStatusModel, ScriptGraphPrograms as SCP, Script as ScriptModel, File as FileModel
 from .consumers import ws_rpc_connect
-from .scripts import Script, ScriptEntry
+from .scripts import Script, ScriptEntryFile, ScriptEntryProgram
 
 
 def fill_database_slaves_set_1():
@@ -84,7 +84,7 @@ class ApiTests(TestCase):
         program = ProgramModel(name="test_program", path="None", arguments="None", slave=slave)
         program.save()
 
-        script = Script("test_script", [ScriptEntry(0, program.id, slave.id, "program")])
+        script = Script("test_script", [ScriptEntryProgram(0, program.id, slave.id)], [])
         script.save()
 
         db_script = ScriptModel.objects.get(name="test_script")
@@ -1323,48 +1323,71 @@ class ComponentTests(TestCase):
 
 class ScriptTests(TestCase):
     def test_script_wrong_type_name(self):
-        self.assertRaises(ValueError, Script, [], [])
+        self.assertRaises(ValueError, Script, [], [], [])
 
-    def test_script_wrong_type_program(self):
-        self.assertRaises(ValueError, Script, "name", "not a list")
+    def test_script_wrong_type_program_not_a_list(self):
+        self.assertRaises(ValueError, Script, "name", "not a list", [])
 
-    def test_script_wrong_type_program(self):
-        self.assertRaises(ValueError, Script, [], "program")
+    def test_script_wrong_type_program_wrong_element(self):
+        self.assertRaises(ValueError, Script, "name", ["String"], [])
 
-    def test_script_wrong_type_program(self):
-        self.assertRaises(ValueError, ScriptEntry, "a name", "whoops", 0, "program")
+    def test_script_wrong_type_file_not_a_list(self):
+        self.assertRaises(ValueError, Script, "name", [], "not a list")
 
-    def test_script_entry_wrong_type_index(self):
-        self.assertRaises(ValueError, ScriptEntry, [], "whoops", 0, "program")
+    def test_script_wrong_type_file_wrong_element(self):
+        self.assertRaises(ValueError, Script, "name", [], ["String"])
 
-    def test_script_entry_wrong_type_name(self):
-        self.assertRaises(ValueError, ScriptEntry, 0, [], 0, "program")
+    def test_script_entry_program_wrong_type_program(self):
+        self.assertRaises(ValueError, ScriptEntryProgram, "a name", "whoops", 0)
 
-    def test_script_entry_wrong_type_slave(self):
-        self.assertRaises(ValueError, ScriptEntry, 0, "", [], "whoops")
+    def test_script_entry_program_wrong_type_index(self):
+        self.assertRaises(ValueError, ScriptEntryProgram, [], "whoops", 0)
 
-    def test_script_entry_wrong_type_type(self):
-        self.assertRaises(ValueError, ScriptEntry, 0, "a name", 0, "whoops")
+    def test_script_entry_program_wrong_type_name(self):
+        self.assertRaises(ValueError, ScriptEntryProgram, 0, [], 0)
+
+    def test_script_entry_program_wrong_type_slave(self):
+        self.assertRaises(ValueError, ScriptEntryProgram, 0, "", [])
+
+    def test_script_wrong_file_type_program(self):
+        self.assertRaises(ValueError, ScriptEntryFile, "a name", "whoops", 0)
+
+    def test_script_entry_file_wrong_type_index(self):
+        self.assertRaises(ValueError, ScriptEntryFile, [], "whoops", 0)
+
+    def test_script_entry_file_wrong_type_name(self):
+        self.assertRaises(ValueError, ScriptEntryFile, 0, [], 0)
+
+    def test_script_entry_file_wrong_type_slave(self):
+        self.assertRaises(ValueError, ScriptEntryFile, 0, "", [])
 
     def test_script_json(self):
-        string = '{"name": "test", "programs": [{"index": 0, "slave": 0, "type": "program", "name": "no name"}]}'
+        string = '{"name": "test", "files": [],"programs": [{"index": 0, "slave": 0, "name": "no name"}]}'
 
-        script = Script("test", [ScriptEntry(0, "no name", 0, "program")])
+        script = Script("test", [ScriptEntryProgram(0, "no name", 0)], [])
 
         self.assertEqual(Script.from_json(string), script)
         self.assertEqual(Script.from_json(script.to_json()), script)
 
 
-    def test_script_entry_json(self):
-        string = '{"index": 0, "slave": 0, "type": "program", "name": "no name"}'
+    def test_script_entry_program_json(self):
+        string = '{"index": 0, "slave": 0, "name": "no name"}'
 
-        script =ScriptEntry(0, "no name", 0, "program")
+        script = ScriptEntryProgram(0, "no name", 0)
 
         self.assertEqual(ScriptEntry.from_json(string), script)
         self.assertEqual(ScriptEntry.from_json(script.to_json()), script)
 
+    def test_script_entry_program_json(self):
+        string = '{"index": 0, "slave": 0, "name": "no name"}'
+
+        script = ScriptEntryFile(0, "no name", 0)
+
+        self.assertEqual(ScriptEntryFile.from_json(string), script)
+        self.assertEqual(ScriptEntryFile.from_json(script.to_json()), script)
+
     def test_script_name_eq(self):
-        self.assertNotEqual(Script("test", []), Script("test2", []))
+        self.assertNotEqual(Script("test", [], []), Script("test2", [], []))
 
     def test_model_support_strings(self):
         slave = SlaveModel(name="test_slave", ip_address="0.0.0.0", mac_address="00:00:00:00:00:00")
@@ -1373,7 +1396,7 @@ class ScriptTests(TestCase):
         program = ProgramModel(name="test_program", path="None", arguments="None", slave=slave)
         program.save()
 
-        script = Script("test_script", [ScriptEntry(0, "test_program", "test_slave", "program")])
+        script = Script("test_script", [ScriptEntryProgram(0, "test_program", "test_slave")], [])
         script.save()
 
         self.assertTrue(ScriptModel.objects.filter(name="test_script").exists())
@@ -1386,7 +1409,7 @@ class ScriptTests(TestCase):
         program = ProgramModel(name="test_program", path="None", arguments="None", slave=slave)
         program.save()
 
-        script = Script("test_script", [ScriptEntry(0, program.id, slave.id, "program")])
+        script = Script("test_script", [ScriptEntryProgram(0, program.id, slave.id)], [])
         script.save()
 
         self.assertTrue(ScriptModel.objects.filter(name="test_script").exists())
@@ -1400,7 +1423,7 @@ class ScriptTests(TestCase):
         program = ProgramModel(name="test_program", path="None", arguments="None", slave=slave)
         program.save()
 
-        script = Script("test_scripts", [ScriptEntry(0, program.id, slave.id, "program"), ScriptEntry(0, program.id + 1, slave.id, "program")])
+        script = Script("test_scripts", [ScriptEntryProgram(0, program.id, slave.id), ScriptEntryProgram(0, program.id + 1, slave.id),], [],)
 
         self.assertRaises(ProgramModel.DoesNotExist, script.save)
         self.assertTrue(not ScriptModel.objects.filter(name="test_script").exists())

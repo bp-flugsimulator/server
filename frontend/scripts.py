@@ -10,13 +10,26 @@ class Script:
     Fields
     ------
         name: Name of the script.
-        programs: List of ScriptEntry's.
+        programs: List of ScriptEntryProgram
+        files: List of ScriptGraphFiles
     """
 
-    def __init__(self, name, programs):
+    def __init__(self, name, programs, files):
         if not isinstance(programs, list):
             raise ValueError("Program has to be a list.")
+        for prog in programs:
+            if not isinstance(prog, ScriptEntryProgram):
+                raise ValueError(
+                    "All list elements has to be ScriptEntryProgram.")
         self.programs = programs
+
+        if not isinstance(files, list):
+            raise ValueError("Files has to be a list.")
+        for file in files:
+            if not isinstance(file, ScriptEntryFile):
+                raise ValueError(
+                    "All list elements has to be ScriptEntryFile.")
+        self.files = files
 
         if not isinstance(name, str):
             raise ValueError("Name has to be a string.")
@@ -26,17 +39,24 @@ class Script:
         if self.name != other.name:
             return False
 
-        c_other = list(other.programs)
+        c_other_prog = list(other.programs)
 
         for item in self.programs:
-            if item in c_other:
-                c_other.remove(item)
+            if item in c_other_prog:
+                c_other_prog.remove(item)
 
-        return len(c_other) == 0
+        c_other_file = list(other.files)
+
+        for item in self.files:
+            if item in c_other_file:
+                c_other_file.remove(item)
+
+        return len(c_other_prog) == 0 and len(c_other_file) == 0
 
     def __iter__(self):
         yield ("name", self.name)
         yield ("programs", [dict(entry) for entry in self.programs])
+        yield ("files", [dict(entry) for entry in self.files])
 
     @classmethod
     def from_model(cls, scriptId):
@@ -55,15 +75,15 @@ class Script:
         script = ScriptModel.objects.get(id=scriptId)
 
         a = [
-            ScriptEntry.from_query(model)
+            ScriptEntryProgram.from_query(model)
             for model in SGPModel.objects.filter(script=script)
         ]
         b = [
-            ScriptEntry.from_query(model)
+            ScriptEntryFile.from_query(model)
             for model in SGFModel.objects.filter(script=script)
         ]
 
-        return cls(script.name, a + b)
+        return cls(script.name, a, b)
 
     @classmethod
     def from_json(cls, string):
@@ -77,7 +97,8 @@ class Script:
         data = json.loads(string)
         return cls(
             data['name'],
-            [ScriptEntry(**program) for program in data['programs']],
+            [ScriptEntryProgram(**program) for program in data['programs']],
+            [ScriptEntryFile(**file) for file in data['files']],
         )
 
     def save(self):
@@ -112,7 +133,7 @@ class Script:
         return json.dumps(dict(self))
 
 
-class ScriptEntry:
+class ScriptEntryFile:
     """
     Consists of the following fields
 
@@ -121,12 +142,9 @@ class ScriptEntry:
         index: When will this script be started.
         name: The name of the program/file
         slave: Location of the program/file
-        type: The type program/file.
     """
 
-    TABLE_TYPES = ["program", "file"]
-
-    def __init__(self, index, name, slave, type):
+    def __init__(self, index, name, slave):
         if not isinstance(index, int):
             raise ValueError("Index has to be an integer.")
         self.index = index
@@ -139,13 +157,8 @@ class ScriptEntry:
             raise ValueError("Slave has to be a string or integer")
         self.slave = slave
 
-        if type not in self.TABLE_TYPES:
-            raise ValueError("ty is not in TABLE_TYPES={}".format(
-                self.TABLE_TYPES))
-        self.type = type
-
     def __eq__(self, other):
-        return self.index == other.index and self.name == other.name and self.slave == other.slave and self.type == other.type
+        return self.index == other.index and self.name == other.name and self.slave == other.slave
 
     def __iter__(self):
         for k, v in vars(self).items():
@@ -162,24 +175,13 @@ class ScriptEntry:
 
         Returns
         -------
-             ScriptEntry object
+             ScriptEntryFile object
         """
-        if hasattr(query, "file"):
-            return cls(
-                query.index,
-                query.file.id,
-                query.file.slave,
-                "file",
-            )
-        elif hasattr(query, "program"):
-            return cls(
-                query.index,
-                query.program.id,
-                query.program.slave.id,
-                "program",
-            )
-        else:
-            raise ValueError("Not supported query input.")
+        return cls(
+            query.index,
+            query.file.id,
+            query.file.slave,
+        )
 
     @classmethod
     def from_json(cls, string):
@@ -195,13 +197,11 @@ class ScriptEntry:
             data['index'],
             data['name'],
             data['slave'],
-            data['type'],
         )
 
     def as_model(self, script):
         """
-        Transforms this object into ScriptGraphFiles or ScriptGraphPrograms depending
-        on the given type.
+        Transforms this object into ScriptGraphFiles.
 
         Arguments
         ---------
@@ -218,28 +218,14 @@ class ScriptEntry:
         else:
             raise ValueError("Not supported value")
 
-        if self.type == 'program':
-            if isinstance(self.name, str):
-                obj = ProgramModel.objects.get(slave=slave, name=self.name)
-            elif isinstance(self.name, int):
-                obj = ProgramModel.objects.get(slave=slave, id=self.name)
-            else:
-                raise ValueError("Not supported value")
-
-            return SGPModel(script=script, index=self.index, program=obj)
-        elif self.type == 'file':
-            if isinstance(self.name, str):
-                obj = FileModel.objects.get(
-                    slave=slave, name=self.name).distinct()
-            elif isinstance(self.name, int):
-                obj = FileModel.objects.get(
-                    slave=slave, id=self.name).distinct()
-            else:
-                raise ValueError("Not supported value")
-
-            return SGFModel(script=script, index=self.index, file=obj)
+        if isinstance(self.name, str):
+            obj = FileModel.objects.get(slave=slave, name=self.name).distinct()
+        elif isinstance(self.name, int):
+            obj = FileModel.objects.get(slave=slave, id=self.name).distinct()
         else:
             raise ValueError("Not supported value")
+
+        return SGFModel(script=script, index=self.index, file=obj)
 
     def to_json(self):
         """
@@ -250,3 +236,98 @@ class ScriptEntry:
             str
         """
         return json.dumps(dict(self))
+
+
+class ScriptEntryProgram:
+    def __init__(self, index, name, slave):
+        if not isinstance(index, int):
+            raise ValueError("Index has to be an integer.")
+        self.index = index
+
+        if not isinstance(name, str) and not isinstance(name, int):
+            raise ValueError("Name has to be a string or int.")
+        self.name = name
+
+        if not isinstance(slave, str) and not isinstance(slave, int):
+            raise ValueError("Slave has to be a string or integer")
+        self.slave = slave
+
+    def __eq__(self, other):
+        return self.index == other.index and self.name == other.name and self.slave == other.slave
+
+    def __iter__(self):
+        for k, v in vars(self).items():
+            yield (k, v)
+
+    @classmethod
+    def from_query(cls, query):
+        """
+        Retrieves values from a django query (for ScriptGraphPrograms).
+
+        Arguments
+        ----------
+            query: django query
+
+        Returns
+        -------
+             ScriptEntry object
+        """
+        return cls(
+            query.index,
+            query.program.id,
+            query.program.slave.id,
+        )
+
+    def to_json(self):
+        """
+        Converts this object to a JSON encoded string.
+
+        Returns
+        -------
+            str
+        """
+        pass
+
+    @classmethod
+    def from_json(cls, string):
+        """
+        Takes a JSON encoded string and build this object.
+
+        Returns
+        -------
+            Script object
+        """
+        data = json.loads(string)
+        return cls(
+            data['index'],
+            data['name'],
+            data['slave'],
+        )
+
+    def as_model(self, script):
+        """
+        Transforms this object into ScriptGraphPrograms.
+
+        Arguments
+        ---------
+            script: coresponding Script
+
+        Returns
+        -------
+            Django model
+        """
+        if isinstance(self.slave, str):
+            slave = SlaveModel.objects.get(name=self.slave)
+        elif isinstance(self.slave, int):
+            slave = SlaveModel.objects.get(id=self.slave)
+        else:
+            raise ValueError("Not supported value")
+
+        if isinstance(self.name, str):
+            obj = ProgramModel.objects.get(slave=slave, name=self.name)
+        elif isinstance(self.name, int):
+            obj = ProgramModel.objects.get(slave=slave, id=self.name)
+        else:
+            raise ValueError("Not supported value")
+
+        return SGPModel(script=script, index=self.index, program=obj)
