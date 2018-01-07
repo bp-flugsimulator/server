@@ -21,16 +21,15 @@ class Command(BaseCommand):
                         line = line.split("'")[1]
                         if 'node/' in line:
                             line = line.replace('node/','./node_modules/')
+                            line = line.rsplit('/', 1)[0]
                             dependencies.append(line)
 
         print(dependencies)
 
         for dirpath, dirnames, filenames in os.walk("./node_modules"):
-            for filename in filenames:
-                filepath = dirpath + '/' + filename
-                if (filepath) not in dependencies:
-                    os.remove(filepath)
-
+            if dirpath not in dependencies:
+                for filename in filenames:
+                    os.remove(dirpath + '/' + filename)
 
         deleted = True
         while deleted:
