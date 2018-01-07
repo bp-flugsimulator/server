@@ -124,7 +124,6 @@ class File(models.Model):
     class Meta:
         unique_together = (('name', 'slave'), )
 
-
 class Script(models.Model):
     """
     Represents a script file in a json format.
@@ -171,7 +170,6 @@ class ScriptGraphFiles(models.Model):
 
     class Meta:
         unique_together = (('script', 'index', 'file'), )
-
 
 class ProgramStatus(models.Model):
     """

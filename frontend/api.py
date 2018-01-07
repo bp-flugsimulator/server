@@ -203,6 +203,8 @@ def manage_program(request, programId):
         program = ProgramModel.objects.get(id=programId)
         if SlaveStatusModel.objects.filter(slave=program.slave).exists():
             ProgramStatusModel(program=program, started=timezone.now()).save()
+
+            # send command to the client
             Group('client_' + str(program.slave.id)).send({
                 'text':
                 Command(
@@ -210,6 +212,15 @@ def manage_program(request, programId):
                     pid=program.id,
                     path=program.path,
                     arguments=split(program.arguments)).to_json()
+            })
+
+            # tell webinterface that the program has ended
+            Group('notifications').send({
+                'text':
+                Status.ok({
+                    "program_status": "started",
+                    "pid": program.id,
+                }).to_json()
             })
             return StatusResponse(Status.ok(''))
         else:
