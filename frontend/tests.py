@@ -244,6 +244,58 @@ class ApiTests(TestCase):
         self.assertNotContains(response, program.id)
         self.assertNotContains(response, slave.name)
 
+    def test_file_autocomplete(self):
+        slave = SlaveModel(name="test_slave", ip_address="0.0.0.0", mac_address="00:00:00:00:00:00")
+        slave.save()
+
+        file = FileModel(name="test_file", sourcePath="None", destinationPath="None", slave=slave)
+        file.save()
+
+        response = self.client.get("/api/files?q=")
+        self.assertContains(response, "test_file")
+        response = self.client.get("/api/files?q=test")
+        self.assertContains(response, "test_file")
+        response = self.client.get("/api/files?q=test_")
+        self.assertContains(response, "test_file")
+        response = self.client.get("/api/files?q=test_file")
+        self.assertContains(response, "test_file")
+        response = self.client.get("/api/files?q=test_file2")
+        self.assertNotContains(response, "test_file")
+
+    def test_program_autocomplete(self):
+        slave = SlaveModel(name="test_slave", ip_address="0.0.0.0", mac_address="00:00:00:00:00:00")
+        slave.save()
+
+        program = ProgramModel(name="test_program", path="None", arguments="None", slave=slave)
+        program.save()
+
+        response = self.client.get("/api/programs?q=")
+        self.assertContains(response, "test_program")
+        response = self.client.get("/api/programs?q=test")
+        self.assertContains(response, "test_program")
+        response = self.client.get("/api/programs?q=test_")
+        self.assertContains(response, "test_program")
+        response = self.client.get("/api/programs?q=test_program")
+        self.assertContains(response, "test_program")
+        response = self.client.get("/api/programs?q=test_program2")
+        self.assertNotContains(response, "test_program")
+
+
+    def test_slave_autocomplete(self):
+        slave = SlaveModel(name="test_slave", ip_address="0.0.0.0", mac_address="00:00:00:00:00:00")
+        slave.save()
+
+        response = self.client.get("/api/slaves?q=")
+        self.assertContains(response, "test_slave")
+        response = self.client.get("/api/slaves?q=test")
+        self.assertContains(response, "test_slave")
+        response = self.client.get("/api/slaves?q=test_")
+        self.assertContains(response, "test_slave")
+        response = self.client.get("/api/slaves?q=test_slave")
+        self.assertContains(response, "test_slave")
+        response = self.client.get("/api/slaves?q=test_slave2")
+        self.assertNotContains(response, "test_slave")
+
 
     def test_add_slave_success(self):
         data_set = [
@@ -375,7 +427,7 @@ class ApiTests(TestCase):
             ip_address="ip address",
             mac_address="mac address")
 
-        api_response = self.client.get(reverse('frontend:add_slaves'))
+        api_response = self.client.put(reverse('frontend:add_slaves'))
         self.assertEqual(api_response.status_code, 403)
 
     def test_manage_slave_forbidden(self):
