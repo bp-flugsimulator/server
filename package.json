@@ -9,6 +9,7 @@
     "jquery": "^3.2.1",
     "material-design-icons": "^3.0.1",
     "popper.js": "^1.12.6",
-    "standard": "^10.0.3"
+    "standard": "^10.0.3",
+    "jsoneditor": "^5.13.1"
   }
 }
