@@ -1,8 +1,19 @@
-<div class="card program-card mb-2" data-id="{{ program.id }}">
+<div class="card script-card mb-2" id="{{ script.id }}">
     <div class="card-body">
         <div class="row">
-            <div class="program-name col">
-                <a href="/script/{{ script.id }}" <h5 class="mt-2">{{ script.name }}</h5></a>
+            <div class="script-name col">
+                <h5 class="mt-2">{{ script.name }}</h5>
+            </div>
+        </div>
+
+        <div class="btn-group mr-2" role="group">
+            <div class="btn-group mr-4" role="group">
+                <a href="/script/{{ script.id }}" class="btn btn-outline-danger modify-script-btn" data-toggle="tooltip" data-placement="top" title="Edit">
+                    <i class="material-icons">edit</i>
+                </a>
+                <button type="button" class="btn btn-outline-danger delete_script" data-toggle="tooltip" data-placement="top" title="Delete">
+                    <i class="material-icons">delete</i>
+                </button>
             </div>
         </div>
     </div>

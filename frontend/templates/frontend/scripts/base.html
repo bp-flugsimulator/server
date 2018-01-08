@@ -2,7 +2,7 @@
 {% extends "base/base.html" %}
 {% load staticfiles %}
 {% load components %}
-{% block title %} Slaves {% endblock %}
+{% block title %} Scripts {% endblock %}
 {% block premain %}
 {% endblock %}
 {% block content %}
@@ -48,5 +48,6 @@
 </div>
 {% endblock %}
 {% block script %}
-    <script src="{% static 'frontend/slaves.js'%}"></script>
+    <script src="{% static 'frontend/base.js'%}"></script>
+    <script src="{% static 'frontend/scripts.js'%}"></script>
 {% endblock %}
