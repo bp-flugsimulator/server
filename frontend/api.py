@@ -2,7 +2,7 @@ from django.http import HttpResponseForbidden
 from django.http.request import QueryDict
 from django.core.exceptions import ValidationError
 
-from .models import Slave as SlaveModel, Program as ProgramModel, ProgramStatus as ProgramStatusModel, SlaveStatus as SlaveStatusModel, Script as ScriptModel, ScriptGraphFiles as SGFModel, ScriptGraphPrograms as SGPModel, File as FileModel
+from .models import Slave as SlaveModel, SlaveStatus as SlaveStatusModel, Program as ProgramModel, ProgramStatus as ProgramStatusModel, Script as ScriptModel, File as FileModel
 
 from .scripts import Script
 
@@ -10,11 +10,12 @@ from .forms import SlaveForm, ProgramForm, FileForm
 from server.utils import StatusResponse
 import json
 
+from .consumers import notify
+
 from channels import Group
 from utils.status import Status
 from utils import Command
 from shlex import split
-from django.utils import timezone
 from wakeonlan.wol import send_magic_packet
 
 
@@ -165,12 +166,13 @@ def shutdown_slave(request, id):
     """
     if request.method == 'GET':
         if SlaveModel.objects.filter(id=id).exists():
-            slave = SlaveModel.objects.get(id=id)
-            if SlaveStatusModel.objects.filter(slave=slave).exists():
+            slave =  SlaveModel.objects.get(id=id)
+            if SlaveStatusModel.objects.filter(slave=slave) and slave.slavestatus.online :
                 Group('client_' + str(id)).send({
                     'text':
                     Command(method="shutdown").to_json()
                 })
+                notify({"message":"Send shutdown Command to {}".format(slave.name)})
                 return StatusResponse(Status.ok(''))
             else:
                 return StatusResponse(
@@ -206,12 +208,7 @@ def wol_slave(request, id):
         except Exception as err:
             return StatusResponse(Status.err(repr(err)), status=500)
 
-        Group('notifications').send({
-            'text':
-            json.dumps({
-                'message': 'Succesful, Client Start queued'
-            })
-        })
+        notify({"message": "Send Wake On Lan Packet"})
         return StatusResponse(Status.ok(''))
     else:
         return HttpResponseForbidden()
@@ -243,15 +240,12 @@ def manage_program(request, programId):
         return StatusResponse(Status.ok(''))
     if request.method == 'POST':
         program = ProgramModel.objects.get(id=programId)
-        if SlaveStatusModel.objects.filter(slave=program.slave).exists():
+        slave = program.slave
+        if SlaveStatusModel.objects.filter(slave=slave) and slave.slavestatus.online :
             cmd = Command(
                 method="execute",
-                pid=program.id,
                 path=program.path,
                 arguments=split(program.arguments))
-
-            # create status entry
-            ProgramStatusModel(program=program, command_uuid=cmd.uuid).save()
 
             # send command to the client
             Group('client_' + str(program.slave.id)).send({
@@ -266,6 +260,10 @@ def manage_program(request, programId):
                     "pid": program.id,
                 }).to_json()
             })
+
+            # create status entry
+            ProgramStatusModel(program=program, command_uuid=cmd.uuid).save()
+
             return StatusResponse(Status.ok(''))
         else:
             return StatusResponse(

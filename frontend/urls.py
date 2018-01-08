@@ -40,6 +40,6 @@ def flush(*tables):
         except:
             pass
 
-
 # Flush status tables DO NOT DELETE!
-flush("SlaveStatus", "ProgramStatus")
+flush('ProgramStatus','SlaveStatus')
+

@@ -2,76 +2,88 @@ socket = new WebSocket('ws://' + window.location.host + '/notifications');
 socket.onmessage = function (data) {
 	let status = Status.from_json(data.data);
 
-    console.log(status)
-	if(status.payload['slave_status'] != null) {
-        // handle slave status updates
+    if(status.is_ok()) {
 
-        let statusButton = $('#slaveStatus_' + status.payload['sid']);
-        let startstopButton = $('#slaveStartStop_' + status.payload['sid']);
-        switch(status.payload['slave_status']) {
-            case 'connected':
-                console.log(status.payload['sid'] + ' has connected');
+        console.log(status)
+        if (status.payload['slave_status'] != null) {
+            // handle slave status updates
 
-                // swap status
-                statusButton.removeClass('btn-danger');
-                statusButton.addClass('btn-success');
+            let statusButton = $('#slaveStatus_' + status.payload['sid']);
+            let startstopButton = $('#slaveStartStop_' + status.payload['sid']);
+            switch (status.payload['slave_status']) {
+                case 'connected':
+                    console.log(status.payload['sid'] + ' has connected');
 
-                // swap start and stop functions
-                startstopButton.removeClass('start-slave');
-                startstopButton.addClass('stop-slave');
+                    // swap status
+                    statusButton.removeClass('btn-danger');
+                    statusButton.addClass('btn-success');
 
-                // set tooltip to Stop
-                startstopButton.prop('title', 'Stop');
-                startstopButton.attr('data-original-title', 'Stop');
+                    // swap start and stop functions
+                    startstopButton.removeClass('start-slave');
+                    startstopButton.addClass('stop-slave');
 
-                break;
-            case 'disconnected':
-                console.log(status.payload['sid'] + ' has disconnected');
+                    // set tooltip to Stop
+                    startstopButton.prop('title', 'Stop');
+                    startstopButton.attr('data-original-title', 'Stop');
 
-                // swap status
-                statusButton.removeClass('btn-success');
-                statusButton.addClass('btn-danger');
+                    break;
+                case 'disconnected':
+                    console.log(status.payload['sid'] + ' has disconnected');
 
-                // swap start and stop functions
-                startstopButton.removeClass('stop-slave');
-                startstopButton.addClass('start-slave');
+                    // swap status
+                    statusButton.removeClass('btn-success');
+                    statusButton.addClass('btn-danger');
 
-                // set tooltip to Start
-                startstopButton.prop('title', 'Start');
-                startstopButton.attr('data-original-title', 'Start');
+                    // swap start and stop functions
+                    startstopButton.removeClass('stop-slave');
+                    startstopButton.addClass('start-slave');
 
-                break;
-        }
-    } else if(status.payload['program_status'] != null) {
-        // handle program status updates
+                    // set tooltip to Start
+                    startstopButton.prop('title', 'Start');
+                    startstopButton.attr('data-original-title', 'Start');
 
-        let statusButton = $('#programStatus_' + status.payload['pid']);
-        switch (status.payload['program_status']) {
-            case 'started':
-                console.log(status.payload['pid'] + ' has started');
+                    break;
+            }
+        } else if (status.payload['program_status'] != null) {
+            // handle program status updates
 
-                statusButton.removeClass('btn-danger');
-                statusButton.addClass('btn-success');
-                statusButton.prop('title', 'Running');
-                statusButton.attr('data-original-title', 'Running');
-                break;
-            case 'finished':
-                console.log(status.payload['pid'] + ' has finished with Code ' + status.payload['code']);
+            let statusButton = $('#programStatus_' + status.payload['pid']);
+            switch (status.payload['program_status']) {
+                case 'started':
+                    console.log(status.payload['pid'] + ' has started');
 
-                statusButton.removeClass('btn-success');
-                statusButton.addClass('btn-danger');
+                    statusButton.removeClass('btn-danger');
+                    statusButton.addClass('btn-success');
+                    statusButton.prop('title', 'Running');
+                    statusButton.attr('data-original-title', 'Running');
+                    break;
+                case 'finished':
+                    console.log(status.payload['pid'] + ' has finished with Code ' + status.payload['code']);
 
-                let new_title = 'Stopped with Code ' + status.payload['code'];
-                statusButton.prop('title', new_title);
-                statusButton.attr('data-original-title', new_title)
-                break;
+                    statusButton.removeClass('btn-success');
+                    statusButton.addClass('btn-danger');
+
+                    let new_title = 'Stopped with Code ' + status.payload['code'];
+                    statusButton.prop('title', new_title);
+                    statusButton.attr('data-original-title', new_title)
+                    break;
+            }
+        } else if (status.payload['message'] != null) {
+            $.notify({
+                message: status.payload['message']
+            });
+        } else {
+            console.log("unknown");
+            console.log(status.payload);
+            $.notify({
+                type: 'danger',
+                message: 'received unknown response from server'
+            });
         }
     } else {
-        console.log("unknown");
-	    console.log(status.payload);
         $.notify({
-            type: 'warning',
-            message: 'received unknown response from server'
+            type: 'danger',
+            message: status.payload
         });
     }
 };

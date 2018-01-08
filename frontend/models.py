@@ -66,7 +66,6 @@ class Slave(models.Model):
     ip_address = models.GenericIPAddressField(unique=True)
     mac_address = models.CharField(
         unique=True, max_length=17, validators=[validate_mac_address])
-    online = models.BooleanField(unique=False, default=False)
 
 
 class Program(models.Model):
@@ -173,16 +172,13 @@ class ScriptGraphFiles(models.Model):
     class Meta:
         unique_together = (('script', 'index', 'file'), )
 
-
+#TODO Comments
 class ProgramStatus(models.Model):
     """
     Represents a process which is currently running on the slave.
 
     Arguments
     ---------
-        error: Error message if the execution was not successful.
-        started: Timestamp when the command was send.
-        stopped: Timestamp when the result of the Command was received.
     """
     program = models.OneToOneField(
         Program,
@@ -191,15 +187,16 @@ class ProgramStatus(models.Model):
     )
     code = models.CharField(max_length=200, unique=False, blank=True)
     command_uuid = models.CharField(max_length=32, unique=True)
+    running = models.BooleanField(unique=False,default=True)
 
 
-class SlaveOnlineRequest(models.Model):
+#TODO Comments
+class SlaveStatus(models.Model):
     """
     Represents the current status of the slaves.
 
     Arguments
     ---------
-        boottime: Timestamp, when the slave was started via uptime command
     """
     slave = models.OneToOneField(
         Slave,
@@ -207,3 +204,4 @@ class SlaveOnlineRequest(models.Model):
         primary_key=True,
     )
     command_uuid = models.CharField(max_length=32, unique=True)
+    online = models.BooleanField(unique=False, default=False)

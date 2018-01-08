@@ -11,7 +11,7 @@ style="background-color: rgb(73, 73, 73);">
                 <div class="btn-group mr-4" role="group">
                         <button type="button" id="slaveStatus_{{ slave.id }}"
                                 class="btn
-                            {% if slave.slavestatus.bootime != ''%}
+                            {% if slave.slavestatus.online %}
                                 btn-success
                             {% else %}
                                 btn-danger
@@ -24,13 +24,13 @@ style="background-color: rgb(73, 73, 73);">
                 <div class="btn-group mr-2" role="group">
                     <button type="button" id="slaveStartStop_{{ slave.id }}"
                             class="btn btn-outline-light
-                                {% if slave.slavestatus.bootime != ''%}
+                                {% if slave.slavestatus.online %}
                                     stop-slave
                                 {% else %}
                                     start-slave
                                 {% endif %}
                                 " data-toggle="tooltip" data-placement="top" title="
-                                {% if slave.slavestatus.bootime != ''%}
+                                {% if slave.slavestatus.online %}
                                     Stop
                                 {% else %}
                                     Start

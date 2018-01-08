@@ -10,9 +10,9 @@ style="background-color: #292929;">
             <div class="program-arguments" style="display: none">{{ program.arguments }}</div>
             <div class="btn-toolbar" role="toolbar">
                 <div class="btn-group mr-4" role="group">
-                        {% if program.programstatus.started != '' and program.programstatus.code == '' %}
+                        {% if program.programstatus.running and program.programstatus.code == '' %}
                             <button id="programStatus_{{ program.id }}" type="button" class="btn btn-success" data-toggle="tooltip" data-placement="top" title="Running">
-                        {% elif program.programstatus.started != '' and program.programstatus.code != '' %}
+                        {% elif not program.programstatus.running and program.programstatus.code != '' %}
                             <button id="programStatus_{{ program.id }}" type="button" class="btn btn-danger" data-toggle="tooltip" data-placement="top" title="Stopped with Code {{ program.programstatus.code }} ">
                         {% else %}
                             <button id="programStatus_{{ program.id }}" type="button" class="btn btn-danger" data-toggle="tooltip" data-placement="top" title="Status">
