@@ -41,6 +41,8 @@ def add_slave(request):
             return StatusResponse(Status.ok(""))
         return StatusResponse(Status.err(form.errors))
     elif request.method == 'GET':
+        # the URL takes an argument with ?q=<string>
+        # e.g. /slaves?q=test
         query = request.GET.get('q', '')
         return StatusResponse(
             Status.ok(
@@ -129,6 +131,8 @@ def add_program(request):
         else:
             return StatusResponse(Status.err(form.errors))
     elif request.method == 'GET':
+        # the URL takes an argument with ?q=<string>
+        # e.g. /programs?q=test
         query = request.GET.get('q', '')
         return StatusResponse(
             Status.ok(
@@ -291,6 +295,8 @@ def manage_program(request, programId):
 def manage_script(request, scriptId):
     if request.method == 'GET':
         try:
+            # adds ?slaves=int&program_key=int&file_key=int to the URL
+            # to allow a dynamic format for the json string
             slave_key = request.GET.get('slaves', 'int')
             program_key = request.GET.get('programs', 'int')
             file_key = request.GET.get('files', 'int')
@@ -362,6 +368,8 @@ def add_file(request):
         else:
             return StatusResponse(Status.err(form.errors))
     elif request.method == 'GET':
+        # the URL takes an argument with ?q=<string>
+        # e.g. /files?q=test
         query = request.GET.get('q', '')
 
         return StatusResponse(
