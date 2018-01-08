@@ -205,6 +205,7 @@ def wol_slave(request, id):
             send_magic_packet(SlaveModel.objects.get(id=id).mac_address)
         except Exception as err:
             return StatusResponse(Status.err(repr(err)), status=500)
+
         Group('notifications').send({
             'text':
             json.dumps({
@@ -243,19 +244,21 @@ def manage_program(request, programId):
     if request.method == 'POST':
         program = ProgramModel.objects.get(id=programId)
         if SlaveStatusModel.objects.filter(slave=program.slave).exists():
-            ProgramStatusModel(program=program, started=timezone.now()).save()
+            cmd = Command(
+                method="execute",
+                pid=program.id,
+                path=program.path,
+                arguments=split(program.arguments))
+
+            # create status entry
+            ProgramStatusModel(program=program, uuid=cmd.uuid).save()
 
             # send command to the client
             Group('client_' + str(program.slave.id)).send({
-                'text':
-                Command(
-                    method="execute",
-                    pid=program.id,
-                    path=program.path,
-                    arguments=split(program.arguments)).to_json()
+                'text': cmd.to_json()
             })
 
-            # tell webinterface that the program has ended
+            # tell webinterface that the program has started
             Group('notifications').send({
                 'text':
                 Status.ok({

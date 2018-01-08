@@ -189,8 +189,7 @@ class ProgramStatus(models.Model):
         primary_key=True,
     )
     code = models.CharField(max_length=200, unique=False, blank=True)
-    started = models.DateTimeField(unique=False, blank=False)
-    stopped = models.DateTimeField(unique=False, null=True)
+    uuid = models.CharField(max_length=200, unique=True)
 
 
 class SlaveStatus(models.Model):
