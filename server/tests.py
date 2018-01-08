@@ -7,7 +7,7 @@ from server.management.commands.compilesass import Command as SassCommand
 from server.management.commands.clean_npm import Command as CleanNpmCommand
 
 import json
-from os import remove, replace, mkdir, rmdir, getcwd
+from os import remove, replace, mkdir, rmdir, getcwd, system
 from os.path import isfile, isdir, join
 
 
@@ -92,6 +92,7 @@ class ManagementTest(TestCase):
             except:
                 pass
         finally:
+            system('tree')
             # delete testfiles
             remove('test.html')
             remove(join(self.NPM_PATH,'test1', 'testdir' ,'testfile.txt'))
