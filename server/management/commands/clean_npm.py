@@ -1,37 +1,56 @@
 from django.core.management.base import BaseCommand
 import os
 
+
+def get_paths(filetype):
+    files = []
+    for dirpath, _, filenames in os.walk("."):
+        for filename in [f for f in filenames if f.endswith(filetype)]:
+            filepath = os.path.join(dirpath, filename)
+            if 'node_modules' not in filepath:
+                files.append(filepath)
+    return files
+
+
+def get_parent_folders(path):
+    new_line = ''
+    paths = []
+    for folder in path.split('/'):
+        new_line += folder
+        paths.append(new_line)
+        new_line += '/'
+    return paths
+
+
 class Command(BaseCommand):
     help = 'Removes unused files from node_modules'
 
     def handle(self, *args, **options):
-        html_files = []
-
-        for dirpath, dirnames, filenames in os.walk("."):
-            for filename in [f for f in filenames if f.endswith(".html")]:
-                filepath = os.path.join(dirpath, filename)
-                if 'node_modules' not in filepath:
-                    html_files.append(filepath)
+        html_files = get_paths('.html')
 
         dependencies = []
+        # get dependencies from html files
         for path in html_files:
             with open(path, 'r') as file:
                 for line in file:
                     if '{% static' in line:
                         line = line.split("'")[1]
                         if 'node/' in line:
-                            line = line.replace('node/','./node_modules/')
-                            # save the whole folder
-                            line = line.rsplit('/', 1)[0]
+                            dependecy_path = line.replace(
+                                'node/', './node_modules/').rsplit('/', 1)[0]
+                            dependencies.extend(
+                                get_parent_folders(dependecy_path))
 
-                            # if a distfolder exist save it
-                            new_line = ''
-                            for folder in line.split('/'):
-                                new_line += folder
-                                dependencies.append(new_line)
-                                new_line += '/'
-
-        print(dependencies)
+        """
+        # get dependencies from scss files
+        scss_files = get_paths('.scss')
+        for path in scss_files:
+            with open(path, 'r') as file:
+                for line in file:
+                    if '@import ' in line:
+                        dependencies.extend(
+                            get_parent_folders('./' + line.split('"')[1]))
+        """
 
         for dirpath, dirnames, filenames in os.walk("./node_modules"):
             if dirpath not in dependencies:
