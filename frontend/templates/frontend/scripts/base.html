@@ -1,0 +1,52 @@
+
+{% extends "base/base.html" %}
+{% load staticfiles %}
+{% load components %}
+{% block title %} Slaves {% endblock %}
+{% block premain %}
+{% endblock %}
+{% block content %}
+
+<div class="jumbotron" >
+    <!-- Modal for deletion warnings used for scripts deletion-->
+    <div id="deleteWarning" class="modal fade" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Deletion Warning!</h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                </div>
+                <div class="modal-footer">
+                    <button type='button' class='btn btn-info' id='deleteScriptModalButton'>OK</button>
+                    <button type='reset' class='btn btn-danger' data-dismiss='modal'>Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% modal_form program_form "program" %}
+
+    <h4>Scripts</h4>
+    <div id="accordion" role="tablist">
+        {% for script in scripts %}
+            {% script_entry script %}
+        {% empty %}
+            <div class="card alert alert-info">
+                <strong>Info!</strong> No scripts in system.
+            </div>
+        {% endfor %}
+    </div>
+
+    <button type="button" class="btn btn-outline-info float-right add-script-btn mb-4 mt-2 col" data-toggle="tooltip" data-placement="top" title="Add Script">
+        <span></span>
+        <i class="material-icons" style="font-size:30px; vertical-align: middle;">add</i>
+    </button>
+
+    <br>
+</div>
+{% endblock %}
+{% block script %}
+    <script src="{% static 'frontend/slaves.js'%}"></script>
+{% endblock %}

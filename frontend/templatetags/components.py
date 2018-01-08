@@ -43,6 +43,23 @@ def program_entry(program):
     return {'program': program}
 
 
+@register.inclusion_tag('frontend/scripts/script.html')
+def script_entry(script):
+    """
+    Template tag {% script_entry script %} is used to display a single
+    script.
+
+    Arguments
+    ---------
+        script: Script object
+
+    Returns
+    -------
+        A context which maps the script object to program.
+    """
+    return {'script': script}
+
+
 @register.inclusion_tag('frontend/slaves/modal_form.html', takes_context=True)
 def modal_form(context, form, prefix):
     """

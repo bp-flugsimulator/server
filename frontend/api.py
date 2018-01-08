@@ -2,7 +2,9 @@ from django.http import HttpResponseForbidden
 from django.http.request import QueryDict
 from django.core.exceptions import ValidationError
 
-from .models import Slave as SlaveModel, Program as ProgramModel, ProgramStatus as ProgramStatusModel, SlaveStatus as SlaveStatusModel
+from .models import Slave as SlaveModel, Program as ProgramModel, ProgramStatus as ProgramStatusModel, SlaveStatus as SlaveStatusModel, Script as ScriptModel, ScriptGraphFiles as SGFModel, ScriptGraphPrograms as SGPModel, File as FileModel
+
+from .scripts import Script
 
 from .forms import SlaveForm, ProgramForm, FileForm
 from server.utils import StatusResponse
@@ -38,6 +40,16 @@ def add_slave(request):
             form.save()
             return StatusResponse(Status.ok(""))
         return StatusResponse(Status.err(form.errors))
+    elif request.method == 'GET':
+        query = request.GET.get('q', '')
+        return StatusResponse(
+            Status.ok(
+                list(
+                    set([
+                        obj['name']
+                        for obj in SlaveModel.objects.filter(
+                            name__contains=query).values("name")
+                    ]))))
     else:
         return HttpResponseForbidden()
 
@@ -116,6 +128,16 @@ def add_program(request):
                 return StatusResponse(Status.err(error_dict))
         else:
             return StatusResponse(Status.err(form.errors))
+    elif request.method == 'GET':
+        query = request.GET.get('q', '')
+        return StatusResponse(
+            Status.ok(
+                list(
+                    set([
+                        obj['name']
+                        for obj in ProgramModel.objects.filter(
+                            name__contains=query).values("name")
+                    ]))))
     else:
         return HttpResponseForbidden()
 
@@ -265,6 +287,45 @@ def manage_program(request, programId):
     else:
         return HttpResponseForbidden()
 
+
+def manage_script(request, scriptId):
+    if request.method == 'GET':
+        try:
+            slave_key = request.GET.get('slaves', 'int')
+            program_key = request.GET.get('programs', 'int')
+            file_key = request.GET.get('files', 'int')
+
+            if slave_key != 'str' and slave_key != 'int':
+                return StatusResponse(
+                    Status.err(
+                        "slaves only allow str or int. (given {})".format(
+                            slave_key)))
+
+            if program_key != 'str' and program_key != 'int':
+                return StatusResponse(
+                    Status.err(
+                        "programs only allow str or int. (given {})".format(
+                            program_key)))
+
+            if file_key != 'str' and file_key != 'int':
+                return StatusResponse(
+                    Status.err(
+                        "files only allow str or int. (given {})".format(
+                            file_key)))
+
+            script = Script.from_model(
+                scriptId,
+                slave_key,
+                program_key,
+                file_key,
+            )
+            return StatusResponse(Status.ok(dict(script)))
+        except ScriptModel.DoesNotExist:
+            return StatusResponse(Status.err("Script does not exist."))
+    else:
+        return HttpResponseForbidden()
+
+
 def add_file(request):
     """
     Answers a POST request to add a new file
@@ -300,7 +361,16 @@ def add_file(request):
                 return StatusResponse(Status.err(error_dict))
         else:
             return StatusResponse(Status.err(form.errors))
+    elif request.method == 'GET':
+        query = request.GET.get('q', '')
+
+        return StatusResponse(
+            Status.ok(
+                list(
+                    set([
+                        obj['name']
+                        for obj in FileModel.objects.filter(
+                            name__contains=query).values("name")
+                    ]))))
     else:
         return HttpResponseForbidden()
-
-
