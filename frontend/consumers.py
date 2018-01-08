@@ -45,7 +45,7 @@ def handle_execute_answer(status):
     # tell webinterface that the program has ended
     notify({
         'program_status': 'finished',
-        "pid": program.id,
+        'pid': str(program.id),
         'code': status.payload['result']
     })
 

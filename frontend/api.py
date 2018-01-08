@@ -8,7 +8,6 @@ from .scripts import Script
 
 from .forms import SlaveForm, ProgramForm, FileForm
 from server.utils import StatusResponse
-import json
 
 from .consumers import notify
 
