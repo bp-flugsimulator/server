@@ -8,7 +8,7 @@ from server.management.commands.clean_npm import Command as CleanNpmCommand
 
 import json
 from os import remove, replace, mkdir, rmdir
-from os.path import isfile, isdir
+from os.path import isfile, isdir, join
 
 
 class StatusResponseTest(TestCase):
@@ -52,16 +52,16 @@ class ManagementTest(TestCase):
         mkdir(self.NPM_PATH)
 
         # create two packages
-        mkdir(self.NPM_PATH + '/test1')
-        with open(self.NPM_PATH + '/test1/' + 'testfile.txt', 'a') as f:
+        mkdir(join(self.NPM_PATH,'test1'))
+        with open(join(self.NPM_PATH, 'test1','testfile.txt'), 'a') as f:
             f.close()
 
-        mkdir(self.NPM_PATH + '/test1/testdir')
-        with open(self.NPM_PATH + '/test1/testdir/' + 'testfile.txt', 'a') as f:
+        mkdir(join(self.NPM_PATH,'test1','testdir'))
+        with open(join(self.NPM_PATH, 'test1','testdir','testfile.txt'), 'a') as f:
             f.close()
 
-        mkdir(self.NPM_PATH + '/test2')
-        with open(self.NPM_PATH + '/test2/' + 'testfile.txt', 'a') as f:
+        mkdir(join(self.NPM_PATH, 'test2'))
+        with open(join(self.NPM_PATH, 'test2', 'testfile.txt'), 'a') as f:
             f.close()
 
         # create test dependency
@@ -75,29 +75,29 @@ class ManagementTest(TestCase):
             com = CleanNpmCommand()
             com.handle()
 
-            self.assertTrue(isdir(self.NPM_PATH + '/test1/'))
-            self.assertTrue(isdir(self.NPM_PATH + '/test1/testdir'))
-            self.assertTrue(isfile(self.NPM_PATH + '/test1/testfile.txt'))
-            self.assertTrue(isfile(self.NPM_PATH + '/test1/testdir/testfile.txt'))
+            self.assertTrue(isdir(join(self.NPM_PATH, 'test1')))
+            self.assertTrue(isdir(join(self.NPM_PATH, 'test1','testdir')))
+            self.assertTrue(isfile(join(self.NPM_PATH,'test1', 'testfile.txt')))
+            self.assertTrue(isfile(join(self.NPM_PATH,'test1', 'testdir', 'testfile.txt')))
 
-            self.assertFalse(isdir(self.NPM_PATH + '/test2'))
+            self.assertFalse(isdir(join(self.NPM_PATH,'test2')))
         except Exception as err:
             exception = err
             try:
-                remove(self.NPM_PATH + '/test2/' + 'testfile.txt')
+                remove(join(self.NPM_PATH, 'test2', 'testfile.txt'))
             except:
                 pass
             try:
-                rmdir(self.NPM_PATH + '/test2')
+                rmdir(join(self.NPM_PATH, 'test2'))
             except:
                 pass
         finally:
             # delete testfiles
             remove('test.html')
-            remove(self.NPM_PATH + '/test1/testdir/' + 'testfile.txt')
-            remove(self.NPM_PATH + '/test1/' + 'testfile.txt')
-            rmdir(self.NPM_PATH + '/test1/testdir')
-            rmdir(self.NPM_PATH + '/test1')
+            remove(join(self.NPM_PATH,'test1', 'testdir' ,'testfile.txt'))
+            remove(join(self.NPM_PATH, 'test1', 'testfile.txt'))
+            rmdir(join(self.NPM_PATH, 'test1', 'testdir'))
+            rmdir(join(self.NPM_PATH, 'test1'))
             rmdir(self.NPM_PATH)
 
             # restore backup
