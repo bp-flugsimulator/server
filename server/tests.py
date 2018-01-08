@@ -41,7 +41,6 @@ class ManagementTest(TestCase):
         else:
             com.handle()
             self.assertTrue(isfile(self.CSS_PATH))
-        
 
     def test_clean_npm(self):
         # if node_modules exists back it up
@@ -52,12 +51,14 @@ class ManagementTest(TestCase):
         mkdir(self.NPM_PATH)
 
         # create two packages
-        mkdir(join(self.NPM_PATH,'test1'))
-        with open(join(self.NPM_PATH, 'test1','testfile.txt'), 'w') as f:
+        mkdir(join(self.NPM_PATH, 'test1'))
+        with open(join(self.NPM_PATH, 'test1', 'testfile.txt'), 'w') as f:
             f.close()
 
-        mkdir(join(self.NPM_PATH,'test1','testdir'))
-        with open(join(self.NPM_PATH, 'test1','testdir','testfile.txt'), 'w') as f:
+        mkdir(join(self.NPM_PATH, 'test1', 'testdir'))
+        with open(
+                join(self.NPM_PATH, 'test1', 'testdir', 'testfile.txt'),
+                'w') as f:
             f.close()
 
         mkdir(join(self.NPM_PATH, 'test2'))
@@ -69,8 +70,6 @@ class ManagementTest(TestCase):
             f.write("{% static 'node/test1/testdir/testfile.txt' %}")
             f.close()
 
-        system('tree')
-
         # execute command
         exception = None
         try:
@@ -78,11 +77,14 @@ class ManagementTest(TestCase):
             com.handle()
 
             self.assertTrue(isdir(join(self.NPM_PATH, 'test1')))
-            self.assertTrue(isdir(join(self.NPM_PATH, 'test1','testdir')))
-            self.assertTrue(isfile(join(self.NPM_PATH,'test1', 'testfile.txt')))
-            self.assertTrue(isfile(join(self.NPM_PATH,'test1', 'testdir', 'testfile.txt')))
+            self.assertTrue(isdir(join(self.NPM_PATH, 'test1', 'testdir')))
+            self.assertTrue(
+                isfile(join(self.NPM_PATH, 'test1', 'testfile.txt')))
+            self.assertTrue(
+                isfile(
+                    join(self.NPM_PATH, 'test1', 'testdir', 'testfile.txt')))
 
-            self.assertFalse(isdir(join(self.NPM_PATH,'test2')))
+            self.assertFalse(isdir(join(self.NPM_PATH, 'test2')))
         except Exception as err:
             exception = err
             try:
@@ -94,10 +96,9 @@ class ManagementTest(TestCase):
             except:
                 pass
         finally:
-            system('tree')
             # delete testfiles
             remove('test.html')
-            remove(join(self.NPM_PATH,'test1', 'testdir' ,'testfile.txt'))
+            remove(join(self.NPM_PATH, 'test1', 'testdir', 'testfile.txt'))
             remove(join(self.NPM_PATH, 'test1', 'testfile.txt'))
             rmdir(join(self.NPM_PATH, 'test1', 'testdir'))
             rmdir(join(self.NPM_PATH, 'test1'))

@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 
-from os import walk, rmdir, remove
+from os import walk, rmdir, remove, getcwd
 from os.path import join
 
 
@@ -44,7 +44,7 @@ def get_parent_folders(path):
     paths = []
     for folder in path.split('/'):
         new_path = join(new_path, folder)
-        paths.append(new_path)
+        paths.append(join(getcwd(), new_path))
     return paths
 
 
@@ -63,13 +63,9 @@ class Command(BaseCommand):
                         line = line.split("'")[1]
                         if 'node/' in line:
                             dependecy_path = line.replace(
-                                'node/', './node_modules/').rsplit('/', 1)[0]
+                                'node/', 'node_modules/').rsplit('/', 1)[0]
                             dependencies.extend(
                                 get_parent_folders(dependecy_path))
-
-        # remove duplicates
-        dependencies = list(set(dependencies))
-
         """
         # get dependencies from scss files
         scss_files = get_paths('.scss')
@@ -82,17 +78,21 @@ class Command(BaseCommand):
 
         """
 
+        # remove duplicates
+        dependencies = list(set(dependencies))
+
         # delete all files that are not a dependency
-        for dirpath, _, filenames in walk("./node_modules"):
+        for dirpath, _, filenames in walk(join(getcwd(), 'node_modules')):
             if dirpath not in dependencies:
                 for filename in filenames:
-                    remove(dirpath + '/' + filename)
+                    remove(join(dirpath, filename))
 
         # delete all empty folders
         deleted = True
         while deleted:
             deleted = False
-            for dirpath, dirnames, filenames in walk("./node_modules"):
+            for dirpath, dirnames, filenames in walk(
+                    join(getcwd(), 'node_modules')):
                 if not dirnames and not filenames:
                     rmdir(dirpath)
                     deleted = True
