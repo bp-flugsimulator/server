@@ -7,7 +7,7 @@ from server.management.commands.compilesass import Command as SassCommand
 from server.management.commands.clean_npm import Command as CleanNpmCommand
 
 import json
-from os import remove, replace, mkdir, rmdir
+from os import remove, replace, mkdir, rmdir, getcwd
 from os.path import isfile, isdir, join
 
 
@@ -27,8 +27,8 @@ class StatusResponseTest(TestCase):
 
 class ManagementTest(TestCase):
     CSS_PATH = 'base/static/base/css/custom.css'
-    NPM_PATH = 'node_modules'
-    BACKUP_PATH = 'node_modules_backup'
+    NPM_PATH = join(getcwd(), 'node_modules')
+    BACKUP_PATH = join(getcwd(), 'node_modules_backup')
 
     def test_css_generation(self):
         # if there is already a custom.css file remove it
