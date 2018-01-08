@@ -7,7 +7,7 @@ from .models import File as FileModel
 class SlaveForm(ModelForm):
     class Meta:
         model = SlaveModel
-        fields = '__all__'
+        fields = ['name', 'ip_address', 'mac_address']
 
 
 class ProgramForm(ModelForm):

@@ -251,7 +251,7 @@ def manage_program(request, programId):
                 arguments=split(program.arguments))
 
             # create status entry
-            ProgramStatusModel(program=program, uuid=cmd.uuid).save()
+            ProgramStatusModel(program=program, command_uuid=cmd.uuid).save()
 
             # send command to the client
             Group('client_' + str(program.slave.id)).send({

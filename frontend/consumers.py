@@ -1,8 +1,7 @@
 from channels import Group
-from .models import SlaveStatus as SlaveStatusModel, Slave as SlaveModel, Program as ProgramModel, ProgramStatus as ProgramStatusModel
+from .models import SlaveOnlineRequest as SlaveOnlineRequestModel, Slave as SlaveModel, ProgramStatus as ProgramStatusModel
 from utils import Command, Status
 from channels.sessions import channel_session
-from datetime import datetime
 from termcolor import colored
 
 # import the logging library
@@ -17,7 +16,7 @@ def notify(message):
 
 
 def handle_execute_answer(status):
-    program_status = ProgramStatusModel.objects.get(uuid=status.uuid)
+    program_status = ProgramStatusModel.objects.get(command_uuid=status.uuid)
     program = program_status.prgogram
 
     logger.info(
@@ -33,8 +32,8 @@ def handle_execute_answer(status):
         # log error
         logger.info(
             colored(
-                'Following exeption occured while executing {} \n {}'.format(
-                    program.name, status.payload['result']), 'red'))
+                'Following exeption occured on the client while executing {}: \n {}'.
+                format(program.name, status.payload['result']), 'red'))
         # Report exception to webinterface
         notify({
             'message':
@@ -50,13 +49,32 @@ def handle_execute_answer(status):
         })
 
 
+def handle_online_answer(status):
+    online_request = SlaveOnlineRequestModel.objects.get(
+        command_uuid=status.uuid)
+    slave = online_request.slave
+    online_request.delete()
+
+    if status.is_ok():
+        # tell webinterface that the client has been connected
+        notify({'slave_status': 'connected', 'sid': str(slave.id)})
+    else:
+        # log error
+        logger.info(
+            colored(
+                'Following exeption occured on the client while handeling an "online-request": \n {}'.
+                format(status.payload['result']), 'red'))
+        # notify the webinterface
+        notify({'message': 'An error occured while connecting to a client!'})
+
+
 @channel_session
 def ws_rpc_connect(message):
     """
     Handels websockets.connect requests of '/commands'.
     Connections only get accepted if the ip of the sender is the ip of a known client.
-    Adds the reply_channel to the groups 'clients' and 'client_$slave.id' and sends a
-    boottime request to the client.
+    Adds the reply_channel to the groups 'clients' and 'client_$slave.id' and sends an
+    online request to the client.
 
     Arguments
     ---------
@@ -77,12 +95,13 @@ def ws_rpc_connect(message):
         Group('clients').add(message.reply_channel)
         Group('client_{}'.format(slave.id)).add(message.reply_channel)
 
+        # send/save online request
+        cmd = Command(method='online')
+        SlaveOnlineRequestModel(slave=slave, command_uuid=cmd.uuid).save()
+        Group('client_{}'.format(slave.id)).send({'text': cmd.to_json()})
+
+        # log
         logger.info("send boottime request to {}".format(slave.name))
-        # send boottime request
-        Group('client_{}'.format(slave.id)).send({
-            'text':
-            Command(method='boottime').to_json()
-        })
     else:
         logger.info(
             colored("Rejecting unknown client with ip {}!".format(ip_address),
@@ -154,23 +173,8 @@ def ws_notifications_receive(message):
 
     try:
         status = Status.from_json(message.content['text'])
-        if status.payload['method'] == 'boottime':
-            if status.is_ok():
-                # TODO in slave status
-                slave = SlaveModel.objects.get(id=status.payload['sid'])
-                logger.info(
-                    "Received answer on boottime request from {}.".format(
-                        slave.name))
-                boottime = datetime.strptime(status.payload['boottime'],
-                                             '%Y-%m-%d %H:%M:%S')
-                SlaveStatusModel(slave=slave, boottime=boottime).save()
-                logger.info("Saved status of {} with boottime {}".format(
-                    slave.name, boottime))
-
-                # tell webinterface that the client has been connected
-                notify({'slave_status': 'connected', 'sid': str(slave.id)})
-            else:
-                pass  #TODO handle fail
+        if status.payload['method'] == 'online':
+            handle_online_answer(status)
         elif status.payload['method'] == 'execute':
             handle_execute_answer(status)
         else:
