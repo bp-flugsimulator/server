@@ -22,7 +22,20 @@ style="background-color: rgb(73, 73, 73);">
                 </div>
 
                 <div class="btn-group mr-2" role="group">
-                    <button type="button" class="btn btn-outline-light startSlave" data-toggle="tooltip" data-placement="top" title="Start/Stop">
+                    <button type="button" id="slaveStartStop_{{ slave.id }}"
+                            class="btn btn-outline-light
+                                {% if slave.slavestatus.bootime != ''%}
+                                    stop-slave
+                                {% else %}
+                                    start-slave
+                                {% endif %}
+                                " data-toggle="tooltip" data-placement="top" title="
+                                {% if slave.slavestatus.bootime != ''%}
+                                    Stop
+                                {% else %}
+                                    Start
+                                {% endif %}
+                            ">
                         <i class="material-icons">power_settings_new</i>
                     </button>
                     <button type="button" class="btn btn-outline-light" data-toggle="tooltip" data-placement="top" title="Restart">
