@@ -1,5 +1,7 @@
 from django.core.management.base import BaseCommand
-import os
+
+from os import walk, rmdir, remove
+from os.path import join
 
 
 def get_paths(filetype):
@@ -16,9 +18,9 @@ def get_paths(filetype):
     to files with the given filetype
     """
     files = []
-    for dirpath, _, filenames in os.walk("."):
+    for dirpath, _, filenames in walk('.'):
         for filename in [f for f in filenames if f.endswith(filetype)]:
-            filepath = os.path.join(dirpath, filename)
+            filepath = join(dirpath, filename)
             if 'node_modules' not in filepath:
                 files.append(filepath)
     return files
@@ -38,12 +40,11 @@ def get_parent_folders(path):
     A list containing strings which specify paths
     to the parentfolders in the given path
     """
-    new_line = ''
+    new_path = ''
     paths = []
     for folder in path.split('/'):
-        new_line += folder
-        paths.append(new_line)
-        new_line += '/'
+        new_path = join(new_path, folder)
+        paths.append(new_path)
     return paths
 
 
@@ -66,6 +67,9 @@ class Command(BaseCommand):
                             dependencies.extend(
                                 get_parent_folders(dependecy_path))
 
+        # remove duplicates
+        dependencies = list(set(dependencies))
+
         """
         # get dependencies from scss files
         scss_files = get_paths('.scss')
@@ -75,21 +79,20 @@ class Command(BaseCommand):
                     if '@import ' in line:
                         dependencies.extend(
                             get_parent_folders('./' + line.split('"')[1]))
+
         """
 
-
         # delete all files that are not a dependency
-        for dirpath, dirnames, filenames in os.walk("./node_modules"):
+        for dirpath, _, filenames in walk("./node_modules"):
             if dirpath not in dependencies:
                 for filename in filenames:
-                    os.remove(dirpath + '/' + filename)
+                    remove(dirpath + '/' + filename)
 
         # delete all empty folders
         deleted = True
         while deleted:
             deleted = False
-            for dirpath, dirnames, filenames in os.walk("./node_modules"):
+            for dirpath, dirnames, filenames in walk("./node_modules"):
                 if not dirnames and not filenames:
-                    os.rmdir(dirpath)
+                    rmdir(dirpath)
                     deleted = True
-                    

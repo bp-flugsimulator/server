@@ -94,7 +94,6 @@ class ManagementTest(TestCase):
             except:
                 pass
         finally:
-            print(exception)
             system('tree')
             # delete testfiles
             remove('test.html')
