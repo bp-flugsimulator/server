@@ -69,6 +69,8 @@ class ManagementTest(TestCase):
             f.write("{% static 'node/test1/testdir/testfile.txt' %}")
             f.close()
 
+        system('tree')
+
         # execute command
         exception = None
         try:
@@ -92,6 +94,7 @@ class ManagementTest(TestCase):
             except:
                 pass
         finally:
+            print(exception)
             system('tree')
             # delete testfiles
             remove('test.html')
