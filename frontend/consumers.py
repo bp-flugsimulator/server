@@ -1,18 +1,53 @@
 from channels import Group
-from .models import SlaveStatus as SlaveStatusModel, Slave as SlaveModel, Program as ProgramModel
+from .models import SlaveStatus as SlaveStatusModel, Slave as SlaveModel, Program as ProgramModel, ProgramStatus as ProgramStatusModel
 from utils import Command, Status
 from channels.sessions import channel_session
 from datetime import datetime
-from django.utils import timezone
 from termcolor import colored
-
-import json
 
 # import the logging library
 import logging
 
 # Get an instance of a logger
 logger = logging.getLogger('django.request')
+
+
+def notify(message):
+    Group('notifications').send({'text': Status.ok(message).to_json()})
+
+
+def handle_execute_answer(status):
+    program_status = ProgramStatusModel.objects.get(uuid=status.uuid)
+    program = program_status.prgogram
+
+    logger.info(
+        "Received answer on execute request of function {} from {}.".format(
+            program.name, program.slave.name))
+
+    if status.is_ok():
+        program_status.code = status.payload['result']
+        program_status.save()
+        logger.info("Saved status of {} with code {}.".format(
+            program.name, program_status.code))
+    else:
+        # log error
+        logger.info(
+            colored(
+                'Following exeption occured while executing {} \n {}'.format(
+                    program.name, status.payload['result']), 'red'))
+        # Report exception to webinterface
+        notify({
+            'message':
+            'An Exception occured while trying to execute {}'.format(
+                program.name)
+        })
+
+        # tell webinterface that the program has ended
+        notify({
+            'program_status': 'finished',
+            "pid": program.id,
+            'code': status.payload['result']
+        })
 
 
 @channel_session
@@ -46,7 +81,7 @@ def ws_rpc_connect(message):
         # send boottime request
         Group('client_{}'.format(slave.id)).send({
             'text':
-            Command(method="boottime", sid=slave.id).to_json()
+            Command(method='boottime').to_json()
         })
     else:
         logger.info(
@@ -77,13 +112,7 @@ def ws_rpc_disconnect(message):
         slave.slavestatus.delete()
 
         # tell the webinterface that the client has disconnected
-        Group('notifications').send({
-            'text':
-            Status.ok({
-                "slave_status": "disconnected",
-                "sid": str(slave.id)
-            }).to_json()
-        })
+        notify({'slave_status': 'disconnected', 'sid': str(slave.id)})
 
         logger.info("Client with ip {} disconnected from /commands!".format(
             message.channel_session['ip_address']))
@@ -125,8 +154,9 @@ def ws_notifications_receive(message):
 
     try:
         status = Status.from_json(message.content['text'])
-        if status.is_ok():
-            if status.payload['method'] == 'boottime':
+        if status.payload['method'] == 'boottime':
+            if status.is_ok():
+                # TODO in slave status
                 slave = SlaveModel.objects.get(id=status.payload['sid'])
                 logger.info(
                     "Received answer on boottime request from {}.".format(
@@ -138,46 +168,15 @@ def ws_notifications_receive(message):
                     slave.name, boottime))
 
                 # tell webinterface that the client has been connected
-                Group('notifications').send({
-                    'text':
-                    Status.ok({
-                        "slave_status": "connected",
-                        "sid": str(slave.id)
-                    }).to_json()
-                })
-            elif status.payload['method'] == 'execute':
-                program = ProgramModel.objects.get(id=status.payload['pid'])
-
-                logger.info(
-                    "Received answer on execute request of function {} from {}.".
-                    format(program.name, program.slave.name))
-
-                program_status = program.programstatus
-                program_status.code = status.payload['code']
-                program_status.stopped = timezone.now()
-                program_status.save()
-
-                logger.info("Saved status of {} with code {}.".format(
-                    program.name, program_status.code))
-
-                # tell webinterface that the program has ended
-                Group('notifications').send({
-                    'text':
-                    Status.ok({
-                        "program_status": "finished",
-                        "pid": status.payload['pid'],
-                        "code": status.payload['code'],
-                    }).to_json()
-                })
+                notify({'slave_status': 'connected', 'sid': str(slave.id)})
             else:
-                logger.info(
-                    colored(
-                        'Client send answer from unknown function {}.'.format(
-                            status.payload['method']), 'red'))
+                pass  #TODO handle fail
+        elif status.payload['method'] == 'execute':
+            handle_execute_answer(status)
         else:
             logger.info(
-                colored('Client answered with error: {}'.format(
-                    status.payload), 'red'))
+                colored('Client send answer from unknown function {}.'.format(
+                    status.payload['method']), 'red'))
     except Exception as err:
         logger.info(
             colored(
