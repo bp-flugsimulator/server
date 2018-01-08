@@ -104,6 +104,8 @@ if __name__ == "__main__":
 
     # from requirements.txt in ./libs
     if len(argv) > 1 and argv[1] == '--update':
+        download('pip')
+        download('wheel')
         with open('requirements.txt') as requirements:
             for library in requirements:
                 download(library)
