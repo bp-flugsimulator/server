@@ -53,15 +53,15 @@ class ManagementTest(TestCase):
 
         # create two packages
         mkdir(join(self.NPM_PATH,'test1'))
-        with open(join(self.NPM_PATH, 'test1','testfile.txt'), 'a') as f:
+        with open(join(self.NPM_PATH, 'test1','testfile.txt'), 'w') as f:
             f.close()
 
         mkdir(join(self.NPM_PATH,'test1','testdir'))
-        with open(join(self.NPM_PATH, 'test1','testdir','testfile.txt'), 'a') as f:
+        with open(join(self.NPM_PATH, 'test1','testdir','testfile.txt'), 'w') as f:
             f.close()
 
         mkdir(join(self.NPM_PATH, 'test2'))
-        with open(join(self.NPM_PATH, 'test2', 'testfile.txt'), 'a') as f:
+        with open(join(self.NPM_PATH, 'test2', 'testfile.txt'), 'w') as f:
             f.close()
 
         # create test dependency
