@@ -16,10 +16,18 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Script',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id',
+                 models.AutoField(
+                     auto_created=True,
+                     primary_key=True,
+                     serialize=False,
+                     verbose_name='ID')),
                 ('name', models.CharField(max_length=200)),
                 ('payload', models.TextField()),
-                ('slave', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='frontend.Slave')),
+                ('slave',
+                 models.ForeignKey(
+                     on_delete=django.db.models.deletion.CASCADE,
+                     to='frontend.Slave')),
             ],
         ),
         migrations.AlterUniqueTogether(

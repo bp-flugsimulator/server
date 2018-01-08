@@ -16,17 +16,33 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='ScriptGraphFiles',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id',
+                 models.AutoField(
+                     auto_created=True,
+                     primary_key=True,
+                     serialize=False,
+                     verbose_name='ID')),
                 ('index', models.IntegerField()),
-                ('file', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='frontend.File')),
+                ('file',
+                 models.ForeignKey(
+                     on_delete=django.db.models.deletion.CASCADE,
+                     to='frontend.File')),
             ],
         ),
         migrations.CreateModel(
             name='ScriptGraphPrograms',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id',
+                 models.AutoField(
+                     auto_created=True,
+                     primary_key=True,
+                     serialize=False,
+                     verbose_name='ID')),
                 ('index', models.IntegerField()),
-                ('program', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='frontend.Program')),
+                ('program',
+                 models.ForeignKey(
+                     on_delete=django.db.models.deletion.CASCADE,
+                     to='frontend.Program')),
             ],
         ),
         migrations.AlterUniqueTogether(
@@ -36,12 +52,16 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='scriptgraphprograms',
             name='script',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='frontend.Script'),
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                to='frontend.Script'),
         ),
         migrations.AddField(
             model_name='scriptgraphfiles',
             name='script',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='frontend.Script'),
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                to='frontend.Script'),
         ),
         migrations.RemoveField(
             model_name='script',
