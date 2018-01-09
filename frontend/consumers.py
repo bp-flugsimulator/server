@@ -54,12 +54,13 @@ def handle_execute_answer(status):
 
 def handle_online_answer(status):
     slave_status = SlaveStatusModel.objects.get(command_uuid=status.uuid)
-    slave_status.online = True
-    slave_status.save()
 
     slave = slave_status.slave
 
     if status.is_ok():
+        slave_status.online = True
+        slave_status.save()
+
         # tell webinterface that the client has been connected
         notify({'slave_status': 'connected', 'sid': str(slave.id)})
     else:

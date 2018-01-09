@@ -5,6 +5,7 @@ from urllib.parse import urlencode
 from utils import Status, Command
 from shlex import split
 from datetime import datetime
+from uuid import uuid4
 
 from channels.test import WSClient
 from channels import Group
@@ -1531,14 +1532,14 @@ class WebsocketTests(TestCase):
             ip_address='0.0.10.2',
             mac_address='00:00:00:00:10:02')
 
-        SlaveStatusModel(slave=slave, command_uuid='abcdefghijklmnop').save()
+        uuid = uuid4().hex
+        SlaveStatusModel(slave=slave, command_uuid=uuid).save()
         expected_status = Status.ok({'method': 'online'})
-        expected_status.uuid = 'abcdefghijklmnop'
+        expected_status.uuid = uuid
 
         #connect webinterface on /notifications
         webinterface = WSClient()
-        webinterface.send_and_consume(
-            'websocket.connect', path='/notifications')
+        webinterface.join_group('notifications')
 
         #send online answer
         ws_client = WSClient()
@@ -1560,6 +1561,48 @@ class WebsocketTests(TestCase):
 
         slave.delete()
 
+    def test_ws_notifications_receive_online_status_err(self):
+        SlaveModel(
+            name="test_ws_notifications_receive_online_status_err",
+            ip_address='0.0.10.15',
+            mac_address='00:00:00:00:10:15').save()
+        slave = SlaveModel.objects.get(
+            name="test_ws_notifications_receive_online_status_err",
+            ip_address='0.0.10.15',
+            mac_address='00:00:00:00:10:15')
+
+        uuid = uuid4().hex
+        SlaveStatusModel(slave=slave, command_uuid=uuid).save()
+        error_status = Status.err({
+            'method': 'online',
+            'result': str(Exception('foobar'))
+        })
+        error_status.uuid = uuid
+
+        #connect webinterface on /notifications
+        webinterface = WSClient()
+        webinterface.join_group('notifications')
+
+        #send online answer
+        ws_client = WSClient()
+        ws_client.send_and_consume(
+            'websocket.receive',
+            path='/notifications',
+            content={
+                'text': error_status.to_json()
+            })
+
+        self.assertFalse(SlaveStatusModel.objects.get(slave=slave).online)
+
+        #test if a connected message was send on /notifications
+        self.assertEqual(
+            Status.err(
+                'An error occured while connecting to client {}!'.format(
+                    slave.name)),
+            Status.from_json(json.dumps(webinterface.receive())))
+
+        slave.delete()
+
     def test_ws_notifications_receive_execute(self):
         SlaveModel(
             name="test_ws_notifications_receive_execute",
@@ -1576,13 +1619,13 @@ class WebsocketTests(TestCase):
         program = ProgramModel.objects.get(
             name='program', path='path', arguments='', slave=slave)
 
-        program_status = ProgramStatusModel(
-            program=program, command_uuid='abcdef')
+        uuid = uuid4().hex
+        program_status = ProgramStatusModel(program=program, command_uuid=uuid)
         program_status.running = True
         program_status.save()
 
         expected_status = Status.ok({'method': 'execute', 'result': 0})
-        expected_status.uuid = 'abcdef'
+        expected_status.uuid = uuid
 
         # connect webinterface
         webinterface = WSClient()
@@ -1613,14 +1656,58 @@ class WebsocketTests(TestCase):
 
         slave.delete()
 
-    def test_ws_notifications_receive_status_err(self):
+    def test_ws_notifications_receive_execute_status_err(self):
+        SlaveModel(
+            name="test_ws_notifications_receive_execute_status_err",
+            ip_address='0.0.10.33',
+            mac_address='00:00:00:00:10:33').save()
+        slave = SlaveModel.objects.get(
+            name="test_ws_notifications_receive_execute_status_err",
+            ip_address='0.0.10.33',
+            mac_address='00:00:00:00:10:33')
+
+        ProgramModel(
+            name='program', path='path', arguments='', slave=slave).save()
+
+        program = ProgramModel.objects.get(
+            name='program', path='path', arguments='', slave=slave)
+
+        uuid = uuid4().hex
+        program_status = ProgramStatusModel(program=program, command_uuid=uuid)
+        program_status.running = True
+        program_status.save()
+
+        error_status = Status.err({
+            'method': 'execute',
+            'result': str(Exception('foobar'))
+        })
+        error_status.uuid = uuid
+
+        # connect webinterface
+        webinterface = WSClient()
+        webinterface.join_group('notifications')
+
         ws_client = WSClient()
         ws_client.send_and_consume(
             'websocket.receive',
             path='/notifications',
-            content={'text': Status.err("").to_json()},
-        )
-        self.assertIsNone(ws_client.receive())
+            content={
+                'text': error_status.to_json()
+            })
+
+        query = ProgramStatusModel.objects.filter(program=program)
+        self.assertTrue(query.count() == 1)
+        self.assertFalse(query.first().running)
+        self.assertEqual(query.first().code, '')
+
+        # test if the webinterface gets the error message
+        self.assertEqual(
+            Status.err(
+                'An Exception occured while trying to execute {}'.format(
+                    program.name)),
+            Status.from_json(json.dumps(webinterface.receive())))
+
+        slave.delete()
 
     def test_ws_notifications_receive_unknown_method(self):
         ws_client = WSClient()
