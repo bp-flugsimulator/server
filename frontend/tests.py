@@ -1,3 +1,5 @@
+# pylint: disable=C0111
+
 from django.test import TestCase
 from django.urls import reverse
 from django.core.exceptions import ValidationError
@@ -12,7 +14,10 @@ from channels import Group
 
 import json
 
-from .models import Slave as SlaveModel, validate_mac_address, Program as ProgramModel, SlaveStatus as SlaveStatusModel, ProgramStatus as ProgramStatusModel, ScriptGraphPrograms as SGP, ScriptGraphFiles as SGF, Script as ScriptModel, File as FileModel
+from .models import Slave as SlaveModel, validate_mac_address,\
+ Program as ProgramModel, SlaveStatus as SlaveStatusModel,\
+ ProgramStatus as ProgramStatusModel, ScriptGraphPrograms as SGP,\
+ ScriptGraphFiles as SGF, Script as ScriptModel, File as FileModel
 from .scripts import Script, ScriptEntryFile, ScriptEntryProgram
 
 
