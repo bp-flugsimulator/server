@@ -130,16 +130,9 @@ class ApiTests(TestCase):
 
         response = self.client.get("/api/script/{}".format(db_script.id))
 
-        self.assertContains(response, "ok")
-        self.assertContains(response, "test_script")
-        self.assertContains(response, "program")
-        self.assertContains(response, 0)
-        self.assertContains(response, program.id)
-        self.assertContains(response, slave.id)
-        self.assertContains(response, file.id)
-        self.assertNotContains(response, program.name)
-        self.assertNotContains(response, slave.name)
-        self.assertNotContains(response, file.name)
+        self.assertEqual(
+            Status.ok(dict(script)),
+            Status.from_json(response.content.decode('utf-8')))
 
     def test_script_wrong_type_slaves(self):
         response = self.client.get("/api/script/0?slaves=float")
@@ -197,16 +190,9 @@ class ApiTests(TestCase):
         response = self.client.get("/api/script/{}?slaves=int".format(
             db_script.id))
 
-        self.assertContains(response, "ok")
-        self.assertContains(response, "test_script")
-        self.assertContains(response, "program")
-        self.assertContains(response, 0)
-        self.assertContains(response, program.id)
-        self.assertContains(response, slave.id)
-        self.assertContains(response, file.id)
-        self.assertNotContains(response, program.name)
-        self.assertNotContains(response, slave.name)
-        self.assertNotContains(response, file.name)
+        self.assertEqual(
+            Status.ok(dict(script)),
+            Status.from_json(response.content.decode('utf-8')))
 
     def test_get_script_program_type_int(self):
         fill_database_slaves_set_1()
@@ -237,16 +223,9 @@ class ApiTests(TestCase):
         response = self.client.get("/api/script/{}?programs=int".format(
             db_script.id))
 
-        self.assertContains(response, "ok")
-        self.assertContains(response, "test_script")
-        self.assertContains(response, "program")
-        self.assertContains(response, 0)
-        self.assertContains(response, program.id)
-        self.assertContains(response, slave.id)
-        self.assertContains(response, file.id)
-        self.assertNotContains(response, program.name)
-        self.assertNotContains(response, slave.name)
-        self.assertNotContains(response, file.name)
+        self.assertEqual(
+            Status.ok(dict(script)),
+            Status.from_json(response.content.decode('utf-8')))
 
     def test_get_script_slave_program_type_int(self):
         fill_database_slaves_set_1()
@@ -277,16 +256,9 @@ class ApiTests(TestCase):
         response = self.client.get(
             "/api/script/{}?programs=int&slaves=int".format(db_script.id))
 
-        self.assertContains(response, "ok")
-        self.assertContains(response, "test_script")
-        self.assertContains(response, "program")
-        self.assertContains(response, 0)
-        self.assertContains(response, program.id)
-        self.assertContains(response, slave.id)
-        self.assertContains(response, file.id)
-        self.assertNotContains(response, program.name)
-        self.assertNotContains(response, slave.name)
-        self.assertNotContains(response, file.name)
+        self.assertEqual(
+            Status.ok(dict(script)),
+            Status.from_json(response.content.decode('utf-8')))
 
     def test_get_script_slave_program_type_str(self):
         fill_database_slaves_set_1()
@@ -318,19 +290,14 @@ class ApiTests(TestCase):
             "/api/script/{}?programs=str&slaves=str&files=str".format(
                 db_script.id))
 
-        # FIXME
-        """
-        self.assertContains(response, "ok")
-        self.assertContains(response, "test_script")
-        self.assertContains(response, "program")
-        self.assertContains(response, 0)
-        self.assertContains(response, program.name)
-        self.assertContains(response, slave.name)
-        self.assertContains(response, file.name)
-        self.assertNotContains(response, program.id)
-        self.assertNotContains(response, slave.id)
-        self.assertNotContains(response, file.id)
-        """
+        expected_json = dict(script)
+        expected_json['programs'][0]['slave'] = slave.name
+        expected_json['programs'][0]['program'] = program.name
+        expected_json['files'][0]['file'] = file.name
+        expected_json['files'][0]['slave'] = slave.name
+        self.assertEqual(
+            Status.ok(expected_json),
+            Status.from_json(response.content.decode('utf-8')))
 
     def test_get_script_slave_type_str(self):
         fill_database_slaves_set_1()
@@ -353,17 +320,11 @@ class ApiTests(TestCase):
         response = self.client.get("/api/script/{}?slaves=str".format(
             db_script.id))
 
-        # FIXME
-        """
-        self.assertContains(response, "ok")
-        self.assertContains(response, "test_script")
-        self.assertContains(response, "program")
-        self.assertContains(response, 0)
-        self.assertContains(response, program.id)
-        self.assertContains(response, slave.name)
-        self.assertNotContains(response, program.name)
-        self.assertNotContains(response, slave.id)
-        """
+        expected_json = dict(script)
+        expected_json['programs'][0]['slave'] = slave.name
+        self.assertEqual(
+            Status.ok(expected_json),
+            Status.from_json(response.content.decode('utf-8')))
 
     def test_get_script_program_type_str(self):
         fill_database_slaves_set_1()
@@ -386,17 +347,11 @@ class ApiTests(TestCase):
         response = self.client.get("/api/script/{}?programs=str".format(
             db_script.id))
 
-        # FIXME
-        """
-        self.assertContains(response, "ok")
-        self.assertContains(response, "test_script")
-        self.assertContains(response, "program")
-        self.assertContains(response, 0)
-        self.assertContains(response, program.name)
-        self.assertContains(response, slave.id)
-        self.assertNotContains(response, program.id)
-        self.assertNotContains(response, slave.name)
-        """
+        expected_json = dict(script)
+        expected_json['programs'][0]['program'] = program.name
+        self.assertEqual(
+            Status.ok(expected_json),
+            Status.from_json(response.content.decode('utf-8')))
 
     def test_file_autocomplete(self):
         slave = SlaveModel(
