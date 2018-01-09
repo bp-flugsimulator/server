@@ -1,4 +1,5 @@
 from django.conf.urls import url
+from django.db.utils import OperationalError
 
 from frontend import views
 from frontend import api
@@ -38,6 +39,8 @@ def flush(*tables):
         try:
             getattr(models, table).objects.all().delete()
         except AttributeError:
+            pass
+        except OperationalError:
             pass
 
 
