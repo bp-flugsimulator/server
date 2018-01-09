@@ -20,14 +20,14 @@
                     </div>
 
                     <div class="btn-group mr-2" role="group">
-                        <button type="button" id="slaveStartStop_{{ slave.id }}"
+                        <button type="button" id="slaveStartStop_{{ slave.id }}" data-slave-id="{{ slave.id }}" data-toggle="tooltip" data-placement="top"
                                 class="btn btn-outline-light
                                     {% if slave.slavestatus.bootime != ''%}
                                         stop-slave
                                     {% else %}
                                         start-slave
                                     {% endif %}
-                                    " data-toggle="tooltip" data-placement="top" title="
+                                    " title="
                                     {% if slave.slavestatus.bootime != ''%}
                                         Stop
                                     {% else %}
@@ -36,26 +36,18 @@
                                 ">
                             <i class="material-icons">power_settings_new</i>
                         </button>
-                        <button type="button" class="btn btn-outline-light" data-toggle="tooltip" data-placement="top" title="Restart">
-                            <i class="material-icons">refresh</i>
-                        </button>
-                    </div>
-
-                    <div class="btn-group mr-2" role="group">
-                        <button type="button" class="btn btn-outline-info" data-toggle="tooltip" data-placement="top" title="Delete File">
-                            <i class="material-icons">signal_cellular_no_sim</i>
-                        </button>
-                        <button type="button" class="btn btn-outline-info" data-toggle="tooltip" data-placement="top" title="Copy File">
-                            <i class="material-icons">insert_drive_file</i>
+                        <button type="button" class="btn btn-outline-light" data-toggle="tooltip" data-placement="top" data-slave-id="{{ slave.id }}" title="Restart">
+                            <i class="mdi mdi-refresh"></i> Restart
                         </button>
                     </div>
 
                     <div class="btn-group mr-4" role="group">
-                        <button type="button" class="btn btn-outline-danger modify-slave-btn" data-toggle="tooltip" data-placement="top" title="Edit">
-                            <i class="material-icons">edit</i>
+                        <button type="button" class="btn btn-outline-danger modify-slave" data-toggle="tooltip" data-placement="top" data-slave-id="{{ slave.id }}" data-slave-name="{{ slave.name }}" data-slave-ip="{{ slave.ip_address }}" data-slave-mac="{{ slave.mac_address }}" title="Edit">
+                            <i class="mdi mdi-edit"></i> Edit
                         </button>
-                        <button type="button" class="btn btn-outline-danger delete_slave" data-toggle="tooltip" data-placement="top" title="Delete">
-                            <i class="material-icons">delete</i>
+
+                        <button type="button" class="btn btn-outline-danger delete-slave" data-slave-id="{{ slave.id }}" data-toggle="tooltip" data-placement="top" title="Delete">
+                            <i class="mdi mdi-delete"></i> Delete
                         </button>
                     </div>
                 </div>
@@ -95,14 +87,14 @@
             {% for program in programs %}
                 {% program_entry program %}
             {% empty %}
-                <div class="card alert alert-info">
+                <div class="alert alert-info">
                     <strong>Info!</strong> No programs for this client in system.
                 </div>
             {% endfor %}
 
-            <button type="button" class="btn btn-outline-info float-right add-program-btn mb-4 mt-2 col" data-toggle="tooltip" data-placement="top" title="Add program">
+            <button type="button" class="btn btn-outline-info float-right add-program mb-4 mt-2 col" data-toggle="tooltip" data-placement="top" data-slave-id="{{ slave.id }}" title="Add program">
                 <span></span>
-                <i class="material-icons" style="font-size:30px; vertical-align: middle;">add</i>
+                <i class="mdi mdi-add" style="font-size:30px; vertical-align: middle;"></i>
             </button>
         </div>
 
@@ -110,13 +102,13 @@
             {% for file in files %}
                 {% file_entry file %}
             {% empty %}
-                <div class="card alert alert-info">
-                    <strong>Info!</strong> No files for this client in system.
+                <div class="alert alert-info">
+                    <strong>Info!</strong> No files/folder for this client in system.
                 </div>
             {% endfor %}
-            <button type="button" class="btn btn-outline-info float-right add-file-btn mb-4 mt-2 col" data-toggle="tooltip" data-placement="top" title="Add file">
+            <button type="button" class="btn btn-outline-info float-right add-file mb-4 mt-2 col" data-toggle="tooltip" data-placement="top" title="Add file">
                 <span></span>
-                <i class="material-icons" style="font-size:30px; vertical-align: middle;">add</i>
+                <i class="mdi mdi-add" style="font-size:30px; vertical-align: middle;"></i>
             </button>
         </div>
     </div>
