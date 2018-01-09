@@ -1,11 +1,12 @@
 
-<div class="row-1 mb-2 pt-2 pb-2 pl-4 pr-4" style="border-style: solid; border-width: 1px;">
+<div class="row-1 mb-2 pt-2 pb-2 pl-4 pr-4 fsim-box fsim-status-error {% if program.programstatus.started != '' and program.programstatus.code == '' %}fsim-status-success
+                {% elif program.programstatus.started != '' and program.programstatus.code != '' %}fsim-status-error{% else %}fsim-status-error{% endif %}" id="programStatusContainer_{{ program.id }}">
     <div class="row">
         <div class="program-name col">
             <h5 class="mt-2">{{ program.name }}</h5>
         </div>
 
-        <div class="btn-group mr-4 col" role="group">
+        {% comment %} <div class="btn-group mr-4 col" role="group">
                 {% if program.programstatus.started != '' and program.programstatus.code == '' %}
                     <button id="programStatus_{{ program.id }}" type="button" class="btn btn-success" data-toggle="tooltip" data-placement="top" title="Running">
                 {% elif program.programstatus.started != '' and program.programstatus.code != '' %}
@@ -15,26 +16,26 @@
                 {% endif %}
                 <i class="mdi mdi-error-outline"></i>
             </button>
-        </div>
+        </div> {% endcomment %}
 
-        <div class="btn-group mr-2 col" role="group">
-            <button type="button" class="btn btn-outline-light start-program" data-program-id="{{ program.id }}" data-toggle="tooltip" data-placement="top" title="Start/Stop">
-                <i class="mdi mdi-power-settings-new"></i> Start/Stop
-            </button>
+        <div class="btn-toolbar col" role="toolbar">
+            <div class="btn-group mr-2" role="group">
+                <button type="button" id="programStartStop_{{ program.id }}" class="btn btn-outline-light start-program" data-program-id="{{ program.id }}" data-toggle="tooltip" data-placement="top" title="{% if program.programstatus.started != '' and program.programstatus.code == '' %}Stops
+                    {% else %}Starts{% endif %} the program">
+                    <i class="mdi mdi-power-settings-new"></i> {% if program.programstatus.started != '' and program.programstatus.code == '' %}Stop
+                    {% else %}Start{% endif %}
+                </button>
+            </div>
 
-            <button type="button" class="btn btn-outline-light" data-toggle="tooltip" data-placement="top" title="Restart">
-                <i class="mid mdi-refresh"></i> Restart
-            </button>
-        </div>
+            <div class="btn-group mr-2" role="group">
+                <button type="button" class="btn btn-outline-danger modify-program" data-toggle="tooltip" data-placement="top" data-program-id="{{ program.id }}" data-program-name="{{ program.name }}" data-program-path="{{ program.path }}" data-program-arguments="{{ program.arguments }}" title="Edit">
+                    <i class="mdi mdi-edit"></i> Edit
+                </button>
 
-        <div class="btn-group mr-2 col" role="group">
-            <button type="button" class="btn btn-outline-danger modify-program" data-toggle="tooltip" data-placement="top" data-program-id="{{ program.id }}" data-program-name="{{ program.name }}" data-program-path="{{ program.path }}" data-program-arguments="{{ program.arguments }}" title="Edit">
-                <i class="mdi mdi-edit"></i> Edit
-            </button>
-
-            <button type="button" class="btn btn-outline-danger delete-program" data-program-id="{{ program.id }}" data-slave-id="{{ program.slave }}" data-program-name="{{ program.name }}" data-toggle="tooltip" data-placement="top" title="Delete">
-                <i class="mdi mdi-delete"></i> Delete
-            </button>
+                <button type="button" class="btn btn-outline-danger delete-program" data-program-id="{{ program.id }}" data-slave-id="{{ program.slave }}" data-program-name="{{ program.name }}" data-toggle="tooltip" data-placement="top" title="Delete">
+                    <i class="mdi mdi-delete"></i> Delete
+                </button>
+            </div>
         </div>
     </div>
 </div>

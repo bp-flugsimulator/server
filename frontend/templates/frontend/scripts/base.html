@@ -26,20 +26,19 @@
 
 <div class="row ml-4 mr-4">
     <div class="col-sm-2">
-        <div class="row input-group" role="group">
-            <span class="col-sm-6 input-group-addon">Scripts</span>
+        <div class="row-1" role="group">
+            <span class="col-1">Scripts</span>
 
-            <span class = "input-group-btn">
-            <button type="button" class="btn add-script" data-toggle="tooltip" data-placement="top" title="Add Script" style="background-color: transparent;">
+            <button type="button" class="btn add-script col-1" data-toggle="tooltip" data-placement="top" title="Add Script" style="background-color: transparent;">
                     <i class="mdi mdi-add"></i>
-            </span>
+            </button>
         </div>
 
         <div class="row">
             <ul class="nav flex-column col" id="script-tabs" role="tablist">
                 {% for script in scripts %}
-                    <li class="nav-item pt-2 pb-2 pr-4 pl-4" style="border-style: solid; border-width: 1px;">
-                    <a class="nav-link" id="{{ script.id }}-tab" data-toggle="tab" href="#{{ script.id }}-tab-content" role="tab">{{ script.name }}</a>
+                    <li class="nav-item pt-2 pb-2 pr-4 pl-4 fsim-box">
+                    <a class="nav-link" id="{{ script.id }}-tab" data-toggle="tab" href="#{{ script.id }}-tab-content" role="tab"><i class="mdi mdi-description"></i> {{ script.name }}</a>
                     </li>
                 {% endfor %}
             </ul>

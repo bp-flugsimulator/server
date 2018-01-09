@@ -5,8 +5,6 @@
 {% block premain %}
 {% endblock %}
 {% block content %}
-
-
     <!-- Modal for deletion warnings used for slave and program deletion-->
     <div id="deleteWarning" class="modal fade" role="dialog">
         <div class="modal-dialog">
@@ -28,24 +26,22 @@
 
     <div class="row ml-4 mr-4">
         <div class="col-sm-2">
-            <div class="row input-group" role="group">
-                <span class="col-sm-6 input-group-addon">Clients</span>
-                <span class = "input-group-btn">
-                    <button type="button" class="btn add-slave" data-toggle="tooltip" data-placement="top" title="Add client" style="background-color: transparent;">
-                            <i class="mdi mdi-add"></i>
-                    </button>
-                </span>
+            <div class="row-1" role="group">
+                <span class="col-sm-1">Clients</span>
+                <button type="button" class="btn add-slave col-sm-1" data-toggle="tooltip" data-placement="top" title="Add client" style="background-color: transparent;">
+                        <i class="mdi mdi-add"></i>
+                </button>
             </div>
 
             <div class="row">
                 <ul class="nav flex-column col" id="slave-tabs" role="tablist">
                     {% for slave in slaves %}
-                        <li class="nav-item pt-2 pb-2 pr-4 pl-4" style="border-style: solid; border-width: 1px;">
-                        <a class="nav-link {% if forloop.first %} active {% endif %}" id="{{ slave.id }}-tab" data-toggle="tab" href="#{{ slave.id }}-tab-content" role="tab">{{ slave.name  }}</a>
+                        <li class="nav-item mt-2 pt-2 pb-2 pr-4 pl-4 fsim-box {% if slave.slavestatus.bootime != '' %}fsim-status-success{% else %}fsim-status-error{% endif %}">
+                            <a class="nav-link {% if forloop.first %} active {% endif %}" id="{{ slave.id }}-tab" data-toggle="tab" href="#{{ slave.id }}-tab-content" role="tab"><i class="mdi mdi-apps"></i> {{ slave.name  }}</a>
                         </li>
                     {% empty %}
                         <li class="nav-item pt-2 pb-2 pr-4 pl-4" style="border-style: solid; border-width: 1px;">
-                        <a class="nav-link active" id="empty-tab" data-toggle="tab" href="#empty-tab-content" role="tab">None</a>
+                            <a class="nav-link active" id="empty-tab" data-toggle="tab" href="#empty-tab-content" role="tab">None</a>
                         </li>
                     {% endfor %}
                 </ul>

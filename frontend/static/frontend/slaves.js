@@ -205,7 +205,6 @@ $(document).ready(function () {
         let programModal = $('#programModal');
         programModal.children().find('.modal-title').text('Add Program');
 
-
         //modify the form for the submit button
         let programForm = programModal.children().find('#programForm');
         programForm.attr('action', '/api/programs');
@@ -238,8 +237,6 @@ $(document).ready(function () {
         let path = $(this).data('program-path');
         let args = $(this).data('program-arguments');
 
-        console.log('id:' + id + ' name:' + name + ' path:' + path + ' args:' + args);
-
         //modify the form for the submit button
         programModal.children().find('.modal-title').text('Edit Program');
         programForm.attr('action', '/api/program/' + id);
@@ -266,7 +263,6 @@ $(document).ready(function () {
     $('.add-file').click(function () {
         let fileModal = $('#fileModal');
         fileModal.children().find('.modal-title').text('Add File');
-
 
         //modify the form for the submit button
         let fileForm = fileModal.children().find('#fileForm');

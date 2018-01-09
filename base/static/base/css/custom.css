@@ -5729,6 +5729,18 @@ a.text-dark:focus, a.text-dark:hover {
 .invisible {
   visibility: hidden !important; }
 
+.fsim-status-error {
+  background: linear-gradient(to right, #a50514 0, #a50514 5px, transparent 5px, transparent 100%) no-repeat; }
+
+.fsim-status-success {
+  background: linear-gradient(to right, #4c9a12 0, #4c9a12 5px, transparent 5px, transparent 100%) no-repeat; }
+
+.fsim-status-unkown {
+  background: linear-gradient(to right, #666666 0, #666666 5px, transparent 5px, transparent 100%) no-repeat; }
+
+.fsim-box {
+  border: 1px solid #666666; }
+
 div.jsoneditor {
   background-color: #323232;
   border: 1px solid #262626; }

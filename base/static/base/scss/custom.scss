@@ -514,15 +514,19 @@ $enable-print-styles: true;
 // My Variables
 @import "node_modules/bootstrap/scss/bootstrap";
 .fsim-status-error {
-    border-left: 5px solid $red;
+    background: linear-gradient(to right, $red 0, $red 5px, transparent 5px, transparent 100%) no-repeat;
 }
 
 .fsim-status-success {
-    border-left: 5px solid $green;
+    background: linear-gradient(to right, $green 0, $green 5px, transparent 5px, transparent 100%) no-repeat;
 }
 
 .fsim-status-unkown {
-    border-left: 5px solid $gray-100;
+    background: linear-gradient(to right, $gray-100 0, $gray-100 5px, transparent 5px, transparent 100%) no-repeat;
+}
+
+.fsim-box {
+    border: 1px solid $gray-100;
 }
 
 div.jsoneditor {
