@@ -28,22 +28,24 @@
 
     <div class="row ml-4 mr-4">
         <div class="col-sm-2">
-            <div class="row">
-                <h4 class="col-sm-4">Clients</h4>
+            <div class="row input-group" role="group">
+                <span class="col-sm-6 input-group-addon">Clients</span>
 
-                <button type="button" class="btn add-slave-btn col-sm-1 badge" data-toggle="tooltip" data-placement="top" title="Add client" style="background-color: transparent;">
-                        <i class="material-icons" style="font-size:24px;">add</i>
-                </button>
+                <span class = "input-group-btn">
+                    <button type="button" class="btn add-slave-btn" data-toggle="tooltip" data-placement="top" title="Add client" style="background-color: transparent;">
+                            <i class="mdi mdi-add"></i>
+                    </button>
+                </span>
             </div>
 
             <div class="row">
                 <ul class="nav flex-column col" id="slave-tabs" role="tablist">
                     {% for slave in slaves %}
-                        <li class="nav-item pt-4 pb-4 pr-4 pl-4" style="border-style: solid; border-width: 1px;">
-                        <a class="nav-link {% if forloop.first %} active {% endif %}" id="{{ slave.name }}-tab" data-toggle="tab" href="#{{ slave.name }}-tab-content" role="tab">{{ slave.name  }}</a>
+                        <li class="nav-item pt-2 pb-2 pr-4 pl-4" style="border-style: solid; border-width: 1px;">
+                        <a class="nav-link {% if forloop.first %} active {% endif %}" id="{{ slave.id }}-tab" data-toggle="tab" href="#{{ slave.id }}-tab-content" role="tab">{{ slave.name  }}</a>
                         </li>
                     {% empty %}
-                        <li class="nav-item pt-4 pb-4 pr-4 pl-4" style="border-style: solid; border-width: 1px;">
+                        <li class="nav-item pt-2 pb-2 pr-4 pl-4" style="border-style: solid; border-width: 1px;">
                         <a class="nav-link active" id="empty-tab" data-toggle="tab" href="#empty-tab-content" role="tab" >None</a>
                         </li>
                     {% endfor %}
@@ -53,11 +55,11 @@
 
         <div class="container-fluid tab-content col" id="slaves-tabs-content">
             {% for slave in slaves %}
-                <div class="tab-pane fade show {% if forloop.first %} active {% endif %}" id="{{ slave.name }}-tab-content" role="tabpanel">
+                <div class="tab-pane fade show {% if forloop.first %} active {% endif %}" id="{{ slave.id }}-tab-content" role="tabpanel">
                     {% slave_entry slave slave.program_set.all slave.file_set.all %}
                 </div>
             {% empty %}
-                <div class="tab-pane fade show active" id="" role="tabpanel">
+                <div class="tab-pane fade show active" id="empty-tab-content" role="tabpanel">
                     <div class="card alert alert-info">
                         <strong>Info!</strong> No clients in system.
                     </div>

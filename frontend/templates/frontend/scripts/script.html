@@ -1,9 +1,4 @@
-<div class="card program-card mb-2" data-id="{{ program.id }}">
-    <div class="card-body">
-        <div class="row">
-            <div class="program-name col">
-                <a href="/script/{{ script.id }}" <h5 class="mt-2">{{ script.name }}</h5></a>
-            </div>
-        </div>
-    </div>
-</div>
+<div id="jsoneditor_{{ script.id }}" style="height: 600px;"></div>
+<script>
+    loadScript({{ script.id }});
+</script>

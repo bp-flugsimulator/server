@@ -9,12 +9,23 @@
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
+        <!-- Stylesheets -->
 		<link href="{% static 'node/jsoneditor/dist/jsoneditor.min.css' %}" rel="stylesheet" type="text/css">
 		<link rel="stylesheet" href="{% static 'node/animate.css/animate.min.css' %}" />
 		<!--Import Google Icon Font-->
-		<link rel="stylesheet" href="{% static 'node/material-design-icons/iconfont/material-icons.css' %}">
+        <!-- <link rel="stylesheet" href="{% static 'node/material-design-icons/iconfont/material-icons.css' %}"> -->
+        <link rel="stylesheet" href="{% static 'node/bootstrap-material-icons/css/material-icons.css' %}">
 
-		<link rel="stylesheet" href="{% static 'base/css/custom.css' %}" />
+        <link rel="stylesheet" href="{% static 'base/css/custom.css' %}" />
+
+		<!-- Scripts -->
+		<script src="{% static 'node/jquery/dist/jquery.min.js'%}"></script>
+		<script src="{% static 'node/popper.js/dist/umd/popper.min.js'%}"></script>
+		<script src="{% static 'node/bootstrap/dist/js/bootstrap.min.js'%}"></script>
+		<script src="{% static 'node/bootstrap-notify/bootstrap-notify.min.js'%}"></script>
+		<script src="{% static 'frontend/ws.js' %}"></script>
+		<script src="{% static 'frontend/status.js' %}"></script>
+		{% block script %}{% endblock %}
 	</head>
 
 	<body>
@@ -45,13 +56,4 @@
 		<main class="container-fluid">
 		{% block content %}{% endblock %}
 		</main>
-
-		<!-- Scripts -->
-		<script src="{% static 'node/jquery/dist/jquery.min.js'%}"></script>
-		<script src="{% static 'node/popper.js/dist/umd/popper.min.js'%}"></script>
-		<script src="{% static 'node/bootstrap/dist/js/bootstrap.min.js'%}"></script>
-		<script src="{% static 'node/bootstrap-notify/bootstrap-notify.min.js'%}"></script>
-		<script src="{% static 'frontend/ws.js' %}"></script>
-		<script src="{% static 'frontend/status.js' %}"></script>
-		{% block script %}{% endblock %}
 	</body>

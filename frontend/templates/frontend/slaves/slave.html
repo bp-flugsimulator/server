@@ -1,5 +1,5 @@
 {% load components %}
-    <div class="row pt-4" style="border-style: solid; border-width: 1px;">
+    <div class="row pt-4 mb-4" style="border-style: solid; border-width: 1px;">
         <div class="container">
             <div class="row">
                 <div class="slave-name col">
@@ -77,17 +77,21 @@
     </div>
 
     <ul class="nav nav-tabs row" id="slave-releated-tabs" role="tablist">
-        <li class="nav-item active">
-            <a class="nav-link" id="{{ slave.name }}-programs-tab" data-toggle="tab" href="#{{ slave.name }}-programs-content" role="tab">Programs</a>
+        <li class="nav-item">
+            <a class="nav-link active" id="{{ slave.id }}-programs-tab" data-toggle="tab" href="#{{ slave.id }}-programs-content" role="tab">
+                <i class="mdi mdi-widgets"></i> Programs
+            </a>
         </li>
 
         <li class="nav-item">
-            <a class="nav-link" id="{{ slave.name }}-files-tab" data-toggle="tab" href="#{{ slave.name }}-files-content" role="tab">Files</a>
+            <a class="nav-link" id="{{ slave.id }}-files-tab" data-toggle="tab" href="#{{ slave.id }}-files-content" role="tab">
+                <i class="mdi mdi-folder "></i> Files
+            </a>
         </li>
     </ul>
 
-    <div class="tab-content row" id="{{ slave.name }}-related-tabs-content">
-        <div class="tab-pane fade show container-fluid mt-4 active" id="{{ slave.name }}-programs-content" role="tabpanel">
+    <div class="tab-content row" id="{{ slave.id }}-related-tabs-content">
+        <div class="tab-pane fade show container-fluid mt-4 active" id="{{ slave.id }}-programs-content" role="tabpanel">
             {% for program in programs %}
                 {% program_entry program %}
             {% empty %}
@@ -102,7 +106,7 @@
             </button>
         </div>
 
-        <div class="tab-pane fade show container-fluid mt-4 " id="{{ slave.name }}-files-content" role="tabpanel" aria-labelledby="home-tab">
+        <div class="tab-pane fade show container-fluid mt-4 " id="{{ slave.id }}-files-content" role="tabpanel" aria-labelledby="home-tab">
             {% for file in files %}
                 {% file_entry file %}
             {% empty %}

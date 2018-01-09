@@ -151,7 +151,7 @@ var loadScript = function (id) {
         },
         success: function (status) {
             if (status.is_ok()) {
-                createEditor(status.payload);
+                createEditor(status.payload, id);
             } else {
                 console.log("Error while querying:");
                 console.log(status.payload);
@@ -170,11 +170,11 @@ var newScript = function (name) {
         files: [],
     };
 
-    createEditor(default_json);
+    createEditor(default_json, 'new');
 };
 
-var createEditor = function (json) {
-    var container = document.getElementById('jsoneditor');
+var createEditor = function (json, id) {
+    var container = document.getElementById('jsoneditor_' + id);
     var editor = new JSONEditor(container, options, json);
     editor.expandAll();
 };
