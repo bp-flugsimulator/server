@@ -14,7 +14,12 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='SlaveStatus',
             fields=[
-                ('slave', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, primary_key=True, serialize=False, to='frontend.Slave')),
+                ('slave',
+                 models.OneToOneField(
+                     on_delete=django.db.models.deletion.CASCADE,
+                     primary_key=True,
+                     serialize=False,
+                     to='frontend.Slave')),
                 ('command_uuid', models.CharField(max_length=32, unique=True)),
                 ('online', models.BooleanField(default=False)),
             ],
@@ -27,7 +32,5 @@ class Migration(migrations.Migration):
             model_name='slave',
             name='online',
         ),
-        migrations.DeleteModel(
-            name='SlaveOnlineRequest',
-        ),
+        migrations.DeleteModel(name='SlaveOnlineRequest', ),
     ]

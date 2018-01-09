@@ -165,13 +165,17 @@ def shutdown_slave(request, id):
     """
     if request.method == 'GET':
         if SlaveModel.objects.filter(id=id).exists():
-            slave =  SlaveModel.objects.get(id=id)
-            if SlaveStatusModel.objects.filter(slave=slave) and slave.slavestatus.online :
+            slave = SlaveModel.objects.get(id=id)
+            if SlaveStatusModel.objects.filter(
+                    slave=slave) and slave.slavestatus.online:
                 Group('client_' + str(id)).send({
                     'text':
                     Command(method="shutdown").to_json()
                 })
-                notify({"message":"Send shutdown Command to {}".format(slave.name)})
+                notify({
+                    "message":
+                    "Send shutdown Command to {}".format(slave.name)
+                })
                 return StatusResponse(Status.ok(''))
             else:
                 return StatusResponse(
@@ -240,7 +244,8 @@ def manage_program(request, programId):
     if request.method == 'POST':
         program = ProgramModel.objects.get(id=programId)
         slave = program.slave
-        if SlaveStatusModel.objects.filter(slave=slave) and slave.slavestatus.online :
+        if SlaveStatusModel.objects.filter(
+                slave=slave) and slave.slavestatus.online:
             cmd = Command(
                 method="execute",
                 path=program.path,

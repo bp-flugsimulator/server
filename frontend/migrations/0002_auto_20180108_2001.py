@@ -14,7 +14,12 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='File',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id',
+                 models.AutoField(
+                     auto_created=True,
+                     primary_key=True,
+                     serialize=False,
+                     verbose_name='ID')),
                 ('name', models.CharField(max_length=200)),
                 ('sourcePath', models.CharField(max_length=200)),
                 ('destinationPath', models.CharField(max_length=200)),
@@ -23,7 +28,12 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='ProgramStatus',
             fields=[
-                ('program', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, primary_key=True, serialize=False, to='frontend.Program')),
+                ('program',
+                 models.OneToOneField(
+                     on_delete=django.db.models.deletion.CASCADE,
+                     primary_key=True,
+                     serialize=False,
+                     to='frontend.Program')),
                 ('code', models.CharField(blank=True, max_length=200)),
                 ('command_uuid', models.CharField(max_length=32, unique=True)),
             ],
@@ -31,30 +41,56 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Script',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id',
+                 models.AutoField(
+                     auto_created=True,
+                     primary_key=True,
+                     serialize=False,
+                     verbose_name='ID')),
                 ('name', models.CharField(max_length=200, unique=True)),
             ],
         ),
         migrations.CreateModel(
             name='ScriptGraphFiles',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id',
+                 models.AutoField(
+                     auto_created=True,
+                     primary_key=True,
+                     serialize=False,
+                     verbose_name='ID')),
                 ('index', models.IntegerField()),
-                ('file', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='frontend.File')),
-                ('script', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='frontend.Script')),
+                ('file',
+                 models.ForeignKey(
+                     on_delete=django.db.models.deletion.CASCADE,
+                     to='frontend.File')),
+                ('script',
+                 models.ForeignKey(
+                     on_delete=django.db.models.deletion.CASCADE,
+                     to='frontend.Script')),
             ],
         ),
         migrations.CreateModel(
             name='ScriptGraphPrograms',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id',
+                 models.AutoField(
+                     auto_created=True,
+                     primary_key=True,
+                     serialize=False,
+                     verbose_name='ID')),
                 ('index', models.IntegerField()),
             ],
         ),
         migrations.CreateModel(
             name='SlaveOnlineRequest',
             fields=[
-                ('slave', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, primary_key=True, serialize=False, to='frontend.Slave')),
+                ('slave',
+                 models.OneToOneField(
+                     on_delete=django.db.models.deletion.CASCADE,
+                     primary_key=True,
+                     serialize=False,
+                     to='frontend.Slave')),
                 ('command_uuid', models.CharField(max_length=32, unique=True)),
             ],
         ),
@@ -76,12 +112,20 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='program',
             name='id',
-            field=models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID'),
+            field=models.AutoField(
+                auto_created=True,
+                primary_key=True,
+                serialize=False,
+                verbose_name='ID'),
         ),
         migrations.AlterField(
             model_name='slave',
             name='id',
-            field=models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID'),
+            field=models.AutoField(
+                auto_created=True,
+                primary_key=True,
+                serialize=False,
+                verbose_name='ID'),
         ),
         migrations.AlterUniqueTogether(
             name='program',
@@ -90,17 +134,23 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='scriptgraphprograms',
             name='program',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='frontend.Program'),
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                to='frontend.Program'),
         ),
         migrations.AddField(
             model_name='scriptgraphprograms',
             name='script',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='frontend.Script'),
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                to='frontend.Script'),
         ),
         migrations.AddField(
             model_name='file',
             name='slave',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='frontend.Slave'),
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                to='frontend.Slave'),
         ),
         migrations.AlterUniqueTogether(
             name='scriptgraphprograms',

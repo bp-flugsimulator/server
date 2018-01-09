@@ -14,6 +14,7 @@ logger = logging.getLogger('django.request')
 def notify(message):
     Group('notifications').send({'text': Status.ok(message).to_json()})
 
+
 def notify_err(message):
     Group('notifications').send({'text': Status.err(message).to_json()})
 
@@ -33,11 +34,12 @@ def handle_execute_answer(status):
             program.name, program_status.code))
     else:
         # Report exception to webinterface
-        notify_err('An Exception occured while trying to execute {}'.format(program.name))
+        notify_err('An Exception occured while trying to execute {}'.format(
+            program.name))
         logger.info(
             colored(
                 'Following exeption occured on the client while executing {}: \n {}'.
-                    format(program.name, status.payload['result']), 'red'))
+                format(program.name, status.payload['result']), 'red'))
 
     # update status
     program_status.running = False
@@ -50,10 +52,8 @@ def handle_execute_answer(status):
     })
 
 
-
 def handle_online_answer(status):
-    slave_status = SlaveStatusModel.objects.get(
-        command_uuid=status.uuid)
+    slave_status = SlaveStatusModel.objects.get(command_uuid=status.uuid)
     slave_status.online = True
     slave_status.save()
 
@@ -64,13 +64,13 @@ def handle_online_answer(status):
         notify({'slave_status': 'connected', 'sid': str(slave.id)})
     else:
         # notify the webinterface
-        notify_err('An error occured while connecting to client {}!'.format(slave.name))
+        notify_err('An error occured while connecting to client {}!'.format(
+            slave.name))
 
         logger.info(
             colored(
                 'Following exeption occured on the client {} while handeling an "online-request": \n {}'.
-                format(slave.name ,status.payload['result']), 'red'))
-
+                format(slave.name, status.payload['result']), 'red'))
 
 
 @channel_session
@@ -142,8 +142,8 @@ def ws_rpc_disconnect(message):
                 'program_status': 'finished',
                 'pid': program.id,
                 'code': 'Status',
-             })
-            program.programstatus.delete()
+            })
+            ProgramStatusModel.objects.get(program=program).delete()
 
         # tell the webinterface that the client has disconnected
         notify({'slave_status': 'disconnected', 'sid': str(slave.id)})

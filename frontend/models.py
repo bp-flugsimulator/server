@@ -172,6 +172,7 @@ class ScriptGraphFiles(models.Model):
     class Meta:
         unique_together = (('script', 'index', 'file'), )
 
+
 #TODO Comments
 class ProgramStatus(models.Model):
     """
@@ -187,7 +188,7 @@ class ProgramStatus(models.Model):
     )
     code = models.CharField(max_length=200, unique=False, blank=True)
     command_uuid = models.CharField(max_length=32, unique=True)
-    running = models.BooleanField(unique=False,default=True)
+    running = models.BooleanField(unique=False, default=True)
 
 
 #TODO Comments
