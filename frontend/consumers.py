@@ -12,14 +12,41 @@ logger = logging.getLogger('django.request')
 
 
 def notify(message):
+    """
+    Sends a Status.ok with the given message
+    on the 'notifications' channel
+
+    Parameters
+    ----------
+    message: json serialisable
+        the message that is going to be send
+    """
     Group('notifications').send({'text': Status.ok(message).to_json()})
 
 
 def notify_err(message):
+    """
+    Sends a Status.err with the given message
+    on the 'notifications' channel
+
+    Parameters
+    ----------
+    message: json serialisable
+        the message that is going to be send
+    """
     Group('notifications').send({'text': Status.err(message).to_json()})
 
 
 def handle_execute_answer(status):
+    """
+    Handles an incoming message on '/notification' that
+    is an answer to an 'execute' request on a slave
+
+    Parameters
+    ----------
+    status: Status
+        The statusobject that was send by the slave
+    """
     program_status = ProgramStatusModel.objects.get(command_uuid=status.uuid)
     program = program_status.program
 
@@ -53,6 +80,15 @@ def handle_execute_answer(status):
 
 
 def handle_online_answer(status):
+    """
+    Handles an incoming message on '/notification' that
+    is an answer to an 'online' request on a slave
+
+    Parameters
+    ----------
+    status: Status
+        The statusobject that was send by the slave
+    """
     slave_status = SlaveStatusModel.objects.get(command_uuid=status.uuid)
 
     slave = slave_status.slave

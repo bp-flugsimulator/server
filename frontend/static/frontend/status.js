@@ -12,7 +12,7 @@ class Status {
                 if (i === 8 || i === 12 || i === 16 || i === 20) {
                     uuid += "-"
                 }
-                uuid += (i == 12 ? 4 : (i == 16 ? (random & 3 | 8) : random)).toString(16);
+                uuid += (i === 12 ? 4 : (i === 16 ? (random & 3 | 8) : random)).toString(16);
             }
             this._uuid = uuid;
         }
@@ -20,8 +20,7 @@ class Status {
 
     equals(other) {
         return this.status === other.status &&
-            this.payload === other.payload &&
-            this.uuid === other.uuid;
+            this.payload === other.payload;
     }
 
     get status() {

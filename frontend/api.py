@@ -98,6 +98,7 @@ def manage_slave(request, id):
 def add_program(request):
     """
     Answers a POST request to add a new program
+
     Parameters
     ----------
     request: HttpRequest
@@ -150,6 +151,8 @@ def shutdown_slave(request, id):
     """
     answers a request to shutdown slave with
     the given id
+
+    Parameters
     ----------
     request: HttpRequest
         a GET request
