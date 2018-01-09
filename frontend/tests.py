@@ -1505,8 +1505,9 @@ class WebsocketTests(TestCase):
         )
 
         # test if ws_client is part of 'notifications'
-        Group('notifications').send({'text':Status.ok('').to_json()})
-        self.assertEqual(Status.ok(''), Status.from_json(json.dumps(ws_client.receive())))
+        Group('notifications').send({'text': Status.ok('').to_json()})
+        self.assertEqual(
+            Status.ok(''), Status.from_json(json.dumps(ws_client.receive())))
 
         ws_client.send_and_consume(
             'websocket.disconnect',
@@ -1514,7 +1515,7 @@ class WebsocketTests(TestCase):
         )
 
         # test if ws_client was removed from 'notifications'
-        Group('notifications').send({'text':Status.ok('').to_json()})
+        Group('notifications').send({'text': Status.ok('').to_json()})
         self.assertIsNone(ws_client.receive())
 
     def test_ws_notifications_receive_fail(self):
@@ -1738,10 +1739,13 @@ class DatabaseTests(TestCase):
 
     def test_flush_error(self):
         from .urls import flush
-        SlaveModel(name='test_flush_error', ip_address='0.1.0.0',mac_address='00:01:00:00:00:00').save()
-        flush('Slave','UnknownModel')
-        self.assertFalse(SlaveModel.objects.filter(name='test_flush_error').exists())
-
+        SlaveModel(
+            name='test_flush_error',
+            ip_address='0.1.0.0',
+            mac_address='00:01:00:00:00:00').save()
+        flush('Slave', 'UnknownModel')
+        self.assertFalse(
+            SlaveModel.objects.filter(name='test_flush_error').exists())
 
     def test_slave_insert_invalid_ip(self):
         self.assertRaises(
