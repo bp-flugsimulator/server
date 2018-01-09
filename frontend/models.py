@@ -1,4 +1,4 @@
-from django.db import models
+from django.db.models import Model, CharField, GenericIPAddressField, ForeignKey, CASCADE, IntegerField, BooleanField, OneToOneField
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 
@@ -45,13 +45,13 @@ def validate_mac_address(mac_addr):
         )
 
 
-class Slave(models.Model):
+class Slave(Model):
     """
     Represents a slave which is node in the network.
     This is stored in a database.
 
-    Attributes
-    ----------
+    Members
+    -------
     name: str
         The name of the slave
 
@@ -62,24 +62,24 @@ class Slave(models.Model):
         The MAC address of the slave.
 
     """
-    name = models.CharField(unique=True, max_length=200)
-    ip_address = models.GenericIPAddressField(unique=True)
-    mac_address = models.CharField(
+    name = CharField(unique=True, max_length=200)
+    ip_address = GenericIPAddressField(unique=True)
+    mac_address = CharField(
         unique=True, max_length=17, validators=[validate_mac_address])
 
 
-class Program(models.Model):
+class Program(Model):
     """
     Represents a program on a slave
     This is stored in a database.
 
-    Attributes
-    ----------
+    Members
+    -------
     name: str
         The name of the program (has to be unique for every slave)
 
     path: str
-        The path to the binaryfile that will be executed
+        The path to the binary file that will be executed
 
     arguments: str
         The arguments which will be passed to the
@@ -88,22 +88,22 @@ class Program(models.Model):
     slave: Slave
         The slave on which the command will be executed
     """
-    name = models.CharField(unique=False, max_length=200)
-    path = models.CharField(unique=False, max_length=200)
-    arguments = models.CharField(unique=False, blank=True, max_length=200)
-    slave = models.ForeignKey(Slave, on_delete=models.CASCADE)
+    name = CharField(unique=False, max_length=200)
+    path = CharField(unique=False, max_length=200)
+    arguments = CharField(unique=False, blank=True, max_length=200)
+    slave = ForeignKey(Slave, on_delete=CASCADE)
 
     class Meta:
         unique_together = (('name', 'slave'), )
 
 
-class File(models.Model):
+class File(Model):
     """
     Represents a file on a slave
     This is stored in a database.
 
-    Attributes
-    ----------
+    Members
+    -------
     name: str
         The name of the file (has to be unique for every slave)
 
@@ -116,93 +116,98 @@ class File(models.Model):
     slave: Slave
         The slave on which the file belongs to
     """
-    name = models.CharField(unique=False, max_length=200)
-    sourcePath = models.CharField(unique=False, max_length=200)
-    destinationPath = models.CharField(unique=False, max_length=200)
-    slave = models.ForeignKey(Slave, on_delete=models.CASCADE)
+    name = CharField(unique=False, max_length=200)
+    sourcePath = CharField(unique=False, max_length=200)
+    destinationPath = CharField(unique=False, max_length=200)
+    slave = ForeignKey(Slave, on_delete=CASCADE)
 
     class Meta:
         unique_together = (('name', 'slave'), )
 
 
-class Script(models.Model):
+class Script(Model):
     """
     Represents a script file in a json format.
 
-    Attributes
-    ----------
+    Members
+    -------
     name: str
         The name of the script (has to be unique for every slave)
     """
-    name = models.CharField(unique=True, max_length=200)
+    name = CharField(unique=True, max_length=200)
 
 
-class ScriptGraphPrograms(models.Model):
+class ScriptGraphPrograms(Model):
     """
     Represents a dependency graph for programs in a script file.
 
-    Attributes
-    ----------
+    Members
+    -------
         script: Script id
         index: Order in which the script starts
         program: Which program will be started
     """
-    script = models.ForeignKey(Script, on_delete=models.CASCADE)
-    index = models.IntegerField(null=False)
-    program = models.ForeignKey(Program, on_delete=models.CASCADE)
+    script = ForeignKey(Script, on_delete=CASCADE)
+    index = IntegerField(null=False)
+    program = ForeignKey(Program, on_delete=CASCADE)
 
     class Meta:
         unique_together = (('script', 'index', 'program'), )
 
 
-class ScriptGraphFiles(models.Model):
+class ScriptGraphFiles(Model):
     """
     Represents a dependency graph for files in a script file.
 
-    Attributes
-    ----------
+    Members
+    -------
         script: Script id
         index: Order in which the script starts
         file: Which file will be move/delete/created
     """
-    script = models.ForeignKey(Script, on_delete=models.CASCADE)
-    index = models.IntegerField(null=False)
-    file = models.ForeignKey(File, on_delete=models.CASCADE)
+    script = ForeignKey(Script, on_delete=CASCADE)
+    index = IntegerField(null=False)
+    file = ForeignKey(File, on_delete=CASCADE)
 
     class Meta:
         unique_together = (('script', 'index', 'file'), )
 
 
-#TODO Comments
-class ProgramStatus(models.Model):
+class ProgramStatus(Model):
     """
     Represents a process which is currently running on the slave.
 
-    Arguments
-    ---------
+    Members
+    -------
+        program: Program id
+        code: last returned value of the program
+        command_uuid: uuid of the send 'execute' request
+        running: True if the program is currently running, otherwise False
     """
-    program = models.OneToOneField(
+    program = OneToOneField(
         Program,
-        on_delete=models.CASCADE,
+        on_delete=CASCADE,
         primary_key=True,
     )
-    code = models.CharField(max_length=200, unique=False, blank=True)
-    command_uuid = models.CharField(max_length=32, unique=True)
-    running = models.BooleanField(unique=False, default=True)
+    code = CharField(max_length=200, unique=False, blank=True)
+    command_uuid = CharField(max_length=32, unique=True)
+    running = BooleanField(unique=False, default=True)
 
 
-#TODO Comments
-class SlaveStatus(models.Model):
+class SlaveStatus(Model):
     """
     Represents the current status of the slaves.
 
-    Arguments
-    ---------
+    Members
+    -------
+        slave: Slave id
+        command_uuid: uuid of the send 'online' request
+        online: true if the slave is currently online, otherwise false
     """
-    slave = models.OneToOneField(
+    slave = OneToOneField(
         Slave,
-        on_delete=models.CASCADE,
+        on_delete=CASCADE,
         primary_key=True,
     )
-    command_uuid = models.CharField(max_length=32, unique=True)
-    online = models.BooleanField(unique=False, default=False)
+    command_uuid = CharField(max_length=32, unique=True)
+    online = BooleanField(unique=False, default=False)

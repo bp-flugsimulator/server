@@ -37,7 +37,7 @@ def flush(*tables):
     for table in tables:
         try:
             getattr(models, table).objects.all().delete()
-        except:
+        except AttributeError:
             pass
 
 

@@ -1,3 +1,15 @@
+function uuid(){
+    let uuid = "", i, random;
+    for (i = 0; i < 32; i++) {
+        random = Math.random() * 16 | 0;
+        if (i === 8 || i === 12 || i === 16 || i === 20) {
+            uuid += "-";
+        }
+            uuid += (i === 12 ? 4 : (i === 16 ? (random & 3 | 8) : random)).toString(16);
+    }
+    return uuid;
+}
+
 class Status {
     constructor (status, payload) {
         if (status !== "ok" && status !== "err") {
@@ -5,16 +17,7 @@ class Status {
         } else {
             this._status = status;
             this._payload = payload;
-            //generate uuid
-            let uuid = "", i, random;
-            for (i = 0; i < 32; i++) {
-                random = Math.random() * 16 | 0;
-                if (i === 8 || i === 12 || i === 16 || i === 20) {
-                    uuid += "-"
-                }
-                uuid += (i === 12 ? 4 : (i === 16 ? (random & 3 | 8) : random)).toString(16);
-            }
-            this._uuid = uuid;
+            this._uuid = uuid();
         }
     }
 
@@ -40,7 +43,7 @@ class Status {
     }
 
     is_ok() {
-        return this.status === 'ok';
+        return this.status === "ok";
     }
 
     is_err() {

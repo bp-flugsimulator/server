@@ -19,27 +19,27 @@ from .scripts import Script, ScriptEntryFile, ScriptEntryProgram
 def fill_database_slaves_set_1():
     data_set = [
         SlaveModel(
-            name="Tommo1",
+            name="Slave1",
             ip_address="192.168.2.39",
             mac_address="00:00:00:00:00:01",
         ),
         SlaveModel(
-            name="Tommo2",
+            name="Slave2",
             ip_address="192.168.3.39",
             mac_address="02:00:00:00:00:00",
         ),
         SlaveModel(
-            name="Tommo3",
+            name="Slave3",
             ip_address="192.168.5.39",
             mac_address="00:02:00:00:00:00",
         ),
         SlaveModel(
-            name="Tommo4",
+            name="Slave4",
             ip_address="192.168.6.39",
             mac_address="00:00:02:00:00:00",
         ),
         SlaveModel(
-            name="Tommo5",
+            name="Slave5",
             ip_address="192.168.7.39",
             mac_address="00:00:00:02:00:00",
         )
@@ -538,11 +538,6 @@ class ApiTests(TestCase):
                 mac_address=data.mac_address).exists())
 
     def test_add_slave_no_post(self):
-        data = SlaveModel(
-            name="add_slave_5",
-            ip_address="ip address",
-            mac_address="mac address")
-
         api_response = self.client.put(reverse('frontend:add_slaves'))
         self.assertEqual(api_response.status_code, 403)
 
@@ -752,13 +747,13 @@ class ApiTests(TestCase):
         ).save()
         model = SlaveModel.objects.get(name='add_program')
 
-        #add all programs
-        for id in range(100):
+        # add all programs
+        for slave_id in range(100):
             api_response = self.client.post(
                 '/api/programs', {
-                    'name': 'name' + str(id),
-                    'path': 'path' + str(id),
-                    'arguments': 'arguments' + str(id),
+                    'name': 'name' + str(slave_id),
+                    'path': 'path' + str(slave_id),
+                    'arguments': 'arguments' + str(slave_id),
                     'slave': str(model.id)
                 })
             self.assertEqual(200, api_response.status_code)
@@ -767,12 +762,12 @@ class ApiTests(TestCase):
                 Status.from_json(api_response.content.decode('utf-8')))
 
         #test if all programs are in the database
-        for id in range(100):
+        for slave_id in range(100):
             self.assertTrue(
                 ProgramModel.objects.filter(
-                    name='name' + str(id),
-                    path='path' + str(id),
-                    arguments='arguments' + str(id),
+                    name='name' + str(slave_id),
+                    path='path' + str(slave_id),
+                    arguments='arguments' + str(slave_id),
                     slave=model))
 
         #delete all entries
@@ -1403,7 +1398,6 @@ class WebsocketTests(TestCase):
             content={'client': ['0.0.10.0', '00:00:00:00:10:00']},
         )
 
-        slave_status = SlaveStatusModel.objects.get(slave=slave)
         self.assertEqual(
             Command(method="online"),
             Command.from_json(json.dumps(ws_client.receive())))
@@ -1509,10 +1503,19 @@ class WebsocketTests(TestCase):
             'websocket.connect',
             path='/notifications',
         )
+
+        # test if ws_client is part of 'notifications'
+        Group('notifications').send({'text':Status.ok('').to_json()})
+        self.assertEqual(Status.ok(''), Status.from_json(json.dumps(ws_client.receive())))
+
         ws_client.send_and_consume(
             'websocket.disconnect',
             path='/notifications',
         )
+
+        # test if ws_client was removed from 'notifications'
+        Group('notifications').send({'text':Status.ok('').to_json()})
+        self.assertIsNone(ws_client.receive())
 
     def test_ws_notifications_receive_fail(self):
         ws_client = WSClient()
@@ -1733,9 +1736,12 @@ class DatabaseTests(TestCase):
         mod.save()
         self.assertTrue(SlaveModel.objects.filter(name="Tommo3").exists())
 
-    def flush_error(self):
+    def test_flush_error(self):
         from .urls import flush
-        flush('testssss')
+        SlaveModel(name='test_flush_error', ip_address='0.1.0.0',mac_address='00:01:00:00:00:00').save()
+        flush('Slave','UnknownModel')
+        self.assertFalse(SlaveModel.objects.filter(name='test_flush_error').exists())
+
 
     def test_slave_insert_invalid_ip(self):
         self.assertRaises(

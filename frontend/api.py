@@ -56,7 +56,7 @@ def add_slave(request):
         return HttpResponseForbidden()
 
 
-def manage_slave(request, id):
+def manage_slave(request, slave_id):
     """
     answers a request to manipulate a slave with
     the given id
@@ -76,14 +76,14 @@ def manage_slave(request, id):
     """
     if request.method == 'DELETE':
         # i can't find any exeptions that can be thrown in our case
-        SlaveModel.objects.filter(id=id).delete()
+        SlaveModel.objects.filter(id=slave_id).delete()
         return StatusResponse(Status.ok(''))
 
     elif request.method == 'PUT':
         # create form from a new QueryDict made from the request body
         # (request.PUT is unsupported) as an update (instance) of the
         # existing slave
-        model = SlaveModel.objects.get(id=id)
+        model = SlaveModel.objects.get(id=slave_id)
         form = SlaveForm(QueryDict(request.body), instance=model)
 
         if form.is_valid():
@@ -147,7 +147,7 @@ def add_program(request):
         return HttpResponseForbidden()
 
 
-def shutdown_slave(request, id):
+def shutdown_slave(request, slave_id):
     """
     answers a request to shutdown slave with
     the given id
@@ -156,7 +156,7 @@ def shutdown_slave(request, id):
     ----------
     request: HttpRequest
         a GET request
-    id: int
+    slave_id: int
         the id of the slave which will be modified
     Returns
     -------
@@ -167,11 +167,11 @@ def shutdown_slave(request, id):
     will be returned.
     """
     if request.method == 'GET':
-        if SlaveModel.objects.filter(id=id).exists():
-            slave = SlaveModel.objects.get(id=id)
+        if SlaveModel.objects.filter(id=slave_id).exists():
+            slave = SlaveModel.objects.get(id=slave_id)
             if SlaveStatusModel.objects.filter(
                     slave=slave) and slave.slavestatus.online:
-                Group('client_' + str(id)).send({
+                Group('client_' + str(slave_id)).send({
                     'text':
                     Command(method="shutdown").to_json()
                 })
@@ -191,7 +191,7 @@ def shutdown_slave(request, id):
         return HttpResponseForbidden()
 
 
-def wol_slave(request, id):
+def wol_slave(request, slave_id):
     """
     answers a request to wake a slave with
     the given id
@@ -210,7 +210,7 @@ def wol_slave(request, id):
     """
     if request.method == 'GET':
         try:
-            send_magic_packet(SlaveModel.objects.get(id=id).mac_address)
+            send_magic_packet(SlaveModel.objects.get(id=slave_id).mac_address)
         except Exception as err:
             return StatusResponse(Status.err(repr(err)), status=500)
 
@@ -220,7 +220,7 @@ def wol_slave(request, id):
         return HttpResponseForbidden()
 
 
-def manage_program(request, programId):
+def manage_program(request, program_id):
     """
     answers a request to manipulate a program with
     the given programId from a slave with the given slaveId
@@ -242,10 +242,10 @@ def manage_program(request, programId):
     will be returned.
     """
     if request.method == 'DELETE':
-        ProgramModel.objects.filter(id=programId).delete()
+        ProgramModel.objects.filter(id=program_id).delete()
         return StatusResponse(Status.ok(''))
     if request.method == 'POST':
-        program = ProgramModel.objects.get(id=programId)
+        program = ProgramModel.objects.get(id=program_id)
         slave = program.slave
         if SlaveStatusModel.objects.filter(
                 slave=slave) and slave.slavestatus.online:
@@ -280,7 +280,7 @@ def manage_program(request, programId):
         # create form from a new QueryDict made from the request body
         # (request.PUT is unsupported) as an update (instance) of the
         # existing slave
-        model = ProgramModel.objects.get(id=programId)
+        model = ProgramModel.objects.get(id=program_id)
         form = ProgramForm(QueryDict(request.body), instance=model)
         if form.is_valid():
             program = form.save(commit=False)
@@ -300,7 +300,7 @@ def manage_program(request, programId):
         return HttpResponseForbidden()
 
 
-def manage_script(request, scriptId):
+def manage_script(request, script_id):
     if request.method == 'GET':
         try:
             # adds ?slaves=int&program_key=int&file_key=int to the URL
@@ -328,7 +328,7 @@ def manage_script(request, scriptId):
                             file_key)))
 
             script = Script.from_model(
-                scriptId,
+                script_id,
                 slave_key,
                 program_key,
                 file_key,
