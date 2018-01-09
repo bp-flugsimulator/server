@@ -7,7 +7,7 @@ from server.management.commands.compilesass import Command as SassCommand
 from server.management.commands.clean_npm import Command as CleanNpmCommand
 
 import json
-from os import remove, replace, mkdir, rmdir, getcwd, system
+from os import remove, replace, mkdir, rmdir, getcwd
 from os.path import isfile, isdir, join
 
 
@@ -89,11 +89,13 @@ class ManagementTest(TestCase):
             exception = err
             try:
                 remove(join(self.NPM_PATH, 'test2', 'testfile.txt'))
-            except:
+            except exception:
+                print('could not delete node/test2/testfile.txt,because:\n' + str(exception ))
                 pass
             try:
                 rmdir(join(self.NPM_PATH, 'test2'))
-            except:
+            except exception:
+                print('could not delete node/test2/ ,because:\n' + str(exception ))
                 pass
         finally:
             # delete testfiles

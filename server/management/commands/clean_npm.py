@@ -66,17 +66,6 @@ class Command(BaseCommand):
                                 'node/', 'node_modules/').rsplit('/', 1)[0]
                             dependencies.extend(
                                 get_parent_folders(dependecy_path))
-        """
-        # get dependencies from scss files
-        scss_files = get_paths('.scss')
-        for path in scss_files:
-            with open(path, 'r') as file:
-                for line in file:
-                    if '@import ' in line:
-                        dependencies.extend(
-                            get_parent_folders('./' + line.split('"')[1]))
-
-        """
 
         # remove duplicates
         dependencies = list(set(dependencies))
