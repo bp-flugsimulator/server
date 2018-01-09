@@ -513,6 +513,18 @@ $enable-grid-classes: true;
 $enable-print-styles: true;
 // My Variables
 @import "node_modules/bootstrap/scss/bootstrap";
+.fsim-status-error {
+    border-left: 5px solid $red;
+}
+
+.fsim-status-success {
+    border-left: 5px solid $green;
+}
+
+.fsim-status-unkown {
+    border-left: 5px solid $gray-100;
+}
+
 div.jsoneditor {
     background-color: $gray-700;
     border: 1px solid $gray-800;

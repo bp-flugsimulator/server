@@ -55,7 +55,7 @@
 
             <div class="row">
                 <div class="col">
-                    <p>IP:
+                    <p><b>IP</b>:
                         <b class="slave-ip">{{ slave.ip_address }}</b>
                     </p>
                 </div>
@@ -74,11 +74,23 @@
                 <i class="mdi mdi-widgets"></i> Programs
             </a>
         </li>
+        <li class="nav-item">
+            <button type="button" class="btn add-program mr-4" data-toggle="tooltip" data-placement="top" data-slave-id="{{ slave.id }}" title="Add program" style="background-color: transparent">
+                <span></span>
+                <i class="mdi mdi-add"></i>
+            </button>
+        </li>
 
         <li class="nav-item">
             <a class="nav-link" id="{{ slave.id }}-files-tab" data-toggle="tab" href="#{{ slave.id }}-files-content" role="tab">
                 <i class="mdi mdi-folder "></i> Files
             </a>
+        </li>
+        <li class="nav-item">
+            <button type="button" class="btn add-file nav-link" data-toggle="tooltip" data-placement="top" title="Add file" style="background-color: transparent">
+                <span></span>
+                <i class="mdi mdi-add"></i>
+            </button>
         </li>
     </ul>
 
@@ -91,11 +103,6 @@
                     <strong>Info!</strong> No programs for this client in system.
                 </div>
             {% endfor %}
-
-            <button type="button" class="btn btn-outline-info float-right add-program mb-4 mt-2 col" data-toggle="tooltip" data-placement="top" data-slave-id="{{ slave.id }}" title="Add program">
-                <span></span>
-                <i class="mdi mdi-add" style="font-size:30px; vertical-align: middle;"></i>
-            </button>
         </div>
 
         <div class="tab-pane fade show container-fluid mt-4 " id="{{ slave.id }}-files-content" role="tabpanel" aria-labelledby="home-tab">
@@ -106,9 +113,5 @@
                     <strong>Info!</strong> No files/folder for this client in system.
                 </div>
             {% endfor %}
-            <button type="button" class="btn btn-outline-info float-right add-file mb-4 mt-2 col" data-toggle="tooltip" data-placement="top" title="Add file">
-                <span></span>
-                <i class="mdi mdi-add" style="font-size:30px; vertical-align: middle;"></i>
-            </button>
         </div>
     </div>
