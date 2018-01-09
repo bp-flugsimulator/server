@@ -71,8 +71,8 @@
         </li>
     </ul>
 
-    <div class="tab-content row" id="{{ slave.id }}-related-tabs-content">
-        <div class="tab-pane fade show container-fluid mt-4 pb-4 active" id="{{ slave.id }}-programs-content" role="tabpanel" style="border-bottom: 1px solid #66489c;">
+    <div class="tab-content row fsim-box-bottom" id="{{ slave.id }}-related-tabs-content">
+        <div class="tab-pane fade show container-fluid mt-4 pb-4 active" id="{{ slave.id }}-programs-content" role="tabpanel">
             {% for program in programs %}
                 {% program_entry program %}
             {% empty %}

@@ -37,7 +37,7 @@
         <div class="row">
             <ul class="nav flex-column col" id="script-tabs" role="tablist">
                 {% for script in scripts %}
-                    <li class="nav-item pt-2 pb-2 pr-4 pl-4 fsim-box">
+                    <li class="nav-item pt-2 pb-2 pr-4 pl-4 fsim-status-unkown fsim-box">
                     <a class="nav-link" id="{{ script.id }}-tab" data-toggle="tab" href="#{{ script.id }}-tab-content" role="tab"><i class="mdi mdi-description"></i> {{ script.name }}</a>
                     </li>
                 {% endfor %}

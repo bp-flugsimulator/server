@@ -40,7 +40,7 @@
                             <a class="nav-link {% if forloop.first %} active {% endif %}" id="{{ slave.id }}-tab" data-toggle="tab" href="#{{ slave.id }}-tab-content" role="tab"><i class="mdi mdi-apps"></i> {{ slave.name  }}</a>
                         </li>
                     {% empty %}
-                        <li class="nav-item pt-2 pb-2 pr-4 pl-4" style="border-style: solid; border-width: 1px;">
+                        <li class="nav-item pt-2 pb-2 pr-4 pl-4">
                             <a class="nav-link active" id="empty-tab" data-toggle="tab" href="#empty-tab-content" role="tab">None</a>
                         </li>
                     {% endfor %}
