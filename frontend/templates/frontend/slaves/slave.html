@@ -1,74 +1,66 @@
 {% load components %}
+    <div class="row pt-4" style="border-style: solid; border-width: 1px;">
+        <div class="container">
+            <div class="row">
+                <div class="slave-name col">
+                    <h5 class="mt-2">{{ slave.name }}</h5>
+                </div>
+                <div class="btn-toolbar col" role="toolbar">
+                    <div class="btn-group mr-4" role="group">
+                            <button type="button" id="slaveStatus_{{ slave.id }}"
+                                    class="btn
+                                {% if slave.slavestatus.bootime != ''%}
+                                    btn-success
+                                {% else %}
+                                    btn-danger
+                                {% endif %}
+                            " data-toggle="tooltip" data-placement="top" title="Status">
+                                <i class="material-icons">error_outline</i>
+                            </button>
+                    </div>
 
-<div class="card slave-card mb-2" id="{{ slave.id }}">
-    <div class="card-header collapsed">
-        <div class="row">
-            <div class="slave-name col">
-                <h5 class="mt-2">{{ slave.name }}</h5>
-            </div>
-            <div class="btn-toolbar " role="toolbar">
-                <div class="btn-group mr-4" role="group">
-                        <button type="button" id="slaveStatus_{{ slave.id }}"
-                                class="btn
-                            {% if slave.slavestatus.bootime != ''%}
-                                btn-success
-                            {% else %}
-                                btn-danger
-                            {% endif %}
-                        " data-toggle="tooltip" data-placement="top" title="Status">
-                            <i class="material-icons">error_outline</i>
+                    <div class="btn-group mr-2" role="group">
+                        <button type="button" id="slaveStartStop_{{ slave.id }}"
+                                class="btn btn-outline-light
+                                    {% if slave.slavestatus.bootime != ''%}
+                                        stop-slave
+                                    {% else %}
+                                        start-slave
+                                    {% endif %}
+                                    " data-toggle="tooltip" data-placement="top" title="
+                                    {% if slave.slavestatus.bootime != ''%}
+                                        Stop
+                                    {% else %}
+                                        Start
+                                    {% endif %}
+                                ">
+                            <i class="material-icons">power_settings_new</i>
                         </button>
-                </div>
+                        <button type="button" class="btn btn-outline-light" data-toggle="tooltip" data-placement="top" title="Restart">
+                            <i class="material-icons">refresh</i>
+                        </button>
+                    </div>
 
-                <div class="btn-group mr-2" role="group">
-                    <button type="button" id="slaveStartStop_{{ slave.id }}"
-                            class="btn btn-outline-light
-                                {% if slave.slavestatus.bootime != ''%}
-                                    stop-slave
-                                {% else %}
-                                    start-slave
-                                {% endif %}
-                                " data-toggle="tooltip" data-placement="top" title="
-                                {% if slave.slavestatus.bootime != ''%}
-                                    Stop
-                                {% else %}
-                                    Start
-                                {% endif %}
-                            ">
-                        <i class="material-icons">power_settings_new</i>
-                    </button>
-                    <button type="button" class="btn btn-outline-light" data-toggle="tooltip" data-placement="top" title="Restart">
-                        <i class="material-icons">refresh</i>
-                    </button>
-                </div>
+                    <div class="btn-group mr-2" role="group">
+                        <button type="button" class="btn btn-outline-info" data-toggle="tooltip" data-placement="top" title="Delete File">
+                            <i class="material-icons">signal_cellular_no_sim</i>
+                        </button>
+                        <button type="button" class="btn btn-outline-info" data-toggle="tooltip" data-placement="top" title="Copy File">
+                            <i class="material-icons">insert_drive_file</i>
+                        </button>
+                    </div>
 
-                <div class="btn-group mr-2" role="group">
-                    <button type="button" class="btn btn-outline-info" data-toggle="tooltip" data-placement="top" title="Delete File">
-                        <i class="material-icons">signal_cellular_no_sim</i>
-                    </button>
-                    <button type="button" class="btn btn-outline-info" data-toggle="tooltip" data-placement="top" title="Copy File">
-                        <i class="material-icons">insert_drive_file</i>
-                    </button>
-                </div>
-
-                <div class="btn-group mr-4" role="group">
-                    <button type="button" class="btn btn-outline-danger modify-slave-btn" data-toggle="tooltip" data-placement="top" title="Edit">
-                        <i class="material-icons">edit</i>
-                    </button>
-                    <button type="button" class="btn btn-outline-danger delete_slave" data-toggle="tooltip" data-placement="top" title="Delete">
-                        <i class="material-icons">delete</i>
-                    </button>
-                </div>
-                <div class="btn-group mr-2" role="group" data-toggle="collapse" href="#collapse{{ slave.id }}">
-                    <button type="button" class="btn btn-outline-secondary" data-toggle="tooltip" data-placement="top" title="Show More" id="headingOne">
-                        <i class="material-icons">expand_more</i>
-                    </button>
+                    <div class="btn-group mr-4" role="group">
+                        <button type="button" class="btn btn-outline-danger modify-slave-btn" data-toggle="tooltip" data-placement="top" title="Edit">
+                            <i class="material-icons">edit</i>
+                        </button>
+                        <button type="button" class="btn btn-outline-danger delete_slave" data-toggle="tooltip" data-placement="top" title="Delete">
+                            <i class="material-icons">delete</i>
+                        </button>
+                    </div>
                 </div>
             </div>
-        </div>
-    </div>
-    <div id="collapse{{ slave.id }}" class="collapse" role="tabpanel">
-        <div class="card-body card-inverse">
+
             <div class="row">
                 <div class="col">
                     <p>IP:
@@ -81,36 +73,46 @@
                     </p>
                 </div>
             </div>
+        </div>
+    </div>
 
-            <h5>Programs</h5>
+    <ul class="nav nav-tabs row" id="slave-releated-tabs" role="tablist">
+        <li class="nav-item active">
+            <a class="nav-link" id="{{ slave.name }}-programs-tab" data-toggle="tab" href="#{{ slave.name }}-programs-content" role="tab">Programs</a>
+        </li>
+
+        <li class="nav-item">
+            <a class="nav-link" id="{{ slave.name }}-files-tab" data-toggle="tab" href="#{{ slave.name }}-files-content" role="tab">Files</a>
+        </li>
+    </ul>
+
+    <div class="tab-content row" id="{{ slave.name }}-related-tabs-content">
+        <div class="tab-pane fade show container-fluid mt-4 active" id="{{ slave.name }}-programs-content" role="tabpanel">
             {% for program in programs %}
                 {% program_entry program %}
             {% empty %}
                 <div class="card alert alert-info">
                     <strong>Info!</strong> No programs for this client in system.
                 </div>
-	        {% endfor %}
-
-
+            {% endfor %}
 
             <button type="button" class="btn btn-outline-info float-right add-program-btn mb-4 mt-2 col" data-toggle="tooltip" data-placement="top" title="Add program">
                 <span></span>
                 <i class="material-icons" style="font-size:30px; vertical-align: middle;">add</i>
-	        </button>
+            </button>
+        </div>
 
-	        <h5>Files</h5>
-	        {% for file in files %}
-	        	{% file_entry file %}
-	        {% empty %}
-	        	<div class="card alert alert-info">
+        <div class="tab-pane fade show container-fluid mt-4 " id="{{ slave.name }}-files-content" role="tabpanel" aria-labelledby="home-tab">
+            {% for file in files %}
+                {% file_entry file %}
+            {% empty %}
+                <div class="card alert alert-info">
                     <strong>Info!</strong> No files for this client in system.
-		        </div>
-	        {% endfor %}
-
-	        <button type="button" class="btn btn-outline-info float-right add-file-btn mb-4 mt-2 col" data-toggle="tooltip" data-placement="top" title="Add file">
+                </div>
+            {% endfor %}
+            <button type="button" class="btn btn-outline-info float-right add-file-btn mb-4 mt-2 col" data-toggle="tooltip" data-placement="top" title="Add file">
                 <span></span>
                 <i class="material-icons" style="font-size:30px; vertical-align: middle;">add</i>
-	        </button>
+            </button>
         </div>
     </div>
-</div>

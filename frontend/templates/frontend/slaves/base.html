@@ -7,8 +7,6 @@
 {% block content %}
 
 
-<div class="jumbotron">
-
     <!-- Modal for deletion warnings used for slave and program deletion-->
     <div id="deleteWarning" class="modal fade" role="dialog">
         <div class="modal-dialog">
@@ -28,26 +26,50 @@
         </div>
     </div>
 
+    <div class="row ml-4 mr-4">
+        <div class="col-sm-2">
+            <div class="row">
+                <h4 class="col-sm-4">Clients</h4>
+
+                <button type="button" class="btn add-slave-btn col-sm-1 badge" data-toggle="tooltip" data-placement="top" title="Add client" style="background-color: transparent;">
+                        <i class="material-icons" style="font-size:24px;">add</i>
+                </button>
+            </div>
+
+            <div class="row">
+                <ul class="nav flex-column col" id="slave-tabs" role="tablist">
+                    {% for slave in slaves %}
+                        <li class="nav-item pt-4 pb-4 pr-4 pl-4" style="border-style: solid; border-width: 1px;">
+                        <a class="nav-link {% if forloop.first %} active {% endif %}" id="{{ slave.name }}-tab" data-toggle="tab" href="#{{ slave.name }}-tab-content" role="tab">{{ slave.name  }}</a>
+                        </li>
+                    {% empty %}
+                        <li class="nav-item pt-4 pb-4 pr-4 pl-4" style="border-style: solid; border-width: 1px;">
+                        <a class="nav-link active" id="empty-tab" data-toggle="tab" href="#empty-tab-content" role="tab" >None</a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <div class="container-fluid tab-content col" id="slaves-tabs-content">
+            {% for slave in slaves %}
+                <div class="tab-pane fade show {% if forloop.first %} active {% endif %}" id="{{ slave.name }}-tab-content" role="tabpanel">
+                    {% slave_entry slave slave.program_set.all slave.file_set.all %}
+                </div>
+            {% empty %}
+                <div class="tab-pane fade show active" id="" role="tabpanel">
+                    <div class="card alert alert-info">
+                        <strong>Info!</strong> No clients in system.
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
     {% modal_form program_form "program" %}
     {% modal_form slave_form "slave" %}
     {% modal_form file_form "file" %}
 
-    <h4>Clients</h4>
-    <div id="accordion" role="tablist">
-        {% for slave in slaves %}
-            {% slave_entry slave slave.program_set.all slave.file_set.all %}
-        {% empty %}
-            <div class="card alert alert-info">
-                <strong>Info!</strong> No clients in system.
-            </div>
-        {% endfor %}
-    </div>
-
-    <button type="button" class="btn btn-info add-slave-btn float-right mt-2 mr-2" data-toggle="tooltip" data-placement="top" title="Add client">
-            <span>Client</span>
-            <i class="material-icons" style="font-size:30px; vertical-align: middle;">add</i>
-    </button>
-</div>
 {% endblock %}
 {% block script %}
     <script src="{% static 'frontend/slaves.js'%}"></script>
