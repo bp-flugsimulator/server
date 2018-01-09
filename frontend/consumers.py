@@ -143,7 +143,8 @@ def ws_rpc_disconnect(message):
                 'pid': program.id,
                 'code': 'Status',
             })
-            ProgramStatusModel.objects.get(program=program).delete()
+            if ProgramStatusModel.objects.filter(program=program).exists():
+                ProgramStatusModel.objects.get(program=program).delete()
 
         # tell the webinterface that the client has disconnected
         notify({'slave_status': 'disconnected', 'sid': str(slave.id)})
