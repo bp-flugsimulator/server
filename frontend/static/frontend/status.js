@@ -1,11 +1,12 @@
 function uuid(){
-    let uuid = "", i, random;
+    let uuid = '', i, random;
     for (i = 0; i < 32; i++) {
         random = Math.random() * 16 | 0;
         if (i === 8 || i === 12 || i === 16 || i === 20) {
-            uuid += "-";
+            uuid += '-';
         }
-            uuid += (i === 12 ? 4 : (i === 16 ? (random & 3 | 8) : random)).toString(16);
+        
+        uuid += (i === 12 ? 4 : (i === 16 ? (random & 3 | 8) : random)).toString(16);
     }
     return uuid;
 }
@@ -59,13 +60,13 @@ class Status {
     }
 
     to_json() {
-        return JSON.stringify({ "status": this.status, "payload": this.payload, "uuid": this.uuid });
+        return JSON.stringify({ 'status': this.status, 'payload': this.payload, 'uuid': this.uuid });
     }
 
     static from_json(data) {
         let json = JSON.parse(data);
-        let object = new Status(json["status"], json["payload"]);
-        object.uuid = json["uuid"];
+        let object = new Status(json['status'], json['payload']);
+        object.uuid = json['uuid'];
         return object;
     }
 }

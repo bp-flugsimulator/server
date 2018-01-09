@@ -1,5 +1,6 @@
 from channels import Group
-from .models import SlaveStatus as SlaveStatusModel, Slave as SlaveModel, Program as ProgramModel, ProgramStatus as ProgramStatusModel
+from .models import SlaveStatus as SlaveStatusModel, Slave as SlaveModel,\
+    Program as ProgramModel, ProgramStatus as ProgramStatusModel
 from utils import Command, Status
 from channels.sessions import channel_session
 from termcolor import colored
