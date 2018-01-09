@@ -9,7 +9,7 @@ from termcolor import colored
 import logging
 
 # Get an instance of a logger
-logger = logging.getLogger('django.request')
+LOGGER = logging.getLogger('django.request')
 
 
 def notify(message):
@@ -51,20 +51,20 @@ def handle_execute_answer(status):
     program_status = ProgramStatusModel.objects.get(command_uuid=status.uuid)
     program = program_status.program
 
-    logger.info(
+    LOGGER.info(
         "Received answer on execute request of function {} from {}.".format(
             program.name, program.slave.name))
 
     if status.is_ok():
         # update return code
         program_status.code = status.payload['result']
-        logger.info("Saved status of {} with code {}.".format(
+        LOGGER.info("Saved status of {} with code {}.".format(
             program.name, program_status.code))
     else:
         # Report exception to webinterface
         notify_err('An Exception occured while trying to execute {}'.format(
             program.name))
-        logger.info(
+        LOGGER.info(
             colored(
                 'Following exeption occured on the client while executing {}: \n {}'.
                 format(program.name, status.payload['result']), 'red'))
@@ -105,7 +105,7 @@ def handle_online_answer(status):
         notify_err('An error occured while connecting to client {}!'.format(
             slave.name))
 
-        logger.info(
+        LOGGER.info(
             colored(
                 'Following exeption occured on the client {} while handeling an "online-request": \n {}'.
                 format(slave.name, status.payload['result']), 'red'))
@@ -131,7 +131,7 @@ def ws_rpc_connect(message):
     if query:
         # Accept the connection
         message.reply_channel.send({"accept": True})
-        logger.info("client connected with ip {} on port {}".format(
+        LOGGER.info("client connected with ip {} on port {}".format(
             ip_address, port))
         # Add to the command group
         slave = query.first()
@@ -144,9 +144,9 @@ def ws_rpc_connect(message):
         Group('client_{}'.format(slave.id)).send({'text': cmd.to_json()})
 
         # log
-        logger.info("send online request to {}".format(slave.name))
+        LOGGER.info("send online request to {}".format(slave.name))
     else:
-        logger.info(
+        LOGGER.info(
             colored("Rejecting unknown client with ip {}!".format(ip_address),
                     'red'))
         message.reply_channel.send({"accept": False})
@@ -187,7 +187,7 @@ def ws_rpc_disconnect(message):
         # tell the webinterface that the client has disconnected
         notify({'slave_status': 'disconnected', 'sid': str(slave.id)})
 
-        logger.info("Client with ip {} disconnected from /commands!".format(
+        LOGGER.info("Client with ip {} disconnected from /commands!".format(
             message.channel_session['ip_address']))
 
 
@@ -232,11 +232,11 @@ def ws_notifications_receive(message):
         elif status.payload['method'] == 'execute':
             handle_execute_answer(status)
         else:
-            logger.info(
+            LOGGER.info(
                 colored('Client send answer from unknown function {}.'.format(
                     status.payload['method']), 'red'))
     except Exception as err:
-        logger.info(
+        LOGGER.info(
             colored(
                 'Exception occurred while handeling an incoming request on /commands \n{}'.
                 format(err), 'red'))

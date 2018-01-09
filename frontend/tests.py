@@ -1,4 +1,5 @@
 # pylint: disable=C0111
+# pylint: disable=C0103
 
 from django.test import TestCase
 from django.urls import reverse
@@ -1249,12 +1250,12 @@ class ApiTests(TestCase):
         model = SlaveModel.objects.get(name='add_file')
 
         #add all programs
-        for id in range(100):
+        for i in range(100):
             api_response = self.client.post(
                 '/api/files', {
-                    'name': 'name' + str(id),
-                    'sourcePath': 'sourcePath' + str(id),
-                    'destinationPath': 'destinationPath' + str(id),
+                    'name': 'name' + str(i),
+                    'sourcePath': 'sourcePath' + str(i),
+                    'destinationPath': 'destinationPath' + str(i),
                     'slave': str(model.id)
                 })
             self.assertEqual(api_response.status_code, 200)
@@ -1263,12 +1264,12 @@ class ApiTests(TestCase):
                 Status.from_json(api_response.content.decode('utf-8')))
 
         #test if all programs are in the database
-        for id in range(100):
+        for i in range(100):
             self.assertTrue(
                 FileModel.objects.filter(
-                    name='name' + str(id),
-                    sourcePath='sourcePath' + str(id),
-                    destinationPath='destinationPath' + str(id),
+                    name='name' + str(i),
+                    sourcePath='sourcePath' + str(i),
+                    destinationPath='destinationPath' + str(i),
                     slave=model))
 
         #delete all entries
@@ -2029,10 +2030,10 @@ class ScriptTests(TestCase):
         script = ScriptModel(name="test_script")
         script.save()
 
-        a = ScriptEntryProgram(0, program.id, slave.id).as_model(script)
-        b = ScriptEntryProgram(0, program.name, slave.name).as_model(script)
-        a.save()
-        self.assertRaises(IntegrityError, b.save)
+        with_int = ScriptEntryProgram(0, program.id, slave.id).as_model(script)
+        with_str = ScriptEntryProgram(0, program.name, slave.name).as_model(script)
+        with_int .save()
+        self.assertRaises(IntegrityError, with_str.save)
 
     def test_from_query_error(self):
         class Dummy:

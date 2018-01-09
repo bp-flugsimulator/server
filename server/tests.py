@@ -1,16 +1,16 @@
-from django.test import TestCase
+# pylint: disable=C0111
 
-from .utils import StatusResponse
-from utils.status import Status
-from server.management.commands.compilesass import Command
-from sass import CompileError
-
-import json
 from os import remove
 from os.path import isfile, isdir
+from sass import CompileError
+from django.test import TestCase
+from utils.status import Status
+from server.management.commands.compilesass import Command
 
+from .utils import StatusResponse
 
 class StatusResponseTest(TestCase):
+
     def test_status_init(self):
         response = StatusResponse(Status.ok(''))
         self.assertEqual(response.status_code, 200)
