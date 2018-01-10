@@ -114,16 +114,6 @@ $(document).ready(function () {
         }
     });
 
-    // Enable tool tips.
-    // $(function () {
-    //     $("[data-toggle='tooltip']").tooltip({
-    //         'delay': {
-    //             show: 5000,
-    //             hide: 3000
-    //         }
-    //     });
-    // });
-
     /*function for deleting a slave, it is added to the delete-slave button*/
     $('.delete-slave').click(function () {
         //get id and name of the slave and create deletion message
@@ -493,33 +483,44 @@ $(document).ready(function () {
     });
 
     // Save Class when opening/closing accordion for every Slave
-    // $('#slaveTabList').children().each(function () {
+    $('#slaveTabList').children().each(function () {
+        let child_id = this.id;
+        let collapse_id = "#collapse" + child_id;
 
-    //     let child_id = this.id;
-    //     let collapse_id = "#collapse" + child_id;
-    //     let status = "collapseStatus" + child_id;
+        $(collapse_id).on('show.bs.collapse', function () {
+            console.log("show");
+            // localStorage.setItem(status, "show");
+        });
+        $(collapse_id).on('hide.bs.collapse', function () {
+            console.log("hide");
+            // localStorage.setItem(status, "")
+        });
 
-    //     $(collapse_id).on('show.bs.collapse', function () {
-    //         localStorage.setItem(status, "show");
-    //         $('div[href="' + collapse_id + '"]').children(".btn")
-    //             .attr('data-original-title', "Show Less")
-    //             .tooltip('show')
-    //             .html('<i class="material-icons">expand_less</i>');
-    //     });
-    //     $(collapse_id).on('hide.bs.collapse', function () {
-    //         localStorage.setItem(status, "");
-    //         $('div[href="' + collapse_id + '"]').children()
-    //             .attr('data-original-title', "Show More")
-    //             .tooltip('show')
-    //             .html('<i class="material-icons">expand_more</i>');
-    //     });
+        // restore saved class
+        // $(collapse_id).addClass(localStorage.getItem(status));
+    });
 
-    //     // restore saved class
-    //     $(collapse_id).addClass(localStorage.getItem(status));
-    // });
+    $('.slave-tab-link.active').parent('li').css('background-color', '#dbdbdc');
+
+    $('.slave-tab-link').click(function (event) {
+        if (!$(this).hasClass('active')) {
+            console.log("test");
+
+            $('.slave-tab-link').each(function (idx, val) {
+                console.log(val);
+                $(val).parent('li').css('background-color', 'transparent');
+            });
+
+            $(this).parent('li').css('background-color', '#dbdbdc');
+        }
+    });
 
     // fixes the tooltip from staying after button is pressed
     $('[data-toggle="tooltip"]').tooltip({
-        trigger: 'hover'
+        trigger: 'hover',
+        'delay': {
+            show: 5000,
+            hide: 3000
+        }
     })
 });
