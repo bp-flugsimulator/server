@@ -1,6 +1,6 @@
 """
 This module specifies which function handles which url.
-In addition the module contains oneshot operations that are executed 
+In addition the module contains oneshot operations that are executed
 on server start
 """
 

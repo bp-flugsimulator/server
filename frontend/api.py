@@ -35,7 +35,7 @@ def add_slave(request):
 
     Returns
     -------
-        A StatusResponse or HttpResponseForbidden if the request method was 
+        A StatusResponse or HttpResponseForbidden if the request method was
         other than GET.
     """
     if request.method == 'POST':
@@ -75,7 +75,7 @@ def manage_slave(request, slave_id):
         other than GET.
     """
     if request.method == 'DELETE':
-        # i can't find any exeptions that can be thrown in our case
+        # i can't find any exceptions that can be thrown in our case
         SlaveModel.objects.filter(id=slave_id).delete()
         return StatusResponse(Status.ok(''))
 
@@ -151,7 +151,7 @@ def wol_slave(request, slave_id):
     if request.method == 'GET':
         try:
             send_magic_packet(SlaveModel.objects.get(id=slave_id).mac_address)
-        except Exception as err:
+        except Exception as err:  #pylint: disable=W0703
             return StatusResponse(Status.err(repr(err)), status=500)
 
         notify({"message": "Send Wake On Lan Packet"})
@@ -337,7 +337,7 @@ def manage_script(request, script_id):
 
 def add_file(request):
     """
-    Process POST requests which adds new FileModel and GET requests to query 
+    Process POST requests which adds new FileModel and GET requests to query
     for FileModel which contains the query string.
 
     Parameters
