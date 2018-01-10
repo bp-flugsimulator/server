@@ -71,7 +71,7 @@ def manage_slave(request, slave_id):
 
     Returns
     -------
-        A StatusResponse or HttpResponseForbidden if the request method was 
+        A StatusResponse or HttpResponseForbidden if the request method was
         other than GET.
     """
     if request.method == 'DELETE':
