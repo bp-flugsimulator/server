@@ -1,3 +1,3 @@
-from django.contrib import admin
-
-# Register your models here.
+"""
+This module contains all models that are visible in the admin interface.
+"""

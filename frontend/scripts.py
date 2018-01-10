@@ -1,3 +1,8 @@
+"""
+This module contains classes to translate from the script databasemodels
+to javascript
+"""
+
 import json
 from django.db import transaction
 from .models import Script as ScriptModel
