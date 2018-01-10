@@ -1,5 +1,6 @@
-/*eslint no-undef: "error"*/
-/*eslint-env browser*/
+/* eslint-env browser */
+/* global $, jQuery, Status */
+/* exported  getCookie, modalDeleteAction, handleFormStatus, clearErrorMessages */
 
 /**
  * Get a cookie by it the name. If the cookie is not present 'null' will be
@@ -53,9 +54,9 @@ function modalDeleteAction(form, route) {
                 });
             }
         },
-        error(xhr, error_string, error_code) {
+        error(xhr, error_string, errorCode) {
             $.notify({
-                message: "Could not deliver delete request to server (" + error_code + ")"
+                message: 'Could not deliver delete request to server (' + errorCode + ')'
             }, {
                 type: 'danger'
             });
@@ -101,7 +102,7 @@ function handleFormStatus(form, status) {
  *
  */
 function clearErrorMessages(form) {
-    form.find("div[class='invalid-feedback']").each(function (index, item) {
+    form.find('div[class="invalid-feedback"]').each(function (index, item) {
         item.remove();
     });
 

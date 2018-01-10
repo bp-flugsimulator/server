@@ -1,5 +1,5 @@
-/*eslint no-undef: "error"*/
-/*eslint-env browser*/
+/* eslint-env browser*/
+/* global $, getCookie, modalDeleteAction, handleFormStatus, clearErrorMessages, Status */
 
 $(document).ready(function () {
     // set defaults for notifications
@@ -31,7 +31,7 @@ $(document).ready(function () {
     $('.slave-tab-link.active').parent('li').css('background-color', '#dbdbdc');
 
     // Changes the color of the clicked slave, if it was not clicked before.
-    $('.slave-tab-link').click(function (event) {
+    $('.slave-tab-link').click(function () {
         if (!$(this).hasClass('active')) {
             // Remove color from the old tabs
             $('.slave-tab-link').each(function (idx, val) {
@@ -116,9 +116,9 @@ $(document).ready(function () {
                     });
                 }
             },
-            error(xhr, error_string, error_code) {
+            error(xhr, error_string, errorCode) {
                 $.notify({
-                    message: 'Could not deliver delete request to server (' + error_code + ')'
+                    message: 'Could not deliver delete request to server (' + errorCode + ')'
                 }, {
                     type: 'danger'
                 });
@@ -280,9 +280,9 @@ $(document).ready(function () {
             success(status) {
                 handleFormStatus($('#programForm'), status);
             },
-            error(xhr, error_string, error_code) {
+            error(xhr, error_string, errorCode) {
                 $.notify({
-                    message: 'Could not deliver ' + $(this).attr('method') + ' request to server (' + error_code + ')'
+                    message: 'Could not deliver ' + $(this).attr('method') + ' request to server (' + errorCode + ')'
                 }, {
                     type: 'danger'
                 });
@@ -310,9 +310,9 @@ $(document).ready(function () {
             success(status) {
                 handleFormStatus($('#fileForm'), status);
             },
-            error(xhr, error_string, error_code) {
+            error(xhr, error_string, errorCode) {
                 $.notify({
-                    message: 'Could not deliver ' + $(this).attr('method') + ' request to server (' + error_code + ')'
+                    message: 'Could not deliver ' + $(this).attr('method') + ' request to server (' + errorCode + ')'
                 }, {
                     type: 'danger'
                 });
@@ -339,9 +339,9 @@ $(document).ready(function () {
             success(status) {
                 handleFormStatus($('#slaveForm'), status);
             },
-            error(xhr, error_string, error_code) {
+            error(xhr, error_string, errorCode) {
                 $.notify({
-                    message: 'Could not deliver ' + $(this).attr('method') + ' request to server (' + error_code + ')'
+                    message: 'Could not deliver ' + $(this).attr('method') + ' request to server (' + errorCode + ')'
                 }, {
                     type: 'danger'
                 });
@@ -357,7 +357,7 @@ $(document).ready(function () {
             type: 'GET',
             url: '/api/slave/' + id + '/wol',
             beforeSend(xhr) {
-                xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'))
+                xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
             },
             success(data) {
                 let status = Status.from_json(JSON.stringify(data));
@@ -375,9 +375,9 @@ $(document).ready(function () {
                 }
 
             },
-            error(xhr, error_string, error_code) {
+            error(xhr, error_string, errorCode) {
                 $.notify({
-                    message: 'Could not deliver Wake-On-Lan request to server (' + error_code + ')'
+                    message: 'Could not deliver Wake-On-Lan request to server (' + errorCode + ')'
                 }, {
                     type: 'danger'
                 });
@@ -393,7 +393,7 @@ $(document).ready(function () {
             type: 'GET',
             url: '/api/slave/' + id + '/shutdown',
             beforeSend(xhr) {
-                xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'))
+                xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
             },
             success(data) {
                 let status = Status.from_json(JSON.stringify(data));
@@ -410,9 +410,9 @@ $(document).ready(function () {
                     });
                 }
             },
-            error(xhr, error_string, error_code) {
+            error(xhr, error_string, errorCode) {
                 $.notify({
-                    message: 'Could not deliver shutdown request to server (' + error_code + ')'
+                    message: 'Could not deliver shutdown request to server (' + errorCode + ')'
                 }, {
                     type: 'danger'
                 });

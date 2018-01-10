@@ -1,10 +1,10 @@
-/*eslint no-undef: "error"*/
-/*eslint-env browser*/
+/* eslint-env browser*/
+/* global $, Status */
 
-socket = new WebSocket('ws://' + window.location.host + '/notifications');
+var socket = new WebSocket('ws://' + window.location.host + '/notifications');
+
 socket.onmessage = function (data) {
     let status = Status.from_json(data.data);
-    console.log(status);
 
     if (status.is_ok()) {
         if (status.payload['slave_status'] != null) {
@@ -95,10 +95,6 @@ socket.onmessage = function (data) {
         });
     }
 };
-
-// socket.onopen = function () {
-//     console.log('Websocket opened')
-// };
 
 // Call onopen directly if socket is already open
 if (socket.readyState === WebSocket.OPEN) socket.onopen();

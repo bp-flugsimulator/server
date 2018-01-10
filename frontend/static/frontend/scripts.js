@@ -1,5 +1,6 @@
-/*eslint no-undef: "error"*/
-/*eslint-env browser*/
+/* eslint-env browser */
+/* global $, JSONEditor, getCookie, Status */
+/* exported loadScript, newScript */
 
 var schema = {
     'title': 'Script',
@@ -80,36 +81,42 @@ var options = {
             'program': ''
         }
     }],
-    schema: schema,
+    schema,
     autocomplete: {
         caseSensitive: false,
         //getOptions(text: string, path: string[], input: string, editor: JSONEditor)
-        getOptions: function (text, path, input, editor) {
+        getOptions(text, path) {
             return new Promise(function (resolve, reject) {
                 switch (path[path.length - 1]) {
                     case 'slave':
                     case 'program':
                     case 'file':
                         $.ajax({
-                            url: "/api/" + path[path.length - 1] + "s?q=" + text,
-                            beforeSend: function (xhr) {
+                            url: '/api/' + path[path.length - 1] + 's?q=' + text,
+                            beforeSend(xhr) {
                                 xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
                             },
                             converters: {
                                 'text json': Status.from_json
                             },
-                            success: function (status) {
+                            success(status) {
                                 if (status.is_ok()) {
                                     resolve(status.payload);
                                 } else {
-                                    console.log('Error while querying:');
-                                    console.log(status.payload);
+                                    $.notify({
+                                        message: 'Could not load autocomplete query from server (' + status.payload + ')'
+                                    }, {
+                                        type: 'danger'
+                                    });
                                     reject();
                                 }
                             },
-                            error: function (error) {
-                                console.log('Error while querying ' + error);
-                                reject();
+                            error(xhr, error_string, errorCode) {
+                                $.notify({
+                                    message: 'Could not load autocomplete query from server (' + errorCode + ')'
+                                }, {
+                                    type: 'danger'
+                                });
                             }
                         });
                         break;
@@ -138,43 +145,50 @@ var options = {
                     value: true
                 };
             default:
-                return true
+                return true;
         }
     }
 };
 
 var createEditor = function (json, id) {
-    var container = document.getElementById('jsoneditor_' + id);
-    var editor = new JSONEditor(container, options, json);
+    let container = document.getElementById('jsoneditor_' + id);
+    let editor = new JSONEditor(container, options, json);
     editor.expandAll();
 };
 
 var loadScript = function (id) {
     $.ajax({
-        url: "/api/script/" + id + "?programs=str&files=str&slaves=str",
-        beforeSend: function (xhr) {
+        url: '/api/script/' + id + '?programs=str&files=str&slaves=str',
+        beforeSend(xhr) {
             xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
         },
         converters: {
             'text json': Status.from_json
         },
-        success: function (status) {
+        success(status) {
             if (status.is_ok()) {
                 createEditor(status.payload, id);
             } else {
-                console.log("Error while querying:");
-                console.log(status.payload);
+                $.notify({
+                    message: 'Could not load script from server (' + status.payload + ')'
+                }, {
+                    type: 'danger'
+                });
             }
         },
-        error: function (error) {
-            console.log("Error while loading script: " + error);
+        error(xhr, error_string, errorCode) {
+            $.notify({
+                message: 'Could not load script from server (' + errorCode + ')'
+            }, {
+                type: 'danger'
+            });
         }
     });
 };
 
 var newScript = function (name) {
     let default_json = {
-        name: name,
+        name,
         programs: [],
         files: [],
     };
