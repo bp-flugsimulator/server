@@ -1,105 +1,3 @@
-/**
- * Get a cookie by it the name. If the cookie is not present 'null' will be
- * returned.
- * @param {string} name Cookie name
- */
-function getCookie(name) {
-    if (document.cookie && document.cookie !== '') {
-        let cookie = document.cookie.split(',').find(function (raw_cookie) {
-            let cookie = jQuery.trim(raw_cookie);
-            return cookie.substring(0, name.length + 1) === (name + '=');
-        });
-
-        if (cookie != null) {
-            return decodeURIComponent(cookie.substring(name.length + 1));
-        }
-    }
-    return null;
-}
-
-/**
- * This function can be used for any kind delete actions. Insert the ID into the
- * #deleteWarning with .data('sqlId', id).
- *
- * @param {HTMLElement} form A valid HTML form.
- * @param {string} route A sub string of a valid REST route which accesses a
- * single object by it's id.
- */
-function modalDeleteAction(form, route) {
-    let id = $('#deleteWarning').data('sqlId');
-
-    $.ajax({
-        type: 'DELETE',
-        url: '/api/' + route + '/' + id,
-        beforeSend: function (xhr) {
-            xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
-        },
-        converters: {
-            'text json': Status.from_json
-        },
-        success: function (status) {
-            if (status.is_ok()) {
-                window.location.reload();
-            } else {
-                $.notify({
-                    message: JSON.stringify(response.payload)
-                }, {
-                    type: 'danger'
-                });
-            }
-        }
-    });
-}
-
-/**
- * Handles the incoming status from a form request. The page will be reloaded or
- * the errors will be marked in the input field.
- *
- * @param {HTMLElement} form
- * @param {Status} status
- */
-function handleFormStatus(form, status) {
-    if (status.is_ok()) {
-        window.location.reload();
-    } else {
-        console.log('Err');
-        console.log(status.to_json());
-
-        // remove previous feedback
-        form.find("div[class='invalid-feedback']").each(function (index, item) {
-            item.remove();
-        });
-
-        // remove previous feedback
-        form.find('.is-invalid').each(function (index, item) {
-            $(item).removeClass('is-invalid');
-        });
-
-        // insert new feedback
-        $.each(status.payload, function (id, msg) {
-            let node = form.find('input[name=' + id + ']');
-            node.addClass('is-invalid');
-            node.parent().append("<div class='invalid-feedback'>" + msg + "</div>");
-        });
-    }
-}
-
-
-/**
- * Cleares the errorfields of a given form
- *
- * @param {HTMLElement} form
- */
-function clearErrorMessages(form) {
-    form.find("div[class='invalid-feedback']").each(function (index, item) {
-        item.remove();
-    });
-
-    form.find('.is-invalid').each(function (index, item) {
-        $(item).removeClass('is-invalid');
-    });
-}
-
 $(document).ready(function () {
     // set defaults for notifications
     $.notifyDefaults({
@@ -124,7 +22,7 @@ $(document).ready(function () {
 
             iter.click();
         }
-    })();
+    }());
 
     // Set color of the current selected.
     $('.slave-tab-link.active').parent('li').css('background-color', '#dbdbdc');
@@ -144,7 +42,6 @@ $(document).ready(function () {
             $(this).parent('li').css('background-color', '#dbdbdc');
         }
     });
-
 
     /*function for deleting a slave, it is added to the delete-slave button*/
     $('.delete-slave').click(function () {
@@ -193,7 +90,7 @@ $(document).ready(function () {
     });
 
     $('#deleteProgramModalButton').click(function () {
-        modalDeleteAction($('#programForm'), 'program')
+        modalDeleteAction($('#programForm'), 'program');
     });
 
     $('.start-program').click(function () {
@@ -201,13 +98,13 @@ $(document).ready(function () {
         $.ajax({
             type: 'POST',
             url: '/api/program/' + id,
-            beforeSend: function (xhr) {
+            beforeSend(xhr) {
                 xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
             },
             converters: {
                 'text json': Status.from_json
             },
-            success: function (status) {
+            success(status) {
                 if (status.is_err()) {
                     $.notify({
                         message: status.payload
@@ -216,9 +113,9 @@ $(document).ready(function () {
                     });
                 }
             },
-            error: function () {
+            error(xhr, error_string, error_code) {
                 $.notify({
-                    message: 'Error in Ajax Request.'
+                    message: "Could not deliver delete request to server (" + error_code + ")"
                 }, {
                     type: 'danger'
                 });
@@ -239,16 +136,16 @@ $(document).ready(function () {
 
         //clear input fields
 
-        programForm.find("input[name='name']").val('');
-        programForm.find("input[name='path']").val('');
-        programForm.find("input[name='arguments']").val('');
+        programForm.find('input[name="name"]').val('');
+        programForm.find('input[name="path"]').val('');
+        programForm.find('input[name="arguments"]').val('');
 
         //clear error messages
         clearErrorMessages(programForm);
 
         //find slave id and store it in the form
         let slaveId = $(this).data('slave-id');
-        programForm.find("input[name='slave']").val(slaveId);
+        programForm.find('input[name="slave"]').val(slaveId);
         programModal.modal('toggle');
     });
 
@@ -270,16 +167,16 @@ $(document).ready(function () {
         programForm.children().find('.submit-btn').text('Edit');
 
         //clear input fields
-        programForm.find("input[name='name']").val(name);
-        programForm.find("input[name='path']").val(path);
-        programForm.find("input[name='arguments']").val(args);
+        programForm.find('input[name="name"]').val(name);
+        programForm.find('input[name="path"]').val(path);
+        programForm.find('input[name="arguments"]').val(args);
 
         //clear error messages
         clearErrorMessages(programForm);
 
         //find slave id and store it in the form
         let slaveId = $(this).data('slave-id');
-        programForm.find("input[name='slave']").val(slaveId);
+        programForm.find('input[name="slave"]').val(slaveId);
 
         //find slave id and store it in the form
         programModal.modal('toggle');
@@ -297,16 +194,16 @@ $(document).ready(function () {
         fileForm.children().find('.submit-btn').text('Add');
 
         //clear input fields
-        fileForm.find("input[name='name']").val('');
-        fileForm.find("input[name='sourcePath']").val('');
-        fileForm.find("input[name='destinationPath']").val('');
+        fileForm.find('input[name="name"]').val('');
+        fileForm.find('input[name="sourcePath"]').val('');
+        fileForm.find('input[name="destinationPath"]').val('');
 
         //clear error messages
         clearErrorMessages(fileForm);
 
         //find slave id and store it in the form
         let slaveId = $(this).data('slave-id');
-        fileForm.find("input[name='slave']").val(slaveId);
+        fileForm.find('input[name="slave"]').val(slaveId);
         fileModal.modal('toggle');
     });
 
@@ -322,9 +219,9 @@ $(document).ready(function () {
         slaveForm.children().find('.submit-btn').text('Add');
 
         //clear input fields
-        slaveForm.find("input[name='name']").val('');
-        slaveForm.find("input[name='ip_address']").val('');
-        slaveForm.find("input[name='mac_address']").val('');
+        slaveForm.find('input[name="name"]').val('');
+        slaveForm.find('input[name="ip_address"]').val('');
+        slaveForm.find('input[name="mac_address"]').val('');
 
         //clear error messages
         clearErrorMessages(slaveForm);
@@ -349,11 +246,11 @@ $(document).ready(function () {
         slaveForm.children().find('.submit-btn').text('Edit');
 
         //insert values into input field
-        slaveForm.find("input[name='name']").val(name);
-        slaveForm.find("input[name='ip_address']").val(ip);
-        slaveForm.find("input[name='mac_address']").val(mac);
+        slaveForm.find('input[name="name"]').val(name);
+        slaveForm.find('input[name="ip_address"]').val(ip);
+        slaveForm.find('input[name="mac_address"]').val(mac);
 
-        //clear errormessages
+        //clear error messages
         clearErrorMessages(slaveForm);
 
         //open modal
@@ -374,15 +271,15 @@ $(document).ready(function () {
             converters: {
                 'text json': Status.from_json
             },
-            beforeSend: function (xhr) {
+            beforeSend(xhr) {
                 xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
             },
-            success: function (status) {
+            success(status) {
                 handleFormStatus($('#programForm'), status);
             },
-            error: function () {
+            error(xhr, error_string, error_code) {
                 $.notify({
-                    message: 'Error in Ajax Request.'
+                    message: "Could not deliver " + $(this).attr('method') + " request to server (" + error_code + ")"
                 }, {
                     type: 'danger'
                 });
@@ -404,22 +301,21 @@ $(document).ready(function () {
             converters: {
                 'text json': Status.from_json
             },
-            beforeSend: function (xhr) {
+            beforeSend(xhr) {
                 xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
             },
-            success: function (status) {
+            success(status) {
                 handleFormStatus($('#fileForm'), status);
             },
-            error: function () {
+            error(xhr, error_string, error_code) {
                 $.notify({
-                    message: 'Error in Ajax Request.'
+                    message: "Could not deliver " + $(this).attr('method') + " request to server (" + error_code + ")"
                 }, {
                     type: 'danger'
                 });
             }
         });
     });
-
 
     // slaveForm Handler
     $('#slaveForm').submit(function (event) {
@@ -431,18 +327,18 @@ $(document).ready(function () {
             type: $(this).attr('method'),
             url: $(this).attr('action'),
             data: $('#slaveForm').serialize(),
-            beforeSend: function (xhr) {
+            beforeSend(xhr) {
                 xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
             },
             converters: {
                 'text json': Status.from_json
             },
-            success: function (status) {
+            success(status) {
                 handleFormStatus($('#slaveForm'), status);
             },
-            error: function () {
+            error(xhr, error_string, error_code) {
                 $.notify({
-                    message: 'Error in Ajax Request.'
+                    message: "Could not deliver " + $(this).attr('method') + " request to server (" + error_code + ")"
                 }, {
                     type: 'danger'
                 });
@@ -454,31 +350,35 @@ $(document).ready(function () {
         let id = $(this).data('slave-id');
         let el = $(this);
 
-        $.get({
+        $.ajax({
+            type: 'GET',
             url: '/api/slave/' + id + '/wol',
-            beforeSend: function (xhr) {
+            beforeSend(xhr) {
                 xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'))
-            }
-        }).done(function (data) {
-            let status = Status.from_json(JSON.stringify(data));
-            if (status.is_ok()) {
-                el.addClass('animated pulse');
-                el.one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend', function () {
-                    el.removeClass('animated pulse');
-                });
-            } else {
+            },
+            success(data) {
+                let status = Status.from_json(JSON.stringify(data));
+                if (status.is_ok()) {
+                    el.addClass('animated pulse');
+                    el.one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend', function () {
+                        el.removeClass('animated pulse');
+                    });
+                } else {
+                    $.notify({
+                        message: 'Error: ' + data.payload
+                    }, {
+                        type: 'danger'
+                    });
+                }
+
+            },
+            error(xhr, error_string, error_code) {
                 $.notify({
-                    message: 'Error: ' + data.payload
+                    message: "Could not deliver Wake-On-Lan request to server (" + error_code + ")"
                 }, {
                     type: 'danger'
                 });
             }
-        }).fail(function () {
-            $.notify({
-                message: 'Error in Ajax Request.'
-            }, {
-                type: 'danger'
-            });
         });
     });
 
@@ -486,31 +386,34 @@ $(document).ready(function () {
         let id = $(this).data('slave-id');
         let el = $(this);
 
-        $.get({
+        $.ajax({
+            type: 'GET',
             url: '/api/slave/' + id + '/shutdown',
-            beforeSend: function (xhr) {
+            beforeSend(xhr) {
                 xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'))
-            }
-        }).done(function (data) {
-            let status = Status.from_json(JSON.stringify(data));
-            if (status.is_ok()) {
-                el.addClass('animated pulse');
-                el.one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend', function () {
-                    el.removeClass('animated pulse');
-                });
-            } else {
+            },
+            success(data) {
+                let status = Status.from_json(JSON.stringify(data));
+                if (status.is_ok()) {
+                    el.addClass('animated pulse');
+                    el.one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend', function () {
+                        el.removeClass('animated pulse');
+                    });
+                } else {
+                    $.notify({
+                        message: 'Error: ' + data.payload
+                    }, {
+                        type: 'danger'
+                    });
+                }
+            },
+            error(xhr, error_string, error_code) {
                 $.notify({
-                    message: 'Error: ' + data.payload
+                    message: "Could not deliver shutdown request to server (" + error_code + ")"
                 }, {
                     type: 'danger'
                 });
             }
-        }).fail(function () {
-            $.notify({
-                message: 'Error in Ajax Request.'
-            }, {
-                type: 'danger'
-            });
         });
     });
 
@@ -521,5 +424,5 @@ $(document).ready(function () {
             show: 100,
             hide: 300
         }
-    })
+    });
 });

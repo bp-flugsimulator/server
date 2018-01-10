@@ -1,52 +1,52 @@
 var schema = {
-    "title": "Script",
-    "type": "object",
-    "definitions": {
-        "program_entry": {
-            "type": "object",
-            "properties": {
-                "index": {
-                    "type": "integer"
+    'title': 'Script',
+    'type': 'object',
+    'definitions': {
+        'program_entry': {
+            'type': 'object',
+            'properties': {
+                'index': {
+                    'type': 'integer'
                 },
-                "slave": {
-                    "type": ["integer", "string"],
+                'slave': {
+                    'type': ['integer', 'string'],
                 },
-                "program": {
-                    "type": ["integer", "string"],
+                'program': {
+                    'type': ['integer', 'string'],
                 }
             },
-            "required": ["index", "slave", "program"]
+            'required': ['index', 'slave', 'program']
         },
-        "file_entry": {
-            "type": "object",
-            "properties": {
-                "index": {
-                    "type": "integer"
+        'file_entry': {
+            'type': 'object',
+            'properties': {
+                'index': {
+                    'type': 'integer'
                 },
-                "slave": {
-                    "type": ["integer", "string"],
+                'slave': {
+                    'type': ['integer', 'string'],
                 },
-                "file": {
-                    "type": ["integer", "string"],
+                'file': {
+                    'type': ['integer', 'string'],
                 }
             },
-            "required": ["index", "slave", "file"]
+            'required': ['index', 'slave', 'file']
         }
     },
-    "properties": {
-        "name": {
-            "type": "string",
+    'properties': {
+        'name': {
+            'type': 'string',
         },
-        "programs": {
-            "type": "array",
-            "items": {
-                "$ref": "#/definitions/program_entry"
+        'programs': {
+            'type': 'array',
+            'items': {
+                '$ref': '#/definitions/program_entry'
             }
         },
-        "files": {
-            "type": "array",
-            "items": {
-                "$ref": "#/definitions/file_entry"
+        'files': {
+            'type': 'array',
+            'items': {
+                '$ref': '#/definitions/file_entry'
             }
         }
     }
@@ -99,13 +99,13 @@ var options = {
                                 if (status.is_ok()) {
                                     resolve(status.payload);
                                 } else {
-                                    console.log("Error while querying:");
+                                    console.log('Error while querying:');
                                     console.log(status.payload);
                                     reject();
                                 }
                             },
                             error: function (error) {
-                                console.log("Error while querying " + error);
+                                console.log('Error while querying ' + error);
                                 reject();
                             }
                         });
@@ -140,6 +140,12 @@ var options = {
     }
 };
 
+var createEditor = function (json, id) {
+    var container = document.getElementById('jsoneditor_' + id);
+    var editor = new JSONEditor(container, options, json);
+    editor.expandAll();
+};
+
 var loadScript = function (id) {
     $.ajax({
         url: "/api/script/" + id + "?programs=str&files=str&slaves=str",
@@ -171,10 +177,4 @@ var newScript = function (name) {
     };
 
     createEditor(default_json, 'new');
-};
-
-var createEditor = function (json, id) {
-    var container = document.getElementById('jsoneditor_' + id);
-    var editor = new JSONEditor(container, options, json);
-    editor.expandAll();
 };
