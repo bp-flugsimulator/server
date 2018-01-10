@@ -1,4 +1,5 @@
 # pylint: disable=C0111
+# pylint: disable=C302
 
 from os import remove
 from os.path import isfile, isdir
@@ -9,8 +10,8 @@ from server.management.commands.compilesass import Command
 
 from .utils import StatusResponse
 
-class StatusResponseTest(TestCase):
 
+class StatusResponseTest(TestCase):
     def test_status_init(self):
         response = StatusResponse(Status.ok(''))
         self.assertEqual(response.status_code, 200)

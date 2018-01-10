@@ -106,8 +106,8 @@ def shutdown_slave(request, slave_id):
 
     Returns
     -------
-        A StatusResponse or HttpResponseForbidden if the request method was other
-        than GET.
+        A StatusResponse or HttpResponseForbidden if the request method was
+        other than GET.
     """
     if request.method == 'GET':
         if SlaveModel.objects.filter(id=slave_id).exists():
@@ -145,13 +145,13 @@ def wol_slave(request, slave_id):
 
     Returns
     -------
-        A StatusResponse or HttpResponseForbidden if the request method was 
+        A StatusResponse or HttpResponseForbidden if the request method was
         other than GET.
     """
     if request.method == 'GET':
         try:
             send_magic_packet(SlaveModel.objects.get(id=slave_id).mac_address)
-        except Exception as err:  #pylint: disable=W0703
+        except Exception as err:  # pylint: disable=W0703
             return StatusResponse(Status.err(repr(err)), status=500)
 
         notify({"message": "Send Wake On Lan Packet"})
@@ -171,8 +171,8 @@ def add_program(request):
 
     Returns
     -------
-        A StatusResponse or HttpResponseForbidden if the request method was other
-        than GET.
+        A StatusResponse or HttpResponseForbidden if the request method was
+        other than GET.
     """
     if request.method == 'POST':
         form = ProgramForm(request.POST or None)
@@ -220,8 +220,8 @@ def manage_program(request, program_id):
 
     Returns
     -------
-        A StatusResponse or HttpResponseForbidden if the request method was other
-        than GET.
+        A StatusResponse or HttpResponseForbidden if the request method was
+        other than GET.
     """
     if request.method == 'DELETE':
         ProgramModel.objects.filter(id=program_id).delete()
@@ -293,8 +293,8 @@ def manage_script(request, script_id):
 
     Returns
     -------
-        A StatusResponse or HttpResponseForbidden if the request method was other
-        than GET.
+        A StatusResponse or HttpResponseForbidden if the request method was
+        other than GET.
     """
     if request.method == 'GET':
         try:
@@ -346,7 +346,7 @@ def add_file(request):
 
     Returns
     -------
-        A StatusResponse or HttpResponseForbidden if the request method was 
+        A StatusResponse or HttpResponseForbidden if the request method was
         other than GET.
     """
     if request.method == 'POST':
