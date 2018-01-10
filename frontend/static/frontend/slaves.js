@@ -1,3 +1,6 @@
+/*eslint no-undef: "error"*/
+/*eslint-env browser*/
+
 $(document).ready(function () {
     // set defaults for notifications
     $.notifyDefaults({
@@ -115,7 +118,7 @@ $(document).ready(function () {
             },
             error(xhr, error_string, error_code) {
                 $.notify({
-                    message: "Could not deliver delete request to server (" + error_code + ")"
+                    message: 'Could not deliver delete request to server (' + error_code + ')'
                 }, {
                     type: 'danger'
                 });
@@ -279,7 +282,7 @@ $(document).ready(function () {
             },
             error(xhr, error_string, error_code) {
                 $.notify({
-                    message: "Could not deliver " + $(this).attr('method') + " request to server (" + error_code + ")"
+                    message: 'Could not deliver ' + $(this).attr('method') + ' request to server (' + error_code + ')'
                 }, {
                     type: 'danger'
                 });
@@ -309,7 +312,7 @@ $(document).ready(function () {
             },
             error(xhr, error_string, error_code) {
                 $.notify({
-                    message: "Could not deliver " + $(this).attr('method') + " request to server (" + error_code + ")"
+                    message: 'Could not deliver ' + $(this).attr('method') + ' request to server (' + error_code + ')'
                 }, {
                     type: 'danger'
                 });
@@ -338,7 +341,7 @@ $(document).ready(function () {
             },
             error(xhr, error_string, error_code) {
                 $.notify({
-                    message: "Could not deliver " + $(this).attr('method') + " request to server (" + error_code + ")"
+                    message: 'Could not deliver ' + $(this).attr('method') + ' request to server (' + error_code + ')'
                 }, {
                     type: 'danger'
                 });
@@ -374,7 +377,7 @@ $(document).ready(function () {
             },
             error(xhr, error_string, error_code) {
                 $.notify({
-                    message: "Could not deliver Wake-On-Lan request to server (" + error_code + ")"
+                    message: 'Could not deliver Wake-On-Lan request to server (' + error_code + ')'
                 }, {
                     type: 'danger'
                 });
@@ -409,7 +412,7 @@ $(document).ready(function () {
             },
             error(xhr, error_string, error_code) {
                 $.notify({
-                    message: "Could not deliver shutdown request to server (" + error_code + ")"
+                    message: 'Could not deliver shutdown request to server (' + error_code + ')'
                 }, {
                     type: 'danger'
                 });

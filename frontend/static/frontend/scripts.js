@@ -1,3 +1,6 @@
+/*eslint no-undef: "error"*/
+/*eslint-env browser*/
+
 var schema = {
     'title': 'Script',
     'type': 'object',

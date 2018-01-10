@@ -1,3 +1,6 @@
+/*eslint no-undef: "error"*/
+/*eslint-env browser*/
+
 /**
  * Get a cookie by it the name. If the cookie is not present 'null' will be
  * returned.

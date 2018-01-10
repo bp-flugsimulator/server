@@ -1,3 +1,6 @@
+/*eslint no-undef: "error"*/
+/*eslint-env browser*/
+
 socket = new WebSocket('ws://' + window.location.host + '/notifications');
 socket.onmessage = function (data) {
     let status = Status.from_json(data.data);
@@ -80,11 +83,9 @@ socket.onmessage = function (data) {
                 message: status.payload['message']
             });
         } else {
-            console.log("unknown");
-            console.log(status.payload);
             $.notify({
                 type: 'warning',
-                message: 'received unknown response from server'
+                message: 'Received unknown response from server'
             });
         }
     } else {
@@ -94,8 +95,10 @@ socket.onmessage = function (data) {
         });
     }
 };
-socket.onopen = function () {
-    console.log('Websocket opened')
-};
+
+// socket.onopen = function () {
+//     console.log('Websocket opened')
+// };
+
 // Call onopen directly if socket is already open
 if (socket.readyState === WebSocket.OPEN) socket.onopen();
