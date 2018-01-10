@@ -1,6 +1,7 @@
 from channels.routing import route
 
-from frontend.consumers import ws_notifications_connect, ws_notifications_receive, ws_notifications_disconnect, ws_rpc_connect, ws_rpc_disconnect
+from frontend.consumers import ws_notifications_connect, ws_notifications_receive,\
+    ws_notifications_disconnect, ws_rpc_connect, ws_rpc_disconnect
 
 # handlers for websocket events
 channel_routing = [

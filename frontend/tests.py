@@ -1880,7 +1880,8 @@ class ScriptTests(TestCase):
         self.assertRaises(ValueError, ScriptEntryFile, 0, "", [])
 
     def test_script_json(self):
-        string = '{"name": "test", "files": [{"index": 0, "slave": 0, "file": "no name"}],"programs": [{"index": 0, "slave": 0, "program": "no name"}]}'
+        string = '{"name": "test", "files": [{"index": 0, "slave": 0, "file": "no name"}],\
+            "programs": [{"index": 0, "slave": 0, "program": "no name"}]}'
 
         script = Script("test", [ScriptEntryProgram(0, "no name", 0)],
                         [ScriptEntryFile(0, "no name", 0)])

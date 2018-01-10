@@ -2,7 +2,9 @@ from django.http import HttpResponseForbidden
 from django.http.request import QueryDict
 from django.core.exceptions import ValidationError
 
-from .models import Slave as SlaveModel, SlaveStatus as SlaveStatusModel, Program as ProgramModel, ProgramStatus as ProgramStatusModel, Script as ScriptModel, File as FileModel
+from .models import Slave as SlaveModel, SlaveStatus as SlaveStatusModel,\
+    Program as ProgramModel, ProgramStatus as ProgramStatusModel,\
+    Script as ScriptModel, File as FileModel
 
 from .scripts import Script
 
