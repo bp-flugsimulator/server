@@ -1,7 +1,11 @@
-from django.core.management.base import BaseCommand
+"""
+This module contains the 'clean_npm' command.
+"""
 
 from os import walk, rmdir, remove, getcwd
 from os.path import join
+
+from django.core.management.base import BaseCommand
 
 
 def get_paths(filetype):
@@ -49,6 +53,9 @@ def get_parent_folders(path):
 
 
 class Command(BaseCommand):
+    """
+    generates the 'clean_npm' command
+    """
     help = 'Removes unused files from node_modules'
 
     def handle(self, *args, **options):
@@ -62,10 +69,10 @@ class Command(BaseCommand):
                     if '{% static' in line:
                         line = line.split("'")[1]
                         if 'node/' in line:
-                            dependecy_path = line.replace(
+                            dependency_path = line.replace(
                                 'node/', 'node_modules/').rsplit('/', 1)[0]
                             dependencies.extend(
-                                get_parent_folders(dependecy_path))
+                                get_parent_folders(dependency_path))
 
         # remove duplicates
         dependencies = list(set(dependencies))

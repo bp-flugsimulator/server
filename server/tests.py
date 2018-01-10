@@ -1,14 +1,15 @@
-from django.test import TestCase
-
-from .utils import StatusResponse
-from utils.status import Status
-from sass import CompileError
-from server.management.commands.compilesass import Command as SassCommand
-from server.management.commands.clean_npm import Command as CleanNpmCommand
+# pylint: disable=C0111
 
 import json
 from os import remove, replace, mkdir, rmdir, getcwd
 from os.path import isfile, isdir, join
+from sass import CompileError
+from django.test import TestCase
+from utils.status import Status
+from server.management.commands.compilesass import Command as SassCommand
+from server.management.commands.clean_npm import Command as CleanNpmCommand
+
+from .utils import StatusResponse
 
 
 class StatusResponseTest(TestCase):
@@ -52,23 +53,23 @@ class ManagementTest(TestCase):
 
         # create two packages
         mkdir(join(self.NPM_PATH, 'test1'))
-        with open(join(self.NPM_PATH, 'test1', 'testfile.txt'), 'w') as f:
-            f.close()
+        with open(join(self.NPM_PATH, 'test1', 'testfile.txt'), 'w') as file:
+            file.close()
 
         mkdir(join(self.NPM_PATH, 'test1', 'testdir'))
         with open(
                 join(self.NPM_PATH, 'test1', 'testdir', 'testfile.txt'),
-                'w') as f:
-            f.close()
+                'w') as file:
+            file.close()
 
         mkdir(join(self.NPM_PATH, 'test2'))
-        with open(join(self.NPM_PATH, 'test2', 'testfile.txt'), 'w') as f:
-            f.close()
+        with open(join(self.NPM_PATH, 'test2', 'testfile.txt'), 'w') as file:
+            file.close()
 
         # create test dependency
-        with open('test.html', 'w') as f:
-            f.write("{% static 'node/test1/testdir/testfile.txt' %}")
-            f.close()
+        with open('test.html', 'w') as file:
+            file.write("{% static 'node/test1/testdir/testfile.txt' %}")
+            file.close()
 
         # execute command
         exception = None
@@ -85,18 +86,18 @@ class ManagementTest(TestCase):
                     join(self.NPM_PATH, 'test1', 'testdir', 'testfile.txt')))
 
             self.assertFalse(isdir(join(self.NPM_PATH, 'test2')))
-        except Exception as err:
+        except Exception as err:  # pylint: disable=W0703
             exception = err
             try:
                 remove(join(self.NPM_PATH, 'test2', 'testfile.txt'))
-            except exception:
-                print('could not delete node/test2/testfile.txt,because:\n' + str(exception ))
-                pass
+            except exception:  # pylint: disable=W0703
+                print('could not delete node/test2/testfile.txt,because:\n' +
+                      str(exception))
             try:
                 rmdir(join(self.NPM_PATH, 'test2'))
-            except exception:
-                print('could not delete node/test2/ ,because:\n' + str(exception ))
-                pass
+            except exception:  # pylint: disable=W0703
+                print('could not delete node/test2/ ,because:\n' +
+                      str(exception))
         finally:
             # delete testfiles
             remove('test.html')
