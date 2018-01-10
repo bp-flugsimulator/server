@@ -1,12 +1,13 @@
+"""
+This module contains all functions that handle requests on websockets.
+"""
+import logging
 from channels import Group
-from .models import SlaveStatus as SlaveStatusModel, Slave as SlaveModel,\
-    Program as ProgramModel, ProgramStatus as ProgramStatusModel
-from utils import Command, Status
 from channels.sessions import channel_session
 from termcolor import colored
-
-# import the logging library
-import logging
+from utils import Command, Status
+from .models import SlaveStatus as SlaveStatusModel, Slave as SlaveModel,\
+    Program as ProgramModel, ProgramStatus as ProgramStatusModel
 
 # Get an instance of a logger
 LOGGER = logging.getLogger('django.request')
@@ -19,7 +20,7 @@ def notify(message):
 
     Parameters
     ----------
-    message: json serialisable
+    message: json serializable
         the message that is going to be send
     """
     Group('notifications').send({'text': Status.ok(message).to_json()})
@@ -32,7 +33,7 @@ def notify_err(message):
 
     Parameters
     ----------
-    message: json serialisable
+    message: json serializable
         the message that is going to be send
     """
     Group('notifications').send({'text': Status.err(message).to_json()})

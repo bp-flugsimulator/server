@@ -1,10 +1,13 @@
+"""
+This module contains all databasemodels from the frontend application.
+"""
+
 from django.db.models import Model, CharField, GenericIPAddressField,\
     ForeignKey, CASCADE, IntegerField, BooleanField, OneToOneField
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 
 
-# Create your models here.
 def validate_mac_address(mac_addr):
     """
     Validates a given MAC address.
@@ -28,6 +31,9 @@ def validate_mac_address(mac_addr):
     """
 
     def ishex(char):
+        """
+        checks if char is a hexvalue
+        """
         return (char <= 'F' and char >= 'A') or (char <= 'f' and char >= 'a')
 
     parts = mac_addr.split(":")
