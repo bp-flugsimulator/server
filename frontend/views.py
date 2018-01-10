@@ -11,17 +11,6 @@ class WelcomeView(TemplateView):
     template_name = 'frontend/welcome.html'
 
 
-class ScriptView(DetailView):
-    template_name = "frontend/script.html"
-    model = ScriptModel
-    context_object_name = "script"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['navbar_link'] = "scripts"
-        return context
-
-
 class ScriptsView(ListView):
     template_name = "frontend/scripts/base.html"
     model = ScriptModel

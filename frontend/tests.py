@@ -75,24 +75,6 @@ class FrontendTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Scripts")
 
-    def test_script_get(self):
-        slave = SlaveModel(name="test_slave", ip_address="0.0.0.0", mac_address="00:00:00:00:00:00")
-        slave.save ()
-
-        program = ProgramModel(name="test_program", path="None", arguments="None", slave=slave)
-        program.save()
-
-        file = FileModel(name="test_file", sourcePath="None", destinationPath="None", slave=slave)
-        file.save()
-
-        script = Script("test_script", [ScriptEntryProgram(0, "test_program", "test_slave")], [ScriptEntryFile(0, "test_file", "test_slave")])
-        script.save()
-
-        db_script = ScriptModel.objects.get(name="test_script")
-
-        response = self.client.get("/script/" + str(db_script.id))
-        self.assertEqual(response.status_code, 200)
-
 class ApiTests(TestCase):
 
     def test_get_script(self):
