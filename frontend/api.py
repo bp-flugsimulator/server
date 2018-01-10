@@ -1,38 +1,42 @@
+"""
+This module contains all functions that handle requests on the REST api.
+"""
+
+from shlex import split
+
 from django.http import HttpResponseForbidden
 from django.http.request import QueryDict
 from django.core.exceptions import ValidationError
+from channels import Group
+from utils.status import Status
+from utils import Command
+from wakeonlan.wol import send_magic_packet
+from server.utils import StatusResponse
 
-from .models import Slave as SlaveModel, Program as ProgramModel, ProgramStatus as ProgramStatusModel, SlaveStatus as SlaveStatusModel, Script as ScriptModel, ScriptGraphFiles as SGFModel, ScriptGraphPrograms as SGPModel, File as FileModel
+from .models import Slave as SlaveModel, SlaveStatus as SlaveStatusModel,\
+    Program as ProgramModel, ProgramStatus as ProgramStatusModel,\
+    Script as ScriptModel, File as FileModel
 
 from .scripts import Script
 
 from .forms import SlaveForm, ProgramForm, FileForm
-from server.utils import StatusResponse
-import json
 
-from channels import Group
-from utils.status import Status
-from utils import Command
-from shlex import split
-from django.utils import timezone
-from wakeonlan.wol import send_magic_packet
+from .consumers import notify
 
 
 def add_slave(request):
     """
-    Answers a POST request to add a new slave
+    Process POST requests which adds new SlaveModel and GET requests to query
+    for SlaveModel which contains the query string.
+
     Parameters
     ----------
-    request: HttpRequest
-        a POST request containing a SlaveForm
+        request: HttpRequest
+
     Returns
     -------
-    A HttpResponse with a JSON object which
-    contains errors if something is goes
-    wrong or is empty on success.
-    If the request method is something other
-    than POST, then HttpResponseForbidden()
-    will be returned.
+        A StatusResponse or HttpResponseForbidden if the request method was
+        other than GET.
     """
     if request.method == 'POST':
         form = SlaveForm(request.POST)
@@ -56,34 +60,30 @@ def add_slave(request):
         return HttpResponseForbidden()
 
 
-def manage_slave(request, id):
+def manage_slave(request, slave_id):
     """
-    answers a request to manipulate a slave with
-    the given id
+    Process DELETE, PUT and POST requests for the SlaveModel ressource.
+
+    Parameters
     ----------
-    request: HttpRequest
-        a DELETE request
-        or a PUT request (data has to be url encoded)
-    id: int
-        the id of the slave which will be modified
+        request: HttpRequest
+        id: Unique identifier of a slave
+
     Returns
     -------
-    A HttpResponse with a JSON object which
-    can contain errors.
-    If the request method is something other
-    than DELETE or PUT, then HttpResponseForbidden()
-    will be returned.
+        A StatusResponse or HttpResponseForbidden if the request method was
+        other than GET.
     """
     if request.method == 'DELETE':
-        # i can't find any exeptions that can be thrown in our case
-        SlaveModel.objects.filter(id=id).delete()
+        # i can't find any exceptions that can be thrown in our case
+        SlaveModel.objects.filter(id=slave_id).delete()
         return StatusResponse(Status.ok(''))
 
     elif request.method == 'PUT':
         # create form from a new QueryDict made from the request body
         # (request.PUT is unsupported) as an update (instance) of the
         # existing slave
-        model = SlaveModel.objects.get(id=id)
+        model = SlaveModel.objects.get(id=slave_id)
         form = SlaveForm(QueryDict(request.body), instance=model)
 
         if form.is_valid():
@@ -95,22 +95,84 @@ def manage_slave(request, id):
         return HttpResponseForbidden()
 
 
-def add_program(request):
+def shutdown_slave(request, slave_id):
     """
-    Answers a POST request to add a new program
+    Process GET requests which will shutdown a slave.
+
     Parameters
     ----------
-    request: HttpRequest
-        a POST request containing a ProgramForm
-        and a slave_id
+        request: HttpRequest
+        id: Unique identifier of a slave
+
     Returns
     -------
-    A HttpResponse with a JSON object, which contains
-    a status. If the status is 'error' the datafield
-    errors contains the errors.
-    If the request method is something other
-    than POST, then HttpResponseForbidden()
-    will be returned.
+        A StatusResponse or HttpResponseForbidden if the request method was
+        other than GET.
+    """
+    if request.method == 'GET':
+        if SlaveModel.objects.filter(id=slave_id).exists():
+            slave = SlaveModel.objects.get(id=slave_id)
+            if SlaveStatusModel.objects.filter(
+                    slave=slave) and slave.slavestatus.online:
+                Group('client_' + str(slave_id)).send({
+                    'text':
+                    Command(method="shutdown").to_json()
+                })
+                notify({
+                    "message":
+                    "Send shutdown Command to {}".format(slave.name)
+                })
+                return StatusResponse(Status.ok(''))
+            else:
+                return StatusResponse(
+                    Status.err('Can not shutdown offline Client'))
+        else:
+            return StatusResponse(
+                Status.err('Can not shutdown unknown Client'))
+
+    else:
+        return HttpResponseForbidden()
+
+
+def wol_slave(request, slave_id):
+    """
+    Process GET requests which will start a Slave via Wake-On-Lan.
+
+    Parameters
+    ----------
+        request: HttpRequest
+        id: Unique identifier of a slave
+
+    Returns
+    -------
+        A StatusResponse or HttpResponseForbidden if the request method was
+        other than GET.
+    """
+    if request.method == 'GET':
+        try:
+            send_magic_packet(SlaveModel.objects.get(id=slave_id).mac_address)
+        except Exception as err:  # pylint: disable=W0703
+            return StatusResponse(Status.err(repr(err)), status=500)
+
+        notify({"message": "Send Wake On Lan Packet"})
+        return StatusResponse(Status.ok(''))
+    else:
+        return HttpResponseForbidden()
+
+
+def add_program(request):
+    """
+    Process POST requests which adds new ProgramModel and GET requests to query
+    for ProgramModel which contains the query string.
+
+    Parameters
+    ----------
+        request: HttpRequest
+
+    Returns
+    -------
+        A StatusResponse or HttpResponseForbidden if the request method was
+        other than GET.
     """
     if request.method == 'POST':
         form = ProgramForm(request.POST or None)
@@ -146,116 +208,40 @@ def add_program(request):
         return HttpResponseForbidden()
 
 
-def shutdown_slave(request, id):
+def manage_program(request, program_id):
     """
-    answers a request to shutdown slave with
-    the given id
+    Process DELETE, PUT and POST requests for the ProgramModel ressource.
+
+    Parameters
     ----------
-    request: HttpRequest
-        a GET request
-    id: int
-        the id of the slave which will be modified
+        request: HttpRequest
+        slaveId: Unique identifier of a slave
+        programId: Unique identifier of a program
+
     Returns
     -------
-    A HttpResponse with a JSON object which
-    can contain errors.
-    If the request method is something other
-    than GET, then a HttpResponseForbidden()
-    will be returned.
-    """
-    if request.method == 'GET':
-        if SlaveModel.objects.filter(id=id).exists():
-            slave = SlaveModel.objects.get(id=id)
-            if SlaveStatusModel.objects.filter(slave=slave).exists():
-                Group('client_' + str(id)).send({
-                    'text':
-                    Command(method="shutdown").to_json()
-                })
-                return StatusResponse(Status.ok(''))
-            else:
-                return StatusResponse(
-                    Status.err('Can not shutdown offline Client'))
-        else:
-            return StatusResponse(
-                Status.err('Can not shutdown unknown Client'))
-
-    else:
-        return HttpResponseForbidden()
-
-
-def wol_slave(request, id):
-    """
-    answers a request to wake a slave with
-    the given id
-    ----------
-    request: HttpRequest
-        a GET request
-    id: int
-        the id of the slave which will be modified
-    Returns
-    -------
-    A HttpResponse with a JSON object which
-    can contain errors.
-    If the request method is something other
-    than GET, then a HttpResponseForbidden()
-    will be returned.
-    """
-    if request.method == 'GET':
-        try:
-            send_magic_packet(SlaveModel.objects.get(id=id).mac_address)
-        except Exception as err:
-            return StatusResponse(Status.err(repr(err)), status=500)
-        Group('notifications').send({
-            'text':
-            json.dumps({
-                'message': 'Succesful, Client Start queued'
-            })
-        })
-        return StatusResponse(Status.ok(''))
-    else:
-        return HttpResponseForbidden()
-
-
-def manage_program(request, programId):
-    """
-    answers a request to manipulate a program with
-    the given programId from a slave with the given slaveId
-    ----------
-    request: HttpRequest
-        a DELETE request to delete a database entry
-        or a PUT request to update a database entry
-        or a POST request to execute the program on the slave
-    slaveId: int
-        the id of the slave
-    programId: int
-        the id of the program which will be modified
-    Returns
-    -------
-    A HttpResponse with a JSON object which
-    can contain errors.
-    If the request method is something other
-    than DELETE or PUT, then HttpResponseForbidden()
-    will be returned.
+        A StatusResponse or HttpResponseForbidden if the request method was
+        other than GET.
     """
     if request.method == 'DELETE':
-        ProgramModel.objects.filter(id=programId).delete()
+        ProgramModel.objects.filter(id=program_id).delete()
         return StatusResponse(Status.ok(''))
     if request.method == 'POST':
-        program = ProgramModel.objects.get(id=programId)
-        if SlaveStatusModel.objects.filter(slave=program.slave).exists():
-            ProgramStatusModel(program=program, started=timezone.now()).save()
+        program = ProgramModel.objects.get(id=program_id)
+        slave = program.slave
+        if SlaveStatusModel.objects.filter(
+                slave=slave) and slave.slavestatus.online:
+            cmd = Command(
+                method="execute",
+                path=program.path,
+                arguments=split(program.arguments))
 
             # send command to the client
             Group('client_' + str(program.slave.id)).send({
-                'text':
-                Command(
-                    method="execute",
-                    pid=program.id,
-                    path=program.path,
-                    arguments=split(program.arguments)).to_json()
+                'text': cmd.to_json()
             })
 
-            # tell webinterface that the program has ended
+            # tell webinterface that the program has started
             Group('notifications').send({
                 'text':
                 Status.ok({
@@ -263,6 +249,10 @@ def manage_program(request, programId):
                     "pid": program.id,
                 }).to_json()
             })
+
+            # create status entry
+            ProgramStatusModel(program=program, command_uuid=cmd.uuid).save()
+
             return StatusResponse(Status.ok(''))
         else:
             return StatusResponse(
@@ -272,7 +262,7 @@ def manage_program(request, programId):
         # create form from a new QueryDict made from the request body
         # (request.PUT is unsupported) as an update (instance) of the
         # existing slave
-        model = ProgramModel.objects.get(id=programId)
+        model = ProgramModel.objects.get(id=program_id)
         form = ProgramForm(QueryDict(request.body), instance=model)
         if form.is_valid():
             program = form.save(commit=False)
@@ -292,7 +282,20 @@ def manage_program(request, programId):
         return HttpResponseForbidden()
 
 
-def manage_script(request, scriptId):
+def manage_script(request, script_id):
+    """
+    Process GET requests for the ScriptModel ressource.
+
+    Parameters
+    ----------
+        request: HttpRequest
+        script_id: Unique identifier of script
+
+    Returns
+    -------
+        A StatusResponse or HttpResponseForbidden if the request method was
+        other than GET.
+    """
     if request.method == 'GET':
         try:
             # adds ?slaves=int&program_key=int&file_key=int to the URL
@@ -320,7 +323,7 @@ def manage_script(request, scriptId):
                             file_key)))
 
             script = Script.from_model(
-                scriptId,
+                script_id,
                 slave_key,
                 program_key,
                 file_key,
@@ -334,20 +337,17 @@ def manage_script(request, scriptId):
 
 def add_file(request):
     """
-    Answers a POST request to add a new file
+    Process POST requests which adds new FileModel and GET requests to query
+    for FileModel which contains the query string.
+
     Parameters
     ----------
-    request: HttpRequest
-        a POST request containing a FileForm
-        and a slave_id
+        request: HttpRequest
+
     Returns
     -------
-    A HttpResponse with a JSON object, which contains
-    a status. If the status is 'error' the datafield
-    errors contains the errors.
-    If the request method is something other
-    than POST, then HttpResponseForbidden()
-    will be returned.
+        A StatusResponse or HttpResponseForbidden if the request method was
+        other than GET.
     """
     if request.method == 'POST':
         form = FileForm(request.POST or None)
