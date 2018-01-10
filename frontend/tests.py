@@ -1749,9 +1749,11 @@ class DatabaseTests(TestCase):
             name='test_flush_error',
             ip_address='0.1.0.0',
             mac_address='00:01:00:00:00:00').save()
-        flush('Slave', 'UnknownModel')
+        flush('Slave')
+        flush('UnknownModel')
         self.assertFalse(
             SlaveModel.objects.filter(name='test_flush_error').exists())
+
 
     def test_slave_insert_invalid_ip(self):
         self.assertRaises(

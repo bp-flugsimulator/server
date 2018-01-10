@@ -40,8 +40,6 @@ def flush(*tables):
             getattr(models, table).objects.all().delete()
         except AttributeError:
             pass
-        except OperationalError:
-            pass
 
 
 # Flush status tables DO NOT DELETE!
