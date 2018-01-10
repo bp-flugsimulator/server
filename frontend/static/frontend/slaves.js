@@ -60,7 +60,6 @@ function modalDeleteAction(form, route) {
  */
 function handleFormStatus(form, status) {
     if (status.is_ok()) {
-        console.log('OK');
         window.location.reload();
     } else {
         console.log('Err');
@@ -116,9 +115,14 @@ $(document).ready(function () {
     });
 
     // Enable tool tips.
-    $(function () {
-        $("[data-toggle='tooltip']").tooltip()
-    });
+    // $(function () {
+    //     $("[data-toggle='tooltip']").tooltip({
+    //         'delay': {
+    //             show: 5000,
+    //             hide: 3000
+    //         }
+    //     });
+    // });
 
     /*function for deleting a slave, it is added to the delete-slave button*/
     $('.delete-slave').click(function () {
@@ -271,7 +275,6 @@ $(document).ready(function () {
         fileForm.children().find('.submit-btn').text('Add');
 
         //clear input fields
-
         fileForm.find("input[name='name']").val('');
         fileForm.find("input[name='sourcePath']").val('');
         fileForm.find("input[name='destinationPath']").val('');
@@ -339,7 +342,6 @@ $(document).ready(function () {
     $('#programForm').submit(function (event) {
         //Stop form from submitting normally
         event.preventDefault();
-        console.log($(this).serialize());
 
         //send request to given url and with given method
         //data field contains information about the slave
@@ -370,7 +372,6 @@ $(document).ready(function () {
     $('#fileForm').submit(function (event) {
         //Stop form from submitting normally
         event.preventDefault();
-        console.log($(this).serialize());
 
         //send request to given url and with given method
         //data field contains information about the slave
@@ -492,7 +493,8 @@ $(document).ready(function () {
     });
 
     // Save Class when opening/closing accordion for every Slave
-    // $('#accordion').children().each(function () {
+    // $('#slaveTabList').children().each(function () {
+
     //     let child_id = this.id;
     //     let collapse_id = "#collapse" + child_id;
     //     let status = "collapseStatus" + child_id;

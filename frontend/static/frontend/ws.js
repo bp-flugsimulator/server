@@ -1,13 +1,17 @@
 socket = new WebSocket('ws://' + window.location.host + '/notifications');
 socket.onmessage = function (data) {
     let status = Status.from_json(data.data);
+    console.log(status);
 
-    console.log(status)
     if (status.payload['slave_status'] != null) {
         // handle slave status updates
 
         let statusContainer = $('#slaveStatusContainer_' + status.payload['sid']);
+        let statusTab = $('#slaveTab' + status.payload['sid']);
         let startstopButton = $('#slaveStartStop_' + status.payload['sid']);
+
+        console.log(statusContainer);
+        console.log(startstopButton);
 
         switch (status.payload['slave_status']) {
             case 'connected':
@@ -15,18 +19,25 @@ socket.onmessage = function (data) {
                 statusContainer.removeClass('fsim-status-error');
                 statusContainer.addClass('fsim-status-success');
 
+                statusTab.removeClass('fsim-status-error');
+                statusTab.addClass('fsim-status-success');
+
                 // swap start and stop functions
                 startstopButton.removeClass('start-slave');
                 startstopButton.addClass('stop-slave');
 
                 // set tooltip to Stop
                 startstopButton.prop('title', 'Stops the client');
+                startstopButton.prop('value', 'Stop');
 
                 break;
             case 'disconnected':
                 // swap status
                 statusContainer.removeClass('fsim-status-success');
                 statusContainer.addClass('fsim-status-error');
+
+                statusTab.removeClass('fsim-status-success');
+                statusTab.addClass('fsim-status-error');
 
                 // swap start and stop functions
                 startstopButton.removeClass('stop-slave');
@@ -45,14 +56,23 @@ socket.onmessage = function (data) {
 
         switch (status.payload['program_status']) {
             case 'started':
-                statusContainer.addClass('fsim-status-success');
-                statusContainer.removeClass('fsim-status-error');
+                statusContainer.removeClass(function (index, className) {
+                    return (className.match(/(^|\s)fsim-status-\S+/g) || []).join(' ');
+                });
 
+                statusContainer.addClass('fsim-status-warn');
                 startstopButton.prop('title', 'Stops the program');
                 break;
             case 'finished':
-                statusContainer.addClass('fsim-status-error');
-                statusContainer.removeClass('fsim-status-success');
+                statusContainer.removeClass(function (index, className) {
+                    return (className.match(/(^|\s)fsim-status-\S+/g) || []).join(' ');
+                });
+
+                if (status.payload['code'] !== 0 && status.payload['code'] !== 255) {
+                    statusContainer.addClass('fsim-status-error');
+                } else {
+                    statusContainer.addClass('fsim-status-success');
+                }
 
                 startstopButton.prop('title', 'Starts the program');
                 break;

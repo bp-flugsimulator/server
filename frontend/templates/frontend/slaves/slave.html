@@ -1,5 +1,5 @@
 {% load components %}
-    <div class="row pt-4 mb-4 fsim-box {% if slave.slavestatus.bootime != '' %} fsim-status-success{% else %}fsim-status-error{% endif %}" id="slaveStatusContainer_{{ slave.id }}">
+    <div class="row pt-4 mb-4 fsim-box {% if slave.is_online %} fsim-status-success{% else %}fsim-status-error{% endif %}" id="slaveStatusContainer_{{ slave.id }}">
         <div class="container-fluid">
             <div class="row">
                 <div class="slave-name col">
@@ -8,21 +8,17 @@
 
                 <div class="btn-toolbar col" role="toolbar">
                     <div class="btn-group mr-2" role="group">
-                        <button type="button" id="slaveStartStop_{{ slave.id }}" data-slave-id="{{ slave.id }}" data-toggle="tooltip" data-placement="top" class="btn btn-outline-light" title="{% if slave.slavestatus.bootime != ''%}Stop{% else %}Start{% endif %}">
-                                <i class="mdi mdi-power-settings-new"></i> {% if slave.slavestatus.bootime != ''%}Stop{% else %}Start{% endif %}
+                        <button type="button" id="slaveStartStop_{{ slave.id }}" data-slave-id="{{ slave.id }}" data-toggle="tooltip" data-placement="top" class="btn btn-outline-dark" title="{% if slave.is_online %}Stops{% else %}Starts{% endif %} the client">
+                                <i class="mdi mdi-power-settings-new"></i> {% if slave.is_online %}Stop{% else %}Start{% endif %}
                         </button>
-
-                       {% comment %} <button type="button" class="btn btn-outline-light" data-toggle="tooltip" data-placement="top" data-slave-id="{{ slave.id }}" title="Restart">
-                            <i class="mdi mdi-refresh"></i> Restart
-                        </button> {% endcomment %}
                     </div>
 
                     <div class="btn-group mr-2" role="group">
-                        <button type="button" class="btn btn-outline-danger modify-slave" data-toggle="tooltip" data-placement="top" data-slave-id="{{ slave.id }}" data-slave-name="{{ slave.name }}" data-slave-ip="{{ slave.ip_address }}" data-slave-mac="{{ slave.mac_address }}" title="Edit">
+                        <button type="button" class="btn btn-outline-dark modify-slave" data-toggle="tooltip" data-placement="top" data-slave-id="{{ slave.id }}" data-slave-name="{{ slave.name }}" data-slave-ip="{{ slave.ip_address }}" data-slave-mac="{{ slave.mac_address }}" title="Edit">
                             <i class="mdi mdi-edit"></i> Edit
                         </button>
 
-                        <button type="button" class="btn btn-outline-danger delete-slave" data-slave-id="{{ slave.id }}" data-toggle="tooltip" data-placement="top" title="Delete">
+                        <button type="button" class="btn btn-outline-dark delete-slave" data-slave-id="{{ slave.id }}" data-toggle="tooltip" data-placement="top" title="Delete">
                             <i class="mdi mdi-delete"></i> Delete
                         </button>
                     </div>
@@ -44,35 +40,35 @@
         </div>
     </div>
 
-    <ul class="nav nav-tabs row" id="slave-releated-tabs" role="tablist">
-        <li class="nav-item">
-            <a class="nav-link active" id="{{ slave.id }}-programs-tab" data-toggle="tab" href="#{{ slave.id }}-programs-content" role="tab">
+    <ul class="nav nav-tabs row" id="slavesObjectsList{{ slave.id }}" role="tablist">
+        <li class="nav-item" data-toggle="tooltip" data-placement="top" title="Show all avialable programs for {{ slave.name }}">
+            <a class="nav-link active" id="slavesObjectsPrograms{{ slave.id }}" data-toggle="tab" href="#slavesObjectsProgramsContent{{ slave.id }}" role="tab" >
                 <i class="mdi mdi-widgets"></i> Programs
             </a>
         </li>
 
-        <li class="nav-item">
-            <button type="button" class="btn add-program mr-4" data-toggle="tooltip" data-placement="top" data-slave-id="{{ slave.id }}" title="Add program" style="background-color: transparent">
+        <li class="nav-item mr-4">
+            <button type="button" class="btn add-program nav-link" data-toggle="tooltip" data-placement="top" data-slave-id="{{ slave.id }}" title="Add program" style="background-color: transparent">
                 <span></span>
                 <i class="mdi mdi-add"></i>
             </button>
         </li>
 
-        <li class="nav-item">
-            <a class="nav-link" id="{{ slave.id }}-files-tab" data-toggle="tab" href="#{{ slave.id }}-files-content" role="tab">
+        <li class="nav-item ml-4" data-toggle="tooltip" data-placement="top" title="Show all avialable files for {{ slave.name }}">
+            <a class="nav-link" id="slavesObjectsFiles{{ slave.id }}" data-toggle="tab" href="#slavesObjectsFilesContent{{ slave.id }}" role="tab">
                 <i class="mdi mdi-folder "></i> Files
             </a>
         </li>
         <li class="nav-item">
-            <button type="button" class="btn add-file nav-link" data-toggle="tooltip" data-placement="top" title="Add file" style="background-color: transparent">
+            <button type="button" class="btn add-file nav-link" data-toggle="tooltip" data-placement="top" data-slave-id="{{ slave.id }}" title="Add file" style="background-color: transparent">
                 <span></span>
                 <i class="mdi mdi-add"></i>
             </button>
         </li>
     </ul>
 
-    <div class="tab-content row fsim-box-bottom" id="{{ slave.id }}-related-tabs-content">
-        <div class="tab-pane fade show container-fluid mt-4 pb-4 active" id="{{ slave.id }}-programs-content" role="tabpanel">
+    <div class="tab-content row pb-4 fsim-box-bottom" id="slavesObjectsConent{{ slave.id }}">
+        <div class="tab-pane fade show container-fluid mt-4 active" id="slavesObjectsProgramsContent{{ slave.id }}" role="tabpanel">
             {% for program in programs %}
                 {% program_entry program %}
             {% empty %}
@@ -82,7 +78,7 @@
             {% endfor %}
         </div>
 
-        <div class="tab-pane fade show container-fluid mt-4 " id="{{ slave.id }}-files-content" role="tabpanel" aria-labelledby="home-tab">
+        <div class="tab-pane fade show container-fluid mt-4 " id="slavesObjectsFilesContent{{ slave.id }}" role="tabpanel">
             {% for file in files %}
                 {% file_entry file %}
             {% empty %}
