@@ -5,6 +5,7 @@ var socket = new WebSocket('ws://' + window.location.host + '/notifications');
 
 socket.onmessage = function (data) {
     let status = Status.from_json(data.data);
+    console.log(status);
 
     if (status.is_ok()) {
         if (status.payload['slave_status'] != null) {
@@ -28,8 +29,7 @@ socket.onmessage = function (data) {
                     startstopButton.addClass('stop-slave');
 
                     // set tooltip to Stop
-                    startstopButton.prop('title', 'Stops the client');
-                    startstopButton.prop('value', 'Stop');
+                    startstopButton.prop('text', 'STOP');
 
                     break;
                 case 'disconnected':
@@ -45,7 +45,7 @@ socket.onmessage = function (data) {
                     startstopButton.addClass('start-slave');
 
                     // set tooltip to Start
-                    startstopButton.prop('title', 'Starts the client');
+                    startstopButton.prop('text', 'START');
 
                     break;
             }
@@ -62,7 +62,9 @@ socket.onmessage = function (data) {
                     });
 
                     statusContainer.addClass('fsim-status-warn');
-                    startstopButton.prop('title', 'Stops the program');
+
+                    startstopButton.data('is-running', true);
+                    startstopButton.prop('text', 'STOP');
                     break;
                 case 'finished':
                     statusContainer.removeClass(function (index, className) {
@@ -75,7 +77,8 @@ socket.onmessage = function (data) {
                         statusContainer.addClass('fsim-status-success');
                     }
 
-                    startstopButton.prop('title', 'Starts the program');
+                    startstopButton.data('is-running', false);
+                    startstopButton.prop('text', 'START');
                     break;
             }
         } else if (status.payload['message'] != null) {

@@ -7,18 +7,18 @@
 
         <div class="btn-toolbar col" role="toolbar">
             <div class="btn-group mr-2" role="group">
-                <button type="button" id="programStartStop_{{ program.id }}" class="btn btn-outline-dark start-program" data-program-id="{{ program.id }}" data-toggle="tooltip" data-placement="top" title="{% if program.is_running %}Stops{% else %}Starts{% endif %} the program">
-                    <i class="mdi mdi-power-settings-new"></i> {% if program.is_running %}Stop{% else %}Start{% endif %}
+                <button type="button" id="programStartStop_{{ program.id }}" class="btn btn-outline-dark start-program font-weight-light" data-program-id="{{ program.id }}">
+                    <i class="mdi mdi-power-settings-new"></i> {% if program.is_running %}STOP{% else %}START{% endif %}
                 </button>
             </div>
 
             <div class="btn-group mr-2" role="group">
-                <button type="button" class="btn btn-outline-dark modify-program" data-toggle="tooltip" data-placement="top" data-program-id="{{ program.id }}" data-program-name="{{ program.name }}" data-slave-id="{{ program.slave.id }}" data-program-path="{{ program.path }}" data-program-arguments="{{ program.arguments }}" title="Edit">
-                    <i class="mdi mdi-edit"></i> Edit
+                <button type="button" class="btn btn-outline-dark modify-program font-weight-light" data-program-id="{{ program.id }}" data-program-name="{{ program.name }}" data-slave-id="{{ program.slave.id }}" data-program-path="{{ program.path }}" data-program-arguments="{{ program.arguments }}">
+                    <i class="mdi mdi-edit"></i> EDIT
                 </button>
 
-                <button type="button" class="btn btn-outline-dark delete-program" data-program-id="{{ program.id }}" data-slave-id="{{ program.slave }}" data-program-name="{{ program.name }}" data-toggle="tooltip" data-placement="top" title="Delete">
-                    <i class="mdi mdi-delete"></i> Delete
+                <button type="button" class="btn btn-outline-dark delete-program font-weight-light" data-program-id="{{ program.id }}" data-slave-id="{{ program.slave }}" data-program-name="{{ program.name }} >
+                    <i class="mdi mdi-delete"></i> DELETE
                 </button>
             </div>
         </div>

@@ -30,17 +30,17 @@
 	<body>
 		<!-- Navigation -->
 		<nav class="navbar navbar-expand-lg bg-dark navbar-dark navbar-toggleable-md bg-faded mb-4">
-			<a class="navbar-brand" href="#">
+			<a class="navbar-brand text-uppercase font-weight-bold" href="#">
 				<img src="{% static 'base/favicon.svg' %}" width="32" height="32" class="d-inline-block align-top" alt="FS">
 				Flugsimulator
 			</a>
 			<div class="collapse navbar-collapse" id="navbarNav">
 				<ul class="navbar-nav">
 					<li class="nav-item">
-						<a class="nav-link {% if navbar_link == 'slaves' %}active{% endif %}" href="/slaves">Clients</a>
+						<a class="nav-link text-uppercase {% if navbar_link == 'slaves' %}active{% endif %}" href="/slaves">Clients</a>
 					</li>
-					<li class="nav-item {% if navbar_link == 'scripts' %}active{% endif %}">
-						<a class="nav-link" href="/scripts">Skripte</a>
+					<li class="nav-item text-uppercase {% if navbar_link == 'scripts' %}active{% endif %}">
+						<a class="nav-link" href="/scripts">Scripts</a>
 					</li>
 				</ul>
 			</div>
