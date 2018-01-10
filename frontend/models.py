@@ -69,6 +69,9 @@ class Slave(models.Model):
 
     @property
     def is_online(self):
+        """
+        Returns true of the current slave has connected to the master.
+        """
         try:
             return self.slavestatus.boottime != ''
         except SlaveStatus.DoesNotExist:
@@ -105,6 +108,9 @@ class Program(models.Model):
 
     @property
     def is_running(self):
+        """
+        Returns true if program is currently running.
+        """
         try:
             return self.programstatus.started != '' and self.programstatus.code == ''
         except ProgramStatus.DoesNotExist:
@@ -112,6 +118,9 @@ class Program(models.Model):
 
     @property
     def is_executed(self):
+        """
+        Returns true if the program exited.
+        """
         try:
             return self.programstatus.started != '' and self.programstatus.code != ''
         except ProgramStatus.DoesNotExist:
@@ -119,17 +128,21 @@ class Program(models.Model):
 
     @property
     def is_error(self):
+        """
+        Returns true if the current program was executed not successful, which means the error code was 0.
+        """
         try:
-            return self.programstatus.started != '' and self.programstatus.code != '' and self.programstatus.code != '0' and self.programstatus.code != '255'
+            return self.programstatus.started != '' and self.programstatus.code != '' and self.programstatus.code != '0'
         except ProgramStatus.DoesNotExist:
             return False
 
     @property
     def is_successful(self):
+        """
+        Returns true if the current program was executed successful.
+        """
         try:
-            return self.programstatus.started != '' and self.programstatus.code != '' and (
-                self.programstatus.code == '0'
-                or self.programstatus.code == '255')
+            return self.programstatus.started != '' and self.programstatus.code != '' and self.programstatus.code == '0'
         except ProgramStatus.DoesNotExist:
             return False
 

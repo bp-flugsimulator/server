@@ -66,7 +66,7 @@ socket.onmessage = function (data) {
                         return (className.match(/(^|\s)fsim-status-\S+/g) || []).join(' ');
                     });
 
-                    if (status.payload['code'] !== 0 && status.payload['code'] !== 255) {
+                    if (status.payload['code'] !== 0) {
                         statusContainer.addClass('fsim-status-error');
                     } else {
                         statusContainer.addClass('fsim-status-success');
