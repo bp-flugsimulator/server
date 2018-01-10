@@ -1,3 +1,6 @@
+"""
+This module contains utility classes.
+"""
 from django.http.response import HttpResponse
 
 from utils.status import Status
