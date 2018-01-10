@@ -94,7 +94,8 @@ class Program(models.Model):
     slave = models.ForeignKey(Slave, on_delete=models.CASCADE)
 
     class Meta:
-        unique_together = (('name', 'slave'),)
+        unique_together = (('name', 'slave'), )
+
 
 class File(models.Model):
     """
@@ -121,7 +122,55 @@ class File(models.Model):
     slave = models.ForeignKey(Slave, on_delete=models.CASCADE)
 
     class Meta:
-        unique_together = (('name', 'slave'),)
+        unique_together = (('name', 'slave'), )
+
+
+class Script(models.Model):
+    """
+    Represents a script file in a json format.
+
+    Attributes
+    ----------
+    name: str
+        The name of the script (has to be unique for every slave)
+    """
+    name = models.CharField(unique=True, max_length=200)
+
+
+class ScriptGraphPrograms(models.Model):
+    """
+    Represents a dependency graph for programs in a script file.
+
+    Attributes
+    ----------
+        script: Script id
+        index: Order in which the script starts
+        program: Which program will be started
+    """
+    script = models.ForeignKey(Script, on_delete=models.CASCADE)
+    index = models.IntegerField(null=False)
+    program = models.ForeignKey(Program, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = (('script', 'index', 'program'), )
+
+
+class ScriptGraphFiles(models.Model):
+    """
+    Represents a dependency graph for files in a script file.
+
+    Attributes
+    ----------
+        script: Script id
+        index: Order in which the script starts
+        file: Which file will be move/delete/created
+    """
+    script = models.ForeignKey(Script, on_delete=models.CASCADE)
+    index = models.IntegerField(null=False)
+    file = models.ForeignKey(File, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = (('script', 'index', 'file'), )
 
 
 class ProgramStatus(models.Model):

@@ -2,7 +2,10 @@ from django.http import HttpResponseForbidden
 from django.http.request import QueryDict
 from django.core.exceptions import ValidationError
 
-from .models import Slave as SlaveModel, Program as ProgramModel, ProgramStatus as ProgramStatusModel, SlaveStatus as SlaveStatusModel, File as FileModel
+
+from .models import Slave as SlaveModel, Program as ProgramModel, ProgramStatus as ProgramStatusModel, SlaveStatus as SlaveStatusModel, Script as ScriptModel, ScriptGraphFiles as SGFModel, ScriptGraphPrograms as SGPModel, File as FileModel
+from .scripts import Script
+
 
 from .forms import SlaveForm, ProgramForm, FileForm
 from server.utils import StatusResponse
@@ -38,6 +41,18 @@ def add_slave(request):
             form.save()
             return StatusResponse(Status.ok(""))
         return StatusResponse(Status.err(form.errors))
+    elif request.method == 'GET':
+        # the URL takes an argument with ?q=<string>
+        # e.g. /slaves?q=test
+        query = request.GET.get('q', '')
+        return StatusResponse(
+            Status.ok(
+                list(
+                    set([
+                        obj['name']
+                        for obj in SlaveModel.objects.filter(
+                            name__contains=query).values("name")
+                    ]))))
     else:
         return HttpResponseForbidden()
 
@@ -116,6 +131,55 @@ def add_program(request):
                 return StatusResponse(Status.err(error_dict))
         else:
             return StatusResponse(Status.err(form.errors))
+    elif request.method == 'GET':
+        # the URL takes an argument with ?q=<string>
+        # e.g. /programs?q=test
+        query = request.GET.get('q', '')
+        return StatusResponse(
+            Status.ok(
+                list(
+                    set([
+                        obj['name']
+                        for obj in ProgramModel.objects.filter(
+                            name__contains=query).values("name")
+                    ]))))
+    else:
+        return HttpResponseForbidden()
+
+
+def shutdown_slave(request, id):
+    """
+    answers a request to shutdown slave with
+    the given id
+    ----------
+    request: HttpRequest
+        a GET request
+    id: int
+        the id of the slave which will be modified
+    Returns
+    -------
+    A HttpResponse with a JSON object which
+    can contain errors.
+    If the request method is something other
+    than GET, then a HttpResponseForbidden()
+    will be returned.
+    """
+    if request.method == 'GET':
+        if SlaveModel.objects.filter(id=id).exists():
+            slave = SlaveModel.objects.get(id=id)
+            if SlaveStatusModel.objects.filter(slave=slave).exists():
+                Group('client_' + str(id)).send({
+                    'text':
+                    Command(method="shutdown").to_json()
+                })
+                return StatusResponse(Status.ok(''))
+            else:
+                return StatusResponse(
+                    Status.err('Can not shutdown offline Client'))
+        else:
+            return StatusResponse(
+                Status.err('Can not shutdown unknown Client'))
+
     else:
         return HttpResponseForbidden()
 
@@ -181,6 +245,8 @@ def manage_program(request, programId):
         program = ProgramModel.objects.get(id=programId)
         if SlaveStatusModel.objects.filter(slave=program.slave).exists():
             ProgramStatusModel(program=program, started=timezone.now()).save()
+
+            # send command to the client
             Group('client_' + str(program.slave.id)).send({
                 'text':
                 Command(
@@ -188,6 +254,15 @@ def manage_program(request, programId):
                     pid=program.id,
                     path=program.path,
                     arguments=split(program.arguments)).to_json()
+            })
+
+            # tell webinterface that the program has ended
+            Group('notifications').send({
+                'text':
+                Status.ok({
+                    "program_status": "started",
+                    "pid": program.id,
+                }).to_json()
             })
             return StatusResponse(Status.ok(''))
         else:
@@ -216,6 +291,47 @@ def manage_program(request, programId):
             return StatusResponse(Status.err(form.errors))
     else:
         return HttpResponseForbidden()
+
+
+def manage_script(request, scriptId):
+    if request.method == 'GET':
+        try:
+            # adds ?slaves=int&program_key=int&file_key=int to the URL
+            # to allow a dynamic format for the json string
+            slave_key = request.GET.get('slaves', 'int')
+            program_key = request.GET.get('programs', 'int')
+            file_key = request.GET.get('files', 'int')
+
+            if slave_key != 'str' and slave_key != 'int':
+                return StatusResponse(
+                    Status.err(
+                        "slaves only allow str or int. (given {})".format(
+                            slave_key)))
+
+            if program_key != 'str' and program_key != 'int':
+                return StatusResponse(
+                    Status.err(
+                        "programs only allow str or int. (given {})".format(
+                            program_key)))
+
+            if file_key != 'str' and file_key != 'int':
+                return StatusResponse(
+                    Status.err(
+                        "files only allow str or int. (given {})".format(
+                            file_key)))
+
+            script = Script.from_model(
+                scriptId,
+                slave_key,
+                program_key,
+                file_key,
+            )
+            return StatusResponse(Status.ok(dict(script)))
+        except ScriptModel.DoesNotExist:
+            return StatusResponse(Status.err("Script does not exist."))
+    else:
+        return HttpResponseForbidden()
+
 
 def add_file(request):
     """
@@ -253,9 +369,21 @@ def add_file(request):
                 return StatusResponse(Status.err(error_dict))
         else:
             return StatusResponse(Status.err(form.errors))
+    elif request.method == 'GET':
+        # the URL takes an argument with ?q=<string>
+        # e.g. /files?q=test
+        query = request.GET.get('q', '')
+
+        return StatusResponse(
+            Status.ok(
+                list(
+                    set([
+                        obj['name']
+                        for obj in FileModel.objects.filter(
+                            name__contains=query).values("name")
+                    ]))))
     else:
         return HttpResponseForbidden()
-
 
 def manage_file(request, fileId):
     """

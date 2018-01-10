@@ -5728,3 +5728,51 @@ a.text-dark:focus, a.text-dark:hover {
 
 .invisible {
   visibility: hidden !important; }
+
+div.jsoneditor {
+  background-color: #323232;
+  border: 1px solid #262626; }
+
+div.jsoneditor-menu {
+  background-color: #545454;
+  border-bottom: #262626; }
+
+div.jsoneditor-readonly {
+  color: #606060; }
+
+div.jsoneditor-values {
+  color: #fff; }
+
+div.jsoneditor-field.jsoneditor-highlight-active,
+div.jsoneditor-field.jsoneditor-highlight-active:focus,
+div.jsoneditor-field.jsoneditor-highlight-active:hover,
+div.jsoneditor-value.jsoneditor-highlight-active,
+div.jsoneditor-value.jsoneditor-highlight-active:focus,
+div.jsoneditor-value.jsoneditor-highlight-active:hover {
+  background-color: #484848;
+  border: 1px solid #262626;
+  border-radius: 2px; }
+
+div.jsoneditor-field.jsoneditor-highlight,
+div.jsoneditor-field[contenteditable=true]:focus,
+div.jsoneditor-field[contenteditable=true]:hover,
+div.jsoneditor-value.jsoneditor-highlight,
+div.jsoneditor-value[contenteditable=true]:focus,
+div.jsoneditor-value[contenteditable=true]:hover {
+  background-color: #484848;
+  border: 1px solid #262626;
+  border-radius: 2px; }
+
+tr.jsoneditor-highlight,
+tr.jsoneditor-selected {
+  background-color: #484848;
+  border: 1px solid #262626; }
+
+div.jsoneditor-field {
+  color: #fff; }
+
+div.jsoneditor-value.jsoneditor-string {
+  color: #0eb077; }
+
+div.jsoneditor-value.jsoneditor-number {
+  color: #e83e8c; }

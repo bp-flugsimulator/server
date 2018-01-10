@@ -432,11 +432,42 @@ $(document).ready(function () {
         });
     });
 
-    $('.startSlave').click(function () {
+    $('.start-slave').click(function () {
         let id = $(this).parents('.card').attr('id');
         let el = $(this);
         $.get({
             url: '/api/slave/' + id + '/wol',
+            beforeSend: function (xhr) {
+                xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'))
+            }
+        }).done(function (data) {
+            let status = Status.from_json(JSON.stringify(data));
+            if (status.is_ok()) {
+                el.addClass('animated pulse');
+                el.one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend', function () {
+                    el.removeClass('animated pulse');
+                });
+            } else {
+                $.notify({
+                    message: 'Error: ' + data.payload
+                }, {
+                    type: 'danger'
+                });
+            }
+        }).fail(function () {
+            $.notify({
+                message: 'Error in Ajax Request.'
+            }, {
+                type: 'danger'
+            });
+        });
+    });
+
+    $('.stop-slave').click(function () {
+        let id = $(this).parents('.card').attr('id');
+        let el = $(this);
+        $.get({
+            url: '/api/slave/' + id + '/shutdown',
             beforeSend: function (xhr) {
                 xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'))
             }

@@ -38,17 +38,13 @@ $gray-800: #262626;
 $gray-900: #212121;
 $black: #000;
 $grays: (100: $gray-100, 200: $gray-200, 300: $gray-300, 400: $gray-400, 500: $gray-500, 600: $gray-600, 700: $gray-700, 800: $gray-800, 900: $gray-900);
-$theme-colors: (primary: $teal, secondary: $purple,  success: $green, info: $cyan, warning: $orange, danger: $red, light: $gray-100, dark: $gray-900);
-$colors: (blue: $blue, indigo: $indigo, purple: $purple, pink: $pink, red: $red, orange: $orange, yellow: $yellow, green: $green, teal: $teal, cyan: $cyan, white: $white, gray: $gray-600,gray-dark: $gray-800);
+$theme-colors: (primary: $teal, secondary: $purple, success: $green, info: $cyan, warning: $orange, danger: $red, light: $gray-100, dark: $gray-900);
+$colors: (blue: $blue, indigo: $indigo, purple: $purple, pink: $pink, red: $red, orange: $orange, yellow: $yellow, green: $green, teal: $teal, cyan: $cyan, white: $white, gray: $gray-600, gray-dark: $gray-800);
 $theme-color-interval: 8%;
-
-
 // Spacing
 $spacer: 1rem;
 $spacers: (0: 0, 1: ($spacer * 0.25), 2: ($spacer * 0.5), 3: $spacer, 4: ($spacer * 1.5), 5: ($spacer * 3));
 $sizes: (25: 25%, 50: 50%, 75: 75%, 100: 100%);
-
-
 // Options
 $enable-rounded: false;
 $enable-shadows: false;
@@ -57,27 +53,19 @@ $enable-transitions: true;
 $enable-hover-media-query: false;
 $enable-grid-classes: true;
 $enable-print-styles: true;
-
-
 // Body
 $body-bg: $gray-900;
 $body-color: $white;
-
-
 // Links
 $link-color: theme-color('primary');
 $link-decoration: none;
 $link-hover-color: darken($link-color, 15%);
 $link-hover-decoration: underline;
-
-
 // Grid
 $grid-breakpoints: (xs: 0, sm: 576px, md: 768px, lg: 992px, xl: 1200px);
 $container-max-widths: (sm: 540px, md: 720px, lg: 960px, xl: 1140px);
 $grid-columns: 12;
 $grid-gutter-width: 30px;
-
-
 // Components
 $line-height-lg: 1.5;
 $line-height-sm: 1.5;
@@ -91,11 +79,20 @@ $caret-width: 0.3em;
 $transition-base: all 0.2s ease-in-out;
 $transition-fade: opacity 0.15s linear;
 $transition-collapse: height 0.35s ease;
-
-
 // Fonts
-$font-family-sans-serif: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-$font-family-monospace: Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+$font-family-sans-serif: -apple-system,
+BlinkMacSystemFont,
+'Segoe UI',
+Roboto,
+'Helvetica Neue',
+Arial,
+sans-serif;
+$font-family-monospace: Menlo,
+Monaco,
+Consolas,
+'Liberation Mono',
+'Courier New',
+monospace;
 $font-family-base: $font-family-sans-serif;
 $font-size-base: 1rem;
 $font-size-lg: 1.25rem;
@@ -138,8 +135,6 @@ $kbd-box-shadow: inset 0 -0.1rem 0 rgba($black, 0.25);
 $nested-kbd-font-weight: $font-weight-bold;
 $list-inline-padding: 5px;
 $mark-bg: #fcf8e3;
-
-
 // Buttons
 $input-btn-padding-y: 0.5rem;
 $input-btn-padding-x: 0.75rem;
@@ -151,7 +146,8 @@ $input-btn-padding-y-lg: 0.5rem;
 $input-btn-padding-x-lg: 1rem;
 $input-btn-line-height-lg: 1.5;
 $btn-font-weight: $font-weight-normal;
-$btn-box-shadow: inset 0 1px 0 rgba($white, 0.15), 0 1px 1px rgba($black, 0.075);
+$btn-box-shadow: inset 0 1px 0 rgba($white, 0.15),
+0 1px 1px rgba($black, 0.075);
 $btn-focus-box-shadow: 0 0 0 3px rgba(theme-color('primary'), 0.25);
 $btn-active-box-shadow: inset 0 3px 5px rgba($black, 0.125);
 $btn-link-disabled-color: $gray-600;
@@ -160,8 +156,6 @@ $btn-border-radius: $border-radius;
 $btn-border-radius-lg: $border-radius-lg;
 $btn-border-radius-sm: $border-radius-sm;
 $btn-transition: all 0.15s ease-in-out;
-
-
 // Forms
 $input-bg: $gray-700;
 $input-disabled-bg: $gray-400;
@@ -174,17 +168,19 @@ $input-border-radius-lg: $border-radius-lg;
 $input-border-radius-sm: $border-radius-sm;
 $input-focus-bg: $input-bg;
 $input-focus-border-color: theme-color('primary');
-$input-focus-box-shadow: $input-box-shadow, $btn-focus-box-shadow;
+$input-focus-box-shadow: $input-box-shadow,
+$btn-focus-box-shadow;
 $input-focus-color: $white;
 $input-placeholder-color: $gray-100;
 $input-height-border: $input-btn-border-width * 2;
-$input-height-inner: ($font-size-base * $input-btn-line-height) + ($input-btn-padding-y * 2);
+$input-height-inner: ($font-size-base * $input-btn-line-height)+($input-btn-padding-y * 2);
 $input-height: calc(#{$input-height-inner} + #{$input-height-border});
-$input-height-inner-sm: ($font-size-sm * $input-btn-line-height-sm) + ($input-btn-padding-y-sm * 2);
+$input-height-inner-sm: ($font-size-sm * $input-btn-line-height-sm)+($input-btn-padding-y-sm * 2);
 $input-height-sm: calc(#{$input-height-inner-sm} + #{$input-height-border});
-$input-height-inner-lg: ($font-size-sm * $input-btn-line-height-lg) + ($input-btn-padding-y-lg * 2);
+$input-height-inner-lg: ($font-size-sm * $input-btn-line-height-lg)+($input-btn-padding-y-lg * 2);
 $input-height-lg: calc(#{$input-height-inner-lg} + #{$input-height-border});
-$input-transition: border-color ease-in-out 0.15s, box-shadow ease-in-out 0.15s;
+$input-transition: border-color ease-in-out 0.15s,
+box-shadow ease-in-out 0.15s;
 $form-text-margin-top: 0.25rem;
 $form-check-margin-bottom: 0.5rem;
 $form-check-input-gutter: 1.25rem;
@@ -206,7 +202,8 @@ $custom-control-description-disabled-color: $gray-400;
 $custom-control-indicator-checked-color: $white;
 $custom-control-indicator-checked-bg: theme-color('primary');
 $custom-control-indicator-checked-box-shadow: none;
-$custom-control-indicator-focus-box-shadow: 0 0 0 1px $body-bg, 0 0 0 3px theme-color('primary');
+$custom-control-indicator-focus-box-shadow: 0 0 0 1px $body-bg,
+0 0 0 3px theme-color('primary');
 $custom-control-indicator-active-color: $white;
 $custom-control-indicator-active-bg: lighten(theme-color('primary'), 35%);
 $custom-control-indicator-active-box-shadow: none;
@@ -230,12 +227,14 @@ $custom-select-border-width: $input-btn-border-width;
 $custom-select-border-color: $input-border-color;
 $custom-select-border-radius: $border-radius;
 $custom-select-focus-border-color: lighten(theme-color('primary'), 25%);
-$custom-select-focus-box-shadow: inset 0 1px 2px rgba($black, 0.075), 0 0 5px rgba($custom-select-focus-border-color, 0.5);
+$custom-select-focus-box-shadow: inset 0 1px 2px rgba($black, 0.075),
+0 0 5px rgba($custom-select-focus-border-color, 0.5);
 $custom-select-font-size-sm: 75%;
 $custom-select-height-sm: $input-height-sm;
 $custom-file-height: 2.5rem;
 $custom-file-width: 14rem;
-$custom-file-focus-box-shadow: 0 0 0 0.075rem $white, 0 0 0 0.2rem theme-color('primary');
+$custom-file-focus-box-shadow: 0 0 0 0.075rem $white,
+0 0 0 0.2rem theme-color('primary');
 $custom-file-padding-y: 1rem;
 $custom-file-padding-x: 0.5rem;
 $custom-file-line-height: 1.5;
@@ -250,8 +249,6 @@ $custom-file-button-bg: $gray-200;
 $custom-file-text: (placeholder: (en: 'Choose file...'), button-label: (en: 'Browse'));
 $form-feedback-valid-color: theme-color('success');
 $form-feedback-invalid-color: theme-color('danger');
-
-
 // Dropdown
 $dropdown-min-width: 10rem;
 $dropdown-padding-y: 0.5rem;
@@ -270,8 +267,6 @@ $dropdown-link-disabled-color: $gray-200;
 $dropdown-item-padding-y: 0.25rem;
 $dropdown-item-padding-x: 1.5rem;
 $dropdown-header-color: $purple;
-
-
 // Navs
 $nav-link-padding-y: 0.5rem;
 $nav-link-padding-x: 1rem;
@@ -286,8 +281,6 @@ $nav-tabs-link-active-border-color: $purple;
 $nav-pills-border-radius: $border-radius;
 $nav-pills-link-active-color: $component-active-color;
 $nav-pills-link-active-bg: $component-active-bg;
-
-
 // Navbar
 $navbar-padding-y: ($spacer / 2);
 $navbar-padding-x: $spacer;
@@ -309,8 +302,6 @@ $navbar-light-hover-color: rgba($black, 0.7);
 $navbar-light-active-color: rgba($black, 0.9);
 $navbar-light-disabled-color: rgba($black, 0.3);
 $navbar-light-toggler-border-color: rgba($black, 0.1);
-
-
 // Tables
 $table-cell-padding: 0.75rem;
 $table-cell-padding-sm: 0.3rem;
@@ -327,8 +318,6 @@ $table-inverse-accent-bg: $gray-400;
 $table-inverse-hover-bg: $gray-600;
 $table-inverse-border-color: $gray-900;
 $table-inverse-color: $white;
-
-
 // Z Index
 $zindex-dropdown: 1000;
 $zindex-sticky: 1020;
@@ -337,8 +326,6 @@ $zindex-modal-backdrop: 1040;
 $zindex-modal: 1050;
 $zindex-popover: 1060;
 $zindex-tooltip: 1070;
-
-
 // Pagination
 $pagination-padding-y: 0.5rem;
 $pagination-padding-x: 0.75rem;
@@ -360,13 +347,9 @@ $pagination-active-border-color: theme-color('primary');
 $pagination-disabled-color: $gray-600;
 $pagination-disabled-bg: $white;
 $pagination-disabled-border-color: #ddd;
-
-
 // Jumbotron
 $jumbotron-padding: 2rem;
 $jumbotron-bg: $body-bg;
-
-
 // Cards
 $card-spacer-y: 0.75rem;
 $card-spacer-x: 1.25rem;
@@ -381,8 +364,6 @@ $card-deck-margin: ($grid-gutter-width / 2);
 $card-columns-count: 3;
 $card-columns-gap: 1.25rem;
 $card-columns-margin: $card-spacer-y;
-
-
 // Tooltip
 $tooltip-max-width: 200px;
 $tooltip-color: $white;
@@ -394,8 +375,6 @@ $tooltip-margin: 0;
 $tooltip-arrow-width: 5px;
 $tooltip-arrow-height: 5px;
 $tooltip-arrow-color: $tooltip-bg;
-
-
 // Popovers
 $popover-inner-padding: 1px;
 $popover-bg: $white;
@@ -415,8 +394,6 @@ $popover-arrow-height: 5px;
 $popover-arrow-color: $popover-bg;
 $popover-arrow-outer-width: ($popover-arrow-width + 1px);
 $popover-arrow-outer-color: fade-in($popover-border-color, 0.05);
-
-
 // Badges
 $badge-color: $white;
 $badge-font-size: 75%;
@@ -425,8 +402,6 @@ $badge-padding-y: 0.25em;
 $badge-padding-x: 0.4em;
 $badge-pill-padding-x: 0.6em;
 $badge-pill-border-radius: 10rem;
-
-
 // Modals
 $modal-inner-padding: 15px;
 $modal-dialog-margin: 10px;
@@ -448,8 +423,6 @@ $modal-lg: 800px;
 $modal-md: 500px;
 $modal-sm: 300px;
 $modal-transition: transform 0.3s ease-out;
-
-
 // Alerts
 $alert-padding-y: 0.75rem;
 $alert-padding-x: 1.25rem;
@@ -457,8 +430,6 @@ $alert-margin-bottom: 1rem;
 $alert-border-radius: $border-radius;
 $alert-link-font-weight: $font-weight-bold;
 $alert-border-width: $border-width;
-
-
 // Progress bars
 $progress-height: 1rem;
 $progress-font-size: 0.75rem;
@@ -469,8 +440,6 @@ $progress-bar-color: $white;
 $progress-bar-bg: theme-color('primary');
 $progress-bar-animation-timing: 1s linear infinite;
 $progress-bar-transition: width 0.6s ease;
-
-
 // List group
 $list-group-bg: $gray-700;
 $list-group-border-color: $gray-800;
@@ -488,8 +457,6 @@ $list-group-action-color: $white;
 $list-group-action-hover-color: $list-group-action-color;
 $list-group-action-active-color: $body-color;
 $list-group-action-active-bg: $gray-200;
-
-
 // Image thumbnails
 $thumbnail-padding: 0.25rem;
 $thumbnail-bg: $body-bg;
@@ -498,13 +465,9 @@ $thumbnail-border-color: $body-bg;
 $thumbnail-border-radius: $border-radius;
 $thumbnail-box-shadow: 0 1px 2px rgba($black, 0.075);
 $thumbnail-transition: all 0.2s ease-in-out;
-
-
 // Figures
 $figure-caption-font-size: 90%;
 $figure-caption-color: $gray-200;
-
-
 // Breadcrumbs
 $breadcrumb-padding-y: 0.75rem;
 $breadcrumb-padding-x: 1rem;
@@ -513,8 +476,6 @@ $breadcrumb-bg: $gray-700;
 $breadcrumb-divider-color: $gray-200;
 $breadcrumb-active-color: $white;
 $breadcrumb-divider: '->';
-
-
 // Carousel
 $carousel-control-color: theme-colors('primary');
 $carousel-control-width: 25%;
@@ -527,15 +488,11 @@ $carousel-caption-width: 70%;
 $carousel-caption-color: $white;
 $carousel-control-icon-width: 20px;
 $carousel-transition: transform 0.6s ease;
-
-
 // Close
 $close-font-size: $font-size-base * 1.5;
 $close-font-weight: $font-weight-bold;
 $close-color: $white;
 $close-text-shadow: 0 1px 0 $white;
-
-
 // Code
 $code-font-size: 90%;
 $code-padding-y: 0.2rem;
@@ -546,8 +503,6 @@ $kbd-color: $white;
 $kbd-bg: $gray-400;
 $pre-color: $white;
 $pre-scrollable-max-height: 340px;
-
-
 // Options
 $enable-rounded: false;
 $enable-shadows: false;
@@ -556,7 +511,62 @@ $enable-transitions: true;
 $enable-hover-media-query: false;
 $enable-grid-classes: true;
 $enable-print-styles: true;
-
-
 // My Variables
 @import "node_modules/bootstrap/scss/bootstrap";
+div.jsoneditor {
+    background-color: $gray-700;
+    border: 1px solid $gray-800;
+}
+
+div.jsoneditor-menu {
+    background-color: $gray-300;
+    border-bottom: $gray-800;
+}
+
+div.jsoneditor-readonly {
+    color: $gray-200;
+}
+
+div.jsoneditor-values {
+    color: $white;
+}
+
+div.jsoneditor-field.jsoneditor-highlight-active,
+div.jsoneditor-field.jsoneditor-highlight-active:focus,
+div.jsoneditor-field.jsoneditor-highlight-active:hover,
+div.jsoneditor-value.jsoneditor-highlight-active,
+div.jsoneditor-value.jsoneditor-highlight-active:focus,
+div.jsoneditor-value.jsoneditor-highlight-active:hover {
+    background-color: $gray-400;
+    border: 1px solid $gray-800;
+    border-radius: 2px
+}
+
+div.jsoneditor-field.jsoneditor-highlight,
+div.jsoneditor-field[contenteditable=true]:focus,
+div.jsoneditor-field[contenteditable=true]:hover,
+div.jsoneditor-value.jsoneditor-highlight,
+div.jsoneditor-value[contenteditable=true]:focus,
+div.jsoneditor-value[contenteditable=true]:hover {
+    background-color: $gray-400;
+    border: 1px solid $gray-800;
+    border-radius: 2px
+}
+
+tr.jsoneditor-highlight,
+tr.jsoneditor-selected {
+    background-color: $gray-400;
+    border: 1px solid $gray-800;
+}
+
+div.jsoneditor-field {
+    color: $white;
+}
+
+div.jsoneditor-value.jsoneditor-string {
+    color: $teal;
+}
+
+div.jsoneditor-value.jsoneditor-number {
+    color: $pink;
+}
