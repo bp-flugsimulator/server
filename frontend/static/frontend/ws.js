@@ -10,9 +10,6 @@ socket.onmessage = function (data) {
         let statusTab = $('#slaveTab' + status.payload['sid']);
         let startstopButton = $('#slaveStartStop_' + status.payload['sid']);
 
-        console.log(statusContainer);
-        console.log(startstopButton);
-
         switch (status.payload['slave_status']) {
             case 'connected':
                 // swap status

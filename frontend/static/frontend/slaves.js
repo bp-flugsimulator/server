@@ -114,6 +114,38 @@ $(document).ready(function () {
         }
     });
 
+    // Restores the last clicked slave
+    (function () {
+        let href = localStorage.getItem('status');
+        if (href !== null) {
+            let iter = $('.slave-tab-link').filter(function (idx, val) {
+                return val.hasAttribute('href') && val.getAttribute('href') === href;
+            });
+
+            iter.click();
+        }
+    })();
+
+    // Set color of the current selected.
+    $('.slave-tab-link.active').parent('li').css('background-color', '#dbdbdc');
+
+    // Changes the color of the clicked slave, if it was not clicked before.
+    $('.slave-tab-link').click(function (event) {
+        if (!$(this).hasClass('active')) {
+            // Remove color from the old tabs
+            $('.slave-tab-link').each(function (idx, val) {
+                $(val).parent('li').css('background-color', 'transparent');
+            });
+
+            // Save Class when opening for every Slave
+            localStorage.setItem('status', $(this).attr('href'));
+
+            // Change the color of the current tab
+            $(this).parent('li').css('background-color', '#dbdbdc');
+        }
+    });
+
+
     /*function for deleting a slave, it is added to the delete-slave button*/
     $('.delete-slave').click(function () {
         //get id and name of the slave and create deletion message
@@ -482,45 +514,12 @@ $(document).ready(function () {
         });
     });
 
-    // Save Class when opening/closing accordion for every Slave
-    $('#slaveTabList').children().each(function () {
-        let child_id = this.id;
-        let collapse_id = "#collapse" + child_id;
-
-        $(collapse_id).on('show.bs.collapse', function () {
-            console.log("show");
-            // localStorage.setItem(status, "show");
-        });
-        $(collapse_id).on('hide.bs.collapse', function () {
-            console.log("hide");
-            // localStorage.setItem(status, "")
-        });
-
-        // restore saved class
-        // $(collapse_id).addClass(localStorage.getItem(status));
-    });
-
-    $('.slave-tab-link.active').parent('li').css('background-color', '#dbdbdc');
-
-    $('.slave-tab-link').click(function (event) {
-        if (!$(this).hasClass('active')) {
-            console.log("test");
-
-            $('.slave-tab-link').each(function (idx, val) {
-                console.log(val);
-                $(val).parent('li').css('background-color', 'transparent');
-            });
-
-            $(this).parent('li').css('background-color', '#dbdbdc');
-        }
-    });
-
     // fixes the tooltip from staying after button is pressed
     $('[data-toggle="tooltip"]').tooltip({
         trigger: 'hover',
         'delay': {
-            show: 5000,
-            hide: 3000
+            show: 100,
+            hide: 300
         }
     })
 });
