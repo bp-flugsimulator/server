@@ -26,25 +26,27 @@
 
     <div class="row ml-4 mr-4">
         <div class="col-2">
-            <div class="row-1" role="group">
-                <span class="col-1 client-header">Clients</span>
-                <button type="button" class="btn add-slave col-1" data-toggle="tooltip" data-placement="top" title="Add client" style="background-color: transparent;">
-                        <i class="mdi mdi-add"></i>
-                </button>
+            <div class="row-1 form-group" >
+                <label class="client-header">
+                    Clients
+                    <button type="button" class="btn add-slave inline-add-button" data-toggle="tooltip" data-placement="top" title="Add client" style="background-color: transparent;">
+                            <i class="mdi mdi-add"></i>
+                    </button>
+                </label>
             </div>
 
-            <div class="row">
+            <div class="row-1">
                 <ul class="nav flex-column col" id="slaveTabList" role="tablist">
                     {% for slave in slaves %}
-                        <li class="nav-item mt-2 pt-2 pb-2 pr-4 pl-4 fsim-box {% if slave.is_online %}fsim-status-success{% else %}fsim-status-error{% endif %}" id="slaveTab{{ slave.id }}">
+                        <li class="nav-item pt-2 pb-2 pr-4 pl-4 fsim-box {% if slave.is_online %}fsim-status-success{% else %}fsim-status-error{% endif %}" id="slaveTab{{ slave.id }}">
                             <a class="nav-link slave-tab-link {% if forloop.first %} active {% endif %}"  data-toggle="tab" href="#slaveTabContent{{ slave.id }}" role="tab">
                                 <i class="mdi mdi-apps"></i> {{ slave.name  }}
                             </a>
                         </li>
                     {% empty %}
-                        <li class="nav-item pt-2 pb-2 pr-4 pl-4">
-                            <a class="nav-link active" id="slaveTabEmpty" data-toggle="tab" href="#slaveTabContentEmpty" role="tab">None
-                            </a>
+
+                        <li class="nav-item pb-2 pt-2 pr-4 pl-4 fsim-box fsim-status-unkown">
+                            <span>No clients registered</span>
                         </li>
                     {% endfor %}
                 </ul>

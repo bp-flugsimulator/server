@@ -25,20 +25,24 @@
 </div>
 
 <div class="row ml-4 mr-4">
-    <div class="col-sm-2">
-        <div class="row-1" role="group">
-            <span class="col-1 script-header">Scripts</span>
-
-            <button type="button" class="btn add-script col-1" data-toggle="tooltip" data-placement="top" title="Add Script" style="background-color: transparent;">
-                    <i class="mdi mdi-add"></i>
-            </button>
+    <div class="col-2">
+        <div class="row-1 form-group">
+            <label class="client-header">
+                Scripts
+                <button type="button" class="btn add-script" data-toggle="tooltip" data-placement="top" title="Add script" style="background-color: transparent;">
+                        <i class="mdi mdi-add"></i>
+                </button>
         </div>
 
-        <div class="row">
+        <div class="row-1">
             <ul class="nav flex-column col" id="script-tabs" role="tablist">
                 {% for script in scripts %}
-                    <li class="nav-item mt-2 pt-2 pb-2 pr-4 pl-4 fsim-status-unkown fsim-box">
+                    <li class="nav-item pt-2 pb-2 pr-4 pl-4 fsim-status-unkown fsim-box">
                     <a class="nav-link" id="{{ script.id }}-tab" data-toggle="tab" href="#{{ script.id }}-tab-content" role="tab"><i class="mdi mdi-description"></i> {{ script.name }}</a>
+                    </li>
+                {% empty %}
+                    <li class="nav-item pt-2 pb-2 pr-4 pl-4 fsim-status-unkown fsim-box">
+                        <span>No scripts registered</span>
                     </li>
                 {% endfor %}
             </ul>

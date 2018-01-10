@@ -539,5 +539,16 @@ $enable-print-styles: true;
 
 .client-header,
 .script-header {
-    font-size: 20px;
+    font-size: 22px;
+    border-block-end: 1px solid black;
+}
+
+.inline-add-button {
+    background: transparent;
+    color: $teal;
+}
+
+.inline-add-button:hover {
+    color: theme-color('secondary');
+    cursor: pointer;
 }

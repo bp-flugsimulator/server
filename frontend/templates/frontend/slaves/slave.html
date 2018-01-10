@@ -1,5 +1,5 @@
 {% load components %}
-    <div class="row pt-4 mb-4 fsim-box {% if slave.is_online %} fsim-status-success{% else %}fsim-status-error{% endif %}" id="slaveStatusContainer_{{ slave.id }}">
+    <div class="row pt-4 mb-4 pb-4 fsim-box {% if slave.is_online %} fsim-status-success{% else %}fsim-status-error{% endif %}" id="slaveStatusContainer_{{ slave.id }}">
         <div class="container-fluid">
             <div class="row">
                 <div class="slave-name col">
@@ -41,29 +41,22 @@
     </div>
 
     <ul class="nav nav-tabs row" id="slavesObjectsList{{ slave.id }}" role="tablist">
-        <li class="nav-item" data-toggle="tooltip" data-placement="top" title="Show all avialable programs for {{ slave.name }}">
+        <li class="nav-item">
             <a class="nav-link active" id="slavesObjectsPrograms{{ slave.id }}" data-toggle="tab" href="#slavesObjectsProgramsContent{{ slave.id }}" role="tab" >
                 <i class="mdi mdi-widgets"></i> Programs
+                <button type="button" class="btn add-program inline-add-button" data-slave-id="{{ slave.id }}" data-toggle="tooltip" data-placement="top" title="Adds a new program for the client.">
+                    <i class="mdi mdi-add"></i>
+                </button>
             </a>
         </li>
 
-        <li class="nav-item mr-4">
-            <button type="button" class="btn add-program nav-link" data-toggle="tooltip" data-placement="top" data-slave-id="{{ slave.id }}" title="Add program" style="background-color: transparent">
-                <span></span>
-                <i class="mdi mdi-add"></i>
-            </button>
-        </li>
-
-        <li class="nav-item ml-4" data-toggle="tooltip" data-placement="top" title="Show all avialable files for {{ slave.name }}">
+        <li class="nav-item" >
             <a class="nav-link" id="slavesObjectsFiles{{ slave.id }}" data-toggle="tab" href="#slavesObjectsFilesContent{{ slave.id }}" role="tab">
                 <i class="mdi mdi-folder "></i> Files
+                <button type="button" class="btn add-file inline-add-button" data-slave-id="{{ slave.id }}" data-toggle="tooltip" data-placement="top" title="Adds a new file/folder for the client.">
+                    <i class="mdi mdi-add"></i>
+                </button>
             </a>
-        </li>
-        <li class="nav-item">
-            <button type="button" class="btn add-file nav-link" data-toggle="tooltip" data-placement="top" data-slave-id="{{ slave.id }}" title="Add file" style="background-color: transparent">
-                <span></span>
-                <i class="mdi mdi-add"></i>
-            </button>
         </li>
     </ul>
 
