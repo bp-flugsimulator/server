@@ -2,7 +2,7 @@
 This module contains all views of the frontend application
 """
 
-from django.views.generic import TemplateView, ListView, DetailView
+from django.views.generic import TemplateView, ListView
 
 from .models import Slave as SlaveModel
 from .models import Script as ScriptModel

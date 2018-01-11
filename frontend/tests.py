@@ -16,7 +16,6 @@ from channels import Group
 import json
 
 from .models import Slave as SlaveModel, validate_mac_address, Program as ProgramModel, SlaveStatus as SlaveStatusModel, ProgramStatus as ProgramStatusModel, ScriptGraphPrograms as SGP, ScriptGraphFiles as SGF, Script as ScriptModel, File as FileModel
-from .consumers import ws_rpc_connect
 from .scripts import Script, ScriptEntryFile, ScriptEntryProgram
 
 
@@ -1714,13 +1713,17 @@ class DatabaseTests(TestCase):
             ip_address="0.0.2.0",
             mac_address="00:00:00:00:00:00",
         )
+        slave.save()
+
         prog = ProgramModel(name="test_program", path="none", slave=slave)
-        status = ProgramStatusModel(
+        prog.save()
+
+        ProgramStatusModel(
             command_uuid=uuid4(),
             code="",
             program=prog,
             running=True,
-        )
+        ).save()
 
         self.assertTrue(prog.is_running)
         self.assertFalse(prog.is_executed)
@@ -1733,13 +1736,17 @@ class DatabaseTests(TestCase):
             ip_address="0.0.2.0",
             mac_address="00:00:00:00:00:00",
         )
+        slave.save()
+
         prog = ProgramModel(name="test_program", path="none", slave=slave)
-        status = ProgramStatusModel(
+        prog.save()
+
+        ProgramStatusModel(
             command_uuid=uuid4(),
             code="0",
             program=prog,
             running=False,
-        )
+        ).save()
 
         self.assertFalse(prog.is_running)
         self.assertTrue(prog.is_executed)
@@ -1752,13 +1759,17 @@ class DatabaseTests(TestCase):
             ip_address="0.0.2.0",
             mac_address="00:00:00:00:00:00",
         )
+        slave.save()
+
         prog = ProgramModel(name="test_program", path="none", slave=slave)
-        status = ProgramStatusModel(
+        prog.save()
+
+        ProgramStatusModel(
             command_uuid=uuid4(),
             code="1",
             program=prog,
             running=False,
-        )
+        ).save()
 
         self.assertFalse(prog.is_running)
         self.assertTrue(prog.is_executed)

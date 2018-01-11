@@ -112,16 +112,16 @@ $(document).ready(function () {
                     $.notify({
                         message: status.payload
                     }, {
-                        type: 'danger'
-                    });
+                            type: 'danger'
+                        });
                 }
             },
-            error(xhr, error_string, errorCode) {
+            error(xhr, errorString, errorCode) {
                 $.notify({
                     message: 'Could not deliver delete request to server (' + errorCode + ')'
                 }, {
-                    type: 'danger'
-                });
+                        type: 'danger'
+                    });
             }
         });
     });
@@ -280,12 +280,12 @@ $(document).ready(function () {
             success(status) {
                 handleFormStatus($('#programForm'), status);
             },
-            error(xhr, error_string, errorCode) {
+            error(xhr, errorString, errorCode) {
                 $.notify({
                     message: 'Could not deliver ' + $(this).attr('method') + ' request to server (' + errorCode + ')'
                 }, {
-                    type: 'danger'
-                });
+                        type: 'danger'
+                    });
             }
         });
     });
@@ -310,12 +310,12 @@ $(document).ready(function () {
             success(status) {
                 handleFormStatus($('#fileForm'), status);
             },
-            error(xhr, error_string, errorCode) {
+            error(xhr, errorString, errorCode) {
                 $.notify({
                     message: 'Could not deliver ' + $(this).attr('method') + ' request to server (' + errorCode + ')'
                 }, {
-                    type: 'danger'
-                });
+                        type: 'danger'
+                    });
             }
         });
     });
@@ -339,12 +339,12 @@ $(document).ready(function () {
             success(status) {
                 handleFormStatus($('#slaveForm'), status);
             },
-            error(xhr, error_string, errorCode) {
+            error(xhr, errorString, errorCode) {
                 $.notify({
                     message: 'Could not deliver ' + $(this).attr('method') + ' request to server (' + errorCode + ')'
                 }, {
-                    type: 'danger'
-                });
+                        type: 'danger'
+                    });
             }
         });
     });
@@ -370,17 +370,17 @@ $(document).ready(function () {
                     $.notify({
                         message: 'Error: ' + data.payload
                     }, {
-                        type: 'danger'
-                    });
+                            type: 'danger'
+                        });
                 }
 
             },
-            error(xhr, error_string, errorCode) {
+            error(xhr, errorString, errorCode) {
                 $.notify({
                     message: 'Could not deliver Wake-On-Lan request to server (' + errorCode + ')'
                 }, {
-                    type: 'danger'
-                });
+                        type: 'danger'
+                    });
             }
         });
     });
@@ -406,16 +406,16 @@ $(document).ready(function () {
                     $.notify({
                         message: 'Error: ' + data.payload
                     }, {
-                        type: 'danger'
-                    });
+                            type: 'danger'
+                        });
                 }
             },
-            error(xhr, error_string, errorCode) {
+            error(xhr, errorString, errorCode) {
                 $.notify({
                     message: 'Could not deliver shutdown request to server (' + errorCode + ')'
                 }, {
-                    type: 'danger'
-                });
+                        type: 'danger'
+                    });
             }
         });
     });

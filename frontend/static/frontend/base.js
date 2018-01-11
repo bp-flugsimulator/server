@@ -10,8 +10,8 @@
  */
 function getCookie(name) {
     if (document.cookie && document.cookie !== '') {
-        let cookie = document.cookie.split(',').find(function (raw_cookie) {
-            let cookie = jQuery.trim(raw_cookie);
+        let cookie = document.cookie.split(',').find(function (rawCookie) {
+            let cookie = jQuery.trim(rawCookie);
             return cookie.substring(0, name.length + 1) === (name + '=');
         });
 
@@ -50,16 +50,16 @@ function modalDeleteAction(form, route) {
                 $.notify({
                     message: JSON.stringify(status.payload)
                 }, {
-                    type: 'danger'
-                });
+                        type: 'danger'
+                    });
             }
         },
-        error(xhr, error_string, errorCode) {
+        error(xhr, errorString, errorCode) {
             $.notify({
                 message: 'Could not deliver delete request to server (' + errorCode + ')'
             }, {
-                type: 'danger'
-            });
+                    type: 'danger'
+                });
         }
     });
 }

@@ -39,7 +39,7 @@
         <div class="row-1">
             <ul class="nav flex-column col" id="slaveTabList" role="tablist">
                 {% for slave in slaves %}
-                    <li class="nav-item pt-2 pb-2 pr-4 pl-4 font-weight-bold fsim-box {% if slave.is_online %}fsim-status-success{% else %}fsim-status-error{% endif %}" id="slaveTab{{ slave.id }}">
+                    <li class="nav-item mb-2 pt-2 pb-2 pr-4 pl-4 font-weight-bold fsim-box {% if slave.is_online %}fsim-status-success{% else %}fsim-status-error{% endif %}" id="slaveTab{{ slave.id }}">
                         <a class="nav-link slave-tab-link {% if forloop.first %} active {% endif %}"  data-toggle="tab" href="#slaveTabContent{{ slave.id }}" role="tab">
                             <i class="mdi mdi-apps"></i> {{ slave.name  }}
                         </a>

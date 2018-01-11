@@ -5,7 +5,7 @@
             <h5 class="mt-2">{{ program.name }}</h5>
         </div>
 
-        <div class="btn-toolbar col" role="toolbar">
+        <div class="btn-toolbar col d-flex justify-content-end" role="toolbar">
             <div class="btn-group mr-2" role="group">
                 <button type="button" id="programStartStop_{{ program.id }}" class="btn btn-outline-dark start-program font-weight-light" data-program-id="{{ program.id }}">
                     <i class="mdi mdi-power-settings-new"></i> {% if program.is_running %}STOP{% else %}START{% endif %}
@@ -17,10 +17,18 @@
                     <i class="mdi mdi-edit"></i> EDIT
                 </button>
 
-                <button type="button" class="btn btn-outline-dark delete-program font-weight-light" data-program-id="{{ program.id }}" data-slave-id="{{ program.slave }}" data-program-name="{{ program.name }} >
+                <button type="button" class="btn btn-outline-dark delete-program font-weight-light" data-program-id="{{ program.id }}" data-slave-id="{{ program.slave }}" data-program-name="{{ program.name }}">
                     <i class="mdi mdi-delete"></i> DELETE
                 </button>
             </div>
+
+            <button class="btn btn-outline-dark font-weight-light" type="button" data-toggle="collapse" data-target="#programCard{{ program.slave.id }}_{{ program.id }}">
+                <i class="mdi mdi-arrow-drop-down"></i> MORE
+            </button>
         </div>
+    </div>
+
+    <div class="collapse pl-4 pr-4 mt-2 row" id="programCard{{ program.slave.id }}_{{ program.id }}">
+            Gimme Gimme
     </div>
 </div>

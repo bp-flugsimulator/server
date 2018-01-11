@@ -106,17 +106,17 @@ var options = {
                                     $.notify({
                                         message: 'Could not load autocomplete query from server (' + status.payload + ')'
                                     }, {
-                                        type: 'danger'
-                                    });
+                                            type: 'danger'
+                                        });
                                     reject();
                                 }
                             },
-                            error(xhr, error_string, errorCode) {
+                            error(xhr, errorString, errorCode) {
                                 $.notify({
                                     message: 'Could not load autocomplete query from server (' + errorCode + ')'
                                 }, {
-                                    type: 'danger'
-                                });
+                                        type: 'danger'
+                                    });
                             }
                         });
                         break;
@@ -127,7 +127,7 @@ var options = {
             });
         }
     },
-    onEditable: function (node) {
+    onEditable(node) {
         switch (node.field) {
             case 'name':
                 return {
@@ -172,26 +172,26 @@ var loadScript = function (id) {
                 $.notify({
                     message: 'Could not load script from server (' + status.payload + ')'
                 }, {
-                    type: 'danger'
-                });
+                        type: 'danger'
+                    });
             }
         },
-        error(xhr, error_string, errorCode) {
+        error(xhr, errorString, errorCode) {
             $.notify({
                 message: 'Could not load script from server (' + errorCode + ')'
             }, {
-                type: 'danger'
-            });
+                    type: 'danger'
+                });
         }
     });
 };
 
 var newScript = function (name) {
-    let default_json = {
+    let defaultJson = {
         name,
         programs: [],
         files: [],
     };
 
-    createEditor(default_json, 'new');
+    createEditor(defaultJson, 'new');
 };
