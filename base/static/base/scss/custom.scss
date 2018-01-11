@@ -552,3 +552,17 @@ $enable-print-styles: true;
     color: theme-color('secondary');
     cursor: pointer;
 }
+
+.background-text-large {
+    color: rgba($black, 0.2);
+    text-transform: uppercase;
+    font-weight: bold;
+    font-size: xx-large;
+}
+
+.background-text-normal {
+    color: rgba($black, 0.2);
+    text-transform: uppercase;
+    font-weight: bold;
+    font-size: large;
+}

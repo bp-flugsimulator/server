@@ -67,8 +67,8 @@
             {% for program in programs %}
                 {% program_entry program %}
             {% empty %}
-                <div class="alert alert-info">
-                    <strong>Info!</strong> No programs for this client in system.
+                <div>
+                    <span class="background-text-normal">No programs registered</span>
                 </div>
             {% endfor %}
         </div>
@@ -77,8 +77,8 @@
             {% for file in files %}
                 {% file_entry file %}
             {% empty %}
-                <div class="alert alert-info">
-                    <strong>Info!</strong> No files/folder for this client in system.
+                <div>
+                    <span class="background-text-normal">No files registered</span>
                 </div>
             {% endfor %}
         </div>
