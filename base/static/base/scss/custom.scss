@@ -511,26 +511,29 @@ $enable-hover-media-query: false;
 $enable-grid-classes: true;
 $enable-print-styles: true;
 @import "node_modules/bootstrap/scss/bootstrap";
-.fsim-status-error {
-    background: linear-gradient(to right, $red 0, $red 5px, transparent 5px, transparent 100%) no-repeat;
-}
-
-.fsim-status-success {
-    background: linear-gradient(to right, $green 0, $green 5px, transparent 5px, transparent 100%) no-repeat;
-}
-
-.fsim-status-warn {
-    background: linear-gradient(to right, $yellow 0, $yellow 5px, transparent 5px, transparent 100%) no-repeat;
-}
-
-.fsim-status-unkown {
-    background: linear-gradient(to right, $gray-100 0, $gray-100 5px, transparent 5px, transparent 100%) no-repeat;
-}
 
 .fsim-box {
     border-bottom: 1px solid $gray-400;
     border-right: 1px solid $gray-400;
     border-top: 1px solid $gray-400;
+}
+
+.fsim-box[data-state=error] {
+    background: linear-gradient(to right, $red 0, $red 5px, transparent 5px, transparent 100%) no-repeat;
+}
+
+.fsim-box[data-state=success] {
+    background: linear-gradient(to right, $green 0, $green 5px, transparent 5px, transparent 100%) no-repeat;
+}
+
+.fsim-box[data-state=warning] {
+    background: linear-gradient(to right, $yellow 0, $yellow 5px, transparent 5px, transparent 100%) no-repeat;
+
+}
+
+.fsim-box[data-state=unkown] {
+    background: linear-gradient(to right, $gray-100 0, $gray-100 5px, transparent 5px, transparent 100%) no-repeat;
+
 }
 
 .fsim-box-bottom {

@@ -18,34 +18,28 @@ socket.onmessage = function (data) {
             switch (status.payload['slave_status']) {
                 case 'connected':
                     // swap status
-                    statusContainer.removeClass('fsim-status-error');
-                    statusContainer.addClass('fsim-status-success');
-
-                    statusTab.removeClass('fsim-status-error');
-                    statusTab.addClass('fsim-status-success');
+                    statusContainer.attr('data-state', 'success');
+                    statusTab.attr('data-state', 'success');
 
                     // swap start and stop functions
                     startstopButton.removeClass('start-slave');
                     startstopButton.addClass('stop-slave');
 
                     // set tooltip to Stop
-                    startstopButton.prop('text', 'STOP');
+                    startstopButton.text('STOP');
 
                     break;
                 case 'disconnected':
                     // swap status
-                    statusContainer.removeClass('fsim-status-success');
-                    statusContainer.addClass('fsim-status-error');
-
-                    statusTab.removeClass('fsim-status-success');
-                    statusTab.addClass('fsim-status-error');
+                    statusContainer.attr('data-state', 'error');
+                    statusTab.attr('data-state', 'error');
 
                     // swap start and stop functions
                     startstopButton.removeClass('stop-slave');
                     startstopButton.addClass('start-slave');
 
                     // set tooltip to Start
-                    startstopButton.prop('text', 'START');
+                    startstopButton.text('START');
 
                     break;
             }
@@ -59,41 +53,38 @@ socket.onmessage = function (data) {
 
             switch (status.payload['program_status']) {
                 case 'started':
-                    statusContainer.removeClass(function (index, className) {
-                        return (className.match(/(^|\s)fsim-status-\S+/g) || []).join(' ');
-                    });
                     statusIcon.removeClass(function (index, className) {
                         return (className.match(/(^|\s)mdi-\S+/g) || []).join(' ');
                     });
 
-                    statusContainer.addClass('fsim-status-warn');
+                    statusContainer.attr('data-state', 'warning');
+                    console.log(statusContainer);
+
                     statusIcon.addClass('mdi-cached');
                     statusIcon.addClass('mdi-spin');
+
                     cardButton.prop('disabled', true);
 
-                    startstopButton.data('is-running', true);
-                    startstopButton.prop('text', 'STOP');
+                    startstopButton.attr('data-is-running', true);
+                    startstopButton.text('STOP');
                     break;
                 case 'finished':
-                    statusContainer.removeClass(function (index, className) {
-                        return (className.match(/(^|\s)fsim-status-\S+/g) || []).join(' ');
-                    });
                     statusIcon.removeClass(function (index, className) {
                         return (className.match(/(^|\s)mdi-\S+/g) || []).join(' ');
                     });
 
                     if (status.payload['code'] !== 0) {
-                        statusContainer.addClass('fsim-status-error');
+                        statusContainer.attr('data-state', 'error');
                         statusIcon.addClass('mdi-error-outline')
                         cardButton.prop('disabled', false);
                         cardBox.text(status.payload['code']);
                     } else {
-                        statusContainer.addClass('fsim-status-success');
+                        statusContainer.attr('data-state', 'success');
                         statusIcon.addClass('mdi-check')
                     }
 
-                    startstopButton.data('is-running', false);
-                    startstopButton.prop('text', 'START');
+                    startstopButton.attr('data-is-running', false);
+                    startstopButton.text('START');
                     break;
             }
         } else if (status.payload['message'] != null) {
