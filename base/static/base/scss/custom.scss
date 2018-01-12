@@ -511,6 +511,7 @@ $enable-hover-media-query: false;
 $enable-grid-classes: true;
 $enable-print-styles: true;
 @import "node_modules/bootstrap/scss/bootstrap";
+@import "node_modules/bootstrap-material-icons/scss/material-icons";
 
 .fsim-box {
     border-bottom: 1px solid $gray-400;
@@ -538,6 +539,27 @@ $enable-print-styles: true;
 
 .fsim-box-bottom {
     border-bottom: 1px solid $gray-100;
+}
+
+.fsim-status-icon[data-state=error] {
+    @extend .mdi;
+    @extend .mdi-error-outline;
+}
+
+.fsim-status-icon[data-state=success] {
+    @extend .mdi;
+    @extend .mdi-check;
+}
+
+.fsim-status-icon[data-state=unkown] {
+    @extend .mdi;
+    @extend .mdi-power-settings-new;
+}
+
+.fsim-status-icon[data-state=warning] {
+    @extend .mdi;
+    @extend .mdi-cached;
+    @extend .mdi-spin;
 }
 
 .client-header,

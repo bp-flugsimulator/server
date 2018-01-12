@@ -1,6 +1,6 @@
 /* eslint-env browser */
 /* global $, jQuery, Status */
-/* exported  getCookie, modalDeleteAction, handleFormStatus, clearErrorMessages */
+/* exported  getCookie, modalDeleteAction, handleFormStatus, clearErrorMessages,swapText, styleSlaveByStatus */
 
 /**
  * Clears the error fields of a given form
@@ -104,3 +104,57 @@ function handleFormStatus(form, status) {
         });
     }
 }
+
+/**
+ * Swaps the text with the data-text-swap field.
+ *
+ * @param {HTMLElement} form
+ * @param {Status} status
+ *
+ */
+function swapText(element) {
+    if (element.text() == element.data("text-swap")) {
+        element.text(element.data("text-original"));
+    } else {
+        element.data("text-original", element.text());
+        element.text(element.data("text-swap"));
+    }
+};
+
+/**
+ * Styles a slave tab and container by the status of their programs.
+ * @param {Integer} sid
+ */
+function styleSlaveByStatus(sid) {
+    let statusContainer = $('#slaveStatusContainer_' + sid);
+    let statusTab = $('#slaveTab' + sid);
+    let status = 0;
+
+    $('#slavesObjectsProgramsContent' + sid)
+        .find('.fsim-box[data-state]')
+        .each(function (idx, val) {
+            switch ($(val).attr('data-state')) {
+                case 'error':
+                    console.log("error");
+                    status = 2;
+                    return false;
+                case 'warning':
+                    console.log("test");
+                    status = 1;
+                    break;
+                default:
+                    break;
+            };
+        });
+
+    if (status === 1) {
+        statusContainer.attr('data-state', 'warning');
+        statusTab.attr('data-state', 'warning');
+    } else if (status == 2) {
+        statusContainer.attr('data-state', 'error');
+        statusTab.attr('data-state', 'error');
+    } else {
+        statusContainer.attr('data-state', 'success');
+        statusTab.attr('data-state', 'success');
+    }
+};

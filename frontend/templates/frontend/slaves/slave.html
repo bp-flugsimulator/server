@@ -1,5 +1,5 @@
 {% load components %}
-    <div class="row pt-4 mb-4 pb-4 fsim-box" data-state="{% if slave.is_online %}success{% elif slave.has_error %}{% else %}unkown{% endif %}" id="slaveStatusContainer_{{ slave.id }}">
+    <div class="row pt-4 mb-4 pb-4 fsim-box" data-state="{% if slave.has_error %}error{% elif slave.has_running %}warning{% elif slave.is_online %}success{% else %}unkown{% endif %}" id="slaveStatusContainer_{{ slave.id }}">
         <div class="container-fluid">
             <div class="row">
                 <div class="slave-name col">
@@ -9,7 +9,8 @@
                 <div class="btn-toolbar col" role="toolbar">
                     <div class="btn-group mr-2" role="group">
                         <button type="button" id="slaveStartStop_{{ slave.id }}" data-slave-id="{{ slave.id }}" class="btn btn-outline-dark font-weight-light">
-                            <i class="mdi mdi-power-settings-new"></i> {% if slave.is_online %}STOP{% else %}START{% endif %}
+                            <i class="mdi mdi-power-settings-new"></i>
+                            <i data-text-swap="{% if slave.is_online %}START{% else %}STOP{% endif %}">{% if slave.is_online %}STOP{% else %}START{% endif %}</i>
                         </button>
                     </div>
 

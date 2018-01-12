@@ -1,5 +1,5 @@
 /* eslint-env browser*/
-/* global $, getCookie, modalDeleteAction, handleFormStatus, clearErrorMessages, Status */
+/* global $, getCookie, modalDeleteAction, handleFormStatus, clearErrorMessages, Status*/
 
 /**
  * Creates a function which handles from submits.

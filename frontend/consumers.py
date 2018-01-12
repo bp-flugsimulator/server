@@ -177,11 +177,6 @@ def ws_rpc_disconnect(message):
 
         # if a slave disconnects all programs stop
         for program in ProgramModel.objects.filter(slave=slave):
-            notify({
-                'program_status': 'finished',
-                'pid': program.id,
-                'code': 'Status',
-            })
             if ProgramStatusModel.objects.filter(program=program).exists():
                 ProgramStatusModel.objects.get(program=program).delete()
 

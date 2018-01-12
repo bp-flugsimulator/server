@@ -1,7 +1,105 @@
 /* eslint-env browser*/
-/* global $, Status */
+/* global $, Status, swapText, styleSlaveByStatus */
+
 
 var socket = new WebSocket('ws://' + window.location.host + '/notifications');
+
+var socketEventHandler = {
+    slaveConnect: function (payload) {
+        let statusContainer = $('#slaveStatusContainer_' + payload.sid);
+        let statusTab = $('#slaveTab' + payload.sid);
+        let startstopButton = $('#slaveStartStop_' + payload.sid);
+
+        statusContainer.attr('data-state', 'success');
+        statusTab.attr('data-state', 'success');
+
+        // swap start and stop functions
+        startstopButton.removeClass('start-slave');
+        startstopButton.addClass('stop-slave');
+
+        // set tooltip to Stop
+        startstopButton.children('[data-text-swap]').each(function (idx, val) {
+            swapText($(val));
+        });
+    },
+    slaveDisconnect: function (payload) {
+        let statusContainer = $('#slaveStatusContainer_' + payload.sid);
+        let statusTab = $('#slaveTab' + payload.sid);
+        let startstopButton = $('#slaveStartStop_' + payload.sid);
+
+        statusContainer.attr('data-state', 'unkown');
+        statusTab.attr('data-state', 'unkown');
+
+        $('#slavesObjectsProgramsContent' + payload.sid)
+            .find('.fsim-status-icon[data-state], .fsim-box[data-state]')
+            .each(function (idx, val) {
+                $(val).attr('data-state', 'unkown');
+            });
+
+        // swap start and stop functions
+        startstopButton.removeClass('stop-slave');
+        startstopButton.addClass('start-slave');
+
+        // set tooltip to Start
+        startstopButton.children('[data-text-swap]').each(function (idx, val) {
+            swapText($(val));
+        });
+    },
+    programStarted: function (payload) {
+        let statusContainer = $('#programStatusContainer_' + payload.pid);
+        let startstopButton = $('#programStartStop_' + payload.pid);
+        let statusIcon = $('#programStatusIcon_' + payload.pid);
+        let cardButton = $('#programCardButton_' + payload.pid);
+
+        statusContainer.attr('data-state', 'warning');
+        statusIcon.attr('data-state', 'warning');
+        cardButton.prop('disabled', true);
+
+        let sid = null;
+
+        statusContainer.find('button[data-slave-id]').each(function (idx, val) {
+            sid = $(val).data('slave-id');
+            return false;
+        });
+
+        styleSlaveByStatus(sid);
+
+        startstopButton.children('[data-text-swap]').each(function (idx, val) {
+            swapText($(val));
+        });
+    },
+    programStopped: function (payload) {
+        let statusContainer = $('#programStatusContainer_' + payload.pid);
+        let startstopButton = $('#programStartStop_' + payload.pid);
+        let statusIcon = $('#programStatusIcon_' + payload.pid);
+        let cardButton = $('#programCardButton_' + payload.pid);
+        let cardBox = $('#programCard_' + payload.pid);
+
+        if (payload.code !== 0) {
+            statusContainer.attr('data-state', 'error');
+            statusIcon.attr('data-state', 'error');
+
+            cardButton.prop('disabled', false);
+            cardBox.text(payload.code);
+        } else {
+            statusContainer.attr('data-state', 'success');
+            statusIcon.attr('data-state', 'success');
+        }
+
+        let sid = null;
+
+        statusContainer.find('button[data-slave-id]').each(function (idx, val) {
+            sid = $(val).data('slave-id');
+            return false;
+        });
+
+        styleSlaveByStatus(sid);
+
+        startstopButton.children('[data-text-swap]').each(function (idx, val) {
+            swapText($(val));
+        });
+    },
+};
 
 socket.onmessage = function (data) {
     let status = Status.from_json(data.data);
@@ -10,81 +108,22 @@ socket.onmessage = function (data) {
     if (status.is_ok()) {
         if (status.payload['slave_status'] != null) {
             // handle slave status updates
-
-            let statusContainer = $('#slaveStatusContainer_' + status.payload['sid']);
-            let statusTab = $('#slaveTab' + status.payload['sid']);
-            let startstopButton = $('#slaveStartStop_' + status.payload['sid']);
-
             switch (status.payload['slave_status']) {
                 case 'connected':
-                    // swap status
-                    statusContainer.attr('data-state', 'success');
-                    statusTab.attr('data-state', 'success');
-
-                    // swap start and stop functions
-                    startstopButton.removeClass('start-slave');
-                    startstopButton.addClass('stop-slave');
-
-                    // set tooltip to Stop
-                    startstopButton.text('STOP');
-
+                    socketEventHandler.slaveConnect(status.payload);
                     break;
                 case 'disconnected':
-                    // swap status
-                    statusContainer.attr('data-state', 'unkown');
-                    statusTab.attr('data-state', 'unkown');
-
-                    // swap start and stop functions
-                    startstopButton.removeClass('stop-slave');
-                    startstopButton.addClass('start-slave');
-
-                    // set tooltip to Start
-                    startstopButton.text('START');
-
+                    socketEventHandler.slaveDisconnect(status.payload);
                     break;
             }
         } else if (status.payload['program_status'] != null) {
             // handle program status updates
-            let statusContainer = $('#programStatusContainer_' + status.payload['pid']);
-            let startstopButton = $('#programStartStop_' + status.payload['pid']);
-            let statusIcon = $('#programStatusIcon_' + status.payload['pid']);
-            let cardButton = $('#programCardButton_' + status.payload['pid']);
-            let cardBox = $('#programCard_' + status.payload['pid']);
-
             switch (status.payload['program_status']) {
                 case 'started':
-                    statusIcon.removeClass(function (index, className) {
-                        return (className.match(/(^|\s)mdi-\S+/g) || []).join(' ');
-                    });
-
-                    statusContainer.attr('data-state', 'warning');
-                    console.log(statusContainer);
-
-                    statusIcon.addClass('mdi-cached');
-                    statusIcon.addClass('mdi-spin');
-
-                    cardButton.prop('disabled', true);
-
-                    startstopButton.attr('data-is-running', true);
-                    startstopButton.text('STOP');
+                    socketEventHandler.programStarted(status.payload);
                     break;
                 case 'finished':
-                    statusIcon.removeClass(function (index, className) {
-                        return (className.match(/(^|\s)mdi-\S+/g) || []).join(' ');
-                    });
-
-                    if (status.payload['code'] !== 0) {
-                        statusContainer.attr('data-state', 'error');
-                        statusIcon.addClass('mdi-error-outline')
-                        cardButton.prop('disabled', false);
-                        cardBox.text(status.payload['code']);
-                    } else {
-                        statusContainer.attr('data-state', 'success');
-                        statusIcon.addClass('mdi-check')
-                    }
-
-                    startstopButton.attr('data-is-running', false);
-                    startstopButton.text('START');
+                    socketEventHandler.programStopped(status.payload);
                     break;
             }
         } else if (status.payload['message'] != null) {
@@ -94,7 +133,7 @@ socket.onmessage = function (data) {
         } else {
             $.notify({
                 type: 'warning',
-                message: 'Received unknown response from server'
+                message: 'Received unknown response from server.'
             });
         }
     } else {

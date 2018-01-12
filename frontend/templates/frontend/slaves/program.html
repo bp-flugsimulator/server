@@ -3,7 +3,8 @@
     <div class="row">
         <div class="program-name col">
             <h5 class="mt-2">
-                <i class="mdi {% if program.is_successful %}mdi-check{% elif program.is_error %}mdi-error-outline{% elif program.is_running %}mdi-cached mdi-spin{% else %}mdi-power-settings-new{% endif %}" id="programStatusIcon_{{ program.id }}"></i>
+                <i class="mdi fsim-status-icon"
+                data-state="{% if program.is_successful %}success{% elif program.is_error %}error{% elif program.is_running %}warning{% else %}unkown{% endif %}" id="programStatusIcon_{{ program.id }}"></i>
                 {{ program.name }}
             </h5>
         </div>
@@ -11,7 +12,10 @@
         <div class="btn-toolbar col d-flex justify-content-end" role="toolbar">
             <div class="btn-group mr-2" role="group">
                 <button type="button" id="programStartStop_{{ program.id }}" class="btn btn-outline-dark start-program font-weight-light" data-program-id="{{ program.id }}">
-                    <i class="mdi mdi-power-settings-new"></i> {% if program.is_running %}STOP{% else %}START{% endif %}
+                    <i class="mdi mdi-power-settings-new"></i>
+                    <i data-text-swap="{% if program.is_running %}START{% else %}STOP{% endif %}">
+                        {% if program.is_running %}STOP{% else %}START{% endif %}
+                    </i>
                 </button>
             </div>
 
