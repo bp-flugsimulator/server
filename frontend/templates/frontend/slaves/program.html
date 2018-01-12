@@ -2,7 +2,10 @@
 <div class="row-1 mb-2 pt-2 pb-2 pl-4 pr-4 fsim-box {% if program.is_successful %}fsim-status-success{% elif program.is_error %}fsim-status-error{% elif program.is_running %}fsim-status-warn{% else %}fsim-status-unkown{% endif %}" id="programStatusContainer_{{ program.id }}">
     <div class="row">
         <div class="program-name col">
-            <h5 class="mt-2">{{ program.name }}</h5>
+            <h5 class="mt-2">
+                <i class="mdi {% if program.is_successful %}mdi-check{% elif program.is_error %}mdi-error-outline{% elif program.is_running %}mdi-cached mdi-spin{% else %}mdi-power-settings-new{% endif %}" id="programStatusIcon_{{ program.id }}"></i>
+                {{ program.name }}
+            </h5>
         </div>
 
         <div class="btn-toolbar col d-flex justify-content-end" role="toolbar">
@@ -22,13 +25,15 @@
                 </button>
             </div>
 
-            <button class="btn btn-outline-dark font-weight-light" type="button" data-toggle="collapse" data-target="#programCard{{ program.slave.id }}_{{ program.id }}">
+            <button class="btn btn-outline-dark font-weight-light" id="programCardButton_{{ program.id }}" type="button" data-toggle="collapse" data-target="#programCard_{{ program.id }}" {% if not program.is_error %} disabled {% endif %}>
                 <i class="mdi mdi-arrow-drop-down"></i> MORE
             </button>
         </div>
     </div>
 
-    <div class="collapse pl-4 pr-4 mt-2 row" id="programCard{{ program.slave.id }}_{{ program.id }}">
-            Gimme Gimme
+    <div class="collapse pl-4 pr-4 mt-2 row" id="programCard_{{ program.id }}">
+            {% if program.is_error %}
+                program.code
+            {% endif %}
     </div>
 </div>

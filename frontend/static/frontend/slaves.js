@@ -1,6 +1,11 @@
 /* eslint-env browser*/
 /* global $, getCookie, modalDeleteAction, handleFormStatus, clearErrorMessages, Status */
 
+/**
+ * Creates a function which handles from submits.
+ *
+ * @param {String} id Form identifier without '#'
+ */
 var onFormSubmit = function (id) {
     let fun = function (event) {
         //Stop form from submitting normally

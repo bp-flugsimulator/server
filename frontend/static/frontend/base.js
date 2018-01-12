@@ -3,6 +3,24 @@
 /* exported  getCookie, modalDeleteAction, handleFormStatus, clearErrorMessages */
 
 /**
+ * Clears the error fields of a given form
+ *
+ * @param {HTMLElement} form
+ *
+ */
+function clearErrorMessages(form) {
+    // remove previous feedback
+    form.find('div[class="invalid-feedback"]').each(function (index, item) {
+        item.remove();
+    });
+
+    // remove previous feedback
+    form.find('.is-invalid').each(function (index, item) {
+        $(item).removeClass('is-invalid');
+    });
+}
+
+/**
  * Get a cookie by it the name. If the cookie is not present 'null' will be
  * returned.
  * @param {string} name Cookie name
@@ -85,22 +103,4 @@ function handleFormStatus(form, status) {
             node.parent().append('<div class="invalid-feedback">' + msg + '</div>');
         });
     }
-}
-
-/**
- * Clears the error fields of a given form
- *
- * @param {HTMLElement} form
- *
- */
-function clearErrorMessages(form) {
-    // remove previous feedback
-    form.find('div[class="invalid-feedback"]').each(function (index, item) {
-        item.remove();
-    });
-
-    // remove previous feedback
-    form.find('.is-invalid').each(function (index, item) {
-        $(item).removeClass('is-invalid');
-    });
 }

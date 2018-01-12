@@ -51,17 +51,25 @@ socket.onmessage = function (data) {
             }
         } else if (status.payload['program_status'] != null) {
             // handle program status updates
-
             let statusContainer = $('#programStatusContainer_' + status.payload['pid']);
             let startstopButton = $('#programStartStop_' + status.payload['pid']);
+            let statusIcon = $('#programStatusIcon_' + status.payload['pid']);
+            let cardButton = $('#programCardButton_' + status.payload['pid']);
+            let cardBox = $('#programCard_' + status.payload['pid']);
 
             switch (status.payload['program_status']) {
                 case 'started':
                     statusContainer.removeClass(function (index, className) {
                         return (className.match(/(^|\s)fsim-status-\S+/g) || []).join(' ');
                     });
+                    statusIcon.removeClass(function (index, className) {
+                        return (className.match(/(^|\s)mdi-\S+/g) || []).join(' ');
+                    });
 
                     statusContainer.addClass('fsim-status-warn');
+                    statusIcon.addClass('mdi-cached');
+                    statusIcon.addClass('mdi-spin');
+                    cardButton.prop('disabled', true);
 
                     startstopButton.data('is-running', true);
                     startstopButton.prop('text', 'STOP');
@@ -70,11 +78,18 @@ socket.onmessage = function (data) {
                     statusContainer.removeClass(function (index, className) {
                         return (className.match(/(^|\s)fsim-status-\S+/g) || []).join(' ');
                     });
+                    statusIcon.removeClass(function (index, className) {
+                        return (className.match(/(^|\s)mdi-\S+/g) || []).join(' ');
+                    });
 
                     if (status.payload['code'] !== 0) {
                         statusContainer.addClass('fsim-status-error');
+                        statusIcon.addClass('mdi-error-outline')
+                        cardButton.prop('disabled', false);
+                        cardBox.text(status.payload['code']);
                     } else {
                         statusContainer.addClass('fsim-status-success');
+                        statusIcon.addClass('mdi-check')
                     }
 
                     startstopButton.data('is-running', false);
