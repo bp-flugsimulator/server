@@ -1,5 +1,5 @@
 
-<div class="row-1 mb-2 pt-2 pb-2 pl-4 pr-4 fsim-box" data-state="{% if program.is_successful %}successful{% elif program.is_error %}error{% elif program.is_running %}warning{% else %}unkown{% endif %}" id="programStatusContainer_{{ program.id }}">
+<div class="row-1 mb-2 pt-2 pb-2 pl-4 pr-4 fsim-box" data-state="{% if program.is_successful %}success{% elif program.is_error %}error{% elif program.is_running %}warning{% else %}unkown{% endif %}" id="programStatusContainer_{{ program.id }}">
     <div class="row">
         <div class="program-name col">
             <h5 class="mt-2">
@@ -33,7 +33,7 @@
 
     <div class="collapse pl-4 pr-4 mt-2 row" id="programCard_{{ program.id }}">
             {% if program.is_error %}
-                program.code
+                {{ program.programstatus.code }}
             {% endif %}
     </div>
 </div>

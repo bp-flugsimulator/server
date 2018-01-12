@@ -58,7 +58,6 @@ def handle_execute_answer(status):
 
     if status.is_ok():
         # update return code
-        program_status.code = status.payload['result']
         LOGGER.info("Saved status of {} with code {}.".format(
             program.name, program_status.code))
     else:
@@ -71,6 +70,7 @@ def handle_execute_answer(status):
                 format(program.name, status.payload['result']), 'red'))
 
     # update status
+    program_status.code = status.payload['result']
     program_status.running = False
     program_status.save()
     # tell webinterface that the program has ended
