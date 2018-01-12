@@ -100,4 +100,6 @@ socket.onmessage = function (data) {
 };
 
 // Call onopen directly if socket is already open
-if (socket.readyState === WebSocket.OPEN) socket.onopen();
+if (socket.readyState === WebSocket.OPEN) {
+    socket.onopen();
+}

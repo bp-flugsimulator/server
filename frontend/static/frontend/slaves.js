@@ -1,6 +1,39 @@
 /* eslint-env browser*/
 /* global $, getCookie, modalDeleteAction, handleFormStatus, clearErrorMessages, Status */
 
+var onFormSubmit = function (id) {
+    let fun = function (event) {
+        //Stop form from submitting normally
+        event.preventDefault();
+
+        //send request to given url and with given method
+        //data field contains information about the slave
+        $.ajax({
+            type: $(this).attr('method'),
+            url: $(this).attr('action'),
+            data: $(this).serialize(),
+            converters: {
+                'text json': Status.from_json
+            },
+            beforeSend(xhr) {
+                xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
+            },
+            success(status) {
+                handleFormStatus($('#' + id), status);
+            },
+            error(xhr, errorString, errorCode) {
+                $.notify({
+                    message: 'Could not deliver ' + $(this).attr('method') + ' request to server (' + errorCode + ')'
+                }, {
+                        type: 'danger'
+                    });
+            }
+        });
+    };
+
+    return fun;
+};
+
 $(document).ready(function () {
     // set defaults for notifications
     $.notifyDefaults({
@@ -44,56 +77,6 @@ $(document).ready(function () {
             // Change the color of the current tab
             $(this).parent('li').css('background-color', '#dbdbdc');
         }
-    });
-
-    /*function for deleting a slave, it is added to the delete-slave button*/
-    $('.delete-slave').click(function () {
-        //get id and name of the slave and create deletion message
-        let id = $(this).data('slave-id');
-        let name = $(this).data('slave-name');
-
-        let message = '<a>Are you sure you want to remove client </a><b>' + name + '</b>?</a>';
-
-        //changing button visibility and message of the delete modal
-        let deleteWarning = $('#deleteWarning');
-        deleteWarning.children().find('#deleteProgramModalButton').hide();
-        deleteWarning.children().find('#deleteSlaveModalButton').show();
-        deleteWarning.children().find('.modal-body').empty(message);
-        deleteWarning.children().find('.modal-body').append(message);
-
-
-        //adding id to modal and set it visible
-        deleteWarning.data('sqlId', id);
-        deleteWarning.modal('toggle');
-    });
-
-    /*function for deleting a program, it is added to the delete-program button*/
-    $('.delete-program').click(function () {
-        //get id and name of the program and create deletion message
-        let id = $(this).data('program-id');
-        let name = $(this).data('program-name');
-        let message = '<a>Are you sure you want to remove program </a><b>' + name + '</b>?</a>';
-
-        //
-        //changing button visibility and message of the delete modal
-        let deleteWarning = $('#deleteWarning');
-        deleteWarning.children().find('#deleteSlaveModalButton').hide();
-        deleteWarning.children().find('#deleteProgramModalButton').show();
-        deleteWarning.children().find('.modal-body').empty(message);
-        deleteWarning.children().find('.modal-body').append(message);
-
-
-        //adding id to modal and set it visible
-        deleteWarning.data('sqlId', id);
-        deleteWarning.modal('toggle');
-    });
-
-    $('#deleteSlaveModalButton').click(function () {
-        modalDeleteAction($('#slaveForm'), 'slave');
-    });
-
-    $('#deleteProgramModalButton').click(function () {
-        modalDeleteAction($('#programForm'), 'program');
     });
 
     $('.start-program').click(function () {
@@ -185,6 +168,33 @@ $(document).ready(function () {
         programModal.modal('toggle');
     });
 
+    $('#deleteProgramModalButton').click(function () {
+        modalDeleteAction($('#programForm'), 'program');
+    });
+
+    $('.delete-program').click(function () {
+        //get id and name of the program and create deletion message
+        let id = $(this).data('program-id');
+        let name = $(this).data('program-name');
+        let message = '<a>Are you sure you want to remove program </a><b>' + name + '</b>?</a>';
+
+        //
+        //changing button visibility and message of the delete modal
+        let deleteWarning = $('#deleteWarning');
+        deleteWarning.children().find('#deleteSlaveModalButton').hide();
+        deleteWarning.children().find('#deleteProgramModalButton').show();
+        deleteWarning.children().find('.modal-body').empty(message);
+        deleteWarning.children().find('.modal-body').append(message);
+
+
+        //adding id to modal and set it visible
+        deleteWarning.data('sqlId', id);
+        deleteWarning.modal('toggle');
+    });
+
+    // programForm Handler
+    $('#programForm').submit(onFormSubmit('programForm'));
+
     //opens the fileModal to add a new program
     $('.add-file').click(function () {
         let fileModal = $('#fileModal');
@@ -210,144 +220,8 @@ $(document).ready(function () {
         fileModal.modal('toggle');
     });
 
-    //opens the slaveModal to add a new slave
-    $('.add-slave').click(function () {
-        let slaveModal = $('#slaveModal');
-        slaveModal.children().find('.modal-title').text('Add Client');
-
-        //modify the form for the submit button
-        let slaveForm = slaveModal.children().find('#slaveForm');
-        slaveForm.attr('action', '/api/slaves');
-        slaveForm.attr('method', 'POST');
-        slaveForm.children().find('.submit-btn').text('Add');
-
-        //clear input fields
-        slaveForm.find('input[name="name"]').val('');
-        slaveForm.find('input[name="ip_address"]').val('');
-        slaveForm.find('input[name="mac_address"]').val('');
-
-        //clear error messages
-        clearErrorMessages(slaveForm);
-        slaveModal.modal('toggle');
-    });
-
-    //opens the slaveModal to modify an existing slave
-    $('.modify-slave').click(function () {
-        //get info of slave
-        let id = $(this).data('slave-id');
-        let name = $(this).data('slave-name');
-        let ip = $(this).data('slave-ip');
-        let mac = $(this).data('slave-mac');
-
-        let slaveModal = $('#slaveModal');
-        slaveModal.children().find('.modal-title').text('Edit Client');
-
-        //modify the form for the submit button
-        let slaveForm = slaveModal.children().find('#slaveForm');
-        slaveForm.attr('action', '/api/slave/' + id);
-        slaveForm.attr('method', 'PUT');
-        slaveForm.children().find('.submit-btn').text('Edit');
-
-        //insert values into input field
-        slaveForm.find('input[name="name"]').val(name);
-        slaveForm.find('input[name="ip_address"]').val(ip);
-        slaveForm.find('input[name="mac_address"]').val(mac);
-
-        //clear error messages
-        clearErrorMessages(slaveForm);
-
-        //open modal
-        slaveModal.modal('toggle');
-    });
-
-    // programForm Handler
-    $('#programForm').submit(function (event) {
-        //Stop form from submitting normally
-        event.preventDefault();
-
-        //send request to given url and with given method
-        //data field contains information about the slave
-        $.ajax({
-            type: $(this).attr('method'),
-            url: $(this).attr('action'),
-            data: $(this).serialize(),
-            converters: {
-                'text json': Status.from_json
-            },
-            beforeSend(xhr) {
-                xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
-            },
-            success(status) {
-                handleFormStatus($('#programForm'), status);
-            },
-            error(xhr, errorString, errorCode) {
-                $.notify({
-                    message: 'Could not deliver ' + $(this).attr('method') + ' request to server (' + errorCode + ')'
-                }, {
-                        type: 'danger'
-                    });
-            }
-        });
-    });
-
     // fileForm Handler
-    $('#fileForm').submit(function (event) {
-        //Stop form from submitting normally
-        event.preventDefault();
-
-        //send request to given url and with given method
-        //data field contains information about the slave
-        $.ajax({
-            type: $(this).attr('method'),
-            url: $(this).attr('action'),
-            data: $(this).serialize(),
-            converters: {
-                'text json': Status.from_json
-            },
-            beforeSend(xhr) {
-                xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
-            },
-            success(status) {
-                handleFormStatus($('#fileForm'), status);
-            },
-            error(xhr, errorString, errorCode) {
-                $.notify({
-                    message: 'Could not deliver ' + $(this).attr('method') + ' request to server (' + errorCode + ')'
-                }, {
-                        type: 'danger'
-                    });
-            }
-        });
-    });
-
-    // slaveForm Handler
-    $('#slaveForm').submit(function (event) {
-        //Stop form from submitting normally
-        event.preventDefault();
-        //send request to given url and with given method
-        //data field contains information about the slave
-        $.ajax({
-            type: $(this).attr('method'),
-            url: $(this).attr('action'),
-            data: $('#slaveForm').serialize(),
-            beforeSend(xhr) {
-                xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
-            },
-            converters: {
-                'text json': Status.from_json
-            },
-            success(status) {
-                handleFormStatus($('#slaveForm'), status);
-            },
-            error(xhr, errorString, errorCode) {
-                $.notify({
-                    message: 'Could not deliver ' + $(this).attr('method') + ' request to server (' + errorCode + ')'
-                }, {
-                        type: 'danger'
-                    });
-            }
-        });
-    });
+    $('#fileForm').submit(onFormSubmit('fileForm'));
 
     $('.start-slave').click(function () {
         let id = $(this).data('slave-id');
@@ -420,12 +294,83 @@ $(document).ready(function () {
         });
     });
 
-    // fixes the tooltip from staying after button is pressed
-    $('[data-toggle="tooltip"]').tooltip({
-        trigger: 'hover',
-        'delay': {
-            show: 100,
-            hide: 300
-        }
+    //opens the slaveModal to add a new slave
+    $('.add-slave').click(function () {
+        let slaveModal = $('#slaveModal');
+        slaveModal.children().find('.modal-title').text('Add Client');
+
+        //modify the form for the submit button
+        let slaveForm = slaveModal.children().find('#slaveForm');
+        slaveForm.attr('action', '/api/slaves');
+        slaveForm.attr('method', 'POST');
+        slaveForm.children().find('.submit-btn').text('Add');
+
+        //clear input fields
+        slaveForm.find('input[name="name"]').val('');
+        slaveForm.find('input[name="ip_address"]').val('');
+        slaveForm.find('input[name="mac_address"]').val('');
+
+        //clear error messages
+        clearErrorMessages(slaveForm);
+        slaveModal.modal('toggle');
     });
+
+    //opens the slaveModal to modify an existing slave
+    $('.modify-slave').click(function () {
+        //get info of slave
+        let id = $(this).data('slave-id');
+        let name = $(this).data('slave-name');
+        let ip = $(this).data('slave-ip');
+        let mac = $(this).data('slave-mac');
+
+        let slaveModal = $('#slaveModal');
+        slaveModal.children().find('.modal-title').text('Edit Client');
+
+        //modify the form for the submit button
+        let slaveForm = slaveModal.children().find('#slaveForm');
+        slaveForm.attr('action', '/api/slave/' + id);
+        slaveForm.attr('method', 'PUT');
+        slaveForm.children().find('.submit-btn').text('Edit');
+
+        //insert values into input field
+        slaveForm.find('input[name="name"]').val(name);
+        slaveForm.find('input[name="ip_address"]').val(ip);
+        slaveForm.find('input[name="mac_address"]').val(mac);
+
+        //clear error messages
+        clearErrorMessages(slaveForm);
+
+        //open modal
+        slaveModal.modal('toggle');
+    });
+
+    /*function for deleting a slave, it is added to the delete-slave button*/
+    $('.delete-slave').click(function () {
+        //get id and name of the slave and create deletion message
+        let id = $(this).data('slave-id');
+        let name = $(this).data('slave-name');
+
+        let message = '<a>Are you sure you want to remove client </a><b>' + name + '</b>?</a>';
+
+        //changing button visibility and message of the delete modal
+        let deleteWarning = $('#deleteWarning');
+        deleteWarning.children().find('#deleteProgramModalButton').hide();
+        deleteWarning.children().find('#deleteSlaveModalButton').show();
+        deleteWarning.children().find('.modal-body').empty(message);
+        deleteWarning.children().find('.modal-body').append(message);
+
+
+        //adding id to modal and set it visible
+        deleteWarning.data('sqlId', id);
+        deleteWarning.modal('toggle');
+    });
+
+    /*function for deleting a program, it is added to the delete-program
+    button*/
+    $('#deleteSlaveModalButton').click(function () {
+        modalDeleteAction($('#slaveForm'), 'slave');
+    });
+
+    // slaveForm Handler
+    $('#slaveForm').submit(onFormSubmit('slaveForm'));
 });

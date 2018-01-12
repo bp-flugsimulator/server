@@ -15,7 +15,12 @@ from channels import Group
 
 import json
 
-from .models import Slave as SlaveModel, validate_mac_address, Program as ProgramModel, SlaveStatus as SlaveStatusModel, ProgramStatus as ProgramStatusModel, ScriptGraphPrograms as SGP, ScriptGraphFiles as SGF, Script as ScriptModel, File as FileModel
+from .models import (Slave as SlaveModel, validate_mac_address, Program as
+                     ProgramModel, SlaveStatus as SlaveStatusModel,
+                     ProgramStatus as ProgramStatusModel, ScriptGraphPrograms
+                     as SGP, ScriptGraphFiles as SGF, Script as ScriptModel,
+                     File as FileModel)
+
 from .scripts import Script, ScriptEntryFile, ScriptEntryProgram
 
 
@@ -75,6 +80,7 @@ class FrontendTests(TestCase):
         response = self.client.get(reverse('frontend:scripts'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Scripts")
+
 
 class ApiTests(TestCase):
     def test_get_script(self):
@@ -1285,13 +1291,12 @@ class ApiTests(TestCase):
         ).save()
         model = SlaveModel.objects.get(name='add_file_fail_not_unique')
 
-        api_response = self.client.post(
-            '/api/files', {
-                'name': 'name',
-                'sourcePath': 'sourcePath',
-                'destinationPath': 'destinationPath',
-                'slave': str(model.id)
-            })
+        api_response = self.client.post('/api/files', {
+            'name': 'name',
+            'sourcePath': 'sourcePath',
+            'destinationPath': 'destinationPath',
+            'slave': str(model.id)
+        })
 
         self.assertEqual(api_response.status_code, 200)
         self.assertEqual(
@@ -1299,13 +1304,12 @@ class ApiTests(TestCase):
             Status.from_json(api_response.content.decode('utf-8')))
 
         # try to add program with the same name
-        api_response = self.client.post(
-            '/api/files', {
-                'name': 'name',
-                'sourcePath': 'sourcePath',
-                'destinationPath': 'destinationPath',
-                'slave': str(model.id)
-            })
+        api_response = self.client.post('/api/files', {
+            'name': 'name',
+            'sourcePath': 'sourcePath',
+            'destinationPath': 'destinationPath',
+            'slave': str(model.id)
+        })
 
         self.assertEqual(api_response.status_code, 200)
         self.assertEqual(
@@ -1787,7 +1791,6 @@ class DatabaseTests(TestCase):
         self.assertFalse(
             SlaveModel.objects.filter(name='test_flush_error').exists())
 
-
     def test_slave_insert_invalid_ip(self):
         self.assertRaises(
             ValidationError, SlaveModel(ip_address='my_cool_ip').full_clean)
@@ -2067,8 +2070,9 @@ class ScriptTests(TestCase):
         script.save()
 
         with_int = ScriptEntryProgram(0, program.id, slave.id).as_model(script)
-        with_str = ScriptEntryProgram(0, program.name, slave.name).as_model(script)
-        with_int .save()
+        with_str = ScriptEntryProgram(0, program.name,
+                                      slave.name).as_model(script)
+        with_int.save()
         self.assertRaises(IntegrityError, with_str.save)
 
     def test_from_query_error(self):
@@ -2085,12 +2089,16 @@ class ScriptTests(TestCase):
                 self.program = Dummy()
                 self.file = Dummy()
 
-        self.assertRaises(ValueError, ScriptEntryProgram.from_query, Dummy(),
-                          "not int", "not str")
-        self.assertRaises(ValueError, ScriptEntryProgram.from_query, Dummy(),
-                          "int", "not str")
+        self.assertRaises(ValueError, ScriptEntryProgram.from_query,
+                          Dummy(), "not int", "not str")
+        self.assertRaises(ValueError, ScriptEntryProgram.from_query,
+                          Dummy(), "int", "not str")
 
-        self.assertRaises(ValueError, ScriptEntryFile.from_query, Dummy(),
-                          "not int", "not str")
-        self.assertRaises(ValueError, ScriptEntryFile.from_query, Dummy(),
-                          "int", "not str")
+        self.assertRaises(ValueError, ScriptEntryFile.from_query,
+                          Dummy(), "not int", "not str")
+        self.assertRaises(ValueError, ScriptEntryFile.from_query,
+                          Dummy(), "int", "not str")
+
+    def test_script_get_slave(self):
+        from .scripts import get_slave
+        self.assertEqual(None, get_slave(None))

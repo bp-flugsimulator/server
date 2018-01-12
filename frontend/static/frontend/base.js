@@ -76,15 +76,7 @@ function handleFormStatus(form, status) {
     if (status.is_ok()) {
         window.location.reload();
     } else {
-        // remove previous feedback
-        form.find('div[class="invalid-feedback"]').each(function (index, item) {
-            item.remove();
-        });
-
-        // remove previous feedback
-        form.find('.is-invalid').each(function (index, item) {
-            $(item).removeClass('is-invalid');
-        });
+        clearErrorMessages(form);
 
         // insert new feedback
         $.each(status.payload, function (id, msg) {
@@ -102,10 +94,12 @@ function handleFormStatus(form, status) {
  *
  */
 function clearErrorMessages(form) {
+    // remove previous feedback
     form.find('div[class="invalid-feedback"]').each(function (index, item) {
         item.remove();
     });
 
+    // remove previous feedback
     form.find('.is-invalid').each(function (index, item) {
         $(item).removeClass('is-invalid');
     });
