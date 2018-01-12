@@ -1,5 +1,5 @@
 {% load components %}
-    <div class="row pt-4 mb-4 pb-4 fsim-box" data-state="{% if slave.is_online %}success{% else %}error{% endif %}" id="slaveStatusContainer_{{ slave.id }}">
+    <div class="row pt-4 mb-4 pb-4 fsim-box" data-state="{% if slave.is_online %}success{% elif slave.has_error %}{% else %}unkown{% endif %}" id="slaveStatusContainer_{{ slave.id }}">
         <div class="container-fluid">
             <div class="row">
                 <div class="slave-name col">

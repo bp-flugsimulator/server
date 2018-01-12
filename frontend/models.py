@@ -84,6 +84,28 @@ class Slave(Model):
         except SlaveStatus.DoesNotExist:
             return False
 
+    @property
+    def has_error(self):
+        """
+        Returns true if any program or file is in an error state.
+        """
+        for prog in self.program_set.all():
+            try:
+                if prog.is_error:
+                    return True
+            except ProgramStatus.DoesNotExist:
+                pass
+
+        # TODO: insert file status here
+        # for prog in self.program_set:
+        #     try:
+        #         if prog.is_error():
+        #             return True
+        #     except File.DoesNotExist:
+        #         pass
+
+        return False
+
 
 class Program(Model):
     """

@@ -31,8 +31,8 @@ socket.onmessage = function (data) {
                     break;
                 case 'disconnected':
                     // swap status
-                    statusContainer.attr('data-state', 'error');
-                    statusTab.attr('data-state', 'error');
+                    statusContainer.attr('data-state', 'unkown');
+                    statusTab.attr('data-state', 'unkown');
 
                     // swap start and stop functions
                     startstopButton.removeClass('stop-slave');
