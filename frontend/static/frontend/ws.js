@@ -5,7 +5,7 @@
 var socket = new WebSocket('ws://' + window.location.host + '/notifications');
 
 var socketEventHandler = {
-    slaveConnect: function (payload) {
+    slaveConnect(payload) {
         let statusContainer = $('#slaveStatusContainer_' + payload.sid);
         let statusTab = $('#slaveTab' + payload.sid);
         let startstopButton = $('#slaveStartStop_' + payload.sid);
@@ -22,7 +22,7 @@ var socketEventHandler = {
             swapText($(val));
         });
     },
-    slaveDisconnect: function (payload) {
+    slaveDisconnect(payload) {
         let statusContainer = $('#slaveStatusContainer_' + payload.sid);
         let statusTab = $('#slaveTab' + payload.sid);
         let startstopButton = $('#slaveStartStop_' + payload.sid);
@@ -45,7 +45,7 @@ var socketEventHandler = {
             swapText($(val));
         });
     },
-    programStarted: function (payload) {
+    programStarted(payload) {
         let statusContainer = $('#programStatusContainer_' + payload.pid);
         let startstopButton = $('#programStartStop_' + payload.pid);
         let statusIcon = $('#programStatusIcon_' + payload.pid);
@@ -68,7 +68,7 @@ var socketEventHandler = {
             swapText($(val));
         });
     },
-    programStopped: function (payload) {
+    programStopped(payload) {
         let statusContainer = $('#programStatusContainer_' + payload.pid);
         let startstopButton = $('#programStartStop_' + payload.pid);
         let statusIcon = $('#programStatusIcon_' + payload.pid);

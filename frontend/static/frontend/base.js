@@ -113,13 +113,13 @@ function handleFormStatus(form, status) {
  *
  */
 function swapText(element) {
-    if (element.text() == element.data("text-swap")) {
-        element.text(element.data("text-original"));
+    if (element.text() === element.data('text-swap')) {
+        element.text(element.data('text-original'));
     } else {
-        element.data("text-original", element.text());
-        element.text(element.data("text-swap"));
+        element.data('text-original', element.text());
+        element.text(element.data('text-swap'));
     }
-};
+}
 
 /**
  * Styles a slave tab and container by the status of their programs.
@@ -135,11 +135,9 @@ function styleSlaveByStatus(sid) {
         .each(function (idx, val) {
             switch ($(val).attr('data-state')) {
                 case 'error':
-                    console.log("error");
                     status = 2;
                     return false;
                 case 'warning':
-                    console.log("test");
                     status = 1;
                     break;
                 default:
@@ -157,4 +155,4 @@ function styleSlaveByStatus(sid) {
         statusContainer.attr('data-state', 'success');
         statusTab.attr('data-state', 'success');
     }
-};
+}
