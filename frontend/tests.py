@@ -1454,14 +1454,6 @@ class WebsocketTests(TestCase):
         self.assertFalse(
             ProgramStatusModel.objects.filter(program=program).exists())
 
-        #  test if a "program finished" message has been send to the webinterface
-        self.assertEqual(
-            Status.ok({
-                'program_status': 'finished',
-                'pid': program.id,
-                'code': 'Status',
-            }), Status.from_json(json.dumps(webinterface.receive())))
-
         #  test if a "disconnected" message has been send to the webinterface
         self.assertEqual(
             Status.ok({
@@ -1673,10 +1665,9 @@ class WebsocketTests(TestCase):
                 'text': error_status.to_json()
             })
 
-        query = ProgramStatusModel.objects.filter(program=program)
-        self.assertTrue(query.count() == 1)
-        self.assertFalse(query.first().running)
-        self.assertEqual(query.first().code, '')
+        query = ProgramStatusModel.objects.get(program=program)
+        self.assertFalse(query.running)
+        self.assertEqual(query.code, 'foobar')
 
         #  test if the webinterface gets the error message
         self.assertEqual(
