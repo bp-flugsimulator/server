@@ -1692,6 +1692,50 @@ class WebsocketTests(TestCase):
 
 
 class DatabaseTests(TestCase):
+
+    def test_slave_has_err(self):
+        slave = SlaveModel(
+            name="test_slave",
+            ip_address="192.168.5.0",
+            mac_address="00:02:00:00:00:00",
+        )
+
+        slave.save()
+
+        prog = ProgramModel(slave=slave, name="test_prog", path="None")
+        prog.save()
+
+        self.assertFalse(slave.has_error)
+        self.assertFalse(slave.has_running)
+
+    def test_slave_is_online_err(self):
+        slave = SlaveModel(
+            name="test_slave",
+            ip_address="192.168.5.0",
+            mac_address="00:02:00:00:00:00",
+        )
+
+        slave.save()
+
+        self.assertFalse(slave.is_online)
+
+    def test_program_is_err(self):
+        slave = SlaveModel(
+            name="test_slave",
+            ip_address="192.168.5.0",
+            mac_address="00:02:00:00:00:00",
+        )
+
+        slave.save()
+
+        prog = ProgramModel(slave=slave, name="test_prog", path="None")
+        prog.save()
+
+        self.assertFalse(prog.is_running)
+        self.assertFalse(prog.is_error)
+        self.assertFalse(prog.is_successful)
+        self.assertFalse(prog.is_error)
+
     def test_slave_insert_valid(self):
         mod = SlaveModel(
             name="Tommo3",
@@ -1720,6 +1764,8 @@ class DatabaseTests(TestCase):
             running=True,
         ).save()
 
+        self.assertTrue(slave.has_running)
+        self.assertFalse(slave.has_error)
         self.assertTrue(prog.is_running)
         self.assertFalse(prog.is_executed)
         self.assertFalse(prog.is_successful)
@@ -1743,6 +1789,8 @@ class DatabaseTests(TestCase):
             running=False,
         ).save()
 
+        self.assertFalse(slave.has_running)
+        self.assertFalse(slave.has_error)
         self.assertFalse(prog.is_running)
         self.assertTrue(prog.is_executed)
         self.assertTrue(prog.is_successful)
@@ -1766,6 +1814,8 @@ class DatabaseTests(TestCase):
             running=False,
         ).save()
 
+        self.assertFalse(slave.has_running)
+        self.assertTrue(slave.has_error)
         self.assertFalse(prog.is_running)
         self.assertTrue(prog.is_executed)
         self.assertFalse(prog.is_successful)
