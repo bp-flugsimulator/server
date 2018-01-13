@@ -511,6 +511,8 @@ $enable-hover-media-query: false;
 $enable-grid-classes: true;
 $enable-print-styles: true;
 @import "node_modules/bootstrap/scss/bootstrap";
+
+$md-font-path: "../../node/bootstrap-material-icons/fonts";
 @import "node_modules/bootstrap-material-icons/scss/material-icons";
 
 .fsim-box {
