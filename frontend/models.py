@@ -90,11 +90,8 @@ class Slave(Model):
         Returns true if any program or file is in an error state.
         """
         for prog in self.program_set.all():
-            try:
-                if prog.is_error:
-                    return True
-            except ProgramStatus.DoesNotExist:
-                pass
+            if prog.is_error:
+                return True
 
         return False
 
@@ -104,11 +101,8 @@ class Slave(Model):
         Returns true if any program or file is in an error state.
         """
         for prog in self.program_set.all():
-            try:
-                if prog.is_running:
-                    return True
-            except ProgramStatus.DoesNotExist:
-                pass
+            if prog.is_running:
+                return True
 
         return False
 
@@ -166,20 +160,20 @@ class Program(Model):
         """
         Returns true if the current program was executed not successful, which means the error code was 0.
         """
-        try:
-            return self.is_executed and self.programstatus.code != '0'
-        except ProgramStatus.DoesNotExist:
-            return False
+        # NOTICE: no try and catch needed because self.is_executed is False
+        # if ProgramStatus.DoesNotExist is thrown, thus the whole expression
+        # is false
+        return self.is_executed and self.programstatus.code != '0'
 
     @property
     def is_successful(self):
         """
         Returns true if the current program was executed successful.
         """
-        try:
-            return self.is_executed and self.programstatus.code == '0'
-        except ProgramStatus.DoesNotExist:
-            return False
+        # NOTICE: no try and catch needed because self.is_executed is False
+        # if ProgramStatus.DoesNotExist is thrown, thus the whole expression
+        # is false
+        return self.is_executed and self.programstatus.code == '0'
 
 
 class File(Model):

@@ -142,13 +142,13 @@ function styleSlaveByStatus(sid) {
                     break;
                 default:
                     break;
-            };
+            }
         });
 
     if (status === 1) {
         statusContainer.attr('data-state', 'warning');
         statusTab.attr('data-state', 'warning');
-    } else if (status == 2) {
+    } else if (status === 2) {
         statusContainer.attr('data-state', 'error');
         statusTab.attr('data-state', 'error');
     } else {

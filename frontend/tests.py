@@ -1734,7 +1734,7 @@ class DatabaseTests(TestCase):
         self.assertFalse(prog.is_running)
         self.assertFalse(prog.is_error)
         self.assertFalse(prog.is_successful)
-        self.assertFalse(prog.is_error)
+        self.assertFalse(prog.is_executed)
 
     def test_slave_insert_valid(self):
         mod = SlaveModel(
