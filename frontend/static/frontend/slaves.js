@@ -53,6 +53,19 @@ $(document).ready(function () {
         }
     });
 
+    var restoreSlaveInnerTab = function (slaveId) {
+        let tabStatus = localStorage.getItem('tab-status');
+
+        if (tabStatus !== null) {
+            if (tabStatus === 'program') {
+                $('#slavesObjectsPrograms' + slaveId).click();
+            }
+            else if (tabStatus === 'file') {
+                $('#slavesObjectsFiles' + slaveId).click();
+            }
+        }
+    };
+
     // Restores the last clicked slave
     (function () {
         let href = localStorage.getItem('status');
@@ -63,20 +76,10 @@ $(document).ready(function () {
 
             iter.click();
 
-            let slave_id = $(this).attr('data-slave-id');
-            let tab_status = localStorage.getItem('tab-status'+slave_id);
-
-            if (tab_status !== null) {
-                if (tab_status === 'program') {
-                    $('#slavesObjectsPrograms' + slave_id).click();
-                }
-                else if (tab_status === 'file') {
-                    $('#slavesObjectsFiles' + slave_id).click();
-                }
-            }
+            let slaveId = iter.attr('data-slave-id');
+            restoreSlaveInnerTab(slaveId);
         }
     }());
-
 
     // Set color of the current selected.
     $('.slave-tab-link.active').parent('li').css('background-color', '#dbdbdc');
@@ -98,13 +101,11 @@ $(document).ready(function () {
     });
 
     $('.slave-file-tab').click(function () {
-        let slave_id = $(this).attr('data-slave-id');
-        localStorage.setItem('tab-status'+slave_id, 'file');
+        localStorage.setItem('tab-status', 'file');
     })
 
     $('.slave-program-tab').click(function () {
-        let slave_id = $(this).attr('data-slave-id');
-        localStorage.setItem('tab-status' + slave_id, 'program');
+        localStorage.setItem('tab-status', 'program');
     })
 
     $('.program-action-start-stop').click(function () {

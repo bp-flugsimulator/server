@@ -4,8 +4,7 @@
     <div class="row">
         <div class="program-name col">
             <h5 class="mt-2">
-                <i class="fsim-status-icon"
-                data-state="{% if program.is_successful %}success{% elif program.is_error %}error{% elif program.is_running %}warning{% else %}unkown{% endif %}" id="programStatusIcon_{{ program.id }}"></i>
+                <i class="fsim-status-icon" id="programStatusIcon_{{ program.id }}"></i>
                 {{ program.name }}
             </h5>
         </div>
@@ -37,8 +36,8 @@
     </div>
 
     <div class="collapse pl-4 pr-4 mt-2 row" id="programCard_{{ program.id }}">
-            {% if program.is_error %}
-                {{ program.programstatus.code }}
-            {% endif %}
+        {% if program.is_error %}
+            {{ program.programstatus.code }}
+        {% endif %}
     </div>
 </div>
