@@ -62,8 +62,21 @@ $(document).ready(function () {
             });
 
             iter.click();
+
+            let slave_id = $(this).attr('data-slave-id');
+            let tab_status = localStorage.getItem('tab-status'+slave_id);
+
+            if (tab_status !== null) {
+                if (tab_status === 'program') {
+                    $('#slavesObjectsPrograms' + slave_id).click();
+                }
+                else if (tab_status === 'file') {
+                    $('#slavesObjectsFiles' + slave_id).click();
+                }
+            }
         }
     }());
+
 
     // Set color of the current selected.
     $('.slave-tab-link.active').parent('li').css('background-color', '#dbdbdc');
@@ -83,6 +96,16 @@ $(document).ready(function () {
             $(this).parent('li').css('background-color', '#dbdbdc');
         }
     });
+
+    $('.slave-file-tab').click(function () {
+        let slave_id = $(this).attr('data-slave-id');
+        localStorage.setItem('tab-status'+slave_id, 'file');
+    })
+
+    $('.slave-program-tab').click(function () {
+        let slave_id = $(this).attr('data-slave-id');
+        localStorage.setItem('tab-status' + slave_id, 'program');
+    })
 
     $('.program-action-start-stop').click(function () {
         if ($(this).attr('data-is-running') === 'True') {

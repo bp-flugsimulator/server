@@ -528,6 +528,11 @@ body {
     margin-bottom:50px;
 }
 
+.btn:focus, .btn:active {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
 .fsim-box {
     border-bottom: 1px solid $gray-400;
     border-right: 1px solid $gray-400;

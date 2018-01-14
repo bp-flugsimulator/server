@@ -47,7 +47,7 @@
 
     <ul class="nav nav-tabs row" id="slavesObjectsList{{ slave.id }}" role="tablist">
         <li class="nav-item">
-            <a class="nav-link font-weight-bold active" id="slavesObjectsPrograms{{ slave.id }}" data-toggle="tab" href="#slavesObjectsProgramsContent{{ slave.id }}" role="tab" >
+            <a class="nav-link font-weight-bold active slave-program-tab" id="slavesObjectsPrograms{{ slave.id }}" data-toggle="tab" href="#slavesObjectsProgramsContent{{ slave.id }}" role="tab" data-slave-id="{{ slave.id }}">
                 <i class="mdi mdi-widgets"></i> PROGRAMS
                 <button type="button" class="btn program-action-add inline-add-button" data-slave-id="{{ slave.id }}">
                     <i class="mdi mdi-add font-weight-bold"></i>
@@ -56,7 +56,7 @@
         </li>
 
         <li class="nav-item" >
-            <a class="nav-link font-weight-bold" id="slavesObjectsFiles{{ slave.id }}" data-toggle="tab" href="#slavesObjectsFilesContent{{ slave.id }}" role="tab">
+            <a class="nav-link font-weight-bold slave-file-tab" id="slavesObjectsFiles{{ slave.id }}" data-toggle="tab" href="#slavesObjectsFilesContent{{ slave.id }}" role="tab" data-slave-id="{{ slave.id }}">
                 <i class="mdi mdi-folder"></i> FILES
                 <button type="button" class="btn file-action-add inline-add-button" data-slave-id="{{ slave.id }}">
                     <i class="mdi mdi-add font-weight-bold"></i>
