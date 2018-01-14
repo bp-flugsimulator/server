@@ -515,6 +515,15 @@ $enable-print-styles: true;
 $md-font-path: "../../node/bootstrap-material-icons/fonts";
 @import "node_modules/bootstrap-material-icons/scss/material-icons";
 
+#footer {
+    position: fixed;
+    height: 50px;
+    bottom: 0px;
+    left: 0px;
+    right: 0px;
+    margin-bottom: 0px;
+}
+
 .fsim-box {
     border-bottom: 1px solid $gray-400;
     border-right: 1px solid $gray-400;
