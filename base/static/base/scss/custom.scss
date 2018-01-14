@@ -514,6 +514,7 @@ $enable-print-styles: true;
 
 $md-font-path: "../../node/bootstrap-material-icons/fonts";
 @import "node_modules/bootstrap-material-icons/scss/material-icons";
+@import "node_modules/font-awesome/scss/font-awesome";
 
 #footer {
     position: fixed;
@@ -589,7 +590,7 @@ body {
 
 .fsim-box[data-state=unkown] .fsim-status-icon {
     @extend .mdi;
-    @extend .mdi-power-settings-new;
+    @extend .fa-circle;
 }
 
 .fsim-box[data-state=warning] .fsim-status-icon {
