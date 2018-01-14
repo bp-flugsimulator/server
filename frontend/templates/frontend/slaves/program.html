@@ -2,11 +2,11 @@
 <div class="row-1 mb-2 pt-2 pb-2 pl-4 pr-4 fsim-box" data-state="{% if program.is_successful %}success{% elif program.is_error %}error{% elif program.is_running %}warning{% else %}unkown{% endif %}" id="programStatusContainer_{{ program.id }}">
 
     <div class="row">
-        <div class="program-name col">
-            <h5 class="mt-2">
+        <div class="program-name font-weight-bold col">
+            <span class="mt-2 align-middle">
                 <i class="fsim-status-icon" id="programStatusIcon_{{ program.id }}"></i>
-                {{ program.name }}
-            </h5>
+                <i>{{ program.name }}</i>
+            </span>
         </div>
 
         <div class="btn-toolbar col d-flex justify-content-end" role="toolbar">

@@ -514,20 +514,22 @@ $enable-print-styles: true;
 
 $md-font-path: "../../node/bootstrap-material-icons/fonts";
 @import "node_modules/bootstrap-material-icons/scss/material-icons";
+$fa-font-path: "../../node/font-awesome/fonts";
 @import "node_modules/font-awesome/scss/font-awesome";
 
-footer {
-    position: absolute;
-    height: 50px;
-    bottom: 0px;
-    left: 0px;
-    right: 0px;
-    margin-top: 50px;
-    margin-bottom: 0px;
+main {
+    min-height: 100%;
 }
 
-body {
+html, body {
+    height: 100%;
+}
+
+footer {
+    @extend .fixed-bottom;
     position: relative;
+    margin-top: 20px;
+    bottom: 0;
 }
 
 .btn:focus, .btn:active {
