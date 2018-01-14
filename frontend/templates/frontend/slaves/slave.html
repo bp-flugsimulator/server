@@ -8,18 +8,20 @@
 
                 <div class="btn-toolbar col" role="toolbar">
                     <div class="btn-group mr-2" role="group">
-                        <button type="button" id="slaveStartStop_{{ slave.id }}" data-slave-id="{{ slave.id }}" class="btn btn-outline-dark font-weight-light">
+                        <button type="button" id="slaveStartStop_{{ slave.id }}" data-slave-id="{{ slave.id }}" class="btn btn-outline-dark font-weight-light slave-action-start-stop" data-is-running="{{ slave.is_online }}">
                             <i class="mdi mdi-power-settings-new"></i>
-                            <i data-text-swap="{% if slave.is_online %}START{% else %}STOP{% endif %}">{% if slave.is_online %}STOP{% else %}START{% endif %}</i>
+                            <i class="button-status-display">
+                                {% if slave.is_online %}STOP{% else %}START{% endif %}
+                            </i>
                         </button>
                     </div>
 
                     <div class="btn-group mr-2" role="group">
-                        <button type="button" class="btn btn-outline-dark modify-slave font-weight-light" data-slave-id="{{ slave.id }}" data-slave-name="{{ slave.name }}" data-slave-ip="{{ slave.ip_address }}" data-slave-mac="{{ slave.mac_address }}">
+                        <button type="button" class="btn btn-outline-dark slave-action-modify font-weight-light" data-slave-id="{{ slave.id }}" data-slave-name="{{ slave.name }}" data-slave-ip="{{ slave.ip_address }}" data-slave-mac="{{ slave.mac_address }}">
                             <i class="mdi mdi-edit"></i> EDIT
                         </button>
 
-                        <button type="button" class="btn btn-outline-dark delete-slave font-weight-light" data-slave-id="{{ slave.id }}" data-slave-name="{{ slave.name }}">
+                        <button type="button" class="btn btn-outline-dark slave-action-delete font-weight-light" data-slave-id="{{ slave.id }}" data-slave-name="{{ slave.name }}">
                             <i class="mdi mdi-delete"></i> DELETE
                         </button>
                     </div>
@@ -47,7 +49,7 @@
         <li class="nav-item">
             <a class="nav-link font-weight-bold active" id="slavesObjectsPrograms{{ slave.id }}" data-toggle="tab" href="#slavesObjectsProgramsContent{{ slave.id }}" role="tab" >
                 <i class="mdi mdi-widgets"></i> PROGRAMS
-                <button type="button" class="btn add-program inline-add-button" data-slave-id="{{ slave.id }}">
+                <button type="button" class="btn program-action-add inline-add-button" data-slave-id="{{ slave.id }}">
                     <i class="mdi mdi-add font-weight-bold"></i>
                 </button>
             </a>
@@ -56,7 +58,7 @@
         <li class="nav-item" >
             <a class="nav-link font-weight-bold" id="slavesObjectsFiles{{ slave.id }}" data-toggle="tab" href="#slavesObjectsFilesContent{{ slave.id }}" role="tab">
                 <i class="mdi mdi-folder"></i> FILES
-                <button type="button" class="btn add-file inline-add-button" data-slave-id="{{ slave.id }}">
+                <button type="button" class="btn file-action-add inline-add-button" data-slave-id="{{ slave.id }}">
                     <i class="mdi mdi-add font-weight-bold"></i>
                 </button>
             </a>

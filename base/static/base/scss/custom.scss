@@ -539,26 +539,42 @@ $md-font-path: "../../node/bootstrap-material-icons/fonts";
 
 }
 
-.fsim-box-bottom {
-    border-bottom: 1px solid $gray-100;
+.fsim-box .fsim-slave-status-icon {
+    @extend .mdi;
+    @extend .mdi-apps;
 }
 
-.fsim-status-icon[data-state=error] {
+.fsim-box[data-state=error] .fsim-slave-status-icon {
     @extend .mdi;
     @extend .mdi-error-outline;
 }
 
-.fsim-status-icon[data-state=success] {
+.fsim-box[data-state=warning] .fsim-slave-status-icon {
+    @extend .mdi;
+    @extend .mdi-cached;
+    @extend .mdi-spin;
+}
+
+.fsim-box-bottom {
+    border-bottom: 1px solid $gray-100;
+}
+
+.fsim-box[data-state=error] .fsim-status-icon {
+    @extend .mdi;
+    @extend .mdi-error-outline;
+}
+
+.fsim-box[data-state=success] .fsim-status-icon {
     @extend .mdi;
     @extend .mdi-check;
 }
 
-.fsim-status-icon[data-state=unkown] {
+.fsim-box[data-state=unkown] .fsim-status-icon {
     @extend .mdi;
     @extend .mdi-power-settings-new;
 }
 
-.fsim-status-icon[data-state=warning] {
+.fsim-box[data-state=warning] .fsim-status-icon {
     @extend .mdi;
     @extend .mdi-cached;
     @extend .mdi-spin;

@@ -1,9 +1,10 @@
 
 <div class="row-1 mb-2 pt-2 pb-2 pl-4 pr-4 fsim-box" data-state="{% if program.is_successful %}success{% elif program.is_error %}error{% elif program.is_running %}warning{% else %}unkown{% endif %}" id="programStatusContainer_{{ program.id }}">
+
     <div class="row">
         <div class="program-name col">
             <h5 class="mt-2">
-                <i class="mdi fsim-status-icon"
+                <i class="fsim-status-icon"
                 data-state="{% if program.is_successful %}success{% elif program.is_error %}error{% elif program.is_running %}warning{% else %}unkown{% endif %}" id="programStatusIcon_{{ program.id }}"></i>
                 {{ program.name }}
             </h5>
@@ -11,20 +12,20 @@
 
         <div class="btn-toolbar col d-flex justify-content-end" role="toolbar">
             <div class="btn-group mr-2" role="group">
-                <button type="button" id="programStartStop_{{ program.id }}" class="btn btn-outline-dark start-program font-weight-light" data-program-id="{{ program.id }}">
+                <button type="button" id="programStartStop_{{ program.id }}" class="btn btn-outline-dark font-weight-light program-action-start-stop" data-program-id="{{ program.id }}" data-is-running="{{ program.is_running }}">
                     <i class="mdi mdi-power-settings-new"></i>
-                    <i data-text-swap="{% if program.is_running %}START{% else %}STOP{% endif %}">
+                    <i class="button-status-display">
                         {% if program.is_running %}STOP{% else %}START{% endif %}
                     </i>
                 </button>
             </div>
 
             <div class="btn-group mr-2" role="group">
-                <button type="button" class="btn btn-outline-dark modify-program font-weight-light" data-program-id="{{ program.id }}" data-program-name="{{ program.name }}" data-slave-id="{{ program.slave.id }}" data-program-path="{{ program.path }}" data-program-arguments="{{ program.arguments }}">
+                <button type="button" class="btn btn-outline-dark program-action-modify font-weight-light" data-program-id="{{ program.id }}" data-program-name="{{ program.name }}" data-slave-id="{{ program.slave.id }}" data-program-path="{{ program.path }}" data-program-arguments="{{ program.arguments }}">
                     <i class="mdi mdi-edit"></i> EDIT
                 </button>
 
-                <button type="button" class="btn btn-outline-dark delete-program font-weight-light" data-program-id="{{ program.id }}" data-slave-id="{{ program.slave }}" data-program-name="{{ program.name }}">
+                <button type="button" class="btn btn-outline-dark program-action-delete font-weight-light" data-program-id="{{ program.id }}" data-slave-id="{{ program.slave }}" data-program-name="{{ program.name }}">
                     <i class="mdi mdi-delete"></i> DELETE
                 </button>
             </div>

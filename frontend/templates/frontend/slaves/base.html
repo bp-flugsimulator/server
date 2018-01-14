@@ -30,7 +30,7 @@
         <div class="row-1 form-group" >
             <label class="client-header font-weight-bold">
                 CLIENTS
-                <button type="button" class="btn add-slave inline-add-button">
+                <button type="button" class="btn slave-action-add inline-add-button">
                     <i class="mdi mdi-add font-weight-bold"></i>
                 </button>
             </label>
@@ -41,7 +41,7 @@
                 {% for slave in slaves %}
                     <li class="nav-item mb-2 pt-2 pb-2 pr-4 pl-4 font-weight-bold fsim-box" data-state="{% if slave.has_error %}error{% elif slave.has_running %}warning{% elif slave.is_online %}success{% else %}unkown{% endif %}" id="slaveTab{{ slave.id }}">
                         <a class="nav-link slave-tab-link {% if forloop.first %} active {% endif %}" data-toggle="tab" href="#slaveTabContent{{ slave.id }}" role="tab">
-                            <i class="mdi mdi-apps"></i> {{ slave.name }}
+                            <i class="fsim-slave-status-icon"></i> {{ slave.name }}
                         </a>
                     </li>
                 {% endfor %}

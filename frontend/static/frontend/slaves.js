@@ -84,38 +84,42 @@ $(document).ready(function () {
         }
     });
 
-    $('.start-program').click(function () {
-        let id = $(this).data('program-id');
-        $.ajax({
-            type: 'POST',
-            url: '/api/program/' + id,
-            beforeSend(xhr) {
-                xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
-            },
-            converters: {
-                'text json': Status.from_json
-            },
-            success(status) {
-                if (status.is_err()) {
+    $('.program-action-start-stop').click(function () {
+        if ($(this).attr('data-is-running') === 'True') {
+            alert('Unimplemented!');
+        } else {
+            let id = $(this).data('program-id');
+            $.ajax({
+                type: 'POST',
+                url: '/api/program/' + id,
+                beforeSend(xhr) {
+                    xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
+                },
+                converters: {
+                    'text json': Status.from_json
+                },
+                success(status) {
+                    if (status.is_err()) {
+                        $.notify({
+                            message: status.payload
+                        }, {
+                                type: 'danger'
+                            });
+                    }
+                },
+                error(xhr, errorString, errorCode) {
                     $.notify({
-                        message: status.payload
+                        message: 'Could not deliver delete request to server (' + errorCode + ')'
                     }, {
                             type: 'danger'
                         });
                 }
-            },
-            error(xhr, errorString, errorCode) {
-                $.notify({
-                    message: 'Could not deliver delete request to server (' + errorCode + ')'
-                }, {
-                        type: 'danger'
-                    });
-            }
-        });
+            });
+        }
     });
 
     //opens the programModal to add a new program
-    $('.add-program').click(function () {
+    $('.program-action-add').click(function () {
         let programModal = $('#programModal');
         programModal.children().find('.modal-title').text('Add Program');
 
@@ -141,7 +145,7 @@ $(document).ready(function () {
     });
 
     //opens the programModal to modify a program
-    $('.modify-program').click(function () {
+    $('.program-action-modify').click(function () {
         let programModal = $('#programModal');
         let programForm = programModal.children().find('#programForm');
 
@@ -177,7 +181,7 @@ $(document).ready(function () {
         modalDeleteAction($('#programForm'), 'program');
     });
 
-    $('.delete-program').click(function () {
+    $('.program-action-delete').click(function () {
         //get id and name of the program and create deletion message
         let id = $(this).data('program-id');
         let name = $(this).data('program-name');
@@ -201,7 +205,7 @@ $(document).ready(function () {
     $('#programForm').submit(onFormSubmit('programForm'));
 
     //opens the fileModal to add a new program
-    $('.add-file').click(function () {
+    $('.file-action-add').click(function () {
         let fileModal = $('#fileModal');
         fileModal.children().find('.modal-title').text('Add File');
 
@@ -225,82 +229,92 @@ $(document).ready(function () {
         fileModal.modal('toggle');
     });
 
+    $('.file-action-modify').click(function () {
+        alert('Unimplemented');
+    });
+
+    $('.file-action-delete').click(function () {
+        alert('Unimplemented');
+    });
+
     // fileForm Handler
     $('#fileForm').submit(onFormSubmit('fileForm'));
 
-    $('.start-slave').click(function () {
-        let id = $(this).data('slave-id');
-        let el = $(this);
+    $('.slave-action-start-stop').click(function () {
+        if ($(this).attr('data-is-running') === 'True') {
+            let id = $(this).data('slave-id');
+            let el = $(this);
 
-        $.ajax({
-            type: 'GET',
-            url: '/api/slave/' + id + '/wol',
-            beforeSend(xhr) {
-                xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
-            },
-            success(data) {
-                let status = Status.from_json(JSON.stringify(data));
-                if (status.is_ok()) {
-                    el.addClass('animated pulse');
-                    el.one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend', function () {
-                        el.removeClass('animated pulse');
-                    });
-                } else {
+            $.ajax({
+                type: 'GET',
+                url: '/api/slave/' + id + '/shutdown',
+                beforeSend(xhr) {
+                    xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
+                },
+                success(data) {
+                    let status = Status.from_json(JSON.stringify(data));
+                    if (status.is_ok()) {
+                        el.addClass('animated pulse');
+                        el.one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend', function () {
+                            el.removeClass('animated pulse');
+                        });
+                    } else {
+                        $.notify({
+                            message: 'Error: ' + data.payload
+                        }, {
+                                type: 'danger'
+                            });
+                    }
+                },
+                error(xhr, errorString, errorCode) {
                     $.notify({
-                        message: 'Error: ' + data.payload
+                        message: 'Could not deliver shutdown request to server (' + errorCode + ')'
                     }, {
                             type: 'danger'
                         });
                 }
+            });
 
-            },
-            error(xhr, errorString, errorCode) {
-                $.notify({
-                    message: 'Could not deliver Wake-On-Lan request to server (' + errorCode + ')'
-                }, {
-                        type: 'danger'
-                    });
-            }
-        });
-    });
+        } else {
+            let id = $(this).data('slave-id');
+            let el = $(this);
 
-    $('.stop-slave').click(function () {
-        let id = $(this).data('slave-id');
-        let el = $(this);
+            $.ajax({
+                type: 'GET',
+                url: '/api/slave/' + id + '/wol',
+                beforeSend(xhr) {
+                    xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
+                },
+                success(data) {
+                    let status = Status.from_json(JSON.stringify(data));
+                    if (status.is_ok()) {
+                        el.addClass('animated pulse');
+                        el.one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend', function () {
+                            el.removeClass('animated pulse');
+                        });
+                    } else {
+                        $.notify({
+                            message: 'Error: ' + data.payload
+                        }, {
+                                type: 'danger'
+                            });
+                    }
 
-        $.ajax({
-            type: 'GET',
-            url: '/api/slave/' + id + '/shutdown',
-            beforeSend(xhr) {
-                xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
-            },
-            success(data) {
-                let status = Status.from_json(JSON.stringify(data));
-                if (status.is_ok()) {
-                    el.addClass('animated pulse');
-                    el.one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend', function () {
-                        el.removeClass('animated pulse');
-                    });
-                } else {
+                },
+                error(xhr, errorString, errorCode) {
                     $.notify({
-                        message: 'Error: ' + data.payload
+                        message: 'Could not deliver Wake-On-Lan request to server (' + errorCode + ')'
                     }, {
                             type: 'danger'
                         });
                 }
-            },
-            error(xhr, errorString, errorCode) {
-                $.notify({
-                    message: 'Could not deliver shutdown request to server (' + errorCode + ')'
-                }, {
-                        type: 'danger'
-                    });
-            }
-        });
+            });
+
+        }
     });
 
     //opens the slaveModal to add a new slave
-    $('.add-slave').click(function () {
+    $('.slave-action-add').click(function () {
         let slaveModal = $('#slaveModal');
         slaveModal.children().find('.modal-title').text('Add Client');
 
@@ -320,8 +334,9 @@ $(document).ready(function () {
         slaveModal.modal('toggle');
     });
 
+
     //opens the slaveModal to modify an existing slave
-    $('.modify-slave').click(function () {
+    $('.slave-action-modify').click(function () {
         //get info of slave
         let id = $(this).data('slave-id');
         let name = $(this).data('slave-name');
@@ -349,8 +364,8 @@ $(document).ready(function () {
         slaveModal.modal('toggle');
     });
 
-    /*function for deleting a slave, it is added to the delete-slave button*/
-    $('.delete-slave').click(function () {
+    /*function for deleting a slave, it is added to the slave-action-delete button*/
+    $('.slave-action-delete').click(function () {
         //get id and name of the slave and create deletion message
         let id = $(this).data('slave-id');
         let name = $(this).data('slave-name');
@@ -370,7 +385,7 @@ $(document).ready(function () {
         deleteWarning.modal('toggle');
     });
 
-    /*function for deleting a program, it is added to the delete-program
+    /*function for deleting a program, it is added to the program-action-delete
     button*/
     $('#deleteSlaveModalButton').click(function () {
         modalDeleteAction($('#slaveForm'), 'slave');

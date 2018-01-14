@@ -1,6 +1,12 @@
 /* eslint-env browser*/
 /* global $, Status, swapText, styleSlaveByStatus */
+/*eslint no-console: ["error", { allow: ["log"] }] */
 
+function changeStartStopText(element, text) {
+    element.children('.button-status-display').each(function (idx, val) {
+        $(val).text(text);
+    });
+}
 
 var socket = new WebSocket('ws://' + window.location.host + '/notifications');
 
@@ -13,9 +19,9 @@ var socketEventHandler = {
         statusContainer.attr('data-state', 'success');
         statusTab.attr('data-state', 'success');
 
-        // swap start and stop functions
-        startstopButton.removeClass('start-slave');
-        startstopButton.addClass('stop-slave');
+        // Use Python notation !!!
+        startstopButton.attr('data-is-running', 'True');
+        changeStartStopText(startstopButton, 'STOP');
 
         // set tooltip to Stop
         startstopButton.children('[data-text-swap]').each(function (idx, val) {
@@ -31,14 +37,14 @@ var socketEventHandler = {
         statusTab.attr('data-state', 'unkown');
 
         $('#slavesObjectsProgramsContent' + payload.sid)
-            .find('.fsim-status-icon[data-state], .fsim-box[data-state]')
+            .find('.fsim-box[data-state]')
             .each(function (idx, val) {
                 $(val).attr('data-state', 'unkown');
             });
 
-        // swap start and stop functions
-        startstopButton.removeClass('stop-slave');
-        startstopButton.addClass('start-slave');
+        // Use Python notation !!!
+        startstopButton.attr('data-is-running', 'False');
+        changeStartStopText(startstopButton, 'START');
 
         // set tooltip to Start
         startstopButton.children('[data-text-swap]').each(function (idx, val) {
@@ -48,12 +54,14 @@ var socketEventHandler = {
     programStarted(payload) {
         let statusContainer = $('#programStatusContainer_' + payload.pid);
         let startstopButton = $('#programStartStop_' + payload.pid);
-        let statusIcon = $('#programStatusIcon_' + payload.pid);
         let cardButton = $('#programCardButton_' + payload.pid);
 
         statusContainer.attr('data-state', 'warning');
-        statusIcon.attr('data-state', 'warning');
         cardButton.prop('disabled', true);
+
+        // Use Python notation !!!
+        startstopButton.attr('data-is-running', 'True');
+        changeStartStopText(startstopButton, 'STOP');
 
         let sid = null;
 
@@ -71,20 +79,21 @@ var socketEventHandler = {
     programStopped(payload) {
         let statusContainer = $('#programStatusContainer_' + payload.pid);
         let startstopButton = $('#programStartStop_' + payload.pid);
-        let statusIcon = $('#programStatusIcon_' + payload.pid);
         let cardButton = $('#programCardButton_' + payload.pid);
         let cardBox = $('#programCard_' + payload.pid);
 
         if (payload.code !== 0) {
             statusContainer.attr('data-state', 'error');
-            statusIcon.attr('data-state', 'error');
 
             cardButton.prop('disabled', false);
             cardBox.text(payload.code);
         } else {
             statusContainer.attr('data-state', 'success');
-            statusIcon.attr('data-state', 'success');
         }
+
+        // Use Python notation !!!
+        startstopButton.attr('data-is-running', 'False');
+        changeStartStopText(startstopButton, 'START');
 
         let sid = null;
 
