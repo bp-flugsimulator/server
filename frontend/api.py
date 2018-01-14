@@ -282,6 +282,38 @@ def manage_program(request, program_id):
         return HttpResponseForbidden()
 
 
+def stop_program(request, program_id):
+    """
+    Process GET requests which will stop a running programm on a slave.
+
+    Parameters
+    ----------
+        request: HttpRequest
+        id: Unique identifier of a program
+
+    Returns
+    -------
+        A StatusResponse or HttpResponseForbidden if the request method was
+        other than GET.
+    """
+    if request.method == 'GET':
+        if ProgramModel.objects.filter(id=program_id).exists():
+            program = ProgramModel.objects.get(id=program_id)
+            if ProgramStatusModel.objects.filter(
+                    program=program) and program.programstatus.running:
+                Group('client_' + str(program.slave.id)).send({ 'text':Command(method="execute", uuid=program.programstatus.command_uuid).to_json()})
+                return StatusResponse(Status.ok(''))
+            else:
+                return StatusResponse(
+                    Status.err('Can not stop a not running Program'))
+        else:
+            return StatusResponse(
+                Status.err('Can not stop unknown Program'))
+
+    else:
+        return HttpResponseForbidden()
+
+
 def manage_script(request, script_id):
     """
     Process GET requests for the ScriptModel ressource.
