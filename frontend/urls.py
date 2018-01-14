@@ -1,11 +1,18 @@
+"""
+This module specifies which function handles which url.
+In addition the module contains oneshot operations that are executed
+on server start
+"""
+
 from django.conf.urls import url
+from django.db.utils import OperationalError
 
 from frontend import views
 from frontend import api
 
-app_name = 'frontend'
+app_name = 'frontend'  # pylint: disable=C0103
 
-urlpatterns = [
+urlpatterns = [  # pylint: disable=C0103
     url(r'^welcome$', views.WelcomeView.as_view(), name='welcome'),
     url(r'^slaves/$', views.SlavesView.as_view(), name='slaves'),
     url(r'^scripts/$', views.ScriptsView.as_view(), name='scripts'),
@@ -38,9 +45,11 @@ def flush(*tables):
     for table in tables:
         try:
             getattr(models, table).objects.all().delete()
-        except:
+        except AttributeError:
+            pass
+        except OperationalError:
             pass
 
 
 # Flush status tables DO NOT DELETE!
-flush("SlaveStatus", "ProgramStatus")
+flush('ProgramStatus', 'SlaveStatus')

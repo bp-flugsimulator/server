@@ -1,1 +1,3 @@
-# Create your views here.
+"""
+This Module contains all views of the base application
+"""
