@@ -1340,6 +1340,66 @@ class ApiTests(TestCase):
 
         model.delete()
 
+    def test_stop_program(self):
+        SlaveModel(
+            name='stop_program',
+            ip_address='0.0.13.0',
+            mac_address='00:00:00:00:07:00').save()
+        slave = SlaveModel.objects.get(name='stop_program')
+        ProgramModel(
+            name='program', path='path', arguments='args', slave=slave).save()
+        program = ProgramModel.objects.get(name='program', slave=slave)
+        cmd_uuid = uuid4()
+        ProgramStatusModel(
+            program=program, running=True, command_uuid=cmd_uuid).save()
+
+        slave_ws = WSClient()
+        slave_ws.join_group('client_' + str(slave.id))
+
+        # test api
+        api_response = self.client.get(
+            path=reverse('frontend:stop_program', args=[program.id]))
+        self.assertEqual(200, api_response.status_code)
+        self.assertEqual(
+            Status.ok(''),
+            Status.from_json(api_response.content.decode('utf-8')))
+
+        # test message
+        self.assertEqual(
+            Command(method='execute', uuid=cmd_uuid),
+            Command.from_json(json.dumps(slave_ws.receive())))
+
+        slave.delete()
+
+    def test_stop_program_unknown_request(self):
+        api_request = self.client.post(reverse('frontend:stop_program', args=[0]))
+        self.assertEqual(403, api_request.status_code)
+
+    def test_stop_program_unknown_program(self):
+        api_response = self.client.get(reverse('frontend:stop_program', args=[9999]))
+        self.assertEqual(200, api_response.status_code)
+        self.assertEqual(
+            Status.err('Can not stop unknown Program'),
+            Status.from_json(api_response.content.decode('utf-8')))
+
+    def test_stop_program_stopped_program(self):
+        SlaveModel(
+            name='stop_program_stopped_program',
+            ip_address='0.0.13.1',
+            mac_address='00:00:00:00:07:01').save()
+        slave = SlaveModel.objects.get(name='stop_program_stopped_program')
+        ProgramModel(
+            name='program', path='path', arguments='args', slave=slave).save()
+        program = ProgramModel.objects.get(name='program', slave=slave)
+        ProgramStatusModel(
+            program=program, running=False, command_uuid=uuid4()).save()
+
+        api_response = self.client.get(reverse('frontend:stop_program', args=[program.id]))
+        self.assertEqual(200, api_response.status_code)
+        self.assertEqual(
+            Status.err('Can not stop a not running Program'),
+            Status.from_json(api_response.content.decode('utf-8')))
+
 
 class WebsocketTests(TestCase):
     def test_rpc_commands_fails_unkown_slave(self):
