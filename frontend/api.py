@@ -284,7 +284,7 @@ def manage_program(request, program_id):
 
 def manage_script(request, script_id):
     """
-    Process GET requests for the ScriptModel ressource.
+    Process GET, DELETE requests for the ScriptModel ressource.
 
     Parameters
     ----------
@@ -331,6 +331,11 @@ def manage_script(request, script_id):
             return StatusResponse(Status.ok(dict(script)))
         except ScriptModel.DoesNotExist:
             return StatusResponse(Status.err("Script does not exist."))
+
+    elif request.method == 'DELETE':
+        ScriptModel.objects.filter(id=script_id).delete()
+        return StatusResponse(Status.ok(''))
+
     else:
         return HttpResponseForbidden()
 

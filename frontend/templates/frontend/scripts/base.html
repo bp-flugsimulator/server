@@ -36,23 +36,26 @@
         </div>
 
         <div class="row-1">
-            <ul class="nav flex-column col" id="script-tabs" role="tablist">
+            <ul class="nav flex-column col" id="scriptTabList" role="tablist">
                 {% for script in scripts %}
-                    <li class="nav-item pt-2 pb-2 pr-4 pl-4 fsim-status-unkown fsim-box">
-                    <a class="nav-link" id="{{ script.id }}-tab" data-toggle="tab" href="#{{ script.id }}-tab-content" role="tab"><i class="mdi mdi-description"></i> {{ script.name }}</a>
+                    <li class="nav-item pt-2 pb-2 pr-4 pl-4 fsim-box" data-state="unkown">
+                        <a class="nav-link font-weight-bold script-tab-link" id="scriptTab{{ script.id }}" data-toggle="tab" href="#scriptTabContent{{ script.id }}" role="tab">
+                            <i class="mdi mdi-description"></i>
+                            {{ script.name }}
+                        </a>
                     </li>
                 {% endfor %}
             </ul>
         </div>
     </div>
 
-    <div class="container-fluid tab-content col" id="scripts-tabs-content">
+    <div class="container-fluid tab-content col" id="scriptTabCcontent">
         <div class="tab-pane fade show active" role="tabpanel" id="scripts-new-container">
             <div id="jsoneditor_new"></div>
         </div>
 
         {% for script in scripts %}
-            <div class="tab-pane fade show" id="{{ script.id }}-tab-content" role="tabpanel">
+            <div class="tab-pane fade show" id="scriptTabContent{{ script.id }}" role="tabpanel">
                 {% script_entry script %}
             </div>
         {% empty %}
