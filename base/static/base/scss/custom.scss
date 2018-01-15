@@ -1,8 +1,3 @@
-/*
-* Orson http://en.orson.io , autreplanete http://www.autreplanete.com/
-*
-**/
-
 @function color($key: "blue") {
     @return map-get($colors, $key);
 }
@@ -532,9 +527,10 @@ footer {
     bottom: 0;
 }
 
-.btn:focus, .btn:active {
-  outline: none !important;
-  box-shadow: none !important;
+.program-name,
+.file-name {
+    @extend .font-weight-bold;
+    font-size: 16px;
 }
 
 .fsim-box {
@@ -606,6 +602,11 @@ footer {
 .script-header {
     font-size: 22px;
     border-bottom: 1px solid black;
+}
+
+.inline-add-button:focus, .inline-add-button:active {
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 .inline-add-button {
