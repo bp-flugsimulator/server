@@ -27,27 +27,3 @@ urlpatterns = [  # pylint: disable=C0103
     url(r'^api/program/([0-9]+)$', api.manage_program, name='manage_program'),
     url(r'^api/files$', api.add_file, name='add_file'),
 ]
-
-
-def flush(*tables):
-    """
-    Deletes all entries in the given tables.
-
-    Arguments
-    ---------
-        tables: List of table names (as string)
-
-    """
-    from frontend import models
-
-    for table in tables:
-        try:
-            getattr(models, table).objects.all().delete()
-        except AttributeError:
-            pass
-        except OperationalError:
-            pass
-
-
-# Flush status tables DO NOT DELETE!
-flush('ProgramStatus', 'SlaveStatus')

@@ -1822,7 +1822,7 @@ class DatabaseTests(TestCase):
         self.assertTrue(prog.is_error)
 
     def test_flush_error(self):
-        from .urls import flush
+        from .apps import flush
         SlaveModel(
             name='test_flush_error',
             ip_address='0.1.0.0',
@@ -1901,7 +1901,7 @@ class DatabaseTests(TestCase):
         self.assertEqual(SlaveStatusModel.objects.count(), 1)
         self.assertEqual(ProgramStatusModel.objects.count(), 1)
 
-        from .urls import flush
+        from .apps import flush
         flush("SlaveStatus", "ProgramStatus")
 
         self.assertEqual(SlaveStatusModel.objects.count(), 0)
