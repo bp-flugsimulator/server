@@ -1,71 +1,138 @@
-socket = new WebSocket('ws://' + window.location.host + '/notifications');
+/* eslint-env browser*/
+/* global $, Status, swapText, styleSlaveByStatus */
+/*eslint no-console: ["error", { allow: ["log"] }] */
+
+function changeStartStopText(element, text) {
+    element.children('.button-status-display').each(function (idx, val) {
+        $(val).text(text);
+    });
+}
+
+var socket = new WebSocket('ws://' + window.location.host + '/notifications');
+
+var socketEventHandler = {
+    slaveConnect(payload) {
+        let statusContainer = $('#slaveStatusContainer_' + payload.sid);
+        let statusTab = $('#slaveTab' + payload.sid);
+        let startstopButton = $('#slaveStartStop_' + payload.sid);
+
+        statusContainer.attr('data-state', 'success');
+        statusTab.attr('data-state', 'success');
+
+        // Use Python notation !!!
+        startstopButton.attr('data-is-running', 'True');
+        changeStartStopText(startstopButton, 'STOP');
+
+        // set tooltip to Stop
+        startstopButton.children('[data-text-swap]').each(function (idx, val) {
+            swapText($(val));
+        });
+    },
+    slaveDisconnect(payload) {
+        let statusContainer = $('#slaveStatusContainer_' + payload.sid);
+        let statusTab = $('#slaveTab' + payload.sid);
+        let startstopButton = $('#slaveStartStop_' + payload.sid);
+
+        statusContainer.attr('data-state', 'unkown');
+        statusTab.attr('data-state', 'unkown');
+
+        $('#slavesObjectsProgramsContent' + payload.sid)
+            .find('.fsim-box[data-state]')
+            .each(function (idx, val) {
+                $(val).attr('data-state', 'unkown');
+            });
+
+        // Use Python notation !!!
+        startstopButton.attr('data-is-running', 'False');
+        changeStartStopText(startstopButton, 'START');
+
+        // set tooltip to Start
+        startstopButton.children('[data-text-swap]').each(function (idx, val) {
+            swapText($(val));
+        });
+    },
+    programStarted(payload) {
+        let statusContainer = $('#programStatusContainer_' + payload.pid);
+        let startstopButton = $('#programStartStop_' + payload.pid);
+        let cardButton = $('#programCardButton_' + payload.pid);
+
+        statusContainer.attr('data-state', 'warning');
+        cardButton.prop('disabled', true);
+
+        // Use Python notation !!!
+        startstopButton.attr('data-is-running', 'True');
+        changeStartStopText(startstopButton, 'STOP');
+
+        let sid = null;
+
+        statusContainer.find('button[data-slave-id]').each(function (idx, val) {
+            sid = $(val).data('slave-id');
+            return false;
+        });
+
+        styleSlaveByStatus(sid);
+
+        startstopButton.children('[data-text-swap]').each(function (idx, val) {
+            swapText($(val));
+        });
+    },
+    programStopped(payload) {
+        let statusContainer = $('#programStatusContainer_' + payload.pid);
+        let startstopButton = $('#programStartStop_' + payload.pid);
+        let cardButton = $('#programCardButton_' + payload.pid);
+        let cardBox = $('#programCard_' + payload.pid);
+
+        if (payload.code !== 0) {
+            statusContainer.attr('data-state', 'error');
+
+            cardButton.prop('disabled', false);
+            cardBox.text(payload.code);
+        } else {
+            statusContainer.attr('data-state', 'success');
+        }
+
+        // Use Python notation !!!
+        startstopButton.attr('data-is-running', 'False');
+        changeStartStopText(startstopButton, 'START');
+
+        let sid = null;
+
+        statusContainer.find('button[data-slave-id]').each(function (idx, val) {
+            sid = $(val).data('slave-id');
+            return false;
+        });
+
+        styleSlaveByStatus(sid);
+
+        startstopButton.children('[data-text-swap]').each(function (idx, val) {
+            swapText($(val));
+        });
+    },
+};
+
 socket.onmessage = function (data) {
-	let status = Status.from_json(data.data);
+    let status = Status.from_json(data.data);
+    console.log(status);
 
-    if(status.is_ok()) {
-
-        console.log(status)
+    if (status.is_ok()) {
         if (status.payload['slave_status'] != null) {
             // handle slave status updates
-
-            let statusButton = $('#slaveStatus_' + status.payload['sid']);
-            let startstopButton = $('#slaveStartStop_' + status.payload['sid']);
             switch (status.payload['slave_status']) {
                 case 'connected':
-                    console.log(status.payload['sid'] + ' has connected');
-
-                    // swap status
-                    statusButton.removeClass('btn-danger');
-                    statusButton.addClass('btn-success');
-
-                    // swap start and stop functions
-                    startstopButton.removeClass('start-slave');
-                    startstopButton.addClass('stop-slave');
-
-                    // set tooltip to Stop
-                    startstopButton.prop('title', 'Stop');
-                    startstopButton.attr('data-original-title', 'Stop');
-
+                    socketEventHandler.slaveConnect(status.payload);
                     break;
                 case 'disconnected':
-                    console.log(status.payload['sid'] + ' has disconnected');
-
-                    // swap status
-                    statusButton.removeClass('btn-success');
-                    statusButton.addClass('btn-danger');
-
-                    // swap start and stop functions
-                    startstopButton.removeClass('stop-slave');
-                    startstopButton.addClass('start-slave');
-
-                    // set tooltip to Start
-                    startstopButton.prop('title', 'Start');
-                    startstopButton.attr('data-original-title', 'Start');
-
+                    socketEventHandler.slaveDisconnect(status.payload);
                     break;
             }
         } else if (status.payload['program_status'] != null) {
             // handle program status updates
-
-            let statusButton = $('#programStatus_' + status.payload['pid']);
             switch (status.payload['program_status']) {
                 case 'started':
-                    console.log(status.payload['pid'] + ' has started');
-
-                    statusButton.removeClass('btn-danger');
-                    statusButton.addClass('btn-success');
-                    statusButton.prop('title', 'Running');
-                    statusButton.attr('data-original-title', 'Running');
+                    socketEventHandler.programStarted(status.payload);
                     break;
                 case 'finished':
-                    console.log(status.payload['pid'] + ' has finished with Code ' + status.payload['code']);
-
-                    statusButton.removeClass('btn-success');
-                    statusButton.addClass('btn-danger');
-
-                    let new_title = 'Stopped with Code ' + status.payload['code'];
-                    statusButton.prop('title', new_title);
-                    statusButton.attr('data-original-title', new_title)
+                    socketEventHandler.programStopped(status.payload);
                     break;
             }
         } else if (status.payload['message'] != null) {
@@ -73,11 +140,9 @@ socket.onmessage = function (data) {
                 message: status.payload['message']
             });
         } else {
-            console.log("unknown");
-            console.log(status.payload);
             $.notify({
-                type: 'danger',
-                message: 'received unknown response from server'
+                type: 'warning',
+                message: 'Received unknown response from server.'
             });
         }
     } else {
@@ -87,8 +152,8 @@ socket.onmessage = function (data) {
         });
     }
 };
-socket.onopen = function () {
-	console.log('Websocket opened')
-};
+
 // Call onopen directly if socket is already open
-if (socket.readyState === WebSocket.OPEN) socket.onopen();
+if (socket.readyState === WebSocket.OPEN) {
+    socket.onopen();
+}

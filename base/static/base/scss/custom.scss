@@ -1,8 +1,3 @@
-/*
-* Orson http://en.orson.io , autreplanete http://www.autreplanete.com/
-*
-**/
-
 @function color($key: "blue") {
     @return map-get($colors, $key);
 }
@@ -15,30 +10,29 @@
     @return map-get($grays, $key);
 }
 
-// Brand Colors
-$blue: #007bff;
+$blue: #3f88c5;
 $indigo: #6610f2;
-$purple: #66489c;
+$purple: #7a5980;
 $pink: #e83e8c;
-$red: #a50514;
-$orange: #be5700;
-$yellow: #b18500;
-$green: #4c9a12;
-$teal: #0eb077;
-$cyan: #0098b0;
-$white: #fff;
-$gray-100: #666666;
-$gray-200: #606060;
-$gray-300: #545454;
-$gray-400: #484848;
-$gray-500: #424242;
-$gray-600: #383838;
-$gray-700: #323232;
-$gray-800: #262626;
-$gray-900: #212121;
-$black: #000;
+$red: #e94f37;
+$orange: #ed8540;
+$yellow: #d6c442;
+$green: #748e54;
+$teal: #44bba4;
+$cyan: #17a2b8;
+$white: #f6f7eb;
+$gray-100: #dbdbdc;
+$gray-200: #c9cacb;
+$gray-300: #B7B8B9;
+$gray-400: #a5a7a8;
+$gray-500: #939597;
+$gray-600: #818486;
+$gray-700: #6f7274;
+$gray-800: #5d6163;
+$gray-900: #4B4F52;
+$black: #393e41;
 $grays: (100: $gray-100, 200: $gray-200, 300: $gray-300, 400: $gray-400, 500: $gray-500, 600: $gray-600, 700: $gray-700, 800: $gray-800, 900: $gray-900);
-$theme-colors: (primary: $teal, secondary: $purple, success: $green, info: $cyan, warning: $orange, danger: $red, light: $gray-100, dark: $gray-900);
+$theme-colors: (primary: $blue, secondary: $gray-600, success: $green, info: $cyan, warning: $yellow, danger: $red, light: $gray-100, dark: $gray-800);
 $colors: (blue: $blue, indigo: $indigo, purple: $purple, pink: $pink, red: $red, orange: $orange, yellow: $yellow, green: $green, teal: $teal, cyan: $cyan, white: $white, gray: $gray-600, gray-dark: $gray-800);
 $theme-color-interval: 8%;
 // Spacing
@@ -46,7 +40,7 @@ $spacer: 1rem;
 $spacers: (0: 0, 1: ($spacer * 0.25), 2: ($spacer * 0.5), 3: $spacer, 4: ($spacer * 1.5), 5: ($spacer * 3));
 $sizes: (25: 25%, 50: 50%, 75: 75%, 100: 100%);
 // Options
-$enable-rounded: false;
+$enable-rounded: true;
 $enable-shadows: false;
 $enable-gradients: false;
 $enable-transitions: true;
@@ -54,8 +48,8 @@ $enable-hover-media-query: false;
 $enable-grid-classes: true;
 $enable-print-styles: true;
 // Body
-$body-bg: $gray-900;
-$body-color: $white;
+$body-bg: $white;
+$body-color: $gray-900;
 // Links
 $link-color: theme-color('primary');
 $link-decoration: none;
@@ -157,21 +151,21 @@ $btn-border-radius-lg: $border-radius-lg;
 $btn-border-radius-sm: $border-radius-sm;
 $btn-transition: all 0.15s ease-in-out;
 // Forms
-$input-bg: $gray-700;
-$input-disabled-bg: $gray-400;
-$input-color: $white;
-$input-border-color: $gray-800;
+$input-bg: $white;
+$input-disabled-bg: $gray-200;
+$input-color: $gray-700;
+$input-border-color: rgba($black, 0.15);
 $input-btn-border-width: $border-width;
 $input-box-shadow: inset 0 1px 1px rgba($black, 0.075);
 $input-border-radius: $border-radius;
 $input-border-radius-lg: $border-radius-lg;
 $input-border-radius-sm: $border-radius-sm;
 $input-focus-bg: $input-bg;
-$input-focus-border-color: theme-color('primary');
+$input-focus-border-color: lighten(theme-color('primary'), 25%);
 $input-focus-box-shadow: $input-box-shadow,
 $btn-focus-box-shadow;
-$input-focus-color: $white;
-$input-placeholder-color: $gray-100;
+$input-focus-color: $input-color;
+$input-placeholder-color: $gray-600;
 $input-height-border: $input-btn-border-width * 2;
 $input-height-inner: ($font-size-base * $input-btn-line-height)+($input-btn-padding-y * 2);
 $input-height: calc(#{$input-height-inner} + #{$input-height-border});
@@ -198,7 +192,7 @@ $custom-control-indicator-bg: #ddd;
 $custom-control-indicator-bg-size: 50% 50%;
 $custom-control-indicator-box-shadow: inset 0 0.25rem 0.25rem rgba($black, 0.1);
 $custom-control-indicator-disabled-bg: $gray-200;
-$custom-control-description-disabled-color: $gray-400;
+$custom-control-description-disabled-color: $gray-600;
 $custom-control-indicator-checked-color: $white;
 $custom-control-indicator-checked-bg: theme-color('primary');
 $custom-control-indicator-checked-box-shadow: none;
@@ -253,31 +247,31 @@ $form-feedback-invalid-color: theme-color('danger');
 $dropdown-min-width: 10rem;
 $dropdown-padding-y: 0.5rem;
 $dropdown-spacer: 0.125rem;
-$dropdown-bg: $gray-700;
-$dropdown-border-color: $black;
+$dropdown-bg: $white;
+$dropdown-border-color: rgba($black, 0.15);
 $dropdown-border-width: $border-width;
-$dropdown-divider-bg: $gray-400;
+$dropdown-divider-bg: $gray-200;
 $dropdown-box-shadow: 0 0.5rem 1rem rgba($black, 0.175);
-$dropdown-link-color: $white;
-$dropdown-link-hover-color: $gray-400;
+$dropdown-link-color: $gray-900;
+$dropdown-link-hover-color: darken($gray-900, 5%);
 $dropdown-link-hover-bg: $gray-100;
 $dropdown-link-active-color: $component-active-color;
 $dropdown-link-active-bg: $component-active-bg;
-$dropdown-link-disabled-color: $gray-200;
+$dropdown-link-disabled-color: $gray-600;
 $dropdown-item-padding-y: 0.25rem;
 $dropdown-item-padding-x: 1.5rem;
-$dropdown-header-color: $purple;
+$dropdown-header-color: $gray-600;
 // Navs
 $nav-link-padding-y: 0.5rem;
 $nav-link-padding-x: 1rem;
-$nav-link-disabled-color: $gray-400;
-$nav-tabs-border-color: $purple;
+$nav-link-disabled-color: $gray-600;
+$nav-tabs-border-color: #ddd;
 $nav-tabs-border-width: $border-width;
 $nav-tabs-border-radius: $border-radius;
 $nav-tabs-link-hover-border-color: $gray-200;
-$nav-tabs-link-active-color: $white;
+$nav-tabs-link-active-color: $gray-700;
 $nav-tabs-link-active-bg: $body-bg;
-$nav-tabs-link-active-border-color: $purple;
+$nav-tabs-link-active-border-color: #ddd;
 $nav-pills-border-radius: $border-radius;
 $nav-pills-link-active-color: $component-active-color;
 $nav-pills-link-active-bg: $component-active-bg;
@@ -292,11 +286,11 @@ $navbar-toggler-padding-y: 0.25rem;
 $navbar-toggler-padding-x: 0.75rem;
 $navbar-toggler-font-size: $font-size-lg;
 $navbar-toggler-border-radius: $btn-border-radius;
-$navbar-dark-color: rgba($white, 0.5);
-$navbar-dark-hover-color: rgba($white, 0.75);
-$navbar-dark-active-color: rgba($white, 1);
-$navbar-dark-disabled-color: rgba($white, 0.25);
-$navbar-dark-toggler-border-color: rgba($white, 0.1);
+$navbar-dark-color: $teal;
+$navbar-dark-hover-color: $white;
+$navbar-dark-active-color: $white;
+$navbar-dark-disabled-color: $gray-600;
+$navbar-dark-toggler-border-color: rgba($black, 0.1);
 $navbar-light-color: rgba($black, 0.5);
 $navbar-light-hover-color: rgba($black, 0.7);
 $navbar-light-active-color: rgba($black, 0.9);
@@ -310,14 +304,14 @@ $table-accent-bg: rgba($black, 0.05);
 $table-hover-bg: rgba($black, 0.075);
 $table-active-bg: $table-hover-bg;
 $table-border-width: $border-width;
-$table-border-color: $gray-700;
-$table-head-bg: $gray-600;
-$table-head-color: $white;
-$table-inverse-bg: $gray-100;
-$table-inverse-accent-bg: $gray-400;
-$table-inverse-hover-bg: $gray-600;
-$table-inverse-border-color: $gray-900;
-$table-inverse-color: $white;
+$table-border-color: $gray-200;
+$table-head-bg: $gray-200;
+$table-head-color: $gray-700;
+$table-inverse-bg: $gray-900;
+$table-inverse-accent-bg: rgba($white, 0.05);
+$table-inverse-hover-bg: rgba($white, 0.075);
+$table-inverse-border-color: lighten($gray-900, 7.5%);
+$table-inverse-color: $body-bg;
 // Z Index
 $zindex-dropdown: 1000;
 $zindex-sticky: 1020;
@@ -335,12 +329,12 @@ $pagination-padding-y-lg: 0.75rem;
 $pagination-padding-x-lg: 1.5rem;
 $pagination-line-height: 1.25;
 $pagination-color: $link-color;
-$pagination-bg: $gray-700;
+$pagination-bg: $white;
 $pagination-border-width: $border-width;
-$pagination-border-color: $gray-900;
+$pagination-border-color: #ddd;
 $pagination-hover-color: $link-hover-color;
-$pagination-hover-bg: $gray-700;
-$pagination-hover-border-color: $pagination-border-color;
+$pagination-hover-bg: $gray-200;
+$pagination-hover-border-color: #ddd;
 $pagination-active-color: $white;
 $pagination-active-bg: theme-color('primary');
 $pagination-active-border-color: theme-color('primary');
@@ -349,7 +343,7 @@ $pagination-disabled-bg: $white;
 $pagination-disabled-border-color: #ddd;
 // Jumbotron
 $jumbotron-padding: 2rem;
-$jumbotron-bg: $body-bg;
+$jumbotron-bg: $gray-200;
 // Cards
 $card-spacer-y: 0.75rem;
 $card-spacer-x: 1.25rem;
@@ -358,7 +352,7 @@ $card-border-radius: $border-radius;
 $card-border-color: rgba($black, 0.125);
 $card-inner-border-radius: calc(#{$card-border-radius} - #{$card-border-width});
 $card-cap-bg: rgba($black, 0.03);
-$card-bg: $gray-700;
+$card-bg: $white;
 $card-img-overlay-padding: 1.25rem;
 $card-deck-margin: ($grid-gutter-width / 2);
 $card-columns-count: 3;
@@ -407,14 +401,14 @@ $modal-inner-padding: 15px;
 $modal-dialog-margin: 10px;
 $modal-dialog-margin-y-sm-up: 30px;
 $modal-title-line-height: $line-height-base;
-$modal-content-bg: $gray-900;
-$modal-content-border-color: rgba($white, 0.2);
+$modal-content-bg: $white;
+$modal-content-border-color: rgba($black, 0.2);
 $modal-content-border-width: $border-width;
 $modal-content-box-shadow-xs: 0 3px 9px rgba($black, 0.5);
 $modal-content-box-shadow-sm-up: 0 5px 15px rgba($black, 0.5);
 $modal-backdrop-bg: $black;
 $modal-backdrop-opacity: 0.5;
-$modal-header-border-color: $gray-700;
+$modal-header-border-color: $gray-200;
 $modal-footer-border-color: $modal-header-border-color;
 $modal-header-border-width: $modal-content-border-width;
 $modal-footer-border-width: $modal-header-border-width;
@@ -433,7 +427,7 @@ $alert-border-width: $border-width;
 // Progress bars
 $progress-height: 1rem;
 $progress-font-size: 0.75rem;
-$progress-bg: $gray-700;
+$progress-bg: $gray-200;
 $progress-border-radius: $border-radius;
 $progress-box-shadow: inset 0 0.1rem 0.1rem rgba($black, 0.1);
 $progress-bar-color: $white;
@@ -441,19 +435,19 @@ $progress-bar-bg: theme-color('primary');
 $progress-bar-animation-timing: 1s linear infinite;
 $progress-bar-transition: width 0.6s ease;
 // List group
-$list-group-bg: $gray-700;
-$list-group-border-color: $gray-800;
+$list-group-bg: $white;
+$list-group-border-color: rgba($black, 0.125);
 $list-group-border-width: $border-width;
 $list-group-border-radius: $border-radius;
 $list-group-item-padding-y: 0.75rem;
 $list-group-item-padding-x: 1.25rem;
-$list-group-hover-bg: $gray-600;
+$list-group-hover-bg: $gray-100;
 $list-group-active-color: $component-active-color;
 $list-group-active-bg: $component-active-bg;
 $list-group-active-border-color: $list-group-active-bg;
-$list-group-disabled-color: $gray-200;
+$list-group-disabled-color: $gray-600;
 $list-group-disabled-bg: $list-group-bg;
-$list-group-action-color: $white;
+$list-group-action-color: $gray-700;
 $list-group-action-hover-color: $list-group-action-color;
 $list-group-action-active-color: $body-color;
 $list-group-action-active-bg: $gray-200;
@@ -461,24 +455,24 @@ $list-group-action-active-bg: $gray-200;
 $thumbnail-padding: 0.25rem;
 $thumbnail-bg: $body-bg;
 $thumbnail-border-width: $border-width;
-$thumbnail-border-color: $body-bg;
+$thumbnail-border-color: #ddd;
 $thumbnail-border-radius: $border-radius;
 $thumbnail-box-shadow: 0 1px 2px rgba($black, 0.075);
 $thumbnail-transition: all 0.2s ease-in-out;
 // Figures
 $figure-caption-font-size: 90%;
-$figure-caption-color: $gray-200;
+$figure-caption-color: $gray-600;
 // Breadcrumbs
 $breadcrumb-padding-y: 0.75rem;
 $breadcrumb-padding-x: 1rem;
 $breadcrumb-item-padding: 0.5rem;
-$breadcrumb-bg: $gray-700;
-$breadcrumb-divider-color: $gray-200;
-$breadcrumb-active-color: $white;
-$breadcrumb-divider: '->';
+$breadcrumb-bg: $gray-200;
+$breadcrumb-divider-color: $gray-600;
+$breadcrumb-active-color: $gray-600;
+$breadcrumb-divider: '/';
 // Carousel
-$carousel-control-color: theme-colors('primary');
-$carousel-control-width: 25%;
+$carousel-control-color: $white;
+$carousel-control-width: 15%;
 $carousel-control-opacity: 0.5;
 $carousel-indicator-width: 30px;
 $carousel-indicator-height: 3px;
@@ -491,82 +485,150 @@ $carousel-transition: transform 0.6s ease;
 // Close
 $close-font-size: $font-size-base * 1.5;
 $close-font-weight: $font-weight-bold;
-$close-color: $white;
+$close-color: $black;
 $close-text-shadow: 0 1px 0 $white;
 // Code
 $code-font-size: 90%;
 $code-padding-y: 0.2rem;
 $code-padding-x: 0.4rem;
-$code-color: $white;
-$code-bg: $gray-400;
+$code-color: #bd4147;
+$code-bg: $gray-100;
 $kbd-color: $white;
-$kbd-bg: $gray-400;
-$pre-color: $white;
+$kbd-bg: $gray-900;
+$pre-color: $gray-900;
 $pre-scrollable-max-height: 340px;
 // Options
-$enable-rounded: false;
+$enable-rounded: true;
 $enable-shadows: false;
 $enable-gradients: false;
 $enable-transitions: true;
 $enable-hover-media-query: false;
 $enable-grid-classes: true;
 $enable-print-styles: true;
-// My Variables
 @import "node_modules/bootstrap/scss/bootstrap";
-div.jsoneditor {
-    background-color: $gray-700;
-    border: 1px solid $gray-800;
+
+$md-font-path: "../../node/bootstrap-material-icons/fonts";
+@import "node_modules/bootstrap-material-icons/scss/material-icons";
+$fa-font-path: "../../node/font-awesome/fonts";
+@import "node_modules/font-awesome/scss/font-awesome";
+
+main {
+    min-height: 100%;
 }
 
-div.jsoneditor-menu {
-    background-color: $gray-300;
-    border-bottom: $gray-800;
+html, body {
+    height: 100%;
 }
 
-div.jsoneditor-readonly {
-    color: $gray-200;
+footer {
+    @extend .fixed-bottom;
+    position: relative;
+    margin-top: 20px;
+    bottom: 0;
 }
 
-div.jsoneditor-values {
-    color: $white;
+.program-name,
+.file-name {
+    @extend .font-weight-bold;
+    font-size: 16px;
 }
 
-div.jsoneditor-field.jsoneditor-highlight-active,
-div.jsoneditor-field.jsoneditor-highlight-active:focus,
-div.jsoneditor-field.jsoneditor-highlight-active:hover,
-div.jsoneditor-value.jsoneditor-highlight-active,
-div.jsoneditor-value.jsoneditor-highlight-active:focus,
-div.jsoneditor-value.jsoneditor-highlight-active:hover {
-    background-color: $gray-400;
-    border: 1px solid $gray-800;
-    border-radius: 2px
+.fsim-box {
+    border-bottom: 1px solid $gray-400;
+    border-right: 1px solid $gray-400;
+    border-top: 1px solid $gray-400;
 }
 
-div.jsoneditor-field.jsoneditor-highlight,
-div.jsoneditor-field[contenteditable=true]:focus,
-div.jsoneditor-field[contenteditable=true]:hover,
-div.jsoneditor-value.jsoneditor-highlight,
-div.jsoneditor-value[contenteditable=true]:focus,
-div.jsoneditor-value[contenteditable=true]:hover {
-    background-color: $gray-400;
-    border: 1px solid $gray-800;
-    border-radius: 2px
+.fsim-box[data-state=error] {
+    background: linear-gradient(to right, $red 0, $red 5px, transparent 5px, transparent 100%) no-repeat;
 }
 
-tr.jsoneditor-highlight,
-tr.jsoneditor-selected {
-    background-color: $gray-400;
-    border: 1px solid $gray-800;
+.fsim-box[data-state=success] {
+    background: linear-gradient(to right, $green 0, $green 5px, transparent 5px, transparent 100%) no-repeat;
 }
 
-div.jsoneditor-field {
-    color: $white;
+.fsim-box[data-state=warning] {
+    background: linear-gradient(to right, $yellow 0, $yellow 5px, transparent 5px, transparent 100%) no-repeat;
+
 }
 
-div.jsoneditor-value.jsoneditor-string {
+.fsim-box[data-state=unkown] {
+    background: linear-gradient(to right, $gray-100 0, $gray-100 5px, transparent 5px, transparent 100%) no-repeat;
+
+}
+
+.fsim-box .fsim-slave-status-icon {
+    @extend .mdi;
+    @extend .mdi-apps;
+}
+
+.fsim-box[data-state=error] .fsim-slave-status-icon {
+    @extend .mdi;
+    @extend .mdi-error-outline;
+}
+
+.fsim-box[data-state=warning] .fsim-slave-status-icon {
+    @extend .mdi;
+    @extend .mdi-cached;
+    @extend .mdi-spin;
+}
+
+.fsim-box-bottom {
+    border-bottom: 1px solid $gray-100;
+}
+
+.fsim-box[data-state=error] .fsim-status-icon {
+    @extend .mdi;
+    @extend .mdi-error-outline;
+}
+
+.fsim-box[data-state=success] .fsim-status-icon {
+    @extend .mdi;
+    @extend .mdi-check;
+}
+
+.fsim-box[data-state=unkown] .fsim-status-icon {
+    @extend .mdi;
+    @extend .mdi-settings-ethernet;
+}
+
+.fsim-box[data-state=warning] .fsim-status-icon {
+    @extend .mdi;
+    @extend .mdi-cached;
+    @extend .mdi-spin;
+}
+
+.client-header,
+.script-header {
+    font-size: 22px;
+    border-bottom: 1px solid black;
+}
+
+.inline-add-button:focus, .inline-add-button:active {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.inline-add-button {
+    background: transparent;
     color: $teal;
 }
 
-div.jsoneditor-value.jsoneditor-number {
-    color: $pink;
+.inline-add-button:hover {
+    color: theme-color('secondary');
+    cursor: pointer;
+}
+
+.background-text-large {
+    color: rgba($black, 0.2);
+    text-transform: uppercase;
+    font-weight: bold;
+    font-size: xx-large;
+}
+
+.background-text-normal {
+    color: rgba($black, 0.2);
+    text-transform: uppercase;
+    font-weight: bold;
+    font-size: large;
 }

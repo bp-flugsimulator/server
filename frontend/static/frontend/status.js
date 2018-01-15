@@ -1,20 +1,20 @@
-function uuid(){
+function uuid() {
     let uuid = '', i, random;
     for (i = 0; i < 32; i++) {
         random = Math.random() * 16 | 0;
         if (i === 8 || i === 12 || i === 16 || i === 20) {
             uuid += '-';
         }
-        
+
         uuid += (i === 12 ? 4 : (i === 16 ? (random & 3 | 8) : random)).toString(16);
     }
     return uuid;
 }
 
 class Status {
-    constructor (status, payload) {
-        if (status !== "ok" && status !== "err") {
-            throw new TypeError("Status only accept a string with `ok` or `err`..");
+    constructor(status, payload) {
+        if (status !== 'ok' && status !== 'err') {
+            throw new TypeError('Status only accept a string with `ok` or `err`.');
         } else {
             this._status = status;
             this._payload = payload;
@@ -35,28 +35,28 @@ class Status {
         return this._payload;
     }
 
-    get uuid(){
+    get uuid() {
         return this._uuid;
     }
 
-    set uuid(id){
+    set uuid(id) {
         this._uuid = id;
     }
 
     is_ok() {
-        return this.status === "ok";
+        return this.status === 'ok';
     }
 
     is_err() {
-        return this.status === "err";
+        return this.status === 'err';
     }
 
     static ok(payload) {
-        return new Status("ok", payload);
+        return new Status('ok', payload);
     }
 
     static err(payload) {
-        return new Status("err", payload);
+        return new Status('err', payload);
     }
 
     to_json() {

@@ -74,6 +74,38 @@ class Slave(Model):
     mac_address = CharField(
         unique=True, max_length=17, validators=[validate_mac_address])
 
+    @property
+    def is_online(self):
+        """
+        Returns true of the current slave has connected to the master.
+        """
+        try:
+            return self.slavestatus.online
+        except SlaveStatus.DoesNotExist:
+            return False
+
+    @property
+    def has_error(self):
+        """
+        Returns true if any program or file is in an error state.
+        """
+        for prog in self.program_set.all():
+            if prog.is_error:
+                return True
+
+        return False
+
+    @property
+    def has_running(self):
+        """
+        Returns true if any program or file is in an error state.
+        """
+        for prog in self.program_set.all():
+            if prog.is_running:
+                return True
+
+        return False
+
 
 class Program(Model):
     """
@@ -102,6 +134,46 @@ class Program(Model):
 
     class Meta:
         unique_together = (('name', 'slave'), )
+
+    @property
+    def is_running(self):
+        """
+        Returns true if program is currently running.
+        """
+        try:
+            return self.programstatus.running
+        except ProgramStatus.DoesNotExist:
+            return False
+
+    @property
+    def is_executed(self):
+        """
+        Returns true if the program exited.
+        """
+        try:
+            return not self.is_running and self.programstatus.code != ''
+        except ProgramStatus.DoesNotExist:
+            return False
+
+    @property
+    def is_error(self):
+        """
+        Returns true if the current program was executed not successful, which means the error code was 0.
+        """
+        # NOTICE: no try and catch needed because self.is_executed is False
+        # if ProgramStatus.DoesNotExist is thrown, thus the whole expression
+        # is false
+        return self.is_executed and self.programstatus.code != '0'
+
+    @property
+    def is_successful(self):
+        """
+        Returns true if the current program was executed successful.
+        """
+        # NOTICE: no try and catch needed because self.is_executed is False
+        # if ProgramStatus.DoesNotExist is thrown, thus the whole expression
+        # is false
+        return self.is_executed and self.programstatus.code == '0'
 
 
 class File(Model):
