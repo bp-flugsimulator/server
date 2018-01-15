@@ -102,11 +102,11 @@ $(document).ready(function () {
 
     $('.slave-file-tab').click(function () {
         localStorage.setItem('tab-status', 'file');
-    })
+    });
 
     $('.slave-program-tab').click(function () {
         localStorage.setItem('tab-status', 'program');
-    })
+    });
 
     $('.program-action-start-stop').click(function () {
         if ($(this).attr('data-is-running') === 'True') {
