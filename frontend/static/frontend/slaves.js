@@ -6,8 +6,8 @@
  *
  * @param {String} id Form identifier without '#'
  */
-var onFormSubmit = function (id) {
-    let fun = function (event) {
+const onFormSubmit = function (id) {
+    return function (event) {
         //Stop form from submitting normally
         event.preventDefault();
 
@@ -30,13 +30,11 @@ var onFormSubmit = function (id) {
                 $.notify({
                     message: 'Could not deliver ' + $(this).attr('method') + ' request to server (' + errorCode + ')'
                 }, {
-                        type: 'danger'
-                    });
+                    type: 'danger'
+                });
             }
         });
     };
-
-    return fun;
 };
 
 $(document).ready(function () {
@@ -53,7 +51,7 @@ $(document).ready(function () {
         }
     });
 
-    var restoreSlaveInnerTab = function (slaveId) {
+    const restoreSlaveInnerTab = function (slaveId) {
         let tabStatus = localStorage.getItem('tab-status');
 
         if (tabStatus !== null) {
