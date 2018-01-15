@@ -24,5 +24,6 @@ urlpatterns = [  # pylint: disable=C0103
         api.shutdown_slave,
         name='shutdown_slave'),
     url(r'^api/program/([0-9]+)$', api.manage_program, name='manage_program'),
+    url(r'^api/program/([0-9]+)/stop$', api.stop_program, name='stop_program'),
     url(r'^api/files$', api.add_file, name='add_file'),
 ]

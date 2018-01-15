@@ -6,8 +6,8 @@
  *
  * @param {String} id Form identifier without '#'
  */
-var onFormSubmit = function (id) {
-    let fun = function (event) {
+const onFormSubmit = function (id) {
+    return function (event) {
         //Stop form from submitting normally
         event.preventDefault();
 
@@ -30,13 +30,11 @@ var onFormSubmit = function (id) {
                 $.notify({
                     message: 'Could not deliver ' + $(this).attr('method') + ' request to server (' + errorCode + ')'
                 }, {
-                        type: 'danger'
-                    });
+                    type: 'danger'
+                });
             }
         });
     };
-
-    return fun;
 };
 
 $(document).ready(function () {
@@ -53,7 +51,7 @@ $(document).ready(function () {
         }
     });
 
-    var restoreSlaveInnerTab = function (slaveId) {
+    const restoreSlaveInnerTab = function (slaveId) {
         let tabStatus = localStorage.getItem('tab-status');
 
         if (tabStatus !== null) {
@@ -109,13 +107,10 @@ $(document).ready(function () {
     });
 
     $('.program-action-start-stop').click(function () {
-        if ($(this).attr('data-is-running') === 'True') {
-            alert('Unimplemented!');
-        } else {
-            let id = $(this).data('program-id');
+        let apiRequest = function(url,type) {
             $.ajax({
-                type: 'POST',
-                url: '/api/program/' + id,
+                type,
+                url,
                 beforeSend(xhr) {
                     xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
                 },
@@ -127,18 +122,26 @@ $(document).ready(function () {
                         $.notify({
                             message: status.payload
                         }, {
-                                type: 'danger'
-                            });
+                            type: 'danger'
+                        });
                     }
                 },
                 error(xhr, errorString, errorCode) {
                     $.notify({
-                        message: 'Could not deliver delete request to server (' + errorCode + ')'
+                        message: 'Could not deliver ' + type + ' request to server (' + errorCode + ')'
                     }, {
-                            type: 'danger'
-                        });
+                        type: 'danger'
+                    });
                 }
             });
+        };
+
+        let id = $(this).data('program-id');
+
+        if ($(this).attr('data-is-running') === 'True') {
+            apiRequest('/api/program/' + id + '/stop', 'GET');
+        } else {
+            apiRequest('/api/program/' + id , 'POST');
         }
     });
 
