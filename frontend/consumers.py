@@ -62,11 +62,11 @@ def handle_execute_answer(status):
             program.name, program_status.code))
     else:
         # Report exception to webinterface
-        notify_err('An Exception occured while trying to execute {}'.format(
+        notify_err('An Exception occurred while trying to execute {}'.format(
             program.name))
         LOGGER.info(
             colored(
-                'Following exeption occured on the client while executing {}: \n {}'.
+                'Following exeption occurred on the client while executing {}: \n {}'.
                 format(program.name, status.payload['result']), 'red'))
 
     # update status
@@ -103,12 +103,12 @@ def handle_online_answer(status):
         notify({'slave_status': 'connected', 'sid': str(slave.id)})
     else:
         # notify the webinterface
-        notify_err('An error occured while connecting to client {}!'.format(
+        notify_err('An error occurred while connecting to client {}!'.format(
             slave.name))
 
         LOGGER.info(
             colored(
-                'Following exeption occured on the client {} while handeling an "online-request": \n {}'.
+                'Following exeption occurred on the client {} while handeling an "online-request": \n {}'.
                 format(slave.name, status.payload['result']), 'red'))
 
 

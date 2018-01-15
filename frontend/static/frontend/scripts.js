@@ -1,5 +1,5 @@
 /* eslint-env browser */
-/* global $, JSONEditor, getCookie, Status */
+/* global $, JSONEditor, getCookie, Status, modalDeleteAction */
 /* exported loadScript, newScript */
 
 var schema = {
@@ -227,7 +227,7 @@ $(document).ready(function () {
     });
 
     $('#deleteScriptModalButton').click(function () {
-        modalDeleteAction($('#scriptFrom'), 'script')
+        modalDeleteAction($('#scriptFrom'), 'script');
     });
 
     $('.script-action-save').click(function () {
