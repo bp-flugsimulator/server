@@ -1,5 +1,5 @@
 /* eslint-env browser */
-/* global $, JSONEditor, getCookie, Status */
+/* global $, JSONEditor, getCookie, Status, modalDeleteAction */
 /* exported loadScript, newScript */
 
 var schema = {
@@ -10,31 +10,39 @@ var schema = {
             'type': 'object',
             'properties': {
                 'index': {
-                    'type': 'integer'
+                    'type': 'integer',
+                    // 'required': true
                 },
                 'slave': {
                     'type': ['integer', 'string'],
+                    // 'required': true
                 },
                 'program': {
                     'type': ['integer', 'string'],
+                    // 'required': true
                 }
             },
-            'required': ['index', 'slave', 'program']
+            'required': ['index', 'slave', 'program'],
+            'additionalProperties': false
         },
         'file_entry': {
             'type': 'object',
             'properties': {
                 'index': {
-                    'type': 'integer'
+                    'type': 'integer',
+                    // 'required': true
                 },
                 'slave': {
                     'type': ['integer', 'string'],
+                    // 'required': true
                 },
                 'file': {
                     'type': ['integer', 'string'],
+                    // 'required': true
                 }
             },
-            'required': ['index', 'slave', 'file']
+            'required': ['index', 'slave', 'file'],
+            'additionalProperties': false
         }
     },
     'properties': {
@@ -45,15 +53,19 @@ var schema = {
             'type': 'array',
             'items': {
                 '$ref': '#/definitions/program_entry'
-            }
+            },
+            'uniqueItems': true
         },
         'files': {
             'type': 'array',
             'items': {
                 '$ref': '#/definitions/file_entry'
-            }
+            },
+            'uniqueItems': true
         }
-    }
+    },
+    'required': ['name', 'programs', 'files'],
+    'additionalProperties': false
 };
 
 var options = {
@@ -195,3 +207,47 @@ var newScript = function (name) {
 
     createEditor(defaultJson, 'new');
 };
+
+
+$(document).ready(function () {
+    // Set color of the current selected.
+    $('.script-tab-link.active').parent('li').css('background-color', '#dbdbdc');
+
+    // Changes the color of the clicked slave, if it was not clicked before.
+    $('.script-tab-link').click(function () {
+        if (!$(this).hasClass('active')) {
+            // Remove color from the old tabs
+            $('.script-tab-link').each(function (idx, val) {
+                $(val).parent('li').css('background-color', 'transparent');
+            });
+
+            // Change the color of the current tab
+            $(this).parent('li').css('background-color', '#dbdbdc');
+        }
+    });
+
+    $('#deleteScriptModalButton').click(function () {
+        modalDeleteAction($('#scriptFrom'), 'script');
+    });
+
+    $('.script-action-save').click(function () {
+        alert('unimplemented');
+    });
+
+    $('.script-action-delete').click(function () {
+        let id = $(this).data('script-id');
+        let name = $(this).data('script-name');
+        let message = '<a>Are you sure you want to remove script </a><b>' + name + '</b>?</a>';
+
+        //
+        //changing button visibility and message of the delete modal
+        let deleteWarning = $('#deleteWarning');
+        deleteWarning.children().find('.modal-body').empty(message);
+        deleteWarning.children().find('.modal-body').append(message);
+
+
+        //adding id to modal and set it visible
+        deleteWarning.data('sqlId', id);
+        deleteWarning.modal('toggle');
+    });
+});
