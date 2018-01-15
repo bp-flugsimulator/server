@@ -109,10 +109,10 @@ $(document).ready(function () {
     });
 
     $('.program-action-start-stop').click(function () {
-        let api_request = function(url,type) {
+        let apiRequest = function(url,type) {
             $.ajax({
-                type: type,
-                url: url,
+                type,
+                url,
                 beforeSend(xhr) {
                     xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
                 },
@@ -141,9 +141,9 @@ $(document).ready(function () {
         let id = $(this).data('program-id');
 
         if ($(this).attr('data-is-running') === 'True') {
-            api_request('/api/program/' + id + '/stop', 'GET')
+            apiRequest('/api/program/' + id + '/stop', 'GET');
         } else {
-            api_request('/api/program/' + id , 'POST')
+            apiRequest('/api/program/' + id , 'POST');
         }
     });
 
