@@ -109,13 +109,10 @@ $(document).ready(function () {
     });
 
     $('.program-action-start-stop').click(function () {
-        if ($(this).attr('data-is-running') === 'True') {
-            alert('Unimplemented!');
-        } else {
-            let id = $(this).data('program-id');
+        let api_request = function(url,type) {
             $.ajax({
-                type: 'POST',
-                url: '/api/program/' + id,
+                type: type,
+                url: url,
                 beforeSend(xhr) {
                     xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
                 },
@@ -127,18 +124,26 @@ $(document).ready(function () {
                         $.notify({
                             message: status.payload
                         }, {
-                                type: 'danger'
-                            });
+                            type: 'danger'
+                        });
                     }
                 },
                 error(xhr, errorString, errorCode) {
                     $.notify({
-                        message: 'Could not deliver delete request to server (' + errorCode + ')'
+                        message: 'Could not deliver ' + type + ' request to server (' + errorCode + ')'
                     }, {
-                            type: 'danger'
-                        });
+                        type: 'danger'
+                    });
                 }
             });
+        };
+
+        let id = $(this).data('program-id');
+
+        if ($(this).attr('data-is-running') === 'True') {
+            api_request('/api/program/' + id + '/stop', 'GET')
+        } else {
+            api_request('/api/program/' + id , 'POST')
         }
     });
 
