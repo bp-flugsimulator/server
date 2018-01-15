@@ -10,31 +10,39 @@ var schema = {
             'type': 'object',
             'properties': {
                 'index': {
-                    'type': 'integer'
+                    'type': 'integer',
+                    // 'required': true
                 },
                 'slave': {
                     'type': ['integer', 'string'],
+                    // 'required': true
                 },
                 'program': {
                     'type': ['integer', 'string'],
+                    // 'required': true
                 }
             },
-            'required': ['index', 'slave', 'program']
+            'required': ['index', 'slave', 'program'],
+            'additionalProperties': false
         },
         'file_entry': {
             'type': 'object',
             'properties': {
                 'index': {
-                    'type': 'integer'
+                    'type': 'integer',
+                    // 'required': true
                 },
                 'slave': {
                     'type': ['integer', 'string'],
+                    // 'required': true
                 },
                 'file': {
                     'type': ['integer', 'string'],
+                    // 'required': true
                 }
             },
-            'required': ['index', 'slave', 'file']
+            'required': ['index', 'slave', 'file'],
+            'additionalProperties': false
         }
     },
     'properties': {
@@ -45,15 +53,19 @@ var schema = {
             'type': 'array',
             'items': {
                 '$ref': '#/definitions/program_entry'
-            }
+            },
+            'uniqueItems': true
         },
         'files': {
             'type': 'array',
             'items': {
                 '$ref': '#/definitions/file_entry'
-            }
+            },
+            'uniqueItems': true
         }
-    }
+    },
+    'required': ['name', 'programs', 'files'],
+    'additionalProperties': false
 };
 
 var options = {
