@@ -72,6 +72,9 @@ var options = {
     search: false,
     navigationBar: false,
     modes: ['tree'],
+    onError() {
+        console.log("error");
+    },
     templates: [{
         text: 'File',
         title: 'Insert a File Node',
@@ -162,11 +165,15 @@ var options = {
     }
 };
 
+var editors = {};
+
 var createEditor = function (json, id) {
     let container = document.getElementById('jsoneditor_' + id);
     let editor = new JSONEditor(container, options, json);
+    editors['jsoneditor_' + id] = editor;
     editor.expandAll();
-};
+}
+
 
 var loadScript = function (id) {
     $.ajax({
@@ -205,7 +212,7 @@ var newScript = function (name) {
         files: [],
     };
 
-    createEditor(defaultJson, 'new');
+    createEditor(defaultJson, name);
 };
 
 
@@ -228,6 +235,47 @@ $(document).ready(function () {
 
     $('#deleteScriptModalButton').click(function () {
         modalDeleteAction($('#scriptFrom'), 'script');
+    });
+
+    $('.script-action-add').click(function () {
+        $('#scriptTabNew').click();
+    });
+
+    $('.script-action-add-save').click(function () {
+        let id = $(this).attr('data-editor-id');
+        let editor = editors['jsoneditor_' + id];
+        let string = JSON.stringify(editor.get());
+
+        $.ajax({
+            method: 'POST',
+            url: '/api/scripts',
+            contentType: 'application/json',
+            data: string,
+            beforeSend(xhr) {
+                xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
+            },
+            converters: {
+                'text json': Status.from_json
+            },
+            success(status) {
+                if (status.is_err()) {
+                    $.notify({
+                        message: 'Could not save script: ' + JSON.stringify(status.payload)
+                    }, {
+                            type: 'danger'
+                        });
+                } else {
+                    window.location.reload();
+                }
+            },
+            error(xhr, errorString, errorCode) {
+                $.notify({
+                    message: 'Could not deliver script add request to server (' + errorCode + ')'
+                }, {
+                        type: 'danger'
+                    });
+            }
+        });
     });
 
     $('.script-action-save').click(function () {

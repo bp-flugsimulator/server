@@ -30,8 +30,8 @@ const onFormSubmit = function (id) {
                 $.notify({
                     message: 'Could not deliver ' + $(this).attr('method') + ' request to server (' + errorCode + ')'
                 }, {
-                    type: 'danger'
-                });
+                        type: 'danger'
+                    });
             }
         });
     };
@@ -107,7 +107,7 @@ $(document).ready(function () {
     });
 
     $('.program-action-start-stop').click(function () {
-        let apiRequest = function(url,type) {
+        let apiRequest = function (url, type) {
             $.ajax({
                 type,
                 url,
@@ -122,16 +122,16 @@ $(document).ready(function () {
                         $.notify({
                             message: status.payload
                         }, {
-                            type: 'danger'
-                        });
+                                type: 'danger'
+                            });
                     }
                 },
                 error(xhr, errorString, errorCode) {
                     $.notify({
                         message: 'Could not deliver ' + type + ' request to server (' + errorCode + ')'
                     }, {
-                        type: 'danger'
-                    });
+                            type: 'danger'
+                        });
                 }
             });
         };
@@ -141,7 +141,7 @@ $(document).ready(function () {
         if ($(this).attr('data-is-running') === 'True') {
             apiRequest('/api/program/' + id + '/stop', 'GET');
         } else {
-            apiRequest('/api/program/' + id , 'POST');
+            apiRequest('/api/program/' + id, 'POST');
         }
     });
 

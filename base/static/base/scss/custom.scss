@@ -512,11 +512,7 @@ $md-font-path: "../../node/bootstrap-material-icons/fonts";
 $fa-font-path: "../../node/font-awesome/fonts";
 @import "node_modules/font-awesome/scss/font-awesome";
 
-main {
-    min-height: 100%;
-}
-
-html, body {
+html, body, main, .max-height {
     height: 100%;
 }
 
