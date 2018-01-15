@@ -5,7 +5,6 @@ on server start
 """
 
 from django.conf.urls import url
-from django.db.utils import OperationalError
 
 from frontend import views
 from frontend import api

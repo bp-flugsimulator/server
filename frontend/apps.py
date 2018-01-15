@@ -3,6 +3,7 @@ This module contains the configuration of the 'frontend' application
 """
 
 from django.apps import AppConfig
+from django.db.utils import OperationalError
 
 
 def flush(*tables):
