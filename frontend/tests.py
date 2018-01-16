@@ -2256,16 +2256,18 @@ class ComponentTests(TestCase):
 
 class ScriptTests(TestCase):
     def test_from_json_no_list(self):
-        self.assertRaises(
+        self.assertRaisesRegex(
             ValueError,
+            "Files has to be a list",
             Script.from_json,
-            '{"name:" "test", "files": {}, "programs": []',
+            '{"name": "test", "files": {}, "programs": []}',
         )
 
-        self.assertRaises(
+        self.assertRaisesRegex(
             ValueError,
+            "Programs has to be a list",
             Script.from_json,
-            '{"name:" "test", "files": [], "programs": {}',
+            '{"name": "test", "files": [], "programs": {}}',
         )
 
     def test_script_wrong_type_name(self):
