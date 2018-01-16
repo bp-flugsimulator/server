@@ -400,23 +400,31 @@ def manage_file(request, fileId):
     A HttpResponse with a JSON object which
     can contain errors.
     """
-    # move file
     if request.method == 'POST':
         file = FileModel.objects.get(id=fileId)
-        if SlaveStatusModel.objects.filter(slave=file.slave).exists():
-            # Status der Files #TODO...
-            Group('client_' + str(file.slave.id)).send({
-                'text':
-                Command(
-                    method="move_file",
-                    fid=file.id,
+        slave = file.slave
+        if SlaveStatusModel.objects.filter(slave=slave) and :
+            cmd = Command(
+                    method="move_file",    # move file
                     sourcePath=file.sourcePath,
-                    destinationPath=file.destinationPath).to_json()
+                    destinationPath=file.destinationPath)
+
+            # send command to the client
+            Group('client_' + str(slave.id)).send({'text': cmd.to_json()})
+
+            # tell webinterface that the file was moved
+            Group('notifications').send({
+                'text':
+                Status.ok({
+                    "file_status": "moved",
+                    "pid": file.id
+                }).to_json()
             })
+
             return StatusResponse(Status.ok(''))
         else:
             return StatusResponse(
                 Status.err('Can not move {} because {} is offline!'.format(
-                    file.name, file.slave.name)))
+                    file.name, slave.name)))
     else:
         return HttpResponseForbidden()
