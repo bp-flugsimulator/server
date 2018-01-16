@@ -125,6 +125,10 @@ class FrontendTests(TestCase):
 
 
 class ApiTests(TestCase):
+    def test_add_script_forbidden(self):
+        response = self.client.put("/api/scripts")
+        self.assertEqual(response.status_code, 403)
+
     def test_add_script_json_error(self):
         response = self.client.post(
             "/api/scripts", data={
@@ -132,42 +136,57 @@ class ApiTests(TestCase):
                 "programs": {},
                 "files": {}
             })
-        self.assertContains(response, "One or more values does contain not valid types.")
+        self.assertContains(
+            response,
+            "One or more values does contain not valid types.",
+        )
 
     def test_add_script_value_error(self):
         response = self.client.post(
             "/api/scripts",
             data='{"name": "test", "programs": {}, "files": {}}',
-            content_type="application/json")
-        self.assertContains(response,
-                            "One or more values does contain not valid types.")
+            content_type="application/json",
+        )
+        self.assertContains(
+            response,
+            "One or more values does contain not valid types.",
+        )
 
     def test_add_script_unique_error(self):
         response = self.client.post(
             "/api/scripts",
             data='{"name": "test", "programs":  [], "files": []}',
-            content_type="application/json")
+            content_type="application/json",
+        )
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, '"status": "ok"')
         response = self.client.post(
             "/api/scripts",
             data='{"name": "test", "programs":  [], "files": []}',
-            content_type="application/json")
-        self.assertContains(response, "Script with that name already exists.")
+            content_type="application/json",
+        )
+        self.assertContains(
+            response,
+            "Script with that name already exists.",
+        )
 
     def test_add_script_key_error(self):
         response = self.client.post(
             "/api/scripts",
             data='{"name": "test", "program":  [], "files": []}',
-            content_type="application/json")
-        self.assertContains(response,
-                            "Could not find required key {}".format("program"))
+            content_type="application/json",
+        )
+        self.assertContains(
+            response,
+            "Could not find required key {}".format("program"),
+        )
 
     def test_add_script(self):
         response = self.client.post(
             "/api/scripts",
             data='{"name": "test", "programs":  [], "files": []}',
-            content_type="application/json")
+            content_type="application/json",
+        )
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, '"status": "ok"')
 
@@ -176,23 +195,31 @@ class ApiTests(TestCase):
         slave = SlaveModel(
             name="test_slave",
             ip_address="0.0.0.0",
-            mac_address="00:00:00:00:00:00")
+            mac_address="00:00:00:00:00:00",
+        )
         slave.save()
 
         program = ProgramModel(
-            name="test_program", path="None", arguments="None", slave=slave)
+            name="test_program",
+            path="None",
+            arguments="None",
+            slave=slave,
+        )
         program.save()
 
         file = FileModel(
             name="test_file",
             sourcePath="None",
             destinationPath="None",
-            slave=slave)
+            slave=slave,
+        )
         file.save()
 
-        script = Script("test_script",
-                        [ScriptEntryProgram(0, program.id, slave.id)],
-                        [ScriptEntryFile(0, file.id, slave.id)])
+        script = Script(
+            "test_script",
+            [ScriptEntryProgram(0, program.id, slave.id)],
+            [ScriptEntryFile(0, file.id, slave.id)],
+        )
         script.save()
 
         db_script = ScriptModel.objects.get(name="test_script")
@@ -201,25 +228,32 @@ class ApiTests(TestCase):
 
         self.assertEqual(
             Status.ok(dict(script)),
-            Status.from_json(response.content.decode('utf-8')))
+            Status.from_json(response.content.decode('utf-8')),
+        )
 
     def test_script_wrong_type_slaves(self):
         response = self.client.get("/api/script/0?slaves=float")
         self.assertContains(response, "err")
-        self.assertContains(response,
-                            "slaves only allow str or int. (given float)")
+        self.assertContains(
+            response,
+            "slaves only allow str or int. (given float)",
+        )
 
     def test_script_wrong_type_programs(self):
         response = self.client.get("/api/script/0?programs=float")
         self.assertContains(response, "err")
-        self.assertContains(response,
-                            "programs only allow str or int. (given float)")
+        self.assertContains(
+            response,
+            "programs only allow str or int. (given float)",
+        )
 
     def test_script_wrong_type_files(self):
         response = self.client.get("/api/script/0?files=float")
         self.assertContains(response, "err")
-        self.assertContains(response,
-                            "files only allow str or int. (given float)")
+        self.assertContains(
+            response,
+            "files only allow str or int. (given float)",
+        )
 
     def test_script_not_exist(self):
         response = self.client.get("/api/script/0")
@@ -2221,6 +2255,19 @@ class ComponentTests(TestCase):
 
 
 class ScriptTests(TestCase):
+    def test_from_json_no_list(self):
+        self.assertRaises(
+            ValueError,
+            Script.from_json,
+            '{"name:" "test", "files": {}, "programs": []',
+        )
+
+        self.assertRaises(
+            ValueError,
+            Script.from_json,
+            '{"name:" "test", "files": [], "programs": {}',
+        )
+
     def test_script_wrong_type_name(self):
         self.assertRaises(ValueError, Script, [], [], [])
 
