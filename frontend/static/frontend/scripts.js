@@ -1,5 +1,5 @@
 /* eslint-env browser */
-/* global $, JSONEditor, getCookie, Status, modalDeleteAction */
+/* global $, JSONEditor, getCookie, Status, modalDeleteAction, notify */
 /* exported loadScript, newScript */
 
 var schema = {
@@ -162,9 +162,12 @@ var options = {
     }
 };
 
+var editors = {};
+
 var createEditor = function (json, id) {
     let container = document.getElementById('jsoneditor_' + id);
     let editor = new JSONEditor(container, options, json);
+    editors['jsoneditor_' + id] = editor;
     editor.expandAll();
 };
 
@@ -205,7 +208,7 @@ var newScript = function (name) {
         files: [],
     };
 
-    createEditor(defaultJson, 'new');
+    createEditor(defaultJson, name);
 };
 
 
@@ -228,6 +231,39 @@ $(document).ready(function () {
 
     $('#deleteScriptModalButton').click(function () {
         modalDeleteAction($('#scriptFrom'), 'script');
+    });
+
+    $('.script-action-add').click(function () {
+        $('#scriptTabNew').click();
+    });
+
+    $('.script-action-add-save').click(function () {
+        let id = $(this).attr('data-editor-id');
+        let editor = editors['jsoneditor_' + id];
+        let string = JSON.stringify(editor.get());
+
+        $.ajax({
+            method: 'POST',
+            url: '/api/scripts',
+            contentType: 'application/json',
+            data: string,
+            beforeSend(xhr) {
+                xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
+            },
+            converters: {
+                'text json': Status.from_json
+            },
+            success(status) {
+                if (status.is_err()) {
+                    notify('Could not save script', JSON.stringify(status.payload), 'danger');
+                } else {
+                    window.location.reload();
+                }
+            },
+            error(xhr, errorString, errorCode) {
+                notify('Connection error', 'Could not deliver script add request. (' + errorCode + ')', 'danger');
+            }
+        });
     });
 
     $('.script-action-save').click(function () {
