@@ -130,9 +130,9 @@ class Program(Model):
     start_time: int
         The amount of time a program needs to start.
     """
-    name = CharField(unique=False, max_length=200)
-    path = CharField(unique=False, max_length=200)
-    arguments = CharField(unique=False, blank=True, max_length=200)
+    name = CharField(unique=False, max_length=1000)
+    path = CharField(unique=False, max_length=1000)
+    arguments = CharField(unique=False, blank=True, max_length=1000)
     slave = ForeignKey(Slave, on_delete=CASCADE)
     start_time = IntegerField(null=False, default=-1)
 

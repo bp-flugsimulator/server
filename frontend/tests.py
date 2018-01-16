@@ -893,13 +893,13 @@ class ApiTests(TestCase):
         self.assertEqual(
             Status.err({
                 "name": [
-                    "Ensure this value has at most 200 characters (it has 2000)."
+                    "Ensure this value has at most 1000 characters (it has 2000)."
                 ],
                 "path": [
-                    "Ensure this value has at most 200 characters (it has 2000)."
+                    "Ensure this value has at most 1000 characters (it has 2000)."
                 ],
                 "arguments": [
-                    "Ensure this value has at most 200 characters (it has 2000)."
+                    "Ensure this value has at most 1000 characters (it has 2000)."
                 ]
             }),
             Status.from_json(api_response.content.decode('utf-8')),
@@ -1142,13 +1142,13 @@ class ApiTests(TestCase):
         self.assertEqual(
             Status.err({
                 "name": [
-                    "Ensure this value has at most 200 characters (it has 2000)."
+                    "Ensure this value has at most 1000 characters (it has 2000)."
                 ],
                 "path": [
-                    "Ensure this value has at most 200 characters (it has 2000)."
+                    "Ensure this value has at most 1000 characters (it has 2000)."
                 ],
                 "arguments": [
-                    "Ensure this value has at most 200 characters (it has 2000)."
+                    "Ensure this value has at most 1000 characters (it has 2000)."
                 ]
             }),
             Status.from_json(api_response.content.decode('utf-8')),
