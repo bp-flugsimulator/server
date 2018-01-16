@@ -131,6 +131,7 @@ class Program(Model):
     path = CharField(unique=False, max_length=200)
     arguments = CharField(unique=False, blank=True, max_length=200)
     slave = ForeignKey(Slave, on_delete=CASCADE)
+    start_time = IntegerField(null=False, default=-1)
 
     class Meta:
         unique_together = (('name', 'slave'), )
