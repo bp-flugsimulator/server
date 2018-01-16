@@ -14,6 +14,18 @@ from django.db.models import (
 )
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
+from threading import Timer
+
+
+def update_program_timeout(id):
+    """
+    This function is called after the timeout passed. And then the timeouted flag for the given
+    program is set to false.
+    """
+
+    me = Program.object.get(id=id)
+    me.timeouted = True
+    me.save()
 
 
 def validate_mac_address(mac_addr):
@@ -144,6 +156,16 @@ class Program(Model):
         unique_together = (('name', 'slave'), )
 
     @property
+    def is_timeouted(self):
+        """
+        Returns true if the time which the program takes to start is over.
+        """
+        try:
+            return self.programstatus.timeouted
+        except ProgramStatus.DoesNotExist:
+            return False
+
+    @property
     def is_running(self):
         """
         Returns true if program is currently running.
@@ -183,7 +205,7 @@ class Program(Model):
         # is false
         return self.is_executed and self.programstatus.code == '0'
 
-    def disable(self):
+    def enable(self):
         """
         Starts the program on the slave.
 
@@ -212,6 +234,9 @@ class Program(Model):
 
             # create status entry
             ProgramStatusModel(program=self, command_uuid=cmd.uuid).save()
+
+            if self.start_time > 0:
+                Timer(self.start_time).start()
 
             return True
         else:
@@ -333,6 +358,7 @@ class ProgramStatus(Model):
     code = CharField(max_length=200, unique=False, blank=True)
     command_uuid = CharField(max_length=32, unique=True)
     running = BooleanField(unique=False, default=True)
+    timeouted = BooleanField(unique=False, default=False)
 
 
 class SlaveStatus(Model):
@@ -355,22 +381,52 @@ class SlaveStatus(Model):
 
 
 class SchedulerStatus(Model):
+    """
+    Properties
+    ----------
+        index: The current index which is executed.
+        wait: If the scheduler is waiting for programs/files.
+        online: If the scheduler knows that every slave is online.
+        done: If the scheduler ran the script.
+    """
     script = OneToOneField(
         Script,
         on_delete=CASCADE,
         primary_key=True,
     )
-    index = IntegerField(null=False)
+    index = IntegerField(null=False, default=-1)
     wait = BooleanField(null=False)
     online = BooleanField(null=False)
     done = BooleanField(null=False)
+
+    def set_next_index(self):
+        """
+        Sets self.index to the next closest index from the script execution.
+
+        Returns
+        -------
+            Returns true if no more index was found.
+        """
+        try:
+            self.index = ScriptGraphPrograms.objects.filter(
+                index__gt=self.index).order_by('-index').first()
+            return False
+        except IndexError:
+            return True
 
     def online(self):
         """
         Checks if all needed slaves are online.
         """
         if not self.done and not self.online:
-            pass
+            all_online = True
+
+            for sgp in ScriptGraphPrograms.object.filter(script=self.script):
+                all_online = sgp.program.slave.is_online
+
+            if all_online:
+                self.set_next_index()
+                self.schedule()
 
     def schedule(self):
         """
@@ -385,26 +441,26 @@ class SchedulerStatus(Model):
                         script=self,
                         index=self.index,
                 ):
-                    try:
-                        if not sgp.programstatus.not_running and not sgp.programstatus.is_successful:
-                            step = False
-                            break
-                    except:
+                    prog = sgp.program
+                    if prog.is_error:
+                        step = False
+                        #TODO: notify user bc of error
+                        break
+                    elif prog.is_running and not prog.is_timeouted:
                         step = False
                         break
+
                 if step:
-                    try:
-                        self.index = ScriptGraphPrograms.objects.filter(
-                            index__gt=self.index).order_by('-index').first()
-                        self.wait = False
-                    except IndexError:
+                    if self.set_next_index():
                         self.done = True
+                    else:
+                        self.wait = False
             else:
                 self.wait = True
-                for prog in ScriptGraphPrograms.objects.filter(
+                for sgp in ScriptGraphPrograms.objects.filter(
                         script=self,
                         index=self.index,
                 ):
-                    prog.enable()
+                    sgp.program.enable()
 
             self.save()
