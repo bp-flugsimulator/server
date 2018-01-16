@@ -7,6 +7,7 @@ from shlex import split
 from django.http import HttpResponseForbidden
 from django.http.request import QueryDict
 from django.core.exceptions import ValidationError
+from django.db.utils import IntegrityError
 from channels import Group
 from utils.status import Status
 from utils import Command
@@ -314,6 +315,40 @@ def stop_program(request, program_id):
         else:
             return StatusResponse(Status.err('Can not stop unknown Program'))
 
+    else:
+        return HttpResponseForbidden()
+
+
+def add_script(request):
+    """
+    Process POST requests which adds new SlaveModel.
+
+    Parameters
+    ----------
+        request: HttpRequest
+
+    Returns
+    -------
+        A StatusResponse or HttpResponseForbidden if the request method was
+        other than GET.
+    """
+    if request.method == 'POST':
+        try:
+            script = Script.from_json(request.body.decode('utf-8'))
+            script.save()
+            return StatusResponse(Status.ok(""))
+        except KeyError as err:
+            return StatusResponse(
+                Status.err("Could not find required key {}".format(
+                    err.args[0])))
+        except TypeError:
+            return StatusResponse(Status.err("Wrong array items."))
+        except ValueError:
+            return StatusResponse(
+                Status.err("One or more values does contain not valid types."))
+        except IntegrityError:
+            return StatusResponse(
+                Status.err("Script with that name already exists."))
     else:
         return HttpResponseForbidden()
 
