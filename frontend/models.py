@@ -94,6 +94,12 @@ class Slave(Model):
     mac_address = CharField(
         unique=True, max_length=17, validators=[validate_mac_address])
 
+    def wake_on_lan(self):
+        """
+        Sends wake on lan package to the slave.
+        """
+        send_magic_packet(self.mac_address)
+
     @property
     def is_online(self):
         """
@@ -422,7 +428,9 @@ class SchedulerStatus(Model):
             all_online = True
 
             for sgp in ScriptGraphPrograms.object.filter(script=self.script):
-                all_online = sgp.program.slave.is_online
+                if not sgp.program.slave.is_online:
+                    all_online = False
+                    break
 
             if all_online:
                 self.set_next_index()

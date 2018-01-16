@@ -18,6 +18,20 @@ class WelcomeView(TemplateView):
     template_name = 'frontend/welcome.html'
 
 
+class RunScriptView(ListView):
+    """
+    generates view for /runscript
+    """
+    template_name = "frontend/run.html"
+    model = ScriptModel
+    context_object_name = "scripts"
+
+    def get_context_data(self, **kwargs):  # pylint: disable=w0221
+        context = super().get_context_data(**kwargs)
+        context['navbar_link'] = "runscript"
+        return context
+
+
 class ScriptsView(ListView):
     """
     generates view for /scripts

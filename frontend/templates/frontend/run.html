@@ -1,0 +1,25 @@
+
+
+{% extends "base/base.html" %}
+{% load staticfiles %}
+{% load components %}
+{% block title %} Scripts {% endblock %}
+{% block premain %}
+{% endblock %}
+{% block content %}
+<div class="row ml-4 mr-4">
+    <ul>
+        {% for script in scripts %}
+        <li>
+            {{ script.name }}
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}
+
+{% block script %}
+    <script src="{% static 'node/jsoneditor/dist/jsoneditor.min.js' %}"></script>
+    <script src="{% static 'frontend/base.js'%}"></script>
+    <script src="{% static 'frontend/scripts.js'%}"></script>
+{% endblock %}

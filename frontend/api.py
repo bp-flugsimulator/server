@@ -150,7 +150,7 @@ def wol_slave(request, slave_id):
     """
     if request.method == 'GET':
         try:
-            send_magic_packet(SlaveModel.objects.get(id=slave_id).mac_address)
+            SlaveModel.objects.get(id=slave_id).wake_on_lan()
         except Exception as err:  # pylint: disable=W0703
             return StatusResponse(Status.err(repr(err)), status=500)
 
