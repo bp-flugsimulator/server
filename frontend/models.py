@@ -126,6 +126,9 @@ class Program(Model):
 
     slave: Slave
         The slave on which the command will be executed
+
+    start_time: int
+        The amount of time a program needs to start.
     """
     name = CharField(unique=False, max_length=200)
     path = CharField(unique=False, max_length=200)
