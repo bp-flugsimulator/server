@@ -126,6 +126,13 @@ class Script:
             Script object
         """
         data = json.loads(string)
+
+        if not isinstance(data['programs'], list):
+            raise ValueError('Programs has to be a list')
+
+        if not isinstance(data['files'], list):
+            raise ValueError('Files has to be a list')
+
         return cls(
             data['name'],
             [ScriptEntryProgram(**program) for program in data['programs']],

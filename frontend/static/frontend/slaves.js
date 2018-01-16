@@ -39,17 +39,6 @@ const onFormSubmit = function (id) {
 
 $(document).ready(function () {
     // set defaults for notifications
-    $.notifyDefaults({
-        type: 'success',
-        placement: {
-            from: 'bottom',
-            align: 'right'
-        },
-        animate: {
-            enter: 'animated fadeInRight',
-            exit: 'animated fadeOutRight'
-        }
-    });
 
     const restoreSlaveInnerTab = function (slaveId) {
         let tabStatus = localStorage.getItem('tab-status');

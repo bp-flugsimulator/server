@@ -259,21 +259,13 @@ $(document).ready(function () {
             },
             success(status) {
                 if (status.is_err()) {
-                    $.notify({
-                        message: 'Could not save script: ' + JSON.stringify(status.payload)
-                    }, {
-                            type: 'danger'
-                        });
+                    notify('Could not save script', JSON.stringify(status.payload), 'danger');
                 } else {
                     window.location.reload();
                 }
             },
             error(xhr, errorString, errorCode) {
-                $.notify({
-                    message: 'Could not deliver script add request to server (' + errorCode + ')'
-                }, {
-                        type: 'danger'
-                    });
+                notify('Connection error', 'Could not deliver script add request. (' + errorCode + ')', 'danger');
             }
         });
     });

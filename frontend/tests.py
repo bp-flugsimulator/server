@@ -125,6 +125,52 @@ class FrontendTests(TestCase):
 
 
 class ApiTests(TestCase):
+    def test_add_script_json_error(self):
+        response = self.client.post(
+            "/api/scripts", data={
+                "name": "test",
+                "programs": {},
+                "files": {}
+            })
+        self.assertContains(response, "The given data is not valid JSON.")
+
+    def test_add_script_value_error(self):
+        response = self.client.post(
+            "/api/scripts",
+            data='{"name": "test", "programs": {}, "files": {}}',
+            content_type="application/json")
+        self.assertContains(response,
+                            "One or more values does contain not valid types.")
+
+    def test_add_script_unique_error(self):
+        response = self.client.post(
+            "/api/scripts",
+            data='{"name": "test", "programs":  [], "files": []}',
+            content_type="application/json")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '"status": "ok"')
+        response = self.client.post(
+            "/api/scripts",
+            data='{"name": "test", "programs":  [], "files": []}',
+            content_type="application/json")
+        self.assertContains(response, "Script with that name already exists.")
+
+    def test_add_script_key_error(self):
+        response = self.client.post(
+            "/api/scripts",
+            data='{"name": "test", "program":  [], "files": []}',
+            content_type="application/json")
+        self.assertContains(response,
+                            "Could not find required key {}".format("program"))
+
+    def test_add_script(self):
+        response = self.client.post(
+            "/api/scripts",
+            data='{"name": "test", "programs":  [], "files": []}',
+            content_type="application/json")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '"status": "ok"')
+
     def test_get_script(self):
         fill_database_slaves_set_1()
         slave = SlaveModel(
@@ -1500,36 +1546,49 @@ class ApiTests(TestCase):
             mac_address='00:00:00:00:07:00').save()
         slave = SlaveModel.objects.get(name='stop_program')
         ProgramModel(
-            name='program', path='path', arguments='args', slave=slave).save()
+            name='program',
+            path='path',
+            arguments='args',
+            slave=slave,
+        ).save()
         program = ProgramModel.objects.get(name='program', slave=slave)
         cmd_uuid = uuid4()
         ProgramStatusModel(
-            program=program, running=True, command_uuid=cmd_uuid).save()
+            program=program,
+            running=True,
+            command_uuid=cmd_uuid,
+        ).save()
 
         slave_ws = WSClient()
         slave_ws.join_group('client_' + str(slave.id))
 
         # test api
-        api_response = self.client.get(
-            path=reverse('frontend:stop_program', args=[program.id]))
+        api_response = self.client.get(path=reverse(
+            'frontend:stop_program',
+            args=[program.id],
+        ))
         self.assertEqual(200, api_response.status_code)
         self.assertEqual(
             Status.ok(''),
-            Status.from_json(api_response.content.decode('utf-8')))
+            Status.from_json(api_response.content.decode('utf-8')),
+        )
 
         # test message
         self.assertEqual(
             Command(method='execute', uuid=cmd_uuid),
-            Command.from_json(json.dumps(slave_ws.receive())))
+            Command.from_json(json.dumps(slave_ws.receive())),
+        )
 
         slave.delete()
 
     def test_stop_program_unknown_request(self):
-        api_request = self.client.post(reverse('frontend:stop_program', args=[0]))
+        api_request = self.client.post(
+            reverse('frontend:stop_program', args=[0]))
         self.assertEqual(403, api_request.status_code)
 
     def test_stop_program_unknown_program(self):
-        api_response = self.client.get(reverse('frontend:stop_program', args=[9999]))
+        api_response = self.client.get(
+            reverse('frontend:stop_program', args=[9999]))
         self.assertEqual(200, api_response.status_code)
         self.assertEqual(
             Status.err('Can not stop unknown Program'),
@@ -1547,7 +1606,8 @@ class ApiTests(TestCase):
         ProgramStatusModel(
             program=program, running=False, command_uuid=uuid4()).save()
 
-        api_response = self.client.get(reverse('frontend:stop_program', args=[program.id]))
+        api_response = self.client.get(
+            reverse('frontend:stop_program', args=[program.id]))
         self.assertEqual(200, api_response.status_code)
         self.assertEqual(
             Status.err('Can not stop a not running Program'),
