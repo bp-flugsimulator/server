@@ -1,5 +1,5 @@
 /* eslint-env browser */
-/* global $, JSONEditor, getCookie, Status, modalDeleteAction */
+/* global $, JSONEditor, getCookie, Status, modalDeleteAction, notify */
 /* exported loadScript, newScript */
 
 var schema = {
@@ -72,9 +72,6 @@ var options = {
     search: false,
     navigationBar: false,
     modes: ['tree'],
-    onError() {
-        console.log("error");
-    },
     templates: [{
         text: 'File',
         title: 'Insert a File Node',
@@ -172,8 +169,7 @@ var createEditor = function (json, id) {
     let editor = new JSONEditor(container, options, json);
     editors['jsoneditor_' + id] = editor;
     editor.expandAll();
-}
-
+};
 
 var loadScript = function (id) {
     $.ajax({

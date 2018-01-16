@@ -1,6 +1,6 @@
 /* eslint-env browser */
 /* global $, jQuery, Status */
-/* exported  getCookie, modalDeleteAction, handleFormStatus, clearErrorMessages,swapText, styleSlaveByStatus */
+/* exported  getCookie, modalDeleteAction, handleFormStatus, clearErrorMessages,swapText, styleSlaveByStatus, notify */
 
 /**
  * Clears the error fields of a given form
@@ -68,6 +68,7 @@ function modalDeleteAction(form, route) {
                 $.notify({
                     message: JSON.stringify(status.payload)
                 }, {
+                    console.log("error");
                         type: 'danger'
                     });
             }
