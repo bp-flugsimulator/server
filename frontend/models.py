@@ -2,8 +2,16 @@
 This module contains all databasemodels from the frontend application.
 """
 
-from django.db.models import Model, CharField, GenericIPAddressField,\
-    ForeignKey, CASCADE, IntegerField, BooleanField, OneToOneField
+from django.db.models import (
+    Model,
+    CharField,
+    GenericIPAddressField,
+    ForeignKey,
+    CASCADE,
+    IntegerField,
+    BooleanField,
+    OneToOneField,
+)
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 
@@ -175,6 +183,60 @@ class Program(Model):
         # is false
         return self.is_executed and self.programstatus.code == '0'
 
+    def disable(self):
+        """
+        Starts the program on the slave.
+
+        Returns
+        -------
+            boolean which indicates if the program was started.
+        """
+
+        if slave.is_online:
+            cmd = Command(
+                method="execute",
+                path=self.path,
+                arguments=split(self.arguments))
+
+            # send command to the client
+            Group('client_' + str(self.slave.id)).send({'text': cmd.to_json()})
+
+            # tell webinterface that the program has started
+            Group('notifications').send({
+                'text':
+                Status.ok({
+                    "program_status": "started",
+                    "pid": self.id,
+                }).to_json()
+            })
+
+            # create status entry
+            ProgramStatusModel(program=self, command_uuid=cmd.uuid).save()
+
+            return True
+        else:
+            return False
+
+    def disable(self):
+        """
+        Stops the program on the slave.
+
+        Returns
+        -------
+            boolean which indicates if the program was stopped.
+        """
+
+        if self.programstatus.is_running:
+            Group('client_' + str(self.slave.id)).send({
+                'text':
+                Command(
+                    method="execute",
+                    uuid=self.programstatus.command_uuid).to_json()
+            })
+            return True
+        else:
+            return False
+
 
 class File(Model):
     """
@@ -290,3 +352,59 @@ class SlaveStatus(Model):
     )
     command_uuid = CharField(max_length=32, unique=True)
     online = BooleanField(unique=False, default=False)
+
+
+class SchedulerStatus(Model):
+    script = OneToOneField(
+        Script,
+        on_delete=CASCADE,
+        primary_key=True,
+    )
+    index = IntegerField(null=False)
+    wait = BooleanField(null=False)
+    online = BooleanField(null=False)
+    done = BooleanField(null=False)
+
+    def online(self):
+        """
+        Checks if all needed slaves are online.
+        """
+        if not self.done and not self.online:
+            pass
+
+    def schedule(self):
+        """
+        Runs the scheduler which determines which programs/files need to be
+        waited for and enabled. Run this on every new event.
+        """
+        if not self.done and self.online:
+            if wait:
+                step = True
+
+                for sgp in ScriptGraphPrograms.objects.filter(
+                        script=self,
+                        index=self.index,
+                ):
+                    try:
+                        if not sgp.programstatus.not_running and not sgp.programstatus.is_successful:
+                            step = False
+                            break
+                    except:
+                        step = False
+                        break
+                if step:
+                    try:
+                        self.index = ScriptGraphPrograms.objects.filter(
+                            index__gt=self.index).order_by('-index').first()
+                        self.wait = False
+                    except IndexError:
+                        self.done = True
+            else:
+                self.wait = True
+                for prog in ScriptGraphPrograms.objects.filter(
+                        script=self,
+                        index=self.index,
+                ):
+                    prog.enable()
+
+            self.save()

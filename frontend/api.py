@@ -228,31 +228,7 @@ def manage_program(request, program_id):
         return StatusResponse(Status.ok(''))
     if request.method == 'POST':
         program = ProgramModel.objects.get(id=program_id)
-        slave = program.slave
-        if SlaveStatusModel.objects.filter(
-                slave=slave) and slave.slavestatus.online:
-            cmd = Command(
-                method="execute",
-                path=program.path,
-                arguments=split(program.arguments))
-
-            # send command to the client
-            Group('client_' + str(program.slave.id)).send({
-                'text': cmd.to_json()
-            })
-
-            # tell webinterface that the program has started
-            Group('notifications').send({
-                'text':
-                Status.ok({
-                    "program_status": "started",
-                    "pid": program.id,
-                }).to_json()
-            })
-
-            # create status entry
-            ProgramStatusModel(program=program, command_uuid=cmd.uuid).save()
-
+        if program.enable():
             return StatusResponse(Status.ok(''))
         else:
             return StatusResponse(
@@ -299,14 +275,7 @@ def stop_program(request, program_id):
     if request.method == 'GET':
         if ProgramModel.objects.filter(id=program_id).exists():
             program = ProgramModel.objects.get(id=program_id)
-            if ProgramStatusModel.objects.filter(
-                    program=program) and program.programstatus.running:
-                Group('client_' + str(program.slave.id)).send({
-                    'text':
-                    Command(
-                        method="execute",
-                        uuid=program.programstatus.command_uuid).to_json()
-                })
+            if program.enable():
                 return StatusResponse(Status.ok(''))
             else:
                 return StatusResponse(

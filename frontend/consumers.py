@@ -6,8 +6,13 @@ from channels import Group
 from channels.sessions import channel_session
 from termcolor import colored
 from utils import Command, Status
-from .models import SlaveStatus as SlaveStatusModel, Slave as SlaveModel,\
-    Program as ProgramModel, ProgramStatus as ProgramStatusModel
+from .models import (
+    SlaveStatus as SlaveStatusModel,
+    Slave as SlaveModel,
+    Program as ProgramModel,
+    ProgramStatus as ProgramStatusModel,
+    SchedulerStatus as SchedulerStatusModel,
+)
 
 # Get an instance of a logger
 LOGGER = logging.getLogger('django.request')
@@ -225,8 +230,16 @@ def ws_notifications_receive(message):
         status = Status.from_json(message.content['text'])
         if status.payload['method'] == 'online':
             handle_online_answer(status)
+
+            # notify the scheduler that the status has changed
+            for scheduler in SchedulerStatusModel.objects.all():
+                scheduler.online()
         elif status.payload['method'] == 'execute':
             handle_execute_answer(status)
+
+            # notify the scheduler that the status has changed
+            for scheduler in SchedulerStatusModel.objects.all():
+                scheduler.schedule()
         else:
             LOGGER.info(
                 colored('Client send answer from unknown function {}.'.format(
