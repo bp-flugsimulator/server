@@ -68,7 +68,6 @@ function modalDeleteAction(form, route) {
                 $.notify({
                     message: JSON.stringify(status.payload)
                 }, {
-                    console.log("error");
                         type: 'danger'
                     });
             }
