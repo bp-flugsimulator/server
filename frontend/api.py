@@ -400,6 +400,8 @@ def manage_file(request, fileId):
     A HttpResponse with a JSON object which
     can contain errors.
     """
+    # if request.method == 'DELETE':
+        #TODO
     if request.method == 'POST':
         file = FileModel.objects.get(id=fileId)
         slave = file.slave
