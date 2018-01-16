@@ -3,7 +3,6 @@ This module contains all functions that handle requests on the REST api.
 """
 
 from shlex import split
-from json import JSONDecodeError
 
 from django.http import HttpResponseForbidden
 from django.http.request import QueryDict
@@ -338,9 +337,6 @@ def add_script(request):
             script = Script.from_json(request.body.decode('utf-8'))
             script.save()
             return StatusResponse(Status.ok(""))
-        except JSONDecodeError:
-            return StatusResponse(
-                Status.err("The given data is not valid JSON."))
         except KeyError as err:
             return StatusResponse(
                 Status.err("Could not find required key {}".format(

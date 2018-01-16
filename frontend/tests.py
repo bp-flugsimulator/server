@@ -132,7 +132,7 @@ class ApiTests(TestCase):
                 "programs": {},
                 "files": {}
             })
-        self.assertContains(response, "The given data is not valid JSON.")
+        self.assertContains(response, "One or more values does contain not valid types.")
 
     def test_add_script_value_error(self):
         response = self.client.post(
