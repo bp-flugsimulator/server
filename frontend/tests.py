@@ -18,6 +18,7 @@ import json
 from .models import (
     Slave as SlaveModel,
     validate_mac_address,
+    validate_argument_list,
     Program as ProgramModel,
     SlaveStatus as SlaveStatusModel,
     ProgramStatus as ProgramStatusModel,
@@ -1952,6 +1953,17 @@ class WebsocketTests(TestCase):
 
 
 class DatabaseTests(TestCase):
+    def test_validate_argument_list(self):
+        self.assertIsNone(validate_argument_list('a b c d e f g'))
+
+    def test_validate_argument_list_raises(self):
+        self.assertRaisesMessage(
+            ValidationError,
+            'Enter a valid argument list.',
+            validate_argument_list,
+            'a "abc',
+        )
+
     def test_slave_has_err(self):
         slave = SlaveModel(
             name="test_slave",
