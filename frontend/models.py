@@ -2,8 +2,9 @@
 This module contains all databasemodels from the frontend application.
 """
 
-from django.db.models import Model, CharField, GenericIPAddressField,\
-    ForeignKey, CASCADE, IntegerField, BooleanField, OneToOneField
+from django.db.models import (Model, CharField, GenericIPAddressField,
+                              ForeignKey, CASCADE, IntegerField, BooleanField,
+                              OneToOneField, TextField)
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 
@@ -157,12 +158,12 @@ class Program(Model):
         The amount of time a program needs to start.
     """
     name = CharField(unique=False, max_length=1000)
-    path = CharField(unique=False, max_length=1000)
-    arguments = CharField(
+    path = TextField(unique=False)
+    arguments = TextField(
         unique=False,
         blank=True,
-        max_length=1000,
-        validators=[validate_argument_list])
+        validators=[validate_argument_list],
+    )
     slave = ForeignKey(Slave, on_delete=CASCADE)
     start_time = IntegerField(null=False, default=-1)
 
