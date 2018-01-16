@@ -8,18 +8,33 @@
 {% endblock %}
 {% block content %}
 <div class="row ml-4 mr-4">
-    <ul>
-        {% for script in scripts %}
-        <li>
+    {% for script in scripts %}
+        <div class="row">
             {{ script.name }}
-        </li>
-        {% endfor %}
-    </ul>
+
+            <ol class="fsim-progressbar">
+                <li class="fsim-progressbar-step">
+                    <i class="mdi mdi-check ProgressBar-icon"></i>
+                </li>
+                <li class="fsim-progressbar-step">
+                    <i class="mdi mdi-check ProgressBar-icon"></i>
+                </li>
+                    <i class="mdi mdi-check ProgressBar-icon"></i>
+                </li>
+                <li class="fsim-progressbar-step">
+                    <i class="mdi mdi-check ProgressBar-icon"></i>
+                </li>
+            </ol>
+        </div>
+    {% empty %}
+    <div class="row">
+        <span class="background-text-large">No scripts added</span>
+    </div>
+    {% endfor %}
+
 </div>
 {% endblock %}
 
 {% block script %}
-    <script src="{% static 'node/jsoneditor/dist/jsoneditor.min.js' %}"></script>
     <script src="{% static 'frontend/base.js'%}"></script>
-    <script src="{% static 'frontend/scripts.js'%}"></script>
 {% endblock %}

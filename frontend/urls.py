@@ -13,7 +13,7 @@ app_name = 'frontend'  # pylint: disable=C0103
 
 urlpatterns = [  # pylint: disable=C0103
     url(r'^welcome$', views.WelcomeView.as_view(), name='welcome'),
-    url(r'^runscripts$', views.RunScriptView.as_view(), name='runscript'),
+    url(r'^runscript$', views.RunScriptView.as_view(), name='runscript'),
     url(r'^slaves/$', views.SlavesView.as_view(), name='slaves'),
     url(r'^scripts/$', views.ScriptsView.as_view(), name='scripts'),
 
