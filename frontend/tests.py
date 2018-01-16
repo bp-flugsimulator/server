@@ -129,6 +129,17 @@ class ApiTests(TestCase):
         response = self.client.put("/api/scripts")
         self.assertEqual(response.status_code, 403)
 
+    def test_add_script_type_error(self):
+        response = self.client.post(
+            "/api/scripts",
+            data='{"name": "test", "programs": [], "files": [null]}',
+            content_type="application/json",
+        )
+        self.assertContains(
+            response,
+            "Wrong array items.",
+        )
+
     def test_add_script_json_error(self):
         response = self.client.post(
             "/api/scripts", data={
