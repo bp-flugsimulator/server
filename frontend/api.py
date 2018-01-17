@@ -21,6 +21,7 @@ from .models import (
     Script as ScriptModel,
     SchedulerStatus as SchedulerStatusModel,
     File as FileModel,
+    CURRENT_SCHEDULER,
 )
 
 from .scripts import Script
@@ -402,37 +403,15 @@ def run_script(request, script_id):
     if request.method == 'GET':
         try:
             script = ScriptModel.objects.get(id=script_id)
-            status = SchedulerStatusModel.objects.all()
-
-            # check is already one exists
-            if len(status) == 1:
-                status = status.first()
-                # only allow the start of a script if the old one is finished
-                if status.state == SchedulerStatusModel.SUCCESS or status.state == SchedulerStatusModel.ERROR:
-                    status.delete()
-                    status = SchedulerStatusModel(script=script)
-                    status.save()
-
-                    status.notify()
-                    return StatusResponse(
-                        Status.ok("Started script {}".format(script.name)))
-                else:
-                    status.delete()
-                    return StatusResponse(
-                        Status.err(
-                            "Could not start a script because there is still one running."
-                        ))
-            # run a new script
-            elif len(status) == 0:
-                status = SchedulerStatusModel(script=script)
-                status.save()
-
-                status.notify()
+            # only allow the start of a script if the old one is finished
+            if CURRENT_SCHEDULER.start(script.id):
                 return StatusResponse(
                     Status.ok("Started script {}".format(script.name)))
             else:
-                return StatusResponse(Status.err("Internal error"))
-
+                return StatusResponse(
+                    Status.err(
+                        "Could not start a script because there is still one running."
+                    ))
         except ScriptModel.DoesNotExist:
             return StatusResponse(
                 Status.err("The script with the id {} does not exist.".format(

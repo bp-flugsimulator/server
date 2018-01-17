@@ -3,6 +3,7 @@ This module contains all databasemodels from the frontend application.
 """
 
 import logging
+import threading
 
 from django.db.models import (
     Model,
@@ -26,6 +27,8 @@ from shlex import split
 logger = logging.getLogger("scheduler")
 
 from enum import Enum
+
+CURRENT_SCHEDULER = Scheduler()
 
 
 def update_programs_timeout(id):
@@ -362,6 +365,42 @@ class Script(Model):
     def __str__(self):
         return self.name
 
+    def check_online(self):
+        """
+        Checks if all needed slaves are online.
+
+        Returns
+        -------
+        Returns True if all needed slaves are online or if the script already
+        run successful.
+        """
+        slaves = ScriptGraphPrograms.objects.filter(script=self.script)
+        all_online = False if len(slaves) == 0 else True
+
+        for sgp in slaves:
+            if not sgp.program.slave.is_online:
+                all_online = False
+                break
+
+    def get_involved_slaves(self):
+        """
+        Returns all slaves which are involved.
+
+        Returns
+        -------
+            A list of slaves
+        """
+
+        query_set = ScriptGraphPrograms.objects.filter(
+            script=self).values('program').annotate(dcount=Count('program'))
+
+        return list(
+            set(
+                map(
+                    lambda query: Program.objects.get(id=query['program']).slave,
+                    query_set,
+                )))
+
 
 class ScriptGraphPrograms(Model):
     """
@@ -442,15 +481,7 @@ class SlaveStatus(Model):
     online = BooleanField(unique=False, default=False)
 
 
-class SchedulerStatus(Model):
-    """
-    Properties
-    ----------
-        index: The current index which is executed.
-        wait: If the scheduler is waiting for programs/files.
-        error_code:
-        state:
-    """
+class SchedulerStatus:
     INIT = 0
     WAITING_FOR_SLAVES = 1
     NEXT_STEP = 2
@@ -458,159 +489,145 @@ class SchedulerStatus(Model):
     SUCCESS = 4
     ERROR = 5
 
-    STATE_CHOICES = (
-        (INIT, 'INIT'),
-        (WAITING_FOR_SLAVES, 'WAITING_FOR_SLAVES'),
-        (NEXT_STEP, 'NEXT_STEP'),
-        (WAITING_FOR_PROGRAMS, 'WAITING_FOR_PROGRAMS'),
-        (SUCCESS, 'SUCCESS'),
-        (ERROR, 'ERROR'),
-    )
+    # STATE_CHOICES = (
+    #     (INIT, 'INIT'),
+    #     (WAITING_FOR_SLAVES, 'WAITING_FOR_SLAVES'),
+    #     (NEXT_STEP, 'NEXT_STEP'),
+    #     (WAITING_FOR_PROGRAMS, 'WAITING_FOR_PROGRAMS'),
+    #     (SUCCESS, 'SUCCESS'),
+    #     (ERROR, 'ERROR'),
+    # )
 
-    state = IntegerField(
-        choices=STATE_CHOICES,
-        default=INIT,
-    )
-    script = OneToOneField(
-        Script,
-        on_delete=CASCADE,
-    )
-    index = IntegerField(null=False, default=-1)
-    error_code = CharField(max_length=1000)
+    # state = IntegerField(
+    #     choices=STATE_CHOICES,
+    #     default=INIT,
+    # )
+    # script = OneToOneField(
+    #     Script,
+    #     on_delete=CASCADE,
+    # )
+    # index = IntegerField(null=False, default=-1)
+    # error_code = CharField(max_length=1000)
 
-    def set_next_index(self):
-        """
-        Sets self.index to the next closest index from the script execution.
 
-        Returns
-        -------
-            Returns true if no more index was found.
-        """
-        logger.debug("Scheduler is doing the next step")
-        try:
-            self.index = ScriptGraphPrograms.objects.filter(
-                index__gt=self.index).order_by('-index')[0].index
-            logger.debug("Scheduler found next index " + str(self.index))
+class Scheduler:
+    def __init__(self):
+        self.event = threading.Event()
+        self.lock = threading.Lock()
+        self.__thread = None
+
+    def start(self, script):
+        self.lock.acquire()
+
+        if self.__thread == None:
+            self.lock.release()
             return False
-        except IndexError:
-            logger.debug("Scheduler done")
+        else:
+            self.__thread = threading.Thread(
+                target=self.__run__,
+                args=(
+                    self.event,
+                    SchedulerStatus.INIT,
+                    script,
+                    0,
+                )).start()
+            self.lock.release()
             return True
 
-    def check_online(self):
-        """
-        Checks if all needed slaves are online.
-
-        Returns
-        -------
-        Returns True if all needed slaves are online or if the script already
-        run successful.
-        """
-        slaves = ScriptGraphPrograms.objects.filter(script=self.script)
-        all_online = False if len(slaves) == 0 else True
-
-        for sgp in slaves:
-            if not sgp.program.slave.is_online:
-                all_online = False
-                break
-
-        logger.debug("Online check slaves --> {}".format(
-            "online" if all_online else "offline"))
-
-        return all_online
-
-    def get_involved_slaves(self):
-        """
-        Returns all slaves which are involved.
-
-        Returns
-        -------
-            A list of slaves
-        """
-        # x = list(set(map(lambda query: Program(id=query.program).slave, )))
-
-        query_set = ScriptGraphPrograms.objects.filter(
-            script=self.script).values('program').annotate(
-                dcount=Count('program'))
-
-        return list(
-            set(
-                map(
-                    lambda query: Program.objects.get(id=query['program']).slave,
-                    query_set,
-                )))
-
     def notify(self):
-        """
-        This function is called to notify the scheduler that the status has
-        changed. The Scheduler will check the new status and handle it.
-        """
-        logging.debug("Current state: {}".format(self.state))
-        if self.state == SchedulerStatus.INIT:
-            for slave in self.get_involved_slaves():
-                logging.debug("Starting slave `{}`".format(slave.name))
-                slave.wake_on_lan()
+        if not self.event.is_set():
+            self.event.set()
 
-            Timer(300, update_scheduler_status_timeout, (self.id, )).start()
+    def __run__(event, status, script, index):
+        def set_next_index(self):
+            """
+            Sets self.index to the next closest index from the script execution.
 
-            self.state = SchedulerStatus.WAITING_FOR_SLAVES
-            self.save()
+            Returns
+            -------
+                Returns true if no more index was found.
+            """
+            logger.debug("Scheduler is doing the next step")
+            try:
+                index = ScriptGraphPrograms.objects.filter(
+                    index__gt=index).order_by('-index')[0].index
+                logger.debug("Scheduler found next index " + str(index))
+                return False
+            except IndexError:
+                logger.debug("Scheduler done")
+                return True
 
-            self.notify()
-        elif self.state == SchedulerStatus.WAITING_FOR_SLAVES:
-            if self.check_online():
-                self.set_next_index()
-                self.state = SchedulerStatus.NEXT_STEP
+            logger.debug("Online check slaves --> {}".format(
+                "online" if all_online else "offline"))
 
-                self.save()
-                self.notify()
-        elif self.state == SchedulerStatus.NEXT_STEP:
-            for sgp in ScriptGraphPrograms.objects.filter(
-                    script=self.script,
-                    index=self.index,
-            ):
-                sgp.program.enable()
+            return all_online
 
-            self.state = SchedulerStatus.WAITING_FOR_PROGRAMS
-            self.save()
-        elif self.state == SchedulerStatus.WAITING_FOR_PROGRAMS:
-            progs = ScriptGraphPrograms.objects.filter(
-                script=self.script,
-                index=self.index,
-            )
+        while event.wait():
+            logging.debug("Current state: {}".format(state))
+            if state == SchedulerStatus.INIT:
+                for slave in self.get_involved_slaves():
+                    logging.debug("Starting slave `{}`".format(slave.name))
+                    slave.wake_on_lan()
 
-            step = False if len(progs) == 0 else True
+                Timer(300, update_scheduler_status_timeout,
+                      (self.id, )).start()
 
-            for sgp in progs:
-                prog = sgp.program
-                if prog.is_error:
-                    logger.debug("Error in program {}".format(prog.name))
-                    self.state = SchedulerStatus.ERROR
-                    step = False
-                    self.save()
-                    #TODO: notify user bc of error
+                state = SchedulerStatus.WAITING_FOR_SLAVES
+                event.set()
+            elif state == SchedulerStatus.WAITING_FOR_SLAVES:
+                if Script.check_online():
+                    set_next_index()
+                    state = SchedulerStatus.NEXT_STEP
 
-                    break
-                elif prog.is_running and not prog.is_timeouted:
-                    logger.debug("Program {} is not ready yet {}".format(
-                        prog.name, vars(prog.programstatus)))
-                    step = False
+                    event.set()
+            elif state == SchedulerStatus.NEXT_STEP:
+                for sgp in ScriptGraphPrograms.objects.filter(
+                        script=self.script,
+                        index=self.index,
+                ):
+                    sgp.program.enable()
 
-                    break
-            if step:
-                logger.debug("next step in WAITING_FOR_PROGRAMS")
-                if self.set_next_index():
-                    self.state = SchedulerStatus.SUCCESS
-                    self.save()
-                    #TODO: notify user bc of end
+                state = SchedulerStatus.WAITING_FOR_PROGRAMS
+            elif state == SchedulerStatus.WAITING_FOR_PROGRAMS:
+                progs = ScriptGraphPrograms.objects.filter(
+                    script=script,
+                    index=index,
+                )
 
-                else:
-                    self.state = SchedulerStatus.NEXT_STEP
-                    self.save()
-                    self.notify()
+                step = False if len(progs) == 0 else True
 
-        elif self.state == SchedulerStatus.SUCCESS:
-            logger.debug("Scheduler is already finished. (SUCCESS)")
-        elif self.state == SchedulerStatus.ERROR:
-            logger.debug("Scheduler is already finished. (ERROR)")
-        else:
-            logging.debug("Nothing todo.")
+                for sgp in progs:
+                    prog = sgp.program
+                    if prog.is_error:
+                        logger.debug("Error in program {}".format(prog.name))
+                        state = SchedulerStatus.ERROR
+                        step = False
+                        event.set()
+                        #TODO: notify user bc of error
+
+                        break
+                    elif prog.is_running and not prog.is_timeouted:
+                        logger.debug("Program {} is not ready yet {}".format(
+                            prog.name, vars(prog.programstatus)))
+                        step = False
+
+                        break
+                if step:
+                    logger.debug("next step in WAITING_FOR_PROGRAMS")
+                    if set_next_index():
+                        state = SchedulerStatus.SUCCESS
+                        event.set()
+                        #TODO: notify user bc of end
+
+                    else:
+                        state = SchedulerStatus.NEXT_STEP
+                        event.set()
+
+            elif state == SchedulerStatus.SUCCESS:
+                logger.debug("Scheduler is already finished. (SUCCESS)")
+                return
+            elif state == SchedulerStatus.ERROR:
+                logger.debug("Scheduler is already finished. (ERROR)")
+                return
+            else:
+                logging.debug("Nothing todo.")
