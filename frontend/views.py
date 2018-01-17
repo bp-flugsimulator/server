@@ -9,6 +9,7 @@ from .models import Script as ScriptModel
 from .forms import SlaveForm
 from .forms import ProgramForm
 from .forms import FileForm
+from .forms import RunScriptForm
 
 
 class WelcomeView(TemplateView):
@@ -20,15 +21,16 @@ class WelcomeView(TemplateView):
 
 class RunScriptView(ListView):
     """
-    generates view for /runscript
+    generates view for /scripts/run
     """
-    template_name = "frontend/run.html"
+    template_name = "frontend/scripts/run.html"
     model = ScriptModel
     context_object_name = "scripts"
 
     def get_context_data(self, **kwargs):  # pylint: disable=w0221
         context = super().get_context_data(**kwargs)
-        context['navbar_link'] = "runscript"
+        context['navbar_link'] = "scripts_run"
+        context['run_script_form'] = RunScriptForm()
         return context
 
 

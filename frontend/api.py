@@ -380,6 +380,28 @@ def manage_script(request, script_id):
         return HttpResponseForbidden()
 
 
+def run_script(request, script_id):
+    """
+    Process POST requests for the ScriptModel ressource.
+
+    Parameters
+    ----------
+        request: HttpRequest
+        script_id: Unique identifier of script
+
+    Returns
+    -------
+        A StatusResponse or HttpResponseForbidden if the request method was
+        other than GET.
+    """
+
+    if request.method == 'POST':
+        pass
+
+    else:
+        return HttpResponseForbidden()
+
+
 def add_file(request):
     """
     Process POST requests which adds new FileModel and GET requests to query

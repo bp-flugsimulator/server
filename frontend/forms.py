@@ -2,10 +2,18 @@
 This module contains all forms based on the models from the frontend application.
 """
 
-from django.forms import ModelForm, ModelChoiceField, HiddenInput
+from django.forms import (
+    ModelForm,
+    ModelChoiceField,
+    HiddenInput,
+    Form,
+    ModelMultipleChoiceField,
+)
+
 from .models import Slave as SlaveModel
 from .models import Program as ProgramModel
 from .models import File as FileModel
+from .models import Script as ScriptModel
 
 
 class SlaveForm(ModelForm):
@@ -53,3 +61,7 @@ class FileForm(ModelForm):
         """
         model = FileModel
         fields = ['name', 'sourcePath', 'destinationPath']
+
+
+class RunScriptForm(Form):
+    scripts = ModelMultipleChoiceField(queryset=ScriptModel.objects.all())

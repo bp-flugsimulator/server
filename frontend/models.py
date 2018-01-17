@@ -19,13 +19,25 @@ from threading import Timer
 
 def update_program_timeout(id):
     """
-    This function is called after the timeout passed. And then the timeouted flag for the given
-    program is set to false.
+    This function is called after the timeout passed. And then the timeouted
+    flag for the given program is set to false.
     """
 
     me = Program.object.get(id=id)
     me.timeouted = True
     me.save()
+
+
+def update_scheduler_status_timeout(id):
+    """
+    Timeout function for the scheduler when waiting for the slaves. If the time
+    passes and the scheduler has no feedback from the slaves the error flag in
+    SchedulerStatus is set to True.
+    """
+    me = SchedulerStatus.object.get(id=id)
+    if not me.check_online():
+        #TODO: notify user bc error
+        me.error = True
 
 
 def validate_mac_address(mac_addr):
@@ -312,6 +324,9 @@ class Script(Model):
     """
     name = CharField(unique=True, max_length=200)
 
+    def __str__(self):
+        return self.name
+
 
 class ScriptGraphPrograms(Model):
     """
@@ -405,8 +420,10 @@ class SchedulerStatus(Model):
         primary_key=True,
     )
     index = IntegerField(null=False, default=-1)
+    started = BooleanField(null=False)
     wait = BooleanField(null=False)
     online = BooleanField(null=False)
+    error = BooleanField(null=False)
     done = BooleanField(null=False)
 
     def set_next_index(self):
@@ -424,9 +441,14 @@ class SchedulerStatus(Model):
         except IndexError:
             return True
 
-    def online(self):
+    def check_online(self):
         """
         Checks if all needed slaves are online.
+
+        Returns
+        -------
+        Returns True if all needed slaves are online or if the script already
+        run successful.
         """
         if not self.done and not self.online:
             all_online = True
@@ -436,9 +458,21 @@ class SchedulerStatus(Model):
                     all_online = False
                     break
 
-            if all_online:
-                self.set_next_index()
-                self.schedule()
+            return all_online
+        else:
+            return True
+
+    def online(self):
+        """
+        Runs the step where the scheduler checks the status of the slaves.
+        """
+        if self.online():
+            self.online = True
+            self.set_next_index()
+            self.schedule()
+        elif not self.started:
+            self.started = True
+            Timer(360, update_scheduler_status_timeout, self.id).start()
 
     def schedule(self):
         """
@@ -456,6 +490,7 @@ class SchedulerStatus(Model):
                     prog = sgp.program
                     if prog.is_error:
                         step = False
+                        self.error = True
                         #TODO: notify user bc of error
                         break
                     elif prog.is_running and not prog.is_timeouted:
