@@ -144,24 +144,27 @@ class Script:
         Saves this object to the database.
         """
 
-        first = transaction.savepoint()
-
         script = ScriptModel(name=self.name)
         script.save()
 
+        done = []
+
         try:
             programs = [obj.as_model(script) for obj in self.programs]
-            files = [obj.as_model(script) for obj in self.files]
 
             for prog in programs:
                 prog.save()
+                done.append(prog)
 
+            files = [obj.as_model(script) for obj in self.files]
             for fil in files:
                 fil.save()
+                done.append(fil)
 
-            transaction.savepoint_commit(first)
         except Exception as err:
-            transaction.savepoint_rollback(first)
+            script.delete()
+            for d in done:
+                d.delete()
             raise err
 
     def to_json(self):
@@ -269,14 +272,27 @@ class ScriptEntryFile:
             Django model
         """
 
-        slave = get_slave(self.slave)
+        try:
+            slave = get_slave(self.slave)
+        except SlaveModel.DoesNotExist:
+            raise ValueError("Client with name/id {} does not exist.".format(
+                self.slave))
 
-        if isinstance(self.file, str):
-            obj = FileModel.objects.get(slave=slave, name=self.file)
-        elif isinstance(self.file, int):
-            obj = FileModel.objects.get(slave=slave, id=self.file)
+        try:
+            if isinstance(self.file, str):
+                obj = FileModel.objects.get(slave=slave, name=self.file)
+                return SGFModel(script=script, index=self.index, file=obj)
+        except FileModel.DoesNotExist:
+            raise ValueError("File with name {} does not exist.".format(
+                self.file))
 
-        return SGFModel(script=script, index=self.index, file=obj)
+        try:
+            if isinstance(self.file, int):
+                obj = FileModel.objects.get(slave=slave, id=self.file)
+                return SGFModel(script=script, index=self.index, file=obj)
+        except FileModel.DoesNotExist:
+            raise ValueError("File with id {} does not exist.".format(
+                self.file))
 
     def to_json(self):
         """
@@ -392,11 +408,24 @@ class ScriptEntryProgram:
         -------
             Django model
         """
-        slave = get_slave(self.slave)
+        try:
+            slave = get_slave(self.slave)
+        except SlaveModel.DoesNotExist:
+            raise ValueError("Client with name/id {} does not exist.".format(
+                self.slave))
 
-        if isinstance(self.program, str):
-            obj = ProgramModel.objects.get(slave=slave, name=self.program)
-        elif isinstance(self.program, int):
-            obj = ProgramModel.objects.get(slave=slave, id=self.program)
+        try:
+            if isinstance(self.program, str):
+                obj = ProgramModel.objects.get(slave=slave, name=self.program)
+                return SGPModel(script=script, index=self.index, program=obj)
+        except ProgramModel.DoesNotExist:
+            raise ValueError("Program with name {} does not exist.".format(
+                self.program))
 
-        return SGPModel(script=script, index=self.index, program=obj)
+        try:
+            if isinstance(self.program, int):
+                obj = ProgramModel.objects.get(slave=slave, id=self.program)
+                return SGPModel(script=script, index=self.index, program=obj)
+        except ProgramModel.DoesNotExist:
+            raise ValueError("Program with id {} does not exist.".format(
+                self.program))

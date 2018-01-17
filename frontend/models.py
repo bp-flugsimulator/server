@@ -2,6 +2,8 @@
 This module contains all databasemodels from the frontend application.
 """
 
+import logging
+
 from django.db.models import (
     Model,
     CharField,
@@ -11,10 +13,25 @@ from django.db.models import (
     IntegerField,
     BooleanField,
     OneToOneField,
+    Count,
 )
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from threading import Timer
+from wakeonlan.wol import send_magic_packet
+from utils import Command, Status
+from channels import Group
+from shlex import split
+
+logger = logging.getLogger("scheduler")
+
+from enum import Enum
+
+
+class ChoiceEnum(Enum):
+    @classmethod
+    def choices(cls):
+        return tuple((x.name, x.value) for x in cls)
 
 
 def update_program_timeout(id):
@@ -23,7 +40,8 @@ def update_program_timeout(id):
     flag for the given program is set to false.
     """
 
-    me = Program.object.get(id=id)
+    me = Program.objects.get(id=id)
+    logger.debug("Timeouted for program " + str(me.name))
     me.timeouted = True
     me.save()
 
@@ -34,10 +52,12 @@ def update_scheduler_status_timeout(id):
     passes and the scheduler has no feedback from the slaves the error flag in
     SchedulerStatus is set to True.
     """
-    me = SchedulerStatus.object.get(id=id)
+    me = SchedulerStatus.objects.get(id=id)
     if not me.check_online():
+        logger.debug("Slave online check timeouted for script " + str(me.name))
+        me.state = SchedulerStatus.ERROR
+        me.error_code = "Waiting for slaves timedout."
         #TODO: notify user bc error
-        me.error = True
 
 
 def validate_mac_address(mac_addr):
@@ -236,11 +256,17 @@ class Program(Model):
             boolean which indicates if the program was started.
         """
 
-        if slave.is_online:
+        if self.slave.is_online:
             cmd = Command(
                 method="execute",
                 path=self.path,
-                arguments=split(self.arguments))
+                arguments=split(self.arguments),
+            )
+
+            logger.info("Starting program {} on slave {}".format(
+                self.name,
+                self.slave.name,
+            ))
 
             # send command to the client
             Group('client_' + str(self.slave.id)).send({'text': cmd.to_json()})
@@ -255,7 +281,7 @@ class Program(Model):
             })
 
             # create status entry
-            ProgramStatusModel(program=self, command_uuid=cmd.uuid).save()
+            ProgramStatus(program=self, command_uuid=cmd.uuid).save()
 
             if self.start_time > 0:
                 Timer(self.start_time).start()
@@ -273,7 +299,11 @@ class Program(Model):
             boolean which indicates if the program was stopped.
         """
 
-        if self.programstatus.is_running:
+        if self.is_running:
+            logger.info("Stoping program {} on slave {}".format(
+                self.name,
+                self.slave.name,
+            ))
             Group('client_' + str(self.slave.id)).send({
                 'text':
                 Command(
@@ -374,6 +404,8 @@ class ProgramStatus(Model):
         code: last returned value of the program
         command_uuid: uuid of the send 'execute' request
         running: True if the program is currently running, otherwise False
+        timeouted: True if the Timer function set this. Which means a
+            start_time from program has elapsed.
     """
     program = OneToOneField(
         Program,
@@ -411,20 +443,35 @@ class SchedulerStatus(Model):
     ----------
         index: The current index which is executed.
         wait: If the scheduler is waiting for programs/files.
-        online: If the scheduler knows that every slave is online.
-        done: If the scheduler ran the script.
+        error_code:
+        state:
     """
+    INIT = 0
+    WAITING_FOR_SLAVES = 1
+    NEXT_STEP = 2
+    WAITING_FOR_PROGRAMS = 3
+    SUCCESS = 4
+    ERROR = 5
+
+    STATE_CHOICES = (
+        (INIT, 'INIT'),
+        (WAITING_FOR_SLAVES, 'WAITING_FOR_SLAVES'),
+        (NEXT_STEP, 'NEXT_STEP'),
+        (WAITING_FOR_PROGRAMS, 'WAITING_FOR_PROGRAMS'),
+        (SUCCESS, 'SUCCESS'),
+        (ERROR, 'ERROR'),
+    )
+
+    state = IntegerField(
+        choices=STATE_CHOICES,
+        default=INIT,
+    )
     script = OneToOneField(
         Script,
         on_delete=CASCADE,
-        primary_key=True,
     )
     index = IntegerField(null=False, default=-1)
-    started = BooleanField(null=False)
-    wait = BooleanField(null=False)
-    online = BooleanField(null=False)
-    error = BooleanField(null=False)
-    done = BooleanField(null=False)
+    error_code = CharField(max_length=1000)
 
     def set_next_index(self):
         """
@@ -434,11 +481,14 @@ class SchedulerStatus(Model):
         -------
             Returns true if no more index was found.
         """
+        logger.debug("Scheduler is doing the next step")
         try:
             self.index = ScriptGraphPrograms.objects.filter(
-                index__gt=self.index).order_by('-index').first()
+                index__gt=self.index).order_by('-index')[0].index
+            logger.debug("Scheduler found next index " + str(self.index))
             return False
         except IndexError:
+            logger.debug("Scheduler done")
             return True
 
     def check_online(self):
@@ -450,64 +500,109 @@ class SchedulerStatus(Model):
         Returns True if all needed slaves are online or if the script already
         run successful.
         """
-        if not self.done and not self.online:
-            all_online = True
+        slaves = ScriptGraphPrograms.objects.filter(script=self.script)
+        all_online = False if len(slaves) == 0 else True
 
-            for sgp in ScriptGraphPrograms.object.filter(script=self.script):
-                if not sgp.program.slave.is_online:
-                    all_online = False
+        for sgp in slaves:
+            if not sgp.program.slave.is_online:
+                all_online = False
+                break
+
+        logger.debug("Online check slaves --> {}".format(
+            "online" if all_online else "offline"))
+
+        return all_online
+
+    def get_involved_slaves(self):
+        """
+        Returns all slaves which are involved.
+
+        Returns
+        -------
+            A list of slaves
+        """
+        # x = list(set(map(lambda query: Program(id=query.program).slave, )))
+
+        query_set = ScriptGraphPrograms.objects.filter(
+            script=self.script).values('program').annotate(
+                dcount=Count('program'))
+
+        return list(
+            set(
+                map(
+                    lambda query: Program.objects.get(id=query['program']).slave,
+                    query_set,
+                )))
+
+    def notify(self):
+        """
+        This function is called to notify the scheduler that the status has
+        changed. The Scheduler will check the new status and handle it.
+        """
+        logging.debug("Current state: {}".format(self.state))
+        if self.state == SchedulerStatus.INIT:
+            self.state = SchedulerStatus.WAITING_FOR_SLAVES
+
+            for slave in self.get_involved_slaves():
+                logging.debug("Starting slave `{}`".format(slave.name))
+                slave.wake_on_lan()
+
+            Timer(300, update_scheduler_status_timeout, self.id).start()
+        elif self.state == SchedulerStatus.WAITING_FOR_SLAVES:
+            if self.check_online():
+                self.set_next_index()
+                self.state = SchedulerStatus.NEXT_STEP
+                self.save()
+                self.notify()
+                return
+        elif self.state == SchedulerStatus.NEXT_STEP:
+            for sgp in ScriptGraphPrograms.objects.filter(
+                    script=self.script,
+                    index=self.index,
+            ):
+                sgp.program.enable()
+
+            self.state = SchedulerStatus.WAITING_FOR_PROGRAMS
+        elif self.state == SchedulerStatus.WAITING_FOR_PROGRAMS:
+            progs = ScriptGraphPrograms.objects.filter(
+                script=self.script,
+                index=self.index,
+            )
+
+            step = False if len(progs) == 0 else True
+
+            for sgp in progs:
+                prog = sgp.program
+                if prog.is_error:
+                    logger.debug("Error in program {}".format(prog.name))
+                    self.state = SchedulerStatus.ERROR
+                    step = False
+                    #TODO: notify user bc of error
+
                     break
+                elif prog.is_running and not prog.is_timeouted:
+                    logger.debug("Program {} is not ready yet {}".format(
+                        prog.name, vars(prog.programstatus)))
+                    step = False
 
-            return all_online
+                    break
+            if step:
+                logger.debug("next step in WAITING_FOR_PROGRAMS")
+                if self.set_next_index():
+                    self.state = SchedulerStatus.SUCCESS
+                    #TODO: notify user bc of end
+
+                else:
+                    self.state = SchedulerStatus.NEXT_STEP
+                    self.save()
+                    self.notify()
+                    return
+
+        elif self.state == SchedulerStatus.SUCCESS:
+            logger.debug("Scheduler is already finished. (SUCCESS)")
+        elif self.state == SchedulerStatus.ERROR:
+            logger.debug("Scheduler is already finished. (ERROR)")
         else:
-            return True
+            logging.debug("Nothing todo.")
 
-    def online(self):
-        """
-        Runs the step where the scheduler checks the status of the slaves.
-        """
-        if self.online():
-            self.online = True
-            self.set_next_index()
-            self.schedule()
-        elif not self.started:
-            self.started = True
-            Timer(360, update_scheduler_status_timeout, self.id).start()
-
-    def schedule(self):
-        """
-        Runs the scheduler which determines which programs/files need to be
-        waited for and enabled. Run this on every new event.
-        """
-        if not self.done and self.online:
-            if wait:
-                step = True
-
-                for sgp in ScriptGraphPrograms.objects.filter(
-                        script=self,
-                        index=self.index,
-                ):
-                    prog = sgp.program
-                    if prog.is_error:
-                        step = False
-                        self.error = True
-                        #TODO: notify user bc of error
-                        break
-                    elif prog.is_running and not prog.is_timeouted:
-                        step = False
-                        break
-
-                if step:
-                    if self.set_next_index():
-                        self.done = True
-                    else:
-                        self.wait = False
-            else:
-                self.wait = True
-                for sgp in ScriptGraphPrograms.objects.filter(
-                        script=self,
-                        index=self.index,
-                ):
-                    sgp.program.enable()
-
-            self.save()
+        self.save()

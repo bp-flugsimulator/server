@@ -2,6 +2,8 @@
 This module contains all functions that handle requests on websockets.
 """
 import logging
+import traceback
+
 from channels import Group
 from channels.sessions import channel_session
 from termcolor import colored
@@ -15,7 +17,7 @@ from .models import (
 )
 
 # Get an instance of a logger
-LOGGER = logging.getLogger('django.request')
+LOGGER = logging.getLogger('websockets')
 
 
 def notify(message):
@@ -233,13 +235,14 @@ def ws_notifications_receive(message):
 
             # notify the scheduler that the status has changed
             for scheduler in SchedulerStatusModel.objects.all():
-                scheduler.online()
+                scheduler.notify()
+
         elif status.payload['method'] == 'execute':
             handle_execute_answer(status)
 
             # notify the scheduler that the status has changed
             for scheduler in SchedulerStatusModel.objects.all():
-                scheduler.schedule()
+                scheduler.notify()
         else:
             LOGGER.info(
                 colored('Client send answer from unknown function {}.'.format(
@@ -248,7 +251,7 @@ def ws_notifications_receive(message):
         LOGGER.info(
             colored(
                 'Exception occurred while handeling an incoming request on /commands \n{}'.
-                format(err), 'red'))
+                format(traceback.format_exc()), 'red'))
 
 
 def ws_notifications_disconnect(message):

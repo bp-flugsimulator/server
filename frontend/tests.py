@@ -3,7 +3,7 @@
 
 from django.test import TestCase
 from django.urls import reverse
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from urllib.parse import urlencode
 from utils import Status, Command
 from shlex import split
@@ -142,25 +142,39 @@ class ApiTests(TestCase):
 
     def test_add_script_json_error(self):
         response = self.client.post(
-            "/api/scripts", data={
+            "/api/scripts",
+            data={
                 "name": "test",
                 "programs": {},
-                "files": {}
+                "files": {},
             })
+
         self.assertContains(
             response,
-            "One or more values does contain not valid types.",
+            "Expecting value: line 1 column 1 (char 0)",
         )
 
     def test_add_script_value_error(self):
         response = self.client.post(
             "/api/scripts",
-            data='{"name": "test", "programs": {}, "files": {}}',
+            data='{"name": "test", "programs": {}, "files": []}',
             content_type="application/json",
         )
+
         self.assertContains(
             response,
-            "One or more values does contain not valid types.",
+            "Programs has to be a list",
+        )
+
+        response = self.client.post(
+            "/api/scripts",
+            data='{"name": "test", "programs": [], "files": {}}',
+            content_type="application/json",
+        )
+
+        self.assertContains(
+            response,
+            "Files has to be a list",
         )
 
     def test_add_script_unique_error(self):
@@ -971,14 +985,13 @@ class ApiTests(TestCase):
         for _ in range(2000):
             long_str += 'a'
 
-        api_response = self.client.post(
-            '/api/programs', {
-                'name': long_str,
-                'path': long_str,
-                'arguments': long_str,
-                'slave': str(model.id),
-                'start_time': -1,
-            })
+        api_response = self.client.post('/api/programs', {
+            'name': long_str,
+            'path': long_str,
+            'arguments': long_str,
+            'slave': str(model.id),
+            'start_time': -1,
+        })
 
         self.assertEqual(api_response.status_code, 200)
         self.assertEqual(
@@ -1007,14 +1020,13 @@ class ApiTests(TestCase):
         ).save()
         model = SlaveModel.objects.get(name='add_program_fail_not_unique')
 
-        api_response = self.client.post(
-            '/api/programs', {
-                'name': 'name',
-                'path': 'path',
-                'arguments': '',
-                'slave': str(model.id),
-                'start_time': -1,
-            })
+        api_response = self.client.post('/api/programs', {
+            'name': 'name',
+            'path': 'path',
+            'arguments': '',
+            'slave': str(model.id),
+            'start_time': -1,
+        })
 
         self.assertEqual(api_response.status_code, 200)
         self.assertEqual(
@@ -1024,14 +1036,13 @@ class ApiTests(TestCase):
 
         # try to add program with the same name
 
-        api_response = self.client.post(
-            '/api/programs', {
-                'name': 'name',
-                'path': 'path',
-                'arguments': '',
-                'slave': str(model.id),
-                'start_time': -1,
-            })
+        api_response = self.client.post('/api/programs', {
+            'name': 'name',
+            'path': 'path',
+            'arguments': '',
+            'slave': str(model.id),
+            'start_time': -1,
+        })
 
         self.assertEqual(api_response.status_code, 200)
         self.assertEqual(
@@ -1074,8 +1085,10 @@ class ApiTests(TestCase):
         test_model.save()
 
         #  non existent slave
-        res = self.client.get(
-            path=reverse('frontend:wol_slave', args=[999999]))
+        res = self.client.get(path=reverse(
+            'frontend:wol_slave',
+            args=[999999],
+        ))
         self.assertEqual(res.status_code, 500)
         self.assertEqual(res.json()['status'], 'err')
         self.assertEqual(
@@ -1084,12 +1097,16 @@ class ApiTests(TestCase):
         )
 
         #  wrong http method
-        res = self.client.post(
-            path=reverse('frontend:wol_slave', args=[test_model.id]))
+        res = self.client.post(path=reverse(
+            'frontend:wol_slave',
+            args=[test_model.id],
+        ))
         self.assertEqual(res.status_code, 403)
 
-        res = self.client.get(
-            path=reverse('frontend:wol_slave', args=[test_model.id]))
+        res = self.client.get(path=reverse(
+            'frontend:wol_slave',
+            args=[test_model.id],
+        ))
         self.assertEqual(res.status_code, 200)
         self.assertEqual(res.json()['status'], 'ok')
 
@@ -1412,11 +1429,10 @@ class ApiTests(TestCase):
         ws_client.join_group('client_' + str(slave.id))
 
         #  make request
-        api_response = self.client.get(
-            path=reverse(
-                'frontend:shutdown_slave',
-                args=[slave.id],
-            ))
+        api_response = self.client.get(path=reverse(
+            'frontend:shutdown_slave',
+            args=[slave.id],
+        ))
         self.assertEqual(api_response.status_code, 200)
         self.assertEqual(
             Status.ok(''),
@@ -1515,13 +1531,12 @@ class ApiTests(TestCase):
         for _ in range(2000):
             long_str += 'a'
 
-        api_response = self.client.post(
-            '/api/files', {
-                'name': long_str,
-                'sourcePath': long_str,
-                'destinationPath': long_str,
-                'slave': str(model.id)
-            })
+        api_response = self.client.post('/api/files', {
+            'name': long_str,
+            'sourcePath': long_str,
+            'destinationPath': long_str,
+            'slave': str(model.id)
+        })
 
         self.assertEqual(200, api_response.status_code)
         self.assertEqual(
@@ -1548,13 +1563,12 @@ class ApiTests(TestCase):
         ).save()
         model = SlaveModel.objects.get(name='add_file_fail_not_unique')
 
-        api_response = self.client.post(
-            '/api/files', {
-                'name': 'name',
-                'sourcePath': 'sourcePath',
-                'destinationPath': 'destinationPath',
-                'slave': str(model.id),
-            })
+        api_response = self.client.post('/api/files', {
+            'name': 'name',
+            'sourcePath': 'sourcePath',
+            'destinationPath': 'destinationPath',
+            'slave': str(model.id),
+        })
 
         self.assertEqual(api_response.status_code, 200)
         self.assertEqual(
@@ -1563,13 +1577,12 @@ class ApiTests(TestCase):
         )
 
         # try to add program with the same name
-        api_response = self.client.post(
-            '/api/files', {
-                'name': 'name',
-                'sourcePath': 'sourcePath',
-                'destinationPath': 'destinationPath',
-                'slave': str(model.id),
-            })
+        api_response = self.client.post('/api/files', {
+            'name': 'name',
+            'sourcePath': 'sourcePath',
+            'destinationPath': 'destinationPath',
+            'slave': str(model.id),
+        })
 
         self.assertEqual(api_response.status_code, 200)
         self.assertEqual(
@@ -1628,6 +1641,7 @@ class ApiTests(TestCase):
             'frontend:stop_program',
             args=[program.id],
         ))
+
         self.assertEqual(200, api_response.status_code)
         self.assertEqual(
             Status.ok(''),
@@ -2432,11 +2446,16 @@ class ScriptTests(TestCase):
         slave = SlaveModel(
             name="test_slave",
             ip_address="0.0.0.0",
-            mac_address="00:00:00:00:00:00")
+            mac_address="00:00:00:00:00:00",
+        )
         slave.save()
 
         program = ProgramModel(
-            name="test_program", path="None", arguments="None", slave=slave)
+            name="test_program",
+            path="None",
+            arguments="None",
+            slave=slave,
+        )
         program.save()
 
         script = Script(
@@ -2448,7 +2467,11 @@ class ScriptTests(TestCase):
             [],
         )
 
-        self.assertRaises(ProgramModel.DoesNotExist, script.save)
+        self.assertRaisesRegex(
+            ValueError,
+            "Program with id 2 does not exist.",
+            script.save,
+        )
         self.assertTrue(
             not ScriptModel.objects.filter(name="test_script").exists())
         self.assertTrue(len(SGP.objects.all()) == 0)
@@ -2518,8 +2541,13 @@ class ScriptTests(TestCase):
             "not int",
             "not str",
         )
-        self.assertRaises(ValueError, ScriptEntryProgram.from_query, Dummy(),
-                          "int", "not str")
+        self.assertRaises(
+            ValueError,
+            ScriptEntryProgram.from_query,
+            Dummy(),
+            "int",
+            "not str",
+        )
 
         self.assertRaises(
             ValueError,

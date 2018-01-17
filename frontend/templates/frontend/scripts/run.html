@@ -35,7 +35,7 @@
                 <div>
                     {% csrf_token %}
                     <div class="form-group">
-                        {% render_field run_script_form.scripts class="form-control" %}
+                        {% render_field run_script_form.scripts class="form-control" id="scriptSelect" %}
                         {% if run_script_form.scripts.help_text %}
                             <small class="form-text text-muted">{{ run_script_form.scripts.help_text }}</small>
                         {% endif %}

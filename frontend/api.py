@@ -6,17 +6,22 @@ from shlex import split
 
 from django.http import HttpResponseForbidden
 from django.http.request import QueryDict
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.db.utils import IntegrityError
 from channels import Group
 from utils.status import Status
 from utils import Command
-from wakeonlan.wol import send_magic_packet
 from server.utils import StatusResponse
 
-from .models import Slave as SlaveModel, SlaveStatus as SlaveStatusModel,\
-    Program as ProgramModel, ProgramStatus as ProgramStatusModel,\
-    Script as ScriptModel, File as FileModel
+from .models import (
+    Slave as SlaveModel,
+    SlaveStatus as SlaveStatusModel,
+    Program as ProgramModel,
+    ProgramStatus as ProgramStatusModel,
+    Script as ScriptModel,
+    SchedulerStatus as SchedulerStatusModel,
+    File as FileModel,
+)
 
 from .scripts import Script
 
@@ -276,7 +281,7 @@ def stop_program(request, program_id):
     if request.method == 'GET':
         if ProgramModel.objects.filter(id=program_id).exists():
             program = ProgramModel.objects.get(id=program_id)
-            if program.enable():
+            if program.disable():
                 return StatusResponse(Status.ok(''))
             else:
                 return StatusResponse(
@@ -312,9 +317,8 @@ def add_script(request):
                     err.args[0])))
         except TypeError:
             return StatusResponse(Status.err("Wrong array items."))
-        except ValueError:
-            return StatusResponse(
-                Status.err("One or more values does contain not valid types."))
+        except ValueError as err:
+            return StatusResponse(Status.err(str(err)))
         except IntegrityError:
             return StatusResponse(
                 Status.err("Script with that name already exists."))
@@ -382,7 +386,7 @@ def manage_script(request, script_id):
 
 def run_script(request, script_id):
     """
-    Process POST requests for the ScriptModel ressource.
+    Process GET requests for the ScriptModel ressource.
 
     Parameters
     ----------
@@ -395,8 +399,41 @@ def run_script(request, script_id):
         other than GET.
     """
 
-    if request.method == 'POST':
-        pass
+    if request.method == 'GET':
+        try:
+            script = ScriptModel.objects.get(id=script_id)
+            status = SchedulerStatusModel.objects.all()
+
+            # check is already one exists
+            if len(status) == 1:
+                status = status.first()
+                # only allow the start of a script if the old one is finished
+                if status.state == SchedulerStatusModel.SUCCESS or status.state == SchedulerStatusModel.ERROR:
+                    status.delete()
+                    status = SchedulerStatusModel(script=script.id)
+                    status.save()
+                    status.notify()
+                    return StatusResponse(
+                        Status.ok("Started script {}".format(script.name)))
+                else:
+                    status.delete()
+                    return StatusResponse(
+                        Status.err(
+                            "Could not start a script because there is still one running."
+                        ))
+            # run a new script
+            elif len(status) == 0:
+                status = SchedulerStatusModel(script=script)
+                status.save()
+                status.notify()
+                return StatusResponse(
+                    Status.ok("Started script {}".format(script.name)))
+            else:
+                return StatusResponse(Status.err("Internal error"))
+        except ScriptModel.DoesNotExist:
+            return StatusResponse(
+                Status.err("The script with the id {} does not exist.".format(
+                    script_id)))
 
     else:
         return HttpResponseForbidden()
