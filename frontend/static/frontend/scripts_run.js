@@ -2,7 +2,6 @@
 $(document).ready(function () {
     $('#scriptRun').click(function (event) {
         event.preventDefault();
-
         let id = $('#scriptSelect :selected').val();
 
         if (id == null) {
@@ -25,7 +24,7 @@ $(document).ready(function () {
                     }
                 },
                 error(xhr, errorString, errorCode) {
-                    notify('Error while transport', errorString, 'danger');
+                    notify('Error while transport', errorCode, 'danger');
                 }
             });
         }

@@ -141,7 +141,7 @@ CHANNEL_LAYERS = {
 
 LOGGING = {
     'version': 1,
-    'disable_existing_loggers': True,
+    'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
             'format':
@@ -159,11 +159,7 @@ LOGGING = {
         },
     },
     'loggers': {
-        'scheduler': {
-            'handlers': ['console'],
-            'level': 'DEBUG'
-        },
-        'websockets': {
+        '': {
             'handlers': ['console'],
             'level': 'DEBUG'
         },

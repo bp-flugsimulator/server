@@ -410,7 +410,7 @@ def run_script(request, script_id):
                 # only allow the start of a script if the old one is finished
                 if status.state == SchedulerStatusModel.SUCCESS or status.state == SchedulerStatusModel.ERROR:
                     status.delete()
-                    status = SchedulerStatusModel(script=script.id)
+                    status = SchedulerStatusModel(script=script)
                     status.save()
                     status.notify()
                     return StatusResponse(
@@ -430,11 +430,11 @@ def run_script(request, script_id):
                     Status.ok("Started script {}".format(script.name)))
             else:
                 return StatusResponse(Status.err("Internal error"))
+
         except ScriptModel.DoesNotExist:
             return StatusResponse(
                 Status.err("The script with the id {} does not exist.".format(
                     script_id)))
-
     else:
         return HttpResponseForbidden()
 

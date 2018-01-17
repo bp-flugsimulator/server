@@ -146,6 +146,9 @@ def ws_rpc_connect(message):
         Group('clients').add(message.reply_channel)
         Group('client_{}'.format(slave.id)).add(message.reply_channel)
 
+        LOGGER.debug('Added client to command group client_{}'.format(
+            slave.id))
+
         # send/save online request
         cmd = Command(method='online')
         SlaveStatusModel(slave=slave, command_uuid=cmd.uuid).save()

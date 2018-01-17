@@ -541,13 +541,13 @@ class SchedulerStatus(Model):
         """
         logging.debug("Current state: {}".format(self.state))
         if self.state == SchedulerStatus.INIT:
-            self.state = SchedulerStatus.WAITING_FOR_SLAVES
-
             for slave in self.get_involved_slaves():
                 logging.debug("Starting slave `{}`".format(slave.name))
                 slave.wake_on_lan()
 
             Timer(300, update_scheduler_status_timeout, self.id).start()
+
+            self.state = SchedulerStatus.WAITING_FOR_SLAVES
         elif self.state == SchedulerStatus.WAITING_FOR_SLAVES:
             if self.check_online():
                 self.set_next_index()
