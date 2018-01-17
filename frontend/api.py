@@ -405,7 +405,7 @@ def manage_file(request, fileId):
     if request.method == 'POST':
         file = FileModel.objects.get(id=fileId)
         slave = file.slave
-        if SlaveStatusModel.objects.filter(slave=slave) and :
+        if SlaveStatusModel.objects.filter(slave=slave):
             cmd = Command(
                     method="move_file",    # move file
                     sourcePath=file.sourcePath,
