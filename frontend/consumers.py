@@ -240,12 +240,16 @@ def ws_notifications_receive(message):
             for scheduler in SchedulerStatusModel.objects.all():
                 scheduler.notify()
 
+            LOGGER.debug("Consumer released")
+
         elif status.payload['method'] == 'execute':
             handle_execute_answer(status)
 
             # notify the scheduler that the status has changed
             for scheduler in SchedulerStatusModel.objects.all():
                 scheduler.notify()
+
+            LOGGER.debug("Consumer released")
         else:
             LOGGER.info(
                 colored('Client send answer from unknown function {}.'.format(

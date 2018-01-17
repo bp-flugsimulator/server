@@ -28,16 +28,13 @@ logger = logging.getLogger("scheduler")
 from enum import Enum
 
 
-class ChoiceEnum(Enum):
-    @classmethod
-    def choices(cls):
-        return tuple((x.name, x.value) for x in cls)
-
-
-def update_program_timeout(id):
+def update_programs_timeout(id):
     """
-    This function is called after the timeout passed. And then the timeouted
-    flag for the given program is set to false.
+    Sets the timeout flag for a program.
+
+    Arguments
+    ---------
+        id: Program id
     """
 
     me = Program.objects.get(id=id)
@@ -51,6 +48,10 @@ def update_scheduler_status_timeout(id):
     Timeout function for the scheduler when waiting for the slaves. If the time
     passes and the scheduler has no feedback from the slaves the error flag in
     SchedulerStatus is set to True.
+
+    Arguments
+    ---------
+        id: SchedulerStatus id
     """
     me = SchedulerStatus.objects.get(id=id)
     if not me.check_online():
@@ -283,8 +284,12 @@ class Program(Model):
             # create status entry
             ProgramStatus(program=self, command_uuid=cmd.uuid).save()
 
-            if self.start_time > 0:
-                Timer(self.start_time).start()
+            # if self.start_time > 0:
+            #     Timer(
+            #         self.start_time,
+            #         update_programs_timeout,
+            #         (self.id, ),
+            #     ).start()
 
             return True
         else:
@@ -545,16 +550,19 @@ class SchedulerStatus(Model):
                 logging.debug("Starting slave `{}`".format(slave.name))
                 slave.wake_on_lan()
 
-            Timer(300, update_scheduler_status_timeout, self.id).start()
+            Timer(300, update_scheduler_status_timeout, (self.id, )).start()
 
             self.state = SchedulerStatus.WAITING_FOR_SLAVES
+            self.save()
+
+            self.notify()
         elif self.state == SchedulerStatus.WAITING_FOR_SLAVES:
             if self.check_online():
                 self.set_next_index()
                 self.state = SchedulerStatus.NEXT_STEP
+
                 self.save()
                 self.notify()
-                return
         elif self.state == SchedulerStatus.NEXT_STEP:
             for sgp in ScriptGraphPrograms.objects.filter(
                     script=self.script,
@@ -563,6 +571,7 @@ class SchedulerStatus(Model):
                 sgp.program.enable()
 
             self.state = SchedulerStatus.WAITING_FOR_PROGRAMS
+            self.save()
         elif self.state == SchedulerStatus.WAITING_FOR_PROGRAMS:
             progs = ScriptGraphPrograms.objects.filter(
                 script=self.script,
@@ -577,6 +586,7 @@ class SchedulerStatus(Model):
                     logger.debug("Error in program {}".format(prog.name))
                     self.state = SchedulerStatus.ERROR
                     step = False
+                    self.save()
                     #TODO: notify user bc of error
 
                     break
@@ -590,13 +600,13 @@ class SchedulerStatus(Model):
                 logger.debug("next step in WAITING_FOR_PROGRAMS")
                 if self.set_next_index():
                     self.state = SchedulerStatus.SUCCESS
+                    self.save()
                     #TODO: notify user bc of end
 
                 else:
                     self.state = SchedulerStatus.NEXT_STEP
                     self.save()
                     self.notify()
-                    return
 
         elif self.state == SchedulerStatus.SUCCESS:
             logger.debug("Scheduler is already finished. (SUCCESS)")
@@ -604,5 +614,3 @@ class SchedulerStatus(Model):
             logger.debug("Scheduler is already finished. (ERROR)")
         else:
             logging.debug("Nothing todo.")
-
-        self.save()

@@ -412,6 +412,7 @@ def run_script(request, script_id):
                     status.delete()
                     status = SchedulerStatusModel(script=script)
                     status.save()
+
                     status.notify()
                     return StatusResponse(
                         Status.ok("Started script {}".format(script.name)))
@@ -425,6 +426,7 @@ def run_script(request, script_id):
             elif len(status) == 0:
                 status = SchedulerStatusModel(script=script)
                 status.save()
+
                 status.notify()
                 return StatusResponse(
                     Status.ok("Started script {}".format(script.name)))
