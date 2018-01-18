@@ -8,6 +8,7 @@ from channels import Group
 from channels.sessions import channel_session
 from termcolor import colored
 from utils import Command, Status
+
 from .models import (
     SlaveStatus as SlaveStatusModel,
     Slave as SlaveModel,
@@ -16,35 +17,10 @@ from .models import (
 )
 
 from .scheduler import Scheduler, CURRENT_SCHEDULER
+from .utils import notify_err, notify
 
 # Get an instance of a logger
 LOGGER = logging.getLogger('websockets')
-
-
-def notify(message):
-    """
-    Sends a Status.ok with the given message
-    on the 'notifications' channel
-
-    Parameters
-    ----------
-    message: json serializable
-        the message that is going to be send
-    """
-    Group('notifications').send({'text': Status.ok(message).to_json()})
-
-
-def notify_err(message):
-    """
-    Sends a Status.err with the given message
-    on the 'notifications' channel
-
-    Parameters
-    ----------
-    message: json serializable
-        the message that is going to be send
-    """
-    Group('notifications').send({'text': Status.err(message).to_json()})
 
 
 def handle_execute_answer(status):

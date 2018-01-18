@@ -662,9 +662,7 @@ footer {
     font-size: large;
 }
 
-.fsim-progressbar {
-    margin: 0 auto;
-    padding: 2em 0 3em;
+.fsim-progress {
     list-style: none;
     position: relative;
     display: flex;
@@ -675,58 +673,70 @@ footer {
     display: block;
 }
 
+.fsim-progressbar-step[data-state='timer'] {
+    &:after {
+        @extend .progress-bar;
+        background: $teal;
+        width: 0%;
+    }
+}
+.fsim-progressbar-step[data-state='success'] {
+    &:after {
+        @extend .progress-bar;
+        background: $green;
+        width: 0%;
+    }
+}
+
+.fsim-progressbar-step[data-state='error'] {
+    &:after {
+        @extend .progress-bar;
+        background: $red;
+        width: 0%;
+    }
+}
+
+.fsim-progressbar-step[data-state='wait'] {
+    &:after {
+        @extend .progress-bar;
+        @extend .progress-bar-striped;
+        @extend .progress-bar-animated;
+        background: $teal;
+        width: 0%;
+    }
+}
+
 .fsim-progressbar-step {
     text-align: center;
     position: relative;
-    width: 100%;
+    width: 95%;
+    height: -50%;
 
     &:before,
     &:after {
+        @extend .progress;
         content: "";
-        height: 12px;
-        background-color: transparent;
-        border: 1px solid $gray-900;
         position: absolute;
-        width: 100%;
-        left: -50%;
+        width: 95%;
+        height: -50%;
+        left: +52.5%;
         top: 30%;
+        z-index: -1;
         transform: translateY(-50%);
-        transition: all .25s ease-out;
     }
 
-    &:first-child:before,
-    &:first-child:after {
+    &:last-child:before,
+    &:last-child:after {
         display: none;
     }
 
-    &:after {
-        background-color: $blue;
-        width: 50%;
-    }
-
-    &.done + &.active:after,
-    &.done + &.done:after {
-        width: 100%;
-    }
 }
 
 .fsim-progressbar-icon {
     width: 32px;
     height: 32px;
-    border: 1px solid $gray-900;
-    background: transparent;
-    padding: 15px;
+    border: 1px solid $white;
+    background: $blue;
     max-width: 100%;
     position: relative;
-    transition: all .25s ease-out;
-
-    .active & {
-        fill: $blue;
-        background-color: $blue;
-    }
-
-    .done & {
-        fill: $white;
-        background-color: $blue;
-    }
 }

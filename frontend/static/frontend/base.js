@@ -170,7 +170,7 @@ function notify(title, message, type) {
                 '<span class="row" data-notify="title">' +
                 '<strong>{1}</strong>' +
                 '</span>' +
-                '<span class="row" data-notify="message">{2}</span>' +
+                '<span class="row text-justify" data-notify="message">{2}</span>' +
                 '</div>' +
                 '</div>'
         });

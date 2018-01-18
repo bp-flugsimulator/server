@@ -1,5 +1,5 @@
 /* eslint-env browser*/
-/* global $, getCookie, modalDeleteAction, handleFormStatus, clearErrorMessages, Status*/
+/* global $, getCookie, modalDeleteAction, handleFormStatus, clearErrorMessages, Status, fsimWebsocket, notify*/
 
 /**
  * Creates a function which handles from submits.
@@ -33,22 +33,128 @@ const onFormSubmit = function (id) {
     };
 };
 
-$(document).ready(function () {
-    // set defaults for notifications
+const restoreSlaveInnerTab = function (slaveId) {
+    let tabStatus = localStorage.getItem('tab-status');
 
-    const restoreSlaveInnerTab = function (slaveId) {
-        let tabStatus = localStorage.getItem('tab-status');
-
-        if (tabStatus !== null) {
-            if (tabStatus === 'program') {
-                $('#slavesObjectsPrograms' + slaveId).click();
-            }
-            else if (tabStatus === 'file') {
-                $('#slavesObjectsFiles' + slaveId).click();
-            }
+    if (tabStatus !== null) {
+        if (tabStatus === 'program') {
+            $('#slavesObjectsPrograms' + slaveId).click();
         }
-    };
+        else if (tabStatus === 'file') {
+            $('#slavesObjectsFiles' + slaveId).click();
+        }
+    }
+};
 
+function changeStartStopText(element, text) {
+    element.children('.button-status-display').each(function (idx, val) {
+        $(val).text(text);
+    });
+}
+
+var socketEventHandler = {
+    slaveConnect(payload) {
+        let statusContainer = $('#slaveStatusContainer_' + payload.sid);
+        let statusTab = $('#slaveTab' + payload.sid);
+        let startstopButton = $('#slaveStartStop_' + payload.sid);
+
+        statusContainer.attr('data-state', 'success');
+        statusTab.attr('data-state', 'success');
+
+        // Use Python notation !!!
+        startstopButton.attr('data-is-running', 'True');
+        changeStartStopText(startstopButton, 'STOP');
+
+        // set tooltip to Stop
+        startstopButton.children('[data-text-swap]').each(function (idx, val) {
+            swapText($(val));
+        });
+    },
+    slaveDisconnect(payload) {
+        let statusContainer = $('#slaveStatusContainer_' + payload.sid);
+        let statusTab = $('#slaveTab' + payload.sid);
+        let startstopButton = $('#slaveStartStop_' + payload.sid);
+
+        statusContainer.attr('data-state', 'unkown');
+        statusTab.attr('data-state', 'unkown');
+
+        $('#slavesObjectsProgramsContent' + payload.sid)
+            .find('.fsim-box[data-state]')
+            .each(function (idx, val) {
+                $(val).attr('data-state', 'unkown');
+            });
+
+        // Use Python notation !!!
+        startstopButton.attr('data-is-running', 'False');
+        changeStartStopText(startstopButton, 'START');
+
+        // set tooltip to Start
+        startstopButton.children('[data-text-swap]').each(function (idx, val) {
+            swapText($(val));
+        });
+    },
+    programStarted(payload) {
+        let statusContainer = $('#programStatusContainer_' + payload.pid);
+        let startstopButton = $('#programStartStop_' + payload.pid);
+        let cardButton = $('#programCardButton_' + payload.pid);
+
+        statusContainer.attr('data-state', 'warning');
+        cardButton.prop('disabled', true);
+
+        // Use Python notation !!!
+        startstopButton.attr('data-is-running', 'True');
+        changeStartStopText(startstopButton, 'STOP');
+
+        let sid = null;
+
+        statusContainer.find('button[data-slave-id]').each(function (idx, val) {
+            sid = $(val).data('slave-id');
+            return false;
+        });
+
+        styleSlaveByStatus(sid);
+
+        startstopButton.children('[data-text-swap]').each(function (idx, val) {
+            swapText($(val));
+        });
+    },
+    programStopped(payload) {
+        let statusContainer = $('#programStatusContainer_' + payload.pid);
+        let startstopButton = $('#programStartStop_' + payload.pid);
+        let cardButton = $('#programCardButton_' + payload.pid);
+        let cardBox = $('#programCard_' + payload.pid);
+
+        if (payload.code !== 0) {
+            statusContainer.attr('data-state', 'error');
+
+            cardButton.prop('disabled', false);
+            cardBox.text(payload.code);
+        } else {
+            statusContainer.attr('data-state', 'success');
+        }
+
+        // Use Python notation !!!
+        startstopButton.attr('data-is-running', 'False');
+        changeStartStopText(startstopButton, 'START');
+
+        let sid = null;
+
+        statusContainer.find('button[data-slave-id]').each(function (idx, val) {
+            sid = $(val).data('slave-id');
+            return false;
+        });
+
+        styleSlaveByStatus(sid);
+
+        startstopButton.children('[data-text-swap]').each(function (idx, val) {
+            swapText($(val));
+        });
+    },
+};
+
+var websocket = fsimWebsocket(socketEventHandler);
+
+$(document).ready(function () {
     // Restores the last clicked slave
     (function () {
         let href = localStorage.getItem('status');

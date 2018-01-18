@@ -19,8 +19,10 @@ from django.db.models import (
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from wakeonlan.wol import send_magic_packet
-from utils import Command, Status
 from channels import Group
+from utils import Command, Status
+from .utils import notify, notify_err
+
 from shlex import split
 
 from .scheduler import CURRENT_SCHEDULER
@@ -253,12 +255,9 @@ class Program(Model):
             Group('client_' + str(self.slave.id)).send({'text': cmd.to_json()})
 
             # tell webinterface that the program has started
-            Group('notifications').send({
-                'text':
-                Status.ok({
-                    "program_status": "started",
-                    "pid": self.id,
-                }).to_json()
+            notify({
+                'program_status': 'started',
+                'pid': self.id,
             })
 
             # create status entry

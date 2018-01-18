@@ -1,151 +1,77 @@
 /* eslint-env browser*/
-/* global $, Status, swapText, styleSlaveByStatus */
+/* global $, Status */
+/* export fsimWebsocket */
 /*eslint no-console: ["error", { allow: ["log"] }] */
 
-function changeStartStopText(element, text) {
-    element.children('.button-status-display').each(function (idx, val) {
-        $(val).text(text);
-    });
-}
+function fsimWebsocket(partialSocketEventHandler) {
+    let socket = new WebSocket('ws://' + window.location.host + '/notifications');
 
-var socket = new WebSocket('ws://' + window.location.host + '/notifications');
-
-var socketEventHandler = {
-    slaveConnect(payload) {
-        let statusContainer = $('#slaveStatusContainer_' + payload.sid);
-        let statusTab = $('#slaveTab' + payload.sid);
-        let startstopButton = $('#slaveStartStop_' + payload.sid);
-
-        statusContainer.attr('data-state', 'success');
-        statusTab.attr('data-state', 'success');
-
-        // Use Python notation !!!
-        startstopButton.attr('data-is-running', 'True');
-        changeStartStopText(startstopButton, 'STOP');
-
-        // set tooltip to Stop
-        startstopButton.children('[data-text-swap]').each(function (idx, val) {
-            swapText($(val));
-        });
-    },
-    slaveDisconnect(payload) {
-        let statusContainer = $('#slaveStatusContainer_' + payload.sid);
-        let statusTab = $('#slaveTab' + payload.sid);
-        let startstopButton = $('#slaveStartStop_' + payload.sid);
-
-        statusContainer.attr('data-state', 'unkown');
-        statusTab.attr('data-state', 'unkown');
-
-        $('#slavesObjectsProgramsContent' + payload.sid)
-            .find('.fsim-box[data-state]')
-            .each(function (idx, val) {
-                $(val).attr('data-state', 'unkown');
-            });
-
-        // Use Python notation !!!
-        startstopButton.attr('data-is-running', 'False');
-        changeStartStopText(startstopButton, 'START');
-
-        // set tooltip to Start
-        startstopButton.children('[data-text-swap]').each(function (idx, val) {
-            swapText($(val));
-        });
-    },
-    programStarted(payload) {
-        let statusContainer = $('#programStatusContainer_' + payload.pid);
-        let startstopButton = $('#programStartStop_' + payload.pid);
-        let cardButton = $('#programCardButton_' + payload.pid);
-
-        statusContainer.attr('data-state', 'warning');
-        cardButton.prop('disabled', true);
-
-        // Use Python notation !!!
-        startstopButton.attr('data-is-running', 'True');
-        changeStartStopText(startstopButton, 'STOP');
-
-        let sid = null;
-
-        statusContainer.find('button[data-slave-id]').each(function (idx, val) {
-            sid = $(val).data('slave-id');
-            return false;
-        });
-
-        styleSlaveByStatus(sid);
-
-        startstopButton.children('[data-text-swap]').each(function (idx, val) {
-            swapText($(val));
-        });
-    },
-    programStopped(payload) {
-        let statusContainer = $('#programStatusContainer_' + payload.pid);
-        let startstopButton = $('#programStartStop_' + payload.pid);
-        let cardButton = $('#programCardButton_' + payload.pid);
-        let cardBox = $('#programCard_' + payload.pid);
-
-        if (payload.code !== 0) {
-            statusContainer.attr('data-state', 'error');
-
-            cardButton.prop('disabled', false);
-            cardBox.text(payload.code);
-        } else {
-            statusContainer.attr('data-state', 'success');
+    let handler = {
+        get: function (target, name) {
+            return name in target ?
+                target[name] :
+                function () { };
         }
+    };
 
-        // Use Python notation !!!
-        startstopButton.attr('data-is-running', 'False');
-        changeStartStopText(startstopButton, 'START');
+    let socketEventHandler = new Proxy(partialSocketEventHandler, handler);
 
-        let sid = null;
+    socket.onmessage = function (data) {
+        let status = Status.from_json(data.data);
+        console.log(status);
 
-        statusContainer.find('button[data-slave-id]').each(function (idx, val) {
-            sid = $(val).data('slave-id');
-            return false;
-        });
-
-        styleSlaveByStatus(sid);
-
-        startstopButton.children('[data-text-swap]').each(function (idx, val) {
-            swapText($(val));
-        });
-    },
-};
-
-socket.onmessage = function (data) {
-    let status = Status.from_json(data.data);
-    console.log(status);
-
-    if (status.is_ok()) {
-        if (status.payload['slave_status'] != null) {
-            // handle slave status updates
-            switch (status.payload['slave_status']) {
-                case 'connected':
-                    socketEventHandler.slaveConnect(status.payload);
-                    break;
-                case 'disconnected':
-                    socketEventHandler.slaveDisconnect(status.payload);
-                    break;
+        if (status.is_ok()) {
+            if (status.payload.slave_status != null) {
+                // handle slave status updates
+                switch (status.payload.slave_status) {
+                    case 'connected':
+                        socketEventHandler.slaveConnect(status.payload);
+                        break;
+                    case 'disconnected':
+                        socketEventHandler.slaveDisconnect(status.payload);
+                        break;
+                    default:
+                        notify('Warning message', 'Unknown slave_status received (' + JSON.stringify(status.payload.message) + ')', 'info');
+                }
+            } else if (status.payload.program_status != null) {
+                // handle program status updates
+                switch (status.payload.program_status) {
+                    case 'started':
+                        socketEventHandler.programStarted(status.payload);
+                        break;
+                    case 'finished':
+                        socketEventHandler.programStopped(status.payload);
+                        break;
+                    default:
+                        notify('Warning message', 'Unknown program_status received (' + JSON.stringify(status.payload.message) + ')', 'info');
+                }
+            } else if (status.payload.script_status != null) {
+                // handle slave status updates
+                switch (status.payload.script_status) {
+                    case 'waiting_for_slaves':
+                        socketEventHandler.scriptWaitForSlaves(status.payload);
+                        break;
+                    case 'next_step':
+                        socketEventHandler.scriptNextStep(status.payload);
+                        break;
+                    case 'success':
+                        socketEventHandler.scriptSuccess(status.payload);
+                        break;
+                    case 'error':
+                        socketEventHandler.scriptError(status.payload);
+                        break;
+                    default:
+                        notify('Warning message', 'Unknown script_status received (' + JSON.stringify(status.payload.message) + ')', 'info');
+                }
+            } else if (status.payload.message != null) {
+                notify('Info message', JSON.stringify(status.payload.message), 'info');
+            } else {
+                notify('Unknown status message', 'The server responded with an unknown message type. (' + JSON.stringify(status.payload) + ')', 'warning');
             }
-        } else if (status.payload['program_status'] != null) {
-            // handle program status updates
-            switch (status.payload['program_status']) {
-                case 'started':
-                    socketEventHandler.programStarted(status.payload);
-                    break;
-                case 'finished':
-                    socketEventHandler.programStopped(status.payload);
-                    break;
-            }
-        } else if (status.payload['message'] != null) {
-            notify('Info message', JSON.stringify(status.payload['message']), 'info');
         } else {
-            notify('Unknown status message', 'The server repsonded with an unknown message type. (' + JSON.stringify(status.payload) + ')', 'warning');
+            notify('Unknown message', JSON.stringify(status), 'danger');
         }
-    } else {
-        notify('Unknown message', JSON.stringify(status), 'danger');
-    }
-};
+    };
 
-// Call onopen directly if socket is already open
-if (socket.readyState === WebSocket.OPEN) {
-    socket.onopen();
+    return socket;
 }

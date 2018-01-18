@@ -2,6 +2,7 @@ from threading import Timer
 import threading
 
 import logging
+from .utils import notify, notify_err
 
 logger = logging.getLogger("scheduler")
 
@@ -249,6 +250,10 @@ class Scheduler:
                     (self, ),
                 ).start()
 
+                notify({
+                    'script_status': 'waiting_for_slaves',
+                })
+
                 state = SchedulerStatus.WAITING_FOR_SLAVES
                 event.set()
             elif state == SchedulerStatus.WAITING_FOR_SLAVES:
@@ -264,11 +269,21 @@ class Scheduler:
             elif state == SchedulerStatus.NEXT_STEP:
                 logger.info("Starting program for iteration {}".format(index))
 
+                max_start_time = 0
+
                 for sgp in ScriptGraphPrograms.objects.filter(
                         script=script,
                         index=index,
                 ):
+                    if max_start_time < sgp.program.start_time:
+                        max_start_time = sgp.program.start_time
                     sgp.program.enable()
+
+                notify({
+                    'script_status': 'next_step',
+                    'index': index,
+                    'start_time': max_start_time,
+                })
 
                 state = SchedulerStatus.WAITING_FOR_PROGRAMS
             elif state == SchedulerStatus.WAITING_FOR_PROGRAMS:
@@ -314,21 +329,29 @@ class Scheduler:
                         event.set()
                 else:
                     logger.info("Not all programs are finished")
-
             elif state == SchedulerStatus.SUCCESS:
                 logger.info("Scheduler is already finished. (SUCCESS)")
 
                 logger.debug("Lock Released")
+
+                notify({
+                    'script_status': 'success',
+                })
+
                 self.lock.release()
                 break
-                #TODO: notify user bc of end
             elif state == SchedulerStatus.ERROR:
                 logger.info("Scheduler is already finished. (ERROR)")
 
                 logger.debug("Lock Released")
+
+                notify({
+                    'script_status': 'error',
+                    'message': self.__error_code,
+                })
+
                 self.lock.release()
                 break
-                #TODO: notify user bc of end
             else:
                 logger.debug("Nothing todo.")
 
