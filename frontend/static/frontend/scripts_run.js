@@ -18,9 +18,9 @@ $(document).ready(function () {
                 },
                 success(status) {
                     if (status.is_ok()) {
-                        notify('Got result', JSON.stringify(status.payload), 'success');
+                        notify('Starting script', JSON.stringify(status.payload), 'success');
                     } else {
-                        notify('Error', JSON.stringify(status.payload), 'danger');
+                        notify('Error while starting', 'Could not start script. (' + JSON.stringify(status.payload) + ')', 'danger');
                     }
                 },
                 error(xhr, errorString, errorCode) {

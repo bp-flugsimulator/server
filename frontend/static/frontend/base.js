@@ -159,13 +159,12 @@ function styleSlaveByStatus(sid) {
 
 function notify(title, message, type) {
     $.notify({
-        icon: 'mdi mdi-error',
+        // icon: 'mdi mdi-error',
         title,
         message,
-        type
     }, {
-            type: 'fsim-warning',
-            template: '<div data-notify="container" class="col-xs-11 col-sm-3 alert alert-{0}" role="alert">' +
+            type,
+            template: '<div data-notify="container" class="col-xs-11 col-sm-3 alert" role="alert" data-notify-type="{0}">' +
                 '<button type="button" aria-hidden="true" class="close" data-notify="dismiss">×</button>' +
                 '<div class="col">' +
                 '<span class="row" data-notify="title">' +

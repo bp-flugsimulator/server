@@ -408,10 +408,7 @@ def run_script(request, script_id):
                 return StatusResponse(
                     Status.ok("Started script {}".format(script.name)))
             else:
-                return StatusResponse(
-                    Status.err(
-                        "Could not start a script because there is still one running."
-                    ))
+                return StatusResponse(Status.err("A script is still running."))
         except ScriptModel.DoesNotExist:
             return StatusResponse(
                 Status.err("The script with the id {} does not exist.".format(

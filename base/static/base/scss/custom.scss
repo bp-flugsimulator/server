@@ -516,7 +516,7 @@ html, body, main, .max-height {
     height: 100%;
 }
 
-[data-notify="container"][class*="alert-fsim-"] {
+[data-notify="container"] {
     background-color: $body-bg;
 	border-width: 0px;
 	border-left: 5px solid $blue;
@@ -526,26 +526,26 @@ html, body, main, .max-height {
 	letter-spacing: 1px;
 }
 
-[data-notify="container"].alert-fsim-info {
+[data-notify="container"][data-notify-type="info"] {
 	border-left-color: $blue;
 }
 
-[data-notify="container"].alert-fsim-danger {
+[data-notify="container"][data-notify-type="danger"] {
 	border-left-color: $red;
 }
 
-[data-notify="container"].alert-fsim-warning {
+[data-notify="container"][data-notify-type="warning"] {
 	border-left-color: $yellow;
 }
 
-[data-notify="container"][class*="alert-fsim-"] > [data-notify="title"] {
+[data-notify="container"] > [data-notify="title"] {
 	color: $gray-800;
 	display: block;
 	font-weight: 700;
 	margin-bottom: 5px;
 }
 
-[data-notify="container"][class*="alert-fsim-"] > [data-notify="message"] {
+[data-notify="container"] > [data-notify="message"] {
 	font-weight: 400;
 }
 

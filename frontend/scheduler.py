@@ -185,8 +185,11 @@ class Scheduler:
         Notifies the scheduler that something has changed. That means the
         scheduler will look at the data again.
         """
-        if self.is_running() and not self.event.is_set():
+        running = self.is_running()
+        self.lock.acquire()
+        if running and not self.event.is_set():
             self.event.set()
+        self.lock.release()
 
     def __run__(self, state, script, index):
         """
@@ -224,12 +227,14 @@ class Scheduler:
 
         event = self.event
 
-        logger.debug("Waiting for event")
         while event.wait():
             event.clear()
 
             if self.should_stop():
                 break
+
+            logger.debug("Lock Locked")
+            self.lock.acquire()
 
             logger.debug("Current state: {}".format(state))
             if state == SchedulerStatus.INIT:
@@ -304,24 +309,31 @@ class Scheduler:
                         event.set()
 
                     else:
-                        logger.info("Going into the next iteration")
+                        logger.debug("Going into the next iteration")
                         state = SchedulerStatus.NEXT_STEP
                         event.set()
                 else:
                     logger.info("Not all programs are finished")
 
             elif state == SchedulerStatus.SUCCESS:
-                logger.debug("Scheduler is already finished. (SUCCESS)")
+                logger.info("Scheduler is already finished. (SUCCESS)")
 
+                logger.debug("Lock Released")
+                self.lock.release()
                 break
                 #TODO: notify user bc of end
             elif state == SchedulerStatus.ERROR:
-                logger.debug("Scheduler is already finished. (ERROR)")
+                logger.info("Scheduler is already finished. (ERROR)")
 
+                logger.debug("Lock Released")
+                self.lock.release()
                 break
                 #TODO: notify user bc of end
             else:
                 logger.debug("Nothing todo.")
+
+            logger.debug("Lock Released")
+            self.lock.release()
 
 
 try:

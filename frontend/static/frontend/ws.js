@@ -136,20 +136,12 @@ socket.onmessage = function (data) {
                     break;
             }
         } else if (status.payload['message'] != null) {
-            $.notify({
-                message: status.payload['message']
-            });
+            notify('Info message', JSON.stringify(status.payload['message']), 'info');
         } else {
-            $.notify({
-                type: 'warning',
-                message: 'Received unknown response from server.'
-            });
+            notify('Unknown status message', 'The server repsonded with an unknown message type. (' + JSON.stringify(status.payload) + ')', 'warning');
         }
     } else {
-        $.notify({
-            type: 'danger',
-            message: status.payload
-        });
+        notify('Unknown message', JSON.stringify(status), 'danger');
     }
 };
 

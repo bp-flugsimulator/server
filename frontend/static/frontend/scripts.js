@@ -115,20 +115,13 @@ var options = {
                                 if (status.is_ok()) {
                                     resolve(status.payload);
                                 } else {
-                                    $.notify({
-                                        message: 'Could not load autocomplete query from server (' + status.payload + ')'
-                                    }, {
-                                            type: 'danger'
-                                        });
+                                    notify('Autocomplete error', 'Could not load autocomplete query from server (' + JSON.stringify(status.payload) + ')', 'danger');
                                     reject();
                                 }
                             },
                             error(xhr, errorString, errorCode) {
-                                $.notify({
-                                    message: 'Could not load autocomplete query from server (' + errorCode + ')'
-                                }, {
-                                        type: 'danger'
-                                    });
+                                notify('Autocomplete error',
+                                    'Could not load autocomplete query from server (' + errorCode + ')', 'danger');
                             }
                         });
                         break;
@@ -184,19 +177,11 @@ var loadScript = function (id) {
             if (status.is_ok()) {
                 createEditor(status.payload, id);
             } else {
-                $.notify({
-                    message: 'Could not load script from server (' + status.payload + ')'
-                }, {
-                        type: 'danger'
-                    });
+                notify('Not found', 'Could not load script from server (' + JSON.stringify(status.payload) + ')', 'danger');
             }
         },
         error(xhr, errorString, errorCode) {
-            $.notify({
-                message: 'Could not load script from server (' + errorCode + ')'
-            }, {
-                    type: 'danger'
-                });
+            notify('Transport error', 'Could not load script from server (' + errorCode + ')', 'danger');
         }
     });
 };

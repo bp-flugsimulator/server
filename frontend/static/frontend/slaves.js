@@ -27,11 +27,7 @@ const onFormSubmit = function (id) {
                 handleFormStatus($('#' + id), status);
             },
             error(xhr, errorString, errorCode) {
-                $.notify({
-                    message: 'Could not deliver ' + $(this).attr('method') + ' request to server (' + errorCode + ')'
-                }, {
-                        type: 'danger'
-                    });
+                notify('Could deliver', 'Could not send data to server.' + errorCode + ')', 'danger');
             }
         });
     };
@@ -108,19 +104,11 @@ $(document).ready(function () {
                 },
                 success(status) {
                     if (status.is_err()) {
-                        $.notify({
-                            message: status.payload
-                        }, {
-                                type: 'danger'
-                            });
+                        notify('Error while starting program', 'Could not start program. (' + JSON.stringify(status.payload) + ')', 'danger');
                     }
                 },
                 error(xhr, errorString, errorCode) {
-                    $.notify({
-                        message: 'Could not deliver ' + type + ' request to server (' + errorCode + ')'
-                    }, {
-                            type: 'danger'
-                        });
+                    notify('Could deliver', 'Could not deliver request `' + type + '` to server.' + errorCode + ')', 'danger');
                 }
             });
         };
@@ -170,6 +158,7 @@ $(document).ready(function () {
         let name = $(this).data('program-name');
         let path = $(this).data('program-path');
         let args = $(this).data('program-arguments');
+        let startTime = $(this).data('program-start-time');
 
         //modify the form for the submit button
         programModal.children().find('.modal-title').text('Edit Program');
@@ -181,6 +170,7 @@ $(document).ready(function () {
         programForm.find('input[name="name"]').val(name);
         programForm.find('input[name="path"]').val(path);
         programForm.find('input[name="arguments"]').val(args);
+        programForm.find('input[name="start_time"]').val(startTime);
 
         //clear error messages
         clearErrorMessages(programForm);
@@ -267,27 +257,21 @@ $(document).ready(function () {
                 beforeSend(xhr) {
                     xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
                 },
-                success(data) {
-                    let status = Status.from_json(JSON.stringify(data));
+                converters: {
+                    'text json': Status.from_json
+                },
+                success(status) {
                     if (status.is_ok()) {
                         el.addClass('animated pulse');
                         el.one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend', function () {
                             el.removeClass('animated pulse');
                         });
                     } else {
-                        $.notify({
-                            message: 'Error: ' + data.payload
-                        }, {
-                                type: 'danger'
-                            });
+                        notify('Could not stop client', 'The client could not be stopped. (' + JSON.stringify(status.payload) + ')', 'danger');
                     }
                 },
                 error(xhr, errorString, errorCode) {
-                    $.notify({
-                        message: 'Could not deliver shutdown request to server (' + errorCode + ')'
-                    }, {
-                            type: 'danger'
-                        });
+                    notify('Could deliver', 'The stop command could not been send. (' + errorCode + ')', 'danger');
                 }
             });
 
@@ -301,28 +285,22 @@ $(document).ready(function () {
                 beforeSend(xhr) {
                     xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
                 },
-                success(data) {
-                    let status = Status.from_json(JSON.stringify(data));
+                converters: {
+                    'text json': Status.from_json
+                },
+                success(status) {
                     if (status.is_ok()) {
                         el.addClass('animated pulse');
                         el.one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend', function () {
                             el.removeClass('animated pulse');
                         });
                     } else {
-                        $.notify({
-                            message: 'Error: ' + data.payload
-                        }, {
-                                type: 'danger'
-                            });
+                        notify('Error while starting', 'Could not start client. (' + JSON.stringify(status.payload) + ')', 'danger');
                     }
 
                 },
                 error(xhr, errorString, errorCode) {
-                    $.notify({
-                        message: 'Could not deliver Wake-On-Lan request to server (' + errorCode + ')'
-                    }, {
-                            type: 'danger'
-                        });
+                    notify('Could deliver', 'The start command could not been send. (' + errorCode + ')', 'danger');
                 }
             });
 

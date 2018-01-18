@@ -23,6 +23,8 @@ from utils import Command, Status
 from channels import Group
 from shlex import split
 
+from .scheduler import CURRENT_SCHEDULER
+
 logger = logging.getLogger("models")
 
 
@@ -35,10 +37,8 @@ def timer_timeout_program(id):
         id: Program id
     """
 
-    me = Program.objects.get(id=id)
-    logger.debug("Timeouted for program " + str(me.name))
-    me.timeouted = True
-    me.save()
+    me = ProgramStatus.objects.filter(program=id).update(timeouted=True)
+    CURRENT_SCHEDULER.notify()
 
 
 def validate_mac_address(mac_addr):
