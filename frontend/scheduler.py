@@ -13,12 +13,40 @@ def timer_scheduler_slave_timeout(scheduler):
     ---------
         scheduler: SchedulerStatus object
     """
-    logger.debug("Slave online check timeouted for script " + str(me.name))
-    scheduler.set_timeouted()
+    logger.debug("Scheduler timeouted")
     scheduler.set_error("Waiting for slaves timedout.")
+    scheduler.stop()
 
 
 class SchedulerStatus:
+    """
+    This class defines the different Scheduler states.
+
+    INIT
+    ----
+        The scheduler starts all relevant slaves
+
+    WAITING_FOR_SLAVES
+    ------------------
+        The scheduler waits for all slaves to connect to the master.
+
+    NEXT_STEP
+    ---------
+        The scheduler fetches the next index and executes the right programs.
+
+    WAITING_FOR_PROGRAMS
+    --------------------
+        The scheduler waits for all programs to finish.
+
+    SUCCESS
+    -------
+        The scheduler is in the end state and was successful.
+
+    ERROR
+    -----
+        The scheduler is in the end state and was NOT successful.
+
+    """
     INIT = 0
     WAITING_FOR_SLAVES = 1
     NEXT_STEP = 2
@@ -28,14 +56,27 @@ class SchedulerStatus:
 
 
 class Scheduler:
+    """
+    A thread-safe scheduler which starts programs from a slave.
+    """
+
     def __init__(self):
         self.event = threading.Event()
         self.lock = threading.Lock()
         self.__thread = None
-        self.__timeouted = False
         self.__error_code = None
+        self.__stop = False
 
     def is_running(self):
+        """
+        This function is thread-safe.
+
+        Returns if the underlying thread is still running.
+
+        Returns
+        -------
+            bool
+        """
         self.lock.acquire()
         if self.__thread != None:
             alive = self.__thread.is_alive()
@@ -47,35 +88,86 @@ class Scheduler:
         self.lock.release()
         return alive
 
-    def set_timeouted(self):
-        self.lock.acquire()
-        self.__timeouted = True
-        self.lock.release()
+    def should_stop(self):
+        """
+        This function is thread-safe.
 
-    def is_timeouted(self):
+        Returns if the underlying thread should stop.
+
+        Returns
+        -------
+            bool
+        """
         self.lock.acquire()
-        timeouted = self.__timeouted
+        stop = self.__stop
         self.lock.release()
-        return timeouted
+        return stop
 
     def set_error(self, error_code):
+        """
+        This function is thread-safe.
+
+        Sets the error message for the scheduler.
+
+        Arguments
+        ---------
+            error_code: object
+        """
         self.lock.acquire()
         self.__error_code = error_code
         self.lock.release()
 
     def get_error(self):
+        """
+        This function is thread-safe.
+
+        Returns the previous set error code. The
+        code can set by a user or the scheduler.
+
+        Returns
+        ---------
+            object
+        """
         self.lock.acquire()
         error = self.__error_code
         self.lock.release()
         return error
 
+    def stop(self):
+        """
+        This function is thread-safe.
+
+        Stops the scheduler and his thread.
+        """
+        self.lock.acquire()
+        self.__stop = True
+        self.event.set()
+        self.__thread.join(timeout=2)
+        self.lock.release()
+
     def start(self, script):
+        """
+        This function is thread-safe.
+
+        Starts a new thread with and execute the given script. If a thread is
+        already active this function will return False.
+
+        Arguments
+        ---------
+            script: Identifier for ScriptModel
+
+        Returns
+        -------
+            Returns true if the new thread was started.
+        """
         self.lock.acquire()
 
         if self.__thread != None:
             self.lock.release()
             return False
         else:
+            self.__error_code = None
+            self.__stop = False
             self.__thread = threading.Thread(
                 target=self.__run__, args=(
                     SchedulerStatus.INIT,
@@ -87,10 +179,26 @@ class Scheduler:
             return True
 
     def notify(self):
+        """
+        This function is thread-safe.
+
+        Notifies the scheduler that something has changed. That means the
+        scheduler will look at the data again.
+        """
         if self.is_running() and not self.event.is_set():
             self.event.set()
 
     def __run__(self, state, script, index):
+        """
+        Function wich will be executed by the Thread.
+
+        Arguments
+        ---------
+            self: Scheduler
+            state: Initiale state
+            script: stript identifier
+            index: Initiale index
+        """
         from .models import (
             Slave,
             Script,
@@ -102,8 +210,9 @@ class Scheduler:
 
         def get_next_index(index):
             try:
-                index = ScriptGraphPrograms.objects.filter(
-                    index__gt=index).order_by('-index')[0].index
+                query = ScriptGraphPrograms.objects.filter(
+                    index__gt=index).order_by('index')
+                index = query[0].index
                 logger.debug("Scheduler found next index " + str(index))
                 all_done = False
             except IndexError:
@@ -118,6 +227,9 @@ class Scheduler:
         logger.debug("Waiting for event")
         while event.wait():
             event.clear()
+
+            if self.should_stop():
+                break
 
             logger.debug("Current state: {}".format(state))
             if state == SchedulerStatus.INIT:
@@ -135,17 +247,13 @@ class Scheduler:
                 state = SchedulerStatus.WAITING_FOR_SLAVES
                 event.set()
             elif state == SchedulerStatus.WAITING_FOR_SLAVES:
-                if self.is_timeouted():
-                    logger.info("Timout reached for WAITING_FOR_SLAVES")
-                    state = SchedulerStatus.ERROR
-                    event.set()
-                elif Script.objects.get(id=script).check_online():
+                if Script.objects.get(id=script).check_online():
                     logger.info("All slaves online")
                     (new_index, done) = get_next_index(index)
                     index = new_index
                     state = SchedulerStatus.NEXT_STEP
-
                     event.set()
+
                 else:
                     logger.info("Waiting for all slaves to be online.")
             elif state == SchedulerStatus.NEXT_STEP:
@@ -166,7 +274,7 @@ class Scheduler:
                     index=index,
                 )
 
-                step = False if len(progs) == 0 else True
+                step = True
 
                 for sgp in progs:
                     prog = sgp.program
@@ -204,9 +312,13 @@ class Scheduler:
 
             elif state == SchedulerStatus.SUCCESS:
                 logger.debug("Scheduler is already finished. (SUCCESS)")
+
+                break
                 #TODO: notify user bc of end
             elif state == SchedulerStatus.ERROR:
                 logger.debug("Scheduler is already finished. (ERROR)")
+
+                break
                 #TODO: notify user bc of end
             else:
                 logger.debug("Nothing todo.")
