@@ -9,8 +9,7 @@ from django.http.request import QueryDict
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.db.utils import IntegrityError
 from channels import Group
-from utils.status import Status
-from utils import Command
+from utils import Status, Command
 from server.utils import StatusResponse
 
 from .models import (
@@ -19,10 +18,10 @@ from .models import (
     Program as ProgramModel,
     ProgramStatus as ProgramStatusModel,
     Script as ScriptModel,
-    SchedulerStatus as SchedulerStatusModel,
     File as FileModel,
-    CURRENT_SCHEDULER,
 )
+
+from .scheduler import Scheduler, CURRENT_SCHEDULER
 
 from .scripts import Script
 
@@ -405,6 +404,7 @@ def run_script(request, script_id):
             script = ScriptModel.objects.get(id=script_id)
             # only allow the start of a script if the old one is finished
             if CURRENT_SCHEDULER.start(script.id):
+                CURRENT_SCHEDULER.notify()
                 return StatusResponse(
                     Status.ok("Started script {}".format(script.name)))
             else:

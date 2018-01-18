@@ -13,8 +13,9 @@ from .models import (
     Slave as SlaveModel,
     Program as ProgramModel,
     ProgramStatus as ProgramStatusModel,
-    SchedulerStatus as SchedulerStatusModel,
 )
+
+from .scheduler import Scheduler, CURRENT_SCHEDULER
 
 # Get an instance of a logger
 LOGGER = logging.getLogger('websockets')
@@ -108,6 +109,7 @@ def handle_online_answer(status):
 
         # tell webinterface that the client has been connected
         notify({'slave_status': 'connected', 'sid': str(slave.id)})
+        LOGGER.info('Slave {} has connected to the master'.format(slave.name))
     else:
         # notify the webinterface
         notify_err('An error occurred while connecting to client {}!'.format(
@@ -237,19 +239,12 @@ def ws_notifications_receive(message):
             handle_online_answer(status)
 
             # notify the scheduler that the status has changed
-            for scheduler in SchedulerStatusModel.objects.all():
-                scheduler.notify()
-
-            LOGGER.debug("Consumer released")
-
+            CURRENT_SCHEDULER.notify()
         elif status.payload['method'] == 'execute':
             handle_execute_answer(status)
 
             # notify the scheduler that the status has changed
-            for scheduler in SchedulerStatusModel.objects.all():
-                scheduler.notify()
-
-            LOGGER.debug("Consumer released")
+            CURRENT_SCHEDULER.notify()
         else:
             LOGGER.info(
                 colored('Client send answer from unknown function {}.'.format(

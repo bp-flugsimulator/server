@@ -3,7 +3,7 @@ This module contains all databasemodels from the frontend application.
 """
 
 import logging
-import threading
+from threading import Timer
 
 from django.db.models import (
     Model,
@@ -18,20 +18,15 @@ from django.db.models import (
 )
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
-from threading import Timer
 from wakeonlan.wol import send_magic_packet
 from utils import Command, Status
 from channels import Group
 from shlex import split
 
-logger = logging.getLogger("scheduler")
-
-from enum import Enum
-
-CURRENT_SCHEDULER = Scheduler()
+logger = logging.getLogger("models")
 
 
-def update_programs_timeout(id):
+def timer_timeout_program(id):
     """
     Sets the timeout flag for a program.
 
@@ -44,24 +39,6 @@ def update_programs_timeout(id):
     logger.debug("Timeouted for program " + str(me.name))
     me.timeouted = True
     me.save()
-
-
-def update_scheduler_status_timeout(id):
-    """
-    Timeout function for the scheduler when waiting for the slaves. If the time
-    passes and the scheduler has no feedback from the slaves the error flag in
-    SchedulerStatus is set to True.
-
-    Arguments
-    ---------
-        id: SchedulerStatus id
-    """
-    me = SchedulerStatus.objects.get(id=id)
-    if not me.check_online():
-        logger.debug("Slave online check timeouted for script " + str(me.name))
-        me.state = SchedulerStatus.ERROR
-        me.error_code = "Waiting for slaves timedout."
-        #TODO: notify user bc error
 
 
 def validate_mac_address(mac_addr):
@@ -287,12 +264,12 @@ class Program(Model):
             # create status entry
             ProgramStatus(program=self, command_uuid=cmd.uuid).save()
 
-            # if self.start_time > 0:
-            #     Timer(
-            #         self.start_time,
-            #         update_programs_timeout,
-            #         (self.id, ),
-            #     ).start()
+            if self.start_time > 0:
+                Timer(
+                    self.start_time,
+                    timer_timeout_program,
+                    (self.id, ),
+                ).start()
 
             return True
         else:
@@ -374,13 +351,15 @@ class Script(Model):
         Returns True if all needed slaves are online or if the script already
         run successful.
         """
-        slaves = ScriptGraphPrograms.objects.filter(script=self.script)
-        all_online = False if len(slaves) == 0 else True
+        slaves = self.get_involved_slaves()
+        all_online = True
 
-        for sgp in slaves:
-            if not sgp.program.slave.is_online:
+        for slave in slaves:
+            if not slave.is_online:
                 all_online = False
                 break
+
+        return all_online
 
     def get_involved_slaves(self):
         """
@@ -479,155 +458,3 @@ class SlaveStatus(Model):
     )
     command_uuid = CharField(max_length=32, unique=True)
     online = BooleanField(unique=False, default=False)
-
-
-class SchedulerStatus:
-    INIT = 0
-    WAITING_FOR_SLAVES = 1
-    NEXT_STEP = 2
-    WAITING_FOR_PROGRAMS = 3
-    SUCCESS = 4
-    ERROR = 5
-
-    # STATE_CHOICES = (
-    #     (INIT, 'INIT'),
-    #     (WAITING_FOR_SLAVES, 'WAITING_FOR_SLAVES'),
-    #     (NEXT_STEP, 'NEXT_STEP'),
-    #     (WAITING_FOR_PROGRAMS, 'WAITING_FOR_PROGRAMS'),
-    #     (SUCCESS, 'SUCCESS'),
-    #     (ERROR, 'ERROR'),
-    # )
-
-    # state = IntegerField(
-    #     choices=STATE_CHOICES,
-    #     default=INIT,
-    # )
-    # script = OneToOneField(
-    #     Script,
-    #     on_delete=CASCADE,
-    # )
-    # index = IntegerField(null=False, default=-1)
-    # error_code = CharField(max_length=1000)
-
-
-class Scheduler:
-    def __init__(self):
-        self.event = threading.Event()
-        self.lock = threading.Lock()
-        self.__thread = None
-
-    def start(self, script):
-        self.lock.acquire()
-
-        if self.__thread == None:
-            self.lock.release()
-            return False
-        else:
-            self.__thread = threading.Thread(
-                target=self.__run__,
-                args=(
-                    self.event,
-                    SchedulerStatus.INIT,
-                    script,
-                    0,
-                )).start()
-            self.lock.release()
-            return True
-
-    def notify(self):
-        if not self.event.is_set():
-            self.event.set()
-
-    def __run__(event, status, script, index):
-        def set_next_index(self):
-            """
-            Sets self.index to the next closest index from the script execution.
-
-            Returns
-            -------
-                Returns true if no more index was found.
-            """
-            logger.debug("Scheduler is doing the next step")
-            try:
-                index = ScriptGraphPrograms.objects.filter(
-                    index__gt=index).order_by('-index')[0].index
-                logger.debug("Scheduler found next index " + str(index))
-                return False
-            except IndexError:
-                logger.debug("Scheduler done")
-                return True
-
-            logger.debug("Online check slaves --> {}".format(
-                "online" if all_online else "offline"))
-
-            return all_online
-
-        while event.wait():
-            logging.debug("Current state: {}".format(state))
-            if state == SchedulerStatus.INIT:
-                for slave in self.get_involved_slaves():
-                    logging.debug("Starting slave `{}`".format(slave.name))
-                    slave.wake_on_lan()
-
-                Timer(300, update_scheduler_status_timeout,
-                      (self.id, )).start()
-
-                state = SchedulerStatus.WAITING_FOR_SLAVES
-                event.set()
-            elif state == SchedulerStatus.WAITING_FOR_SLAVES:
-                if Script.check_online():
-                    set_next_index()
-                    state = SchedulerStatus.NEXT_STEP
-
-                    event.set()
-            elif state == SchedulerStatus.NEXT_STEP:
-                for sgp in ScriptGraphPrograms.objects.filter(
-                        script=self.script,
-                        index=self.index,
-                ):
-                    sgp.program.enable()
-
-                state = SchedulerStatus.WAITING_FOR_PROGRAMS
-            elif state == SchedulerStatus.WAITING_FOR_PROGRAMS:
-                progs = ScriptGraphPrograms.objects.filter(
-                    script=script,
-                    index=index,
-                )
-
-                step = False if len(progs) == 0 else True
-
-                for sgp in progs:
-                    prog = sgp.program
-                    if prog.is_error:
-                        logger.debug("Error in program {}".format(prog.name))
-                        state = SchedulerStatus.ERROR
-                        step = False
-                        event.set()
-                        #TODO: notify user bc of error
-
-                        break
-                    elif prog.is_running and not prog.is_timeouted:
-                        logger.debug("Program {} is not ready yet {}".format(
-                            prog.name, vars(prog.programstatus)))
-                        step = False
-
-                        break
-                if step:
-                    logger.debug("next step in WAITING_FOR_PROGRAMS")
-                    if set_next_index():
-                        state = SchedulerStatus.SUCCESS
-                        event.set()
-                        #TODO: notify user bc of end
-
-                    else:
-                        state = SchedulerStatus.NEXT_STEP
-                        event.set()
-
-            elif state == SchedulerStatus.SUCCESS:
-                logger.debug("Scheduler is already finished. (SUCCESS)")
-                return
-            elif state == SchedulerStatus.ERROR:
-                logger.debug("Scheduler is already finished. (ERROR)")
-                return
-            else:
-                logging.debug("Nothing todo.")
