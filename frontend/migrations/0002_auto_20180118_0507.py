@@ -14,7 +14,5 @@ class Migration(migrations.Migration):
             model_name='schedulerstatus',
             name='script',
         ),
-        migrations.DeleteModel(
-            name='SchedulerStatus',
-        ),
+        migrations.DeleteModel(name='SchedulerStatus', ),
     ]

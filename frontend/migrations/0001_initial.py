@@ -9,14 +9,18 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
             name='File',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id',
+                 models.AutoField(
+                     auto_created=True,
+                     primary_key=True,
+                     serialize=False,
+                     verbose_name='ID')),
                 ('name', models.CharField(max_length=200)),
                 ('sourcePath', models.CharField(max_length=200)),
                 ('destinationPath', models.CharField(max_length=200)),
@@ -25,7 +29,12 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Program',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id',
+                 models.AutoField(
+                     auto_created=True,
+                     primary_key=True,
+                     serialize=False,
+                     verbose_name='ID')),
                 ('name', models.CharField(max_length=200)),
                 ('path', models.CharField(max_length=200)),
                 ('arguments', models.CharField(blank=True, max_length=200)),
@@ -35,8 +44,18 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='SchedulerStatus',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('state', models.IntegerField(choices=[(0, 'INIT'), (1, 'WAITING_FOR_SLAVES'), (2, 'NEXT_STEP'), (3, 'WAITING_FOR_PROGRAMS'), (4, 'SUCCESS'), (5, 'ERROR')], default=0)),
+                ('id',
+                 models.AutoField(
+                     auto_created=True,
+                     primary_key=True,
+                     serialize=False,
+                     verbose_name='ID')),
+                ('state',
+                 models.IntegerField(
+                     choices=[(0, 'INIT'), (1, 'WAITING_FOR_SLAVES'),
+                              (2, 'NEXT_STEP'), (3, 'WAITING_FOR_PROGRAMS'),
+                              (4, 'SUCCESS'), (5, 'ERROR')],
+                     default=0)),
                 ('index', models.IntegerField(default=-1)),
                 ('error_code', models.CharField(max_length=1000)),
             ],
@@ -44,39 +63,74 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Script',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id',
+                 models.AutoField(
+                     auto_created=True,
+                     primary_key=True,
+                     serialize=False,
+                     verbose_name='ID')),
                 ('name', models.CharField(max_length=200, unique=True)),
             ],
         ),
         migrations.CreateModel(
             name='ScriptGraphFiles',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id',
+                 models.AutoField(
+                     auto_created=True,
+                     primary_key=True,
+                     serialize=False,
+                     verbose_name='ID')),
                 ('index', models.IntegerField()),
-                ('file', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='frontend.File')),
-                ('script', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='frontend.Script')),
+                ('file',
+                 models.ForeignKey(
+                     on_delete=django.db.models.deletion.CASCADE,
+                     to='frontend.File')),
+                ('script',
+                 models.ForeignKey(
+                     on_delete=django.db.models.deletion.CASCADE,
+                     to='frontend.Script')),
             ],
         ),
         migrations.CreateModel(
             name='ScriptGraphPrograms',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id',
+                 models.AutoField(
+                     auto_created=True,
+                     primary_key=True,
+                     serialize=False,
+                     verbose_name='ID')),
                 ('index', models.IntegerField()),
             ],
         ),
         migrations.CreateModel(
             name='Slave',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id',
+                 models.AutoField(
+                     auto_created=True,
+                     primary_key=True,
+                     serialize=False,
+                     verbose_name='ID')),
                 ('name', models.CharField(max_length=200, unique=True)),
                 ('ip_address', models.GenericIPAddressField(unique=True)),
-                ('mac_address', models.CharField(max_length=17, unique=True, validators=[frontend.models.validate_mac_address])),
+                ('mac_address',
+                 models.CharField(
+                     max_length=17,
+                     unique=True,
+                     validators=[frontend.models.validate_mac_address])),
             ],
         ),
         migrations.CreateModel(
             name='ProgramStatus',
             fields=[
-                ('program', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, primary_key=True, serialize=False, to='frontend.Program')),
+                ('program',
+                 models.OneToOneField(
+                     on_delete=django.db.models.deletion.CASCADE,
+                     primary_key=True,
+                     serialize=False,
+                     to='frontend.Program')),
                 ('code', models.CharField(blank=True, max_length=200)),
                 ('command_uuid', models.CharField(max_length=32, unique=True)),
                 ('running', models.BooleanField(default=True)),
@@ -86,7 +140,12 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='SlaveStatus',
             fields=[
-                ('slave', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, primary_key=True, serialize=False, to='frontend.Slave')),
+                ('slave',
+                 models.OneToOneField(
+                     on_delete=django.db.models.deletion.CASCADE,
+                     primary_key=True,
+                     serialize=False,
+                     to='frontend.Slave')),
                 ('command_uuid', models.CharField(max_length=32, unique=True)),
                 ('online', models.BooleanField(default=False)),
             ],
@@ -94,27 +153,37 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='scriptgraphprograms',
             name='program',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='frontend.Program'),
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                to='frontend.Program'),
         ),
         migrations.AddField(
             model_name='scriptgraphprograms',
             name='script',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='frontend.Script'),
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                to='frontend.Script'),
         ),
         migrations.AddField(
             model_name='schedulerstatus',
             name='script',
-            field=models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, to='frontend.Script'),
+            field=models.OneToOneField(
+                on_delete=django.db.models.deletion.CASCADE,
+                to='frontend.Script'),
         ),
         migrations.AddField(
             model_name='program',
             name='slave',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='frontend.Slave'),
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                to='frontend.Slave'),
         ),
         migrations.AddField(
             model_name='file',
             name='slave',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='frontend.Slave'),
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                to='frontend.Slave'),
         ),
         migrations.AlterUniqueTogether(
             name='scriptgraphprograms',
