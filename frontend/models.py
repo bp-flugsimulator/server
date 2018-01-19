@@ -337,9 +337,45 @@ class Script(Model):
         The name of the script (has to be unique for every slave)
     """
     name = CharField(unique=True, max_length=200)
+    last_ran = BooleanField(null=False)
+    is_initialized = BooleanField(null=False)
+    is_running = BooleanField(null=False)
+    error_code = CharField(max_length=1000)
 
     def __str__(self):
         return self.name
+
+    @property
+    def indexes(self):
+        """
+        Returns a query which contains the index and 'id__count' which holds the
+        amount of index for one script.
+
+        Returns
+        -------
+            array of maps where 'index' and 'id__count' is in.
+        """
+        query = ScriptGraphPrograms.objects.filter(
+            script=self).values("index").annotate(
+                Count("id")).order_by("index")
+
+        return query
+
+    @property
+    def has_error(self):
+        return self.error_code != ''
+
+    def set_last_started(self):
+        """
+        Sets the last_ran flag for this script and disables the flag for all
+        other scripts.
+        """
+        for script in Script.objects.all():
+            script.last_ran = False
+            script.save()
+
+        self.last_ran = True
+        self.save()
 
     def check_online(self):
         """

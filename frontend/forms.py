@@ -6,8 +6,6 @@ from django.forms import (
     ModelForm,
     ModelChoiceField,
     HiddenInput,
-    Form,
-    ModelMultipleChoiceField,
 )
 
 from .models import Slave as SlaveModel
@@ -61,7 +59,3 @@ class FileForm(ModelForm):
         """
         model = FileModel
         fields = ['name', 'sourcePath', 'destinationPath']
-
-
-class RunScriptForm(Form):
-    scripts = ModelMultipleChoiceField(queryset=ScriptModel.objects.all())

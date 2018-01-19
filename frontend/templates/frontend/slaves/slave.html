@@ -9,7 +9,7 @@
                 <div class="btn-toolbar col" role="toolbar">
                     <div class="btn-group mr-2" role="group">
                         <button type="button" id="slaveStartStop_{{ slave.id }}" data-slave-id="{{ slave.id }}" class="btn btn-outline-dark font-weight-light slave-action-start-stop" data-is-running="{{ slave.is_online }}">
-                            <i class="mdi mdi-power-settings-new"></i>
+                            <i class="mdi mdi-power"></i>
                             <i class="button-status-display">
                                 {% if slave.is_online %}STOP{% else %}START{% endif %}
                             </i>
@@ -18,7 +18,7 @@
 
                     <div class="btn-group mr-2" role="group">
                         <button type="button" class="btn btn-outline-dark slave-action-modify font-weight-light" data-slave-id="{{ slave.id }}" data-slave-name="{{ slave.name }}" data-slave-ip="{{ slave.ip_address }}" data-slave-mac="{{ slave.mac_address }}">
-                            <i class="mdi mdi-edit"></i> EDIT
+                            <i class="mdi mdi-pencil"></i> EDIT
                         </button>
 
                         <button type="button" class="btn btn-outline-dark slave-action-delete font-weight-light" data-slave-id="{{ slave.id }}" data-slave-name="{{ slave.name }}">

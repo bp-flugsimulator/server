@@ -159,7 +159,6 @@ function styleSlaveByStatus(sid) {
 
 function notify(title, message, type) {
     $.notify({
-        // icon: 'mdi mdi-error',
         title,
         message,
     }, {

@@ -11,7 +11,7 @@
         <div class="btn-toolbar col d-flex justify-content-end" role="toolbar">
             <div class="btn-group mr-2" role="group">
                 <button type="button" id="programStartStop_{{ program.id }}" class="btn btn-outline-dark font-weight-light program-action-start-stop" data-program-id="{{ program.id }}" data-is-running="{{ program.is_running }}">
-                    <i class="mdi mdi-power-settings-new"></i>
+                    <i class="mdi mdi-power"></i>
                     <i class="button-status-display">
                         {% if program.is_running %}STOP{% else %}START{% endif %}
                     </i>
@@ -20,7 +20,7 @@
 
             <div class="btn-group mr-2" role="group">
                 <button type="button" class="btn btn-outline-dark program-action-modify font-weight-light" data-program-id="{{ program.id }}" data-program-name="{{ program.name }}" data-slave-id="{{ program.slave.id }}" data-program-path="{{ program.path }}" data-program-arguments="{{ program.arguments }}" data-program-start-time="{{ program.start_time }}">
-                    <i class="mdi mdi-edit"></i> EDIT
+                    <i class="mdi mdi-pencil"></i> EDIT
                 </button>
 
                 <button type="button" class="btn btn-outline-dark program-action-delete font-weight-light" data-program-id="{{ program.id }}" data-slave-id="{{ program.slave }}" data-program-name="{{ program.name }}">
@@ -29,7 +29,7 @@
             </div>
 
             <button class="btn btn-outline-dark font-weight-light" id="programCardButton_{{ program.id }}" type="button" data-toggle="collapse" data-target="#programCard_{{ program.id }}" {% if not program.is_error %} disabled {% endif %}>
-                <i class="mdi mdi-arrow-drop-down"></i> MORE
+                <i class="mdi mdi-dots-vertical"></i> MORE
             </button>
         </div>
     </div>

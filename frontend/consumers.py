@@ -33,30 +33,34 @@ def handle_execute_answer(status):
     status: Status
         The statusobject that was send by the slave
     """
-    program_status = ProgramStatusModel.objects.get(command_uuid=status.uuid)
-    program = program_status.program
+    try:
+        program_status = ProgramStatusModel.objects.get(
+            command_uuid=status.uuid)
+        program = program_status.program
+    except ProgramStatusModel.DoesNotExist:
+        LOGGER.warning(
+            "A program finished with id {}, but can not be found in the database.".
+            format(status.uuid))
+        return
 
     LOGGER.info(
         "Received answer on execute request of function {} from {}.".format(
             program.name, program.slave.name))
 
     if status.is_ok():
-        # update return code
         LOGGER.info("Saved status of {} with code {}.".format(
             program.name, program_status.code))
     else:
-        # Report exception to webinterface
-        notify_err('An Exception occurred while trying to execute {}'.format(
-            program.name))
         LOGGER.info(
             colored(
-                'Following exeption occurred on the client while executing {}: \n {}'.
+                'Following exception occurred on the client while executing {}: \n {}'.
                 format(program.name, status.payload['result']), 'red'))
 
     # update status
     program_status.code = status.payload['result']
     program_status.running = False
     program_status.save()
+
     # tell webinterface that the program has ended
     notify({
         'program_status': 'finished',
@@ -75,9 +79,14 @@ def handle_online_answer(status):
     status: Status
         The statusobject that was send by the slave
     """
-    slave_status = SlaveStatusModel.objects.get(command_uuid=status.uuid)
-
-    slave = slave_status.slave
+    try:
+        slave_status = SlaveStatusModel.objects.get(command_uuid=status.uuid)
+        slave = slave_status.slave
+    except SlaveStatusModel.DoesNotExist:
+        LOGGER.warning(
+            "Slaves responded with online request with uuid {}, but was not asked for it.".
+            format(status.uuid))
+        return
 
     if status.is_ok():
         slave_status.online = True
@@ -93,7 +102,7 @@ def handle_online_answer(status):
 
         LOGGER.info(
             colored(
-                'Following exeption occurred on the client {} while handeling an "online-request": \n {}'.
+                'Following exception occurred on the client {} while handeling an "online-request": \n {}'.
                 format(slave.name, status.payload['result']), 'red'))
 
 

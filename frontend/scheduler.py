@@ -215,7 +215,10 @@ class Scheduler:
         def get_next_index(index):
             try:
                 query = ScriptGraphPrograms.objects.filter(
-                    index__gt=index).order_by('index')
+                    script=script,
+                    index__gt=index,
+                ).order_by('index')
+
                 index = query[0].index
                 logger.debug("Scheduler found next index " + str(index))
                 all_done = False
@@ -227,6 +230,7 @@ class Scheduler:
             return (index, all_done)
 
         event = self.event
+        last_index = index
 
         while event.wait():
             event.clear()
@@ -260,6 +264,7 @@ class Scheduler:
                 if Script.objects.get(id=script).check_online():
                     logger.info("All slaves online")
                     (new_index, done) = get_next_index(index)
+                    last_index = index
                     index = new_index
                     state = SchedulerStatus.NEXT_STEP
                     event.set()
@@ -267,7 +272,8 @@ class Scheduler:
                 else:
                     logger.info("Waiting for all slaves to be online.")
             elif state == SchedulerStatus.NEXT_STEP:
-                logger.info("Starting program for iteration {}".format(index))
+                logger.info("Starting program for stage {}".format(index))
+                last_index = index
 
                 max_start_time = 0
 
@@ -282,6 +288,7 @@ class Scheduler:
                 notify({
                     'script_status': 'next_step',
                     'index': index,
+                    'last_index': last_index,
                     'start_time': max_start_time,
                 })
 
@@ -316,6 +323,7 @@ class Scheduler:
                 if step:
                     logger.debug("Scheduler is doing the next step")
                     (new_index, all_done) = get_next_index(index)
+                    last_index = index
                     index = new_index
 
                     if all_done:
@@ -338,6 +346,12 @@ class Scheduler:
                     'script_status': 'success',
                 })
 
+                db_obj = Script.objects.get(id=script)
+                db_obj.is_running = False
+                db_obj.error_code = ''
+                db_obj.set_last_started()
+                db_obj.save()
+
                 self.lock.release()
                 break
             elif state == SchedulerStatus.ERROR:
@@ -349,6 +363,11 @@ class Scheduler:
                     'script_status': 'error',
                     'message': self.__error_code,
                 })
+
+                db_obj = Script.objects.get(script=script)
+                db_obj.is_running = False
+                db_obj.error_code = self.__error_code
+                db_obj.save()
 
                 self.lock.release()
                 break

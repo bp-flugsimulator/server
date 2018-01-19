@@ -240,7 +240,6 @@ $custom-file-border-radius: $border-radius;
 $custom-file-box-shadow: inset 0 0.2rem 0.4rem rgba($black, 0.05);
 $custom-file-button-color: $custom-file-color;
 $custom-file-button-bg: $gray-200;
-$custom-file-text: (placeholder: (en: 'Choose file...'), button-label: (en: 'Browse'));
 $form-feedback-valid-color: theme-color('success');
 $form-feedback-invalid-color: theme-color('danger');
 // Dropdown
@@ -507,10 +506,8 @@ $enable-grid-classes: true;
 $enable-print-styles: true;
 @import "node_modules/bootstrap/scss/bootstrap";
 
-$md-font-path: "../../node/bootstrap-material-icons/fonts";
-@import "node_modules/bootstrap-material-icons/scss/material-icons";
-$fa-font-path: "../../node/font-awesome/fonts";
-@import "node_modules/font-awesome/scss/font-awesome";
+$mdi-font-path: "../../node/mdi/fonts";
+@import "node_modules/mdi/scss/materialdesignicons";
 
 html, body, main, .max-height {
     height: 100%;
@@ -586,6 +583,22 @@ footer {
 
 }
 
+.fsim-script-status-icon[data-state="none"] {
+    @extend .mdi;
+    @extend .mdi-circle-outline;
+}
+
+.fsim-script-status-icon[data-state="done"] {
+    @extend .mdi;
+    @extend .mdi-check;
+}
+
+.fsim-script-status-icon[data-state="error"] {
+    @extend .mdi;
+    @extend .mdi-alert-outline;
+
+}
+
 .fsim-box .fsim-slave-status-icon {
     @extend .mdi;
     @extend .mdi-apps;
@@ -593,12 +606,12 @@ footer {
 
 .fsim-box[data-state=error] .fsim-slave-status-icon {
     @extend .mdi;
-    @extend .mdi-error-outline;
+    @extend .mdi-alert-circle-outline;
 }
 
 .fsim-box[data-state=warning] .fsim-slave-status-icon {
     @extend .mdi;
-    @extend .mdi-cached;
+    @extend .mdi-loading;
     @extend .mdi-spin;
 }
 
@@ -608,7 +621,7 @@ footer {
 
 .fsim-box[data-state=error] .fsim-status-icon {
     @extend .mdi;
-    @extend .mdi-error-outline;
+    @extend .mdi-alert-circle-outline;
 }
 
 .fsim-box[data-state=success] .fsim-status-icon {
@@ -618,12 +631,12 @@ footer {
 
 .fsim-box[data-state=unkown] .fsim-status-icon {
     @extend .mdi;
-    @extend .mdi-settings-ethernet;
+    @extend .mdi-all-inclusive;
 }
 
 .fsim-box[data-state=warning] .fsim-status-icon {
     @extend .mdi;
-    @extend .mdi-cached;
+    @extend .mdi-loading;
     @extend .mdi-spin;
 }
 
@@ -662,81 +675,96 @@ footer {
     font-size: large;
 }
 
-.fsim-progress {
-    list-style: none;
-    position: relative;
-    display: flex;
-    justify-content: space-between;
-}
-
-.fsim-progressbar-name {
-    display: block;
-}
-
-.fsim-progressbar-step[data-state='timer'] {
-    &:after {
-        @extend .progress-bar;
-        background: $teal;
-        width: 0%;
-    }
-}
-.fsim-progressbar-step[data-state='success'] {
-    &:after {
-        @extend .progress-bar;
-        background: $green;
-        width: 0%;
+.fsim-progress[data-state="none"] {
+    .mdi {
+        @extend .mdi-circle-outline;
     }
 }
 
-.fsim-progressbar-step[data-state='error'] {
-    &:after {
-        @extend .progress-bar;
-        background: $red;
-        width: 0%;
+.fsim-progress[data-state="error"] {
+    .mdi {
+        @extend .mdi-alert-outline;
     }
 }
 
-.fsim-progressbar-step[data-state='wait'] {
-    &:after {
-        @extend .progress-bar;
-        @extend .progress-bar-striped;
-        @extend .progress-bar-animated;
-        background: $teal;
-        width: 0%;
+.fsim-progress[data-state="waiting"] {
+    .mdi {
+        @extend .mdi-loading;
+        @extend .mdi-spin;
     }
 }
 
-.fsim-progressbar-step {
-    text-align: center;
-    position: relative;
-    width: 95%;
-    height: -50%;
-
-    &:before,
-    &:after {
-        @extend .progress;
-        content: "";
-        position: absolute;
-        width: 95%;
-        height: -50%;
-        left: +52.5%;
-        top: 30%;
-        z-index: -1;
-        transform: translateY(-50%);
+.fsim-progress[data-state="done"] {
+    .mdi {
+        @extend .mdi-check;
     }
-
-    &:last-child:before,
-    &:last-child:after {
-        display: none;
-    }
-
 }
 
-.fsim-progressbar-icon {
-    width: 32px;
-    height: 32px;
-    border: 1px solid $white;
-    background: $blue;
-    max-width: 100%;
-    position: relative;
-}
+// .fsim-progress {
+//     @extend .progress;
+//     position: relative;
+//     height: 16px;
+// }
+
+// .fsim-progressbar {
+//     position: absolute !important;
+//     top: 0;
+//     left: 0;
+//     height: 100%;
+//     z-index: 0;
+// }
+
+// .fsim-progressbar[data-state='timer'] {
+//     @extend .progress-bar;
+//     background: $teal;
+//     width: 50%;
+// }
+// .fsim-progressbar[data-state='success'] {
+//     @extend .progress-bar;
+//     background: $green;
+//     width: 50%;
+// }
+
+// .fsim-progressbar[data-state='error'] {
+//     @extend .progress-bar;
+//     background: $red;
+//     width: 50%;
+// }
+
+// .fsim-progressbar[data-state='wait'] {
+//     @extend .progress-bar;
+//     @extend .progress-bar-striped;
+//     @extend .progress-bar-animated;
+//     width: 50%;
+// }
+
+// .fsim-progressbar-step:before {
+//     color: $black;
+// }
+
+// .fsim-progressbar-step:after {
+//     color: $white;
+// }
+
+// .fsim-progressbar-step {
+//     @extend .font-weight-bold;
+//     font-size: 14px;
+//     position: absolute !important;
+//     height: 100%;
+//     z-index: 1;
+//     width: 100%;
+//     top: 0;
+//     left: 0;
+// }
+
+// .fsim-progressbar-step[data-state="done"] {
+//     .mdi {
+//         @extend .mdi-check;
+//     }
+// }
+
+// .fsim-progressbar-step[data-state="pending"] {
+//     .mdi {
+//         @extend .mdi-panorama-fisheye;
+//     }
+// }
