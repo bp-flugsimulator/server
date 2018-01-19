@@ -31,24 +31,3 @@ urlpatterns = [  # pylint: disable=C0103
     url(r'^api/program/([0-9]+)/stop$', api.stop_program, name='stop_program'),
     url(r'^api/files$', api.add_file, name='add_file'),
 ]
-
-# from .models import Slave as SlaveModel, Program as ProgramModel, File as FileModel, Script as ScriptModel
-
-# from .scripts import Script, ScriptEntryProgram, ScriptEntryFile
-
-# slave = SlaveModel(
-#     name="test_slave", ip_address="0.0.0.0", mac_address="00:00:00:00:00:00")
-# slave.save()
-
-# program = ProgramModel(
-#     name="test_program", path="None", arguments="None", slave=slave)
-# program.save()
-
-# file = FileModel(
-#     name="test_file", sourcePath="None", destinationPath="None", slave=slave)
-# file.save()
-
-# script = Script("test_script",
-#                 [ScriptEntryProgram(0, "test_program", "test_slave")],
-#                 [ScriptEntryFile(0, "test_file", "test_slave")])
-# script.save()
