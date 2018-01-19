@@ -337,10 +337,10 @@ class Script(Model):
         The name of the script (has to be unique for every slave)
     """
     name = CharField(unique=True, max_length=200)
-    last_ran = BooleanField(null=False)
-    is_initialized = BooleanField(null=False)
-    is_running = BooleanField(null=False)
-    error_code = CharField(max_length=1000)
+    last_ran = BooleanField(default=False)
+    is_initialized = BooleanField(default=False)
+    is_running = BooleanField(default=False)
+    error_code = CharField(default="", max_length=1000)
 
     def __str__(self):
         return self.name

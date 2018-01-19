@@ -273,7 +273,6 @@ class Scheduler:
                     logger.info("Waiting for all slaves to be online.")
             elif state == SchedulerStatus.NEXT_STEP:
                 logger.info("Starting program for stage {}".format(index))
-                last_index = index
 
                 max_start_time = 0
 
