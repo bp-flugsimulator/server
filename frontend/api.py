@@ -401,10 +401,6 @@ def run_script(request, script_id):
             script = ScriptModel.objects.get(id=script_id)
             # only allow the start of a script if the old one is finished
             if FSIM_CURRENT_SCHEDULER.start(script.id):
-                script.is_running = True
-                script.is_initialized = True
-                script.save()
-
                 FSIM_CURRENT_SCHEDULER.notify()
                 return StatusResponse(
                     Status.ok("Started script {}".format(script.name)))

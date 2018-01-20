@@ -340,6 +340,7 @@ class Script(Model):
     is_initialized = BooleanField(default=False)
     is_running = BooleanField(default=False)
     error_code = CharField(default="", max_length=1000)
+    current_index = IntegerField(default=-1)
 
     def __str__(self):
         return self.name
@@ -421,6 +422,8 @@ class Script(Model):
         self.error_code = ""
         self.is_running = False
         self.is_initialized = False
+        self.current_index = -1
+        self.save()
 
 
 class ScriptGraphPrograms(Model):

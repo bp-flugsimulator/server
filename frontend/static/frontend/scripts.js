@@ -198,7 +198,6 @@ var newScript = function (name) {
     createEditor(defaultJson, name);
 };
 
-
 $(document).ready(function () {
     // Set color of the current selected.
     $('.script-tab-link.active').parent('li').css('background-color', '#dbdbdc');

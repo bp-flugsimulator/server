@@ -7,16 +7,29 @@ from server.utils import notify, notify_err
 logger = logging.getLogger("scheduler")
 
 
-def timer_scheduler_slave_timeout(scheduler):
+def timer_scheduler_slave_timeout(scheduler, script):
     """
 
     Arguments
     ---------
         scheduler: SchedulerStatus object
     """
+    from .models import Script
+
     logger.debug("Scheduler timeouted")
+    db_obj = Script.objects.get(id=script)
+    db_obj.error_code = 'Not all slaves connected within 5 minutes.'
+    db_obj.is_running = False
+    db_obj.save()
+
     scheduler.set_error("Waiting for slaves timedout.")
     scheduler.stop()
+
+    notify({
+        'script_status': 'error',
+        'error_code': 'Not all slaves connected within 5 minutes.',
+        'script_id': script,
+    })
 
 
 class SchedulerStatus:
@@ -170,6 +183,7 @@ class Scheduler:
         if self.is_running():
             return False
         else:
+            from .models import Script
             self.lock.acquire()
 
             self.__error_code = None
@@ -182,6 +196,13 @@ class Scheduler:
                     script,
                     -1,
                 ))
+
+            db_obj = Script.objects.get(id=script)
+            db_obj.is_running = True
+            db_obj.is_initialized = True
+            db_obj.current_index = -1
+            db_obj.save()
+
             self.__thread.start()
             self.lock.release()
             return True
@@ -259,7 +280,10 @@ class Scheduler:
                 Timer(
                     300.0,
                     timer_scheduler_slave_timeout,
-                    (self, ),
+                    (
+                        self,
+                        script,
+                    ),
                 ).start()
 
                 notify({
@@ -340,7 +364,6 @@ class Scheduler:
 
                     state = SchedulerStatus.NEXT_STEP
                     event.set()
-
                 else:
                     logger.info("Not all programs are finished")
             elif state == SchedulerStatus.SUCCESS:
@@ -368,7 +391,7 @@ class Scheduler:
 
                 notify({
                     'script_status': 'error',
-                    'message': self.__error_code,
+                    'error_code': self.__error_code,
                     'script_id': script,
                 })
 
