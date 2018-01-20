@@ -7,31 +7,6 @@ from server.utils import notify, notify_err
 logger = logging.getLogger("scheduler")
 
 
-def timer_scheduler_slave_timeout(scheduler, script):
-    """
-
-    Arguments
-    ---------
-        scheduler: SchedulerStatus object
-    """
-    from .models import Script
-
-    logger.debug("Scheduler timeouted")
-    db_obj = Script.objects.get(id=script)
-    db_obj.error_code = 'Not all slaves connected within 5 minutes.'
-    db_obj.is_running = False
-    db_obj.save()
-
-    scheduler.set_error("Waiting for slaves timedout.")
-    scheduler.stop()
-
-    notify({
-        'script_status': 'error',
-        'error_code': 'Not all slaves connected within 5 minutes.',
-        'script_id': script,
-    })
-
-
 class SchedulerStatus:
     """
     This class defines the different Scheduler states.
@@ -80,6 +55,9 @@ class Scheduler:
         self.__thread = None
         self.__error_code = None
         self.__stop = False
+        self.__state = SchedulerStatus.INIT
+        self.__index = -1
+        self.__script = None
 
     def is_running(self):
         """
@@ -123,36 +101,6 @@ class Scheduler:
         self.lock.release()
         return stop
 
-    def set_error(self, error_code):
-        """
-        This function is thread-safe.
-
-        Sets the error message for the scheduler.
-
-        Arguments
-        ---------
-            error_code: object
-        """
-        self.lock.acquire()
-        self.__error_code = error_code
-        self.lock.release()
-
-    def get_error(self):
-        """
-        This function is thread-safe.
-
-        Returns the previous set error code. The
-        code can set by a user or the scheduler.
-
-        Returns
-        ---------
-            object
-        """
-        self.lock.acquire()
-        error = self.__error_code
-        self.lock.release()
-        return error
-
     def stop(self):
         """
         This function is thread-safe.
@@ -188,16 +136,16 @@ class Scheduler:
 
             self.__error_code = None
             self.__stop = False
+            self.__state = SchedulerStatus.INIT
+            self.__index = -1
+            self.__script = script
+
             self.__thread = threading.Thread(
                 daemon=True,
                 target=self.__run__,
-                args=(
-                    SchedulerStatus.INIT,
-                    script,
-                    -1,
-                ))
+            )
 
-            db_obj = Script.objects.get(id=script)
+            db_obj = Script.objects.get(id=self.__script)
             db_obj.is_running = True
             db_obj.is_initialized = True
             db_obj.current_index = -1
@@ -220,35 +168,62 @@ class Scheduler:
             self.event.set()
         self.lock.release()
 
-    @staticmethod
-    def get_next_index(script, index):
+    def __next_stage(self):
+        """
+        Generates the next stage and returns the number of the last stage and if
+        this stage is valid.
+
+        Returns
+        --------
+            last index and if this stage is valid
+
+        """
         from .models import ScriptGraphPrograms
+
+        old_index = self.__index
+
         try:
             query = ScriptGraphPrograms.objects.filter(
-                script=script,
-                index__gt=index,
+                script=self.__script,
+                index__gt=self.__index,
             ).order_by('index')
 
-            index = query[0].index
-            logger.debug("Scheduler found next index " + str(index))
+            self.__index = query[0].index
+            logger.debug("Scheduler found next index " + str(self.__index))
             all_done = False
         except IndexError:
             logger.debug("Scheduler done")
-            index = -1
+            self.__index = -1
             all_done = True
 
-        return (index, all_done)
+        return (old_index, all_done)
 
-    def __run__(self, state, script, index):
+    def timer_scheduler_slave_timeout(self):
         """
-        Function wich will be executed by the Thread.
+        Callback function for slave timeout.
 
         Arguments
         ---------
-            self: Scheduler
-            state: Initiale state
-            script: stript identifier
-            index: Initiale index
+            scheduler: SchedulerStatus object
+        """
+        from .models import Script
+
+        logger.debug("Scheduler for slaves timeouted")
+
+        db_obj = Script.objects.get(id=self.__script)
+        db_obj.error_code = 'Not all slaves connected within 5 minutes.'
+        db_obj.is_running = False
+        db_obj.save()
+
+        self.lock.acquire()
+        self.__error_code = 'Not all slaves connected within 5 minutes.'
+        self.__state = SchedulerStatus.ERROR
+        self.lock.release()
+        self.event.set()
+
+    def __run__(self):
+        """
+        Function wich will be executed by the Thread.
         """
         from .models import (
             Slave,
@@ -259,65 +234,61 @@ class Scheduler:
             File,
         )
 
-        event = self.event
-
-        while event.wait():
-            event.clear()
+        while self.event.wait():
+            self.event.clear()
 
             if self.should_stop():
                 return
 
-            logger.debug("Lock Locked")
             self.lock.acquire()
-            logger.debug("Current state: {}".format(state))
+            logger.debug("Current state: {}".format(self.__state))
 
-            if state == SchedulerStatus.INIT:
+            if self.__state == SchedulerStatus.INIT:
                 for slave in Script.objects.get(
-                        id=script).get_involved_slaves():
+                        id=self.__script).get_involved_slaves():
                     logger.debug("Starting slave `{}`".format(slave.name))
                     slave.wake_on_lan()
 
+                self.__state = SchedulerStatus.WAITING_FOR_SLAVES
+                self.event.set()
+
                 Timer(
                     300.0,
-                    timer_scheduler_slave_timeout,
-                    (
-                        self,
-                        script,
-                    ),
+                    self.timer_scheduler_slave_timeout,
                 ).start()
 
                 notify({
                     'script_status': 'waiting_for_slaves',
-                    'script_id': script,
+                    'script_id': self.__script,
                 })
 
-                state = SchedulerStatus.WAITING_FOR_SLAVES
-                event.set()
-            elif state == SchedulerStatus.WAITING_FOR_SLAVES:
-                if Script.objects.get(id=script).check_online():
+            elif self.__state == SchedulerStatus.WAITING_FOR_SLAVES:
+                if Script.objects.get(id=self.__script).check_online():
                     logger.info("All slaves online")
-                    state = SchedulerStatus.NEXT_STEP
-                    event.set()
+                    self.__state = SchedulerStatus.NEXT_STEP
+                    self.event.set()
                 else:
                     logger.info("Waiting for all slaves to be online.")
-            elif state == SchedulerStatus.NEXT_STEP:
-                logger.info("Starting program for stage {}".format(index))
 
-                (new_index, all_done) = self.get_next_index(script, index)
-                last_index = index
-                index = new_index
+            elif self.__state == SchedulerStatus.NEXT_STEP:
+                logger.info("Starting program for stage {}".format(
+                    self.__index))
+
+                (last_index, all_done) = self.__next_stage()
 
                 if all_done:
                     logger.info("Everything done ... scheduler done")
-                    state = SchedulerStatus.SUCCESS
-                    event.set()
+                    self.__state = SchedulerStatus.SUCCESS
+                    self.event.set()
 
                 else:
+                    self.__state = SchedulerStatus.WAITING_FOR_PROGRAMS
+
                     max_start_time = 0
 
                     for sgp in ScriptGraphPrograms.objects.filter(
-                            script=script,
-                            index=index,
+                            script=self.__script,
+                            index=self.__index,
                     ):
                         if max_start_time < sgp.program.start_time:
                             max_start_time = sgp.program.start_time
@@ -325,19 +296,18 @@ class Scheduler:
 
                     notify({
                         'script_status': 'next_step',
-                        'index': index,
+                        'index': self.__index,
                         'last_index': last_index,
                         'start_time': max_start_time,
-                        'script_id': script,
+                        'script_id': self.__script,
                     })
 
-                    state = SchedulerStatus.WAITING_FOR_PROGRAMS
-            elif state == SchedulerStatus.WAITING_FOR_PROGRAMS:
+            elif self.__state == SchedulerStatus.WAITING_FOR_PROGRAMS:
                 logger.info("Waiting for programs to finish")
 
                 progs = ScriptGraphPrograms.objects.filter(
-                    script=script,
-                    index=index,
+                    script=self.__script,
+                    index=self.__index,
                 )
 
                 step = True if len(progs) > 0 else False
@@ -346,37 +316,34 @@ class Scheduler:
                     prog = sgp.program
                     if prog.is_error:
                         logger.debug("Error in program {}".format(prog.name))
-                        state = SchedulerStatus.ERROR
-                        self.set_error("Program {} has an error.".format(
-                            prog.name))
+                        self.__state = SchedulerStatus.ERROR
+                        self.__error_code = "Program {} has an error.".format(
+                            prog.name)
                         step = False
-                        event.set()
+                        self.event.set()
 
                         break
                     elif prog.is_running and not prog.is_timeouted:
-                        logger.debug("Program {} is not ready yet {}".format(
-                            prog.name, vars(prog.programstatus)))
+                        logger.debug("Program {} is not ready yet.".format(
+                            prog.name))
                         step = False
 
                         break
                 if step:
-                    logger.debug("Scheduler is doing the next step")
-
-                    state = SchedulerStatus.NEXT_STEP
-                    event.set()
+                    self.__state = SchedulerStatus.NEXT_STEP
+                    self.event.set()
                 else:
-                    logger.info("Not all programs are finished")
-            elif state == SchedulerStatus.SUCCESS:
-                logger.info("Scheduler is already finished. (SUCCESS)")
+                    logger.info("Not all programs are finished.")
 
-                logger.debug("Lock Released")
+            elif self.__state == SchedulerStatus.SUCCESS:
+                logger.info("Scheduler is already finished. (SUCCESS)")
 
                 notify({
                     'script_status': 'success',
-                    'script_id': script,
+                    'script_id': self.__script,
                 })
 
-                db_obj = Script.objects.get(id=script)
+                db_obj = Script.objects.get(id=self.__script)
                 db_obj.is_running = False
                 db_obj.error_code = ''
                 db_obj.set_last_started()
@@ -384,26 +351,21 @@ class Scheduler:
 
                 self.lock.release()
                 return
-            elif state == SchedulerStatus.ERROR:
+            elif self.__state == SchedulerStatus.ERROR:
                 logger.info("Scheduler is already finished. (ERROR)")
-
-                logger.debug("Lock Released")
 
                 notify({
                     'script_status': 'error',
                     'error_code': self.__error_code,
-                    'script_id': script,
+                    'script_id': self.__script,
                 })
 
-                db_obj = Script.objects.get(script=script)
+                db_obj = Script.objects.get(script=self.__script)
                 db_obj.is_running = False
                 db_obj.error_code = self.__error_code
                 db_obj.save()
 
                 self.lock.release()
                 return
-            else:
-                logger.debug("Nothing todo.")
 
-            logger.debug("Lock Released")
             self.lock.release()
