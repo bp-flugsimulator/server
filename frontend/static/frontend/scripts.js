@@ -7,38 +7,40 @@ var schema = {
     'type': 'object',
     'definitions': {
         'program_entry': {
+            'title': 'Program set',
             'type': 'object',
             'properties': {
                 'index': {
+                    'title': 'Index',
                     'type': 'integer',
-                    // 'required': true
                 },
                 'slave': {
+                    'title': 'Client',
                     'type': ['integer', 'string'],
-                    // 'required': true
                 },
                 'program': {
+                    'title': 'Program',
                     'type': ['integer', 'string'],
-                    // 'required': true
                 }
             },
             'required': ['index', 'slave', 'program'],
             'additionalProperties': false
         },
         'file_entry': {
+            'title': 'File set',
             'type': 'object',
             'properties': {
                 'index': {
+                    'title': 'Index',
                     'type': 'integer',
-                    // 'required': true
                 },
                 'slave': {
+                    'title': 'Client',
                     'type': ['integer', 'string'],
-                    // 'required': true
                 },
                 'file': {
+                    'title': 'File',
                     'type': ['integer', 'string'],
-                    // 'required': true
                 }
             },
             'required': ['index', 'slave', 'file'],
