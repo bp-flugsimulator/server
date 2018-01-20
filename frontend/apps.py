@@ -35,3 +35,7 @@ class FrontendConfig(AppConfig):
     def ready(self):
         # Flush status tables DO NOT DELETE!
         flush('ProgramStatus', 'SlaveStatus')
+
+        from .models import Script as ScriptModel
+        for script in ScriptModel.objects.all():
+            script.reset()

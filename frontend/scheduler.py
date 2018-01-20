@@ -170,7 +170,9 @@ class Scheduler:
             self.__error_code = None
             self.__stop = False
             self.__thread = threading.Thread(
-                target=self.__run__, args=(
+                daemon=True,
+                target=self.__run__,
+                args=(
                     SchedulerStatus.INIT,
                     script,
                     -1,

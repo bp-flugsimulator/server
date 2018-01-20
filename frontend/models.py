@@ -415,6 +415,14 @@ class Script(Model):
                     query_set,
                 )))
 
+    def reset(self):
+        """
+        Resets the status information.
+        """
+        self.error_code = ""
+        self.is_running = False
+        self.is_initialized = False
+
 
 class ScriptGraphPrograms(Model):
     """

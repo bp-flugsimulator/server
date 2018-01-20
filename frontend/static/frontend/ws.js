@@ -16,6 +16,18 @@ function fsimWebsocket(partialSocketEventHandler) {
 
     let socketEventHandler = new Proxy(partialSocketEventHandler, handler);
 
+    socket.onopen = function () {
+        console.log('Websocket open');
+    };
+
+    socket.onerror = function (error) {
+        console.log('Websocket error: ' + error);
+    };
+
+    socket.onclose = function () {
+        console.log('Websocket closed');
+    };
+
     socket.onmessage = function (data) {
         let status = Status.from_json(data.data);
         console.log(status);
@@ -61,7 +73,7 @@ function fsimWebsocket(partialSocketEventHandler) {
                         socketEventHandler.scriptError(status.payload);
                         break;
                     default:
-                        notify('Warning message', 'Unknown script_status received (' + JSON.stringify(status.payload.message) + ')', 'info');
+                        notify('Unknown message', 'Unknown script_status received (' + JSON.stringify(status.payload.message) + ')', 'info');
                 }
             } else if (status.payload.message != null) {
                 notify('Info message', JSON.stringify(status.payload.message), 'info');
