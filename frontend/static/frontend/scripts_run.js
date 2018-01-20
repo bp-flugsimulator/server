@@ -38,6 +38,7 @@ $(document).ready(function () {
     $('.script-action-run').click(function (event) {
         event.preventDefault();
         let id = $(this).attr('data-script-id');
+        $('#scriptTabContent' + id + ' [data-state]').attr('data-state', 'none');
 
         $.ajax({
             type: 'GET',
