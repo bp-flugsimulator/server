@@ -596,7 +596,12 @@ footer {
 .fsim-script-status-icon[data-state="error"] {
     @extend .mdi;
     @extend .mdi-alert-outline;
+}
 
+.fsim-script-status-icon[data-state="waiting"] {
+    @extend .mdi;
+    @extend .mdi-loading;
+    @extend .mdi-spin;
 }
 
 .fsim-box .fsim-slave-status-icon {

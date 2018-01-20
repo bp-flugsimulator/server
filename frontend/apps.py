@@ -1,9 +1,11 @@
 """
 This module contains the configuration of the 'frontend' application
 """
+import builtins
 
 from django.apps import AppConfig
 from django.db.utils import OperationalError
+from .scheduler import Scheduler
 
 
 def flush(*tables):
@@ -33,9 +35,14 @@ class FrontendConfig(AppConfig):
     name = 'frontend'
 
     def ready(self):
+        # add FSIM_CURRENT_SCHEDULER to the builtins which make it
+        # avialabel in every module
+        builtins.FSIM_CURRENT_SCHEDULER = Scheduler()
+
         # Flush status tables DO NOT DELETE!
         flush('ProgramStatus', 'SlaveStatus')
 
+        # removes the status flags from the script
         from .models import Script as ScriptModel
         for script in ScriptModel.objects.all():
             script.reset()

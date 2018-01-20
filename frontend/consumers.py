@@ -16,8 +16,8 @@ from .models import (
     ProgramStatus as ProgramStatusModel,
 )
 
-from .scheduler import Scheduler, CURRENT_SCHEDULER
-from .utils import notify_err, notify
+from .scheduler import Scheduler
+from server.utils import notify_err, notify
 
 # Get an instance of a logger
 LOGGER = logging.getLogger('websockets')
@@ -180,6 +180,9 @@ def ws_rpc_disconnect(message):
         # tell the webinterface that the client has disconnected
         notify({'slave_status': 'disconnected', 'sid': str(slave.id)})
 
+        # notify the scheduler that status has change
+        FSIM_CURRENT_SCHEDULER.notify()
+
         LOGGER.info("Client with ip {} disconnected from /commands!".format(
             message.channel_session['ip_address']))
 
@@ -224,12 +227,12 @@ def ws_notifications_receive(message):
             handle_online_answer(status)
 
             # notify the scheduler that the status has changed
-            CURRENT_SCHEDULER.notify()
+            FSIM_CURRENT_SCHEDULER.notify()
         elif status.payload['method'] == 'execute':
             handle_execute_answer(status)
 
             # notify the scheduler that the status has changed
-            CURRENT_SCHEDULER.notify()
+            FSIM_CURRENT_SCHEDULER.notify()
         else:
             LOGGER.info(
                 colored('Client send answer from unknown function {}.'.format(

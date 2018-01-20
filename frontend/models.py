@@ -4,6 +4,7 @@ This module contains all databasemodels from the frontend application.
 
 import logging
 from threading import Timer
+from shlex import split
 
 from django.db.models import (
     Model,
@@ -18,14 +19,12 @@ from django.db.models import (
 )
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
-from wakeonlan.wol import send_magic_packet
 from channels import Group
+
+from server.utils import notify, notify_err
+
+from wakeonlan.wol import send_magic_packet
 from utils import Command, Status
-from .utils import notify, notify_err
-
-from shlex import split
-
-from .scheduler import CURRENT_SCHEDULER
 
 logger = logging.getLogger("models")
 
@@ -40,7 +39,7 @@ def timer_timeout_program(id):
     """
 
     me = ProgramStatus.objects.filter(program=id).update(timeouted=True)
-    CURRENT_SCHEDULER.notify()
+    FSIM_CURRENT_SCHEDULER.notify()
 
 
 def validate_mac_address(mac_addr):

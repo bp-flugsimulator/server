@@ -3,21 +3,32 @@
 
 var socketEventHandler = {
     scriptWaitForSlaves(payload) {
-        console.log("wait");
-        notify('Waiting for client ', 'Waiting for all clients to connect.', 'info');
+        $('#scriptTabNav' + payload.script_id + ' .fsim-script-status-icon').attr('data-state', 'waiting');
+
+        $('#runInit' + payload.script_id).attr('data-state', 'done');
+        $('#runWaitSlaves' + payload.script_id).attr('data-state', 'waiting');
+        // notify('Waiting for client ', 'Waiting for all clients to connect.', 'info');
     },
     scriptNextStep(payload) {
-        console.log("next");
+        if (payload.last_index === -1) {
+            $('#runWaitSlaves' + payload.script_id).attr('data-state', 'done');
+        } else {
+            $('#runStage' + payload.script_id + '_' + payload.last_index).attr('data-state', 'done');
+        }
 
-        notify('Stage ' + payload.last_index + ' done', 'All programs for index ' + payload.index + ' have been started. The next stage will take ' + payload.start_time + ' seconds.', 'info');
+        $('#runStage' + payload.script_id + '_' + payload.index).attr('data-state', 'waiting');
+        // notify('Stage ' + payload.last_index + ' done', 'All programs for index ' + payload.index + ' have been started. The next stage will take ' + payload.start_time + ' seconds.', 'info');
     },
     scriptSuccess(payload) {
-        console.log("success");
-        notify('Success', 'The script has been successfully started.', 'success');
+        $('#scriptTabContent' + payload.script_id + ' [data-state="waiting"]').attr('data-state', 'done');
+        $('#runDone' + payload.script_id).attr('data-state', 'done');
+        $('#scriptTabNav' + payload.script_id + ' .fsim-script-status-icon').attr('data-state', 'done');
+        // notify('Success', 'The script has been successfully started.', 'success');
     },
     scriptError(payload) {
-        console.log("error");
-        notify('Error', 'There was an error while running the script.', 'danger');
+        $('#scriptTabContent' + payload.script_id + ' [data-state="waiting"]').attr('data-state', 'error');
+        $('#scriptTabNav' + payload.script_id + ' .fsim-script-status-icon').attr('data-state', 'error');
+        notify('Error', 'There was an error while running the script. (' + payload.error_code + ')', 'danger');
     },
 };
 

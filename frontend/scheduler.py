@@ -2,7 +2,7 @@ from threading import Timer
 import threading
 
 import logging
-from .utils import notify, notify_err
+from server.utils import notify, notify_err
 
 logger = logging.getLogger("scheduler")
 
@@ -79,7 +79,13 @@ class Scheduler:
             bool
         """
         self.lock.acquire()
+
         if self.__thread != None:
+            logger.debug("Thread information: {}".format(
+                self.__thread.name,
+                self.__thread.ident,
+            ))
+
             alive = self.__thread.is_alive()
             logger.debug(
                 "Thread is {}".format("online" if alive else "offline"))
@@ -161,12 +167,11 @@ class Scheduler:
         -------
             Returns true if the new thread was started.
         """
-        self.lock.acquire()
-
-        if self.__thread != None:
-            self.lock.release()
+        if self.is_running():
             return False
         else:
+            self.lock.acquire()
+
             self.__error_code = None
             self.__stop = False
             self.__thread = threading.Thread(
@@ -194,6 +199,25 @@ class Scheduler:
             self.event.set()
         self.lock.release()
 
+    @staticmethod
+    def get_next_index(script, index):
+        from .models import ScriptGraphPrograms
+        try:
+            query = ScriptGraphPrograms.objects.filter(
+                script=script,
+                index__gt=index,
+            ).order_by('index')
+
+            index = query[0].index
+            logger.debug("Scheduler found next index " + str(index))
+            all_done = False
+        except IndexError:
+            logger.debug("Scheduler done")
+            index = -1
+            all_done = True
+
+        return (index, all_done)
+
     def __run__(self, state, script, index):
         """
         Function wich will be executed by the Thread.
@@ -214,36 +238,18 @@ class Scheduler:
             File,
         )
 
-        def get_next_index(index):
-            try:
-                query = ScriptGraphPrograms.objects.filter(
-                    script=script,
-                    index__gt=index,
-                ).order_by('index')
-
-                index = query[0].index
-                logger.debug("Scheduler found next index " + str(index))
-                all_done = False
-            except IndexError:
-                logger.debug("Scheduler done")
-                index = -1
-                all_done = True
-
-            return (index, all_done)
-
         event = self.event
-        last_index = index
 
         while event.wait():
             event.clear()
 
             if self.should_stop():
-                break
+                return
 
             logger.debug("Lock Locked")
             self.lock.acquire()
-
             logger.debug("Current state: {}".format(state))
+
             if state == SchedulerStatus.INIT:
                 for slave in Script.objects.get(
                         id=script).get_involved_slaves():
@@ -258,6 +264,7 @@ class Scheduler:
 
                 notify({
                     'script_status': 'waiting_for_slaves',
+                    'script_id': script,
                 })
 
                 state = SchedulerStatus.WAITING_FOR_SLAVES
@@ -265,35 +272,42 @@ class Scheduler:
             elif state == SchedulerStatus.WAITING_FOR_SLAVES:
                 if Script.objects.get(id=script).check_online():
                     logger.info("All slaves online")
-                    (new_index, done) = get_next_index(index)
-                    last_index = index
-                    index = new_index
                     state = SchedulerStatus.NEXT_STEP
                     event.set()
-
                 else:
                     logger.info("Waiting for all slaves to be online.")
             elif state == SchedulerStatus.NEXT_STEP:
                 logger.info("Starting program for stage {}".format(index))
 
-                max_start_time = 0
+                (new_index, all_done) = self.get_next_index(script, index)
+                last_index = index
+                index = new_index
 
-                for sgp in ScriptGraphPrograms.objects.filter(
-                        script=script,
-                        index=index,
-                ):
-                    if max_start_time < sgp.program.start_time:
-                        max_start_time = sgp.program.start_time
-                    sgp.program.enable()
+                if all_done:
+                    logger.info("Everything done ... scheduler done")
+                    state = SchedulerStatus.SUCCESS
+                    event.set()
 
-                notify({
-                    'script_status': 'next_step',
-                    'index': index,
-                    'last_index': last_index,
-                    'start_time': max_start_time,
-                })
+                else:
+                    max_start_time = 0
 
-                state = SchedulerStatus.WAITING_FOR_PROGRAMS
+                    for sgp in ScriptGraphPrograms.objects.filter(
+                            script=script,
+                            index=index,
+                    ):
+                        if max_start_time < sgp.program.start_time:
+                            max_start_time = sgp.program.start_time
+                        sgp.program.enable()
+
+                    notify({
+                        'script_status': 'next_step',
+                        'index': index,
+                        'last_index': last_index,
+                        'start_time': max_start_time,
+                        'script_id': script,
+                    })
+
+                    state = SchedulerStatus.WAITING_FOR_PROGRAMS
             elif state == SchedulerStatus.WAITING_FOR_PROGRAMS:
                 logger.info("Waiting for programs to finish")
 
@@ -302,7 +316,7 @@ class Scheduler:
                     index=index,
                 )
 
-                step = True
+                step = True if len(progs) > 0 else False
 
                 for sgp in progs:
                     prog = sgp.program
@@ -323,19 +337,10 @@ class Scheduler:
                         break
                 if step:
                     logger.debug("Scheduler is doing the next step")
-                    (new_index, all_done) = get_next_index(index)
-                    last_index = index
-                    index = new_index
 
-                    if all_done:
-                        logger.info("Everything done ... scheduler done")
-                        state = SchedulerStatus.SUCCESS
-                        event.set()
+                    state = SchedulerStatus.NEXT_STEP
+                    event.set()
 
-                    else:
-                        logger.debug("Going into the next iteration")
-                        state = SchedulerStatus.NEXT_STEP
-                        event.set()
                 else:
                     logger.info("Not all programs are finished")
             elif state == SchedulerStatus.SUCCESS:
@@ -345,6 +350,7 @@ class Scheduler:
 
                 notify({
                     'script_status': 'success',
+                    'script_id': script,
                 })
 
                 db_obj = Script.objects.get(id=script)
@@ -354,7 +360,7 @@ class Scheduler:
                 db_obj.save()
 
                 self.lock.release()
-                break
+                return
             elif state == SchedulerStatus.ERROR:
                 logger.info("Scheduler is already finished. (ERROR)")
 
@@ -363,6 +369,7 @@ class Scheduler:
                 notify({
                     'script_status': 'error',
                     'message': self.__error_code,
+                    'script_id': script,
                 })
 
                 db_obj = Script.objects.get(script=script)
@@ -371,16 +378,9 @@ class Scheduler:
                 db_obj.save()
 
                 self.lock.release()
-                break
+                return
             else:
                 logger.debug("Nothing todo.")
 
             logger.debug("Lock Released")
             self.lock.release()
-
-
-try:
-    if CURRENT_SCHEDULER is None:
-        CURRENT_SCHEDULER = Scheduler()
-except NameError:
-    CURRENT_SCHEDULER = Scheduler()

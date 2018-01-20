@@ -21,12 +21,9 @@ from .models import (
     File as FileModel,
 )
 
-from .scheduler import Scheduler, CURRENT_SCHEDULER
-
+from .scheduler import Scheduler
 from .scripts import Script
-
 from .forms import SlaveForm, ProgramForm, FileForm
-
 from .consumers import notify
 
 
@@ -58,7 +55,8 @@ def add_slave(request):
             Status.ok(
                 list(
                     set([
-                        obj['name'] for obj in SlaveModel.objects.filter(
+                        obj['name']
+                        for obj in SlaveModel.objects.filter(
                             name__contains=query).values("name")
                     ]))))
     else:
@@ -205,7 +203,8 @@ def add_program(request):
             Status.ok(
                 list(
                     set([
-                        obj['name'] for obj in ProgramModel.objects.filter(
+                        obj['name']
+                        for obj in ProgramModel.objects.filter(
                             name__contains=query).values("name")
                     ]))))
     else:
@@ -401,12 +400,12 @@ def run_script(request, script_id):
         try:
             script = ScriptModel.objects.get(id=script_id)
             # only allow the start of a script if the old one is finished
-            if CURRENT_SCHEDULER.start(script.id):
+            if FSIM_CURRENT_SCHEDULER.start(script.id):
                 script.is_running = True
                 script.is_initialized = True
                 script.save()
 
-                CURRENT_SCHEDULER.notify()
+                FSIM_CURRENT_SCHEDULER.notify()
                 return StatusResponse(
                     Status.ok("Started script {}".format(script.name)))
             else:
@@ -460,7 +459,8 @@ def add_file(request):
             Status.ok(
                 list(
                     set([
-                        obj['name'] for obj in FileModel.objects.filter(
+                        obj['name']
+                        for obj in FileModel.objects.filter(
                             name__contains=query).values("name")
                     ]))))
     else:

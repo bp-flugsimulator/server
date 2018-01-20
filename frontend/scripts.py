@@ -62,6 +62,9 @@ class Script:
                     "All list elements has to be ScriptEntryFile.")
         self.files = files
 
+        if len(self.files) + len(self.programs) < 1:
+            raise ValueError("Add a file or program to the script.")
+
         if not isinstance(name, str):
             raise ValueError("Name has to be a string.")
         self.name = name
@@ -192,6 +195,8 @@ class ScriptEntryFile:
     def __init__(self, index, file, slave):
         if not isinstance(index, int):
             raise ValueError("Index has to be an integer.")
+        if index < 0:
+            raise ValueError("Use positive or null for the index.")
         self.index = index
 
         if not isinstance(file, str) and not isinstance(file, int):
@@ -319,6 +324,8 @@ class ScriptEntryProgram:
     def __init__(self, index, program, slave):
         if not isinstance(index, int):
             raise ValueError("Index has to be an integer.")
+        if index < 0:
+            raise ValueError("Use positive or null for the index.")
         self.index = index
 
         if not isinstance(program, str) and not isinstance(program, int):
