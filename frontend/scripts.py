@@ -63,7 +63,7 @@ class Script:
         self.files = files
 
         if len(self.files) + len(self.programs) < 1:
-            raise ValueError("Add a file or program to the script.")
+            raise ValueError("Add a file or a program to the script.")
 
         if not isinstance(name, str):
             raise ValueError("Name has to be a string.")
