@@ -1,5 +1,7 @@
 #  pylint: disable=C0111,R0904,R0903,C0103
 
+import unittest
+
 from urllib.parse import urlencode
 from shlex import split
 from datetime import datetime
@@ -3204,7 +3206,7 @@ class ScriptTests(TestCase):
         )
 
 
-class SchedulerTests(TestCase):
+class SchedulerTests(unittest.TestCase):
     def setUp(self):
         script = ScriptModel(name="t1")
         script.save()
@@ -3249,6 +3251,8 @@ class SchedulerTests(TestCase):
 
     def tearDown(self):
         self.script.delete()
+        self.slave1.delete()
+        self.slave2.delete()
 
     def test_start(self):
         self.assertTrue(self.sched.start(self.script.id))
@@ -3257,9 +3261,6 @@ class SchedulerTests(TestCase):
         self.assertFalse(self.sched.should_stop())
         self.sched.stop()
         self.assertTrue(self.sched.should_stop())
-
-    def test_next_stage(self):
-        pass
 
     def test_state_init(self):
         webinterface = WSClient()

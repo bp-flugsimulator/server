@@ -17,6 +17,7 @@ from django.db.models import (
     OneToOneField,
     Count,
 )
+from django.db.utils import OperationalError
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from channels import Group
@@ -35,8 +36,15 @@ def timer_timeout_program(identifier):
     ---------
         id: Program id
     """
+    tries = 5
 
-    ProgramStatus.objects.filter(program=identifier).update(timeouted=True)
+    while tries > 0:
+        try:
+            ProgramStatus.objects.filter(program=identifier).update(
+                timeouted=True)
+            break
+        except OperationalError:
+            tries -= 1
     FSIM_CURRENT_SCHEDULER.notify()
 
 

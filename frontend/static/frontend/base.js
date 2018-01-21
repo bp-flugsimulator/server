@@ -1,4 +1,5 @@
 /* eslint-env browser */
+/* eslint no-use-before-define: ["error", { "functions": false }] */
 /* global $, jQuery, Status */
 /* exported  getCookie, modalDeleteAction, handleFormStatus, clearErrorMessages,swapText, styleSlaveByStatus, notify */
 

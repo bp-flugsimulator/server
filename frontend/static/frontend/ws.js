@@ -1,4 +1,5 @@
 /* eslint-env browser*/
+/* eslint no-use-before-define: ["error", { "functions": false }] */
 /* global Status, notify */
 /* export fsimWebsocket */
 /*eslint no-console: ["error", { allow: ["log"] }] */
@@ -7,7 +8,7 @@ function fsimWebsocket(partialSocketEventHandler) {
     let socket = new WebSocket('ws://' + window.location.host + '/notifications');
 
     let handler = {
-        get: function (target, name) {
+        get(target, name) {
             return name in target ?
                 target[name] :
                 function () { };

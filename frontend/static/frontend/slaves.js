@@ -1,4 +1,5 @@
 /* eslint-env browser*/
+/* eslint no-use-before-define: ["error", { "functions": false }] */
 /* global $, getCookie, modalDeleteAction, handleFormStatus, clearErrorMessages, Status, fsimWebsocket, notify, swapText, styleSlaveByStatus*/
 
 /**

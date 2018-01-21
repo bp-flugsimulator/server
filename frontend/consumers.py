@@ -263,7 +263,7 @@ def ws_notifications_receive(message):
                 'Client send answer from unknown function %s.',
                 status.payload['method'],
             )
-    except Exception as err:
+    except Exception:
         LOGGER.error(
             'Exception occurred (incoming-request)\n:%s',
             traceback.format_exc(),

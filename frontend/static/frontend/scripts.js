@@ -1,4 +1,5 @@
 /* eslint-env browser */
+/* eslint no-use-before-define: ["error", { "functions": false }] */
 /* global $, JSONEditor, getCookie, Status, modalDeleteAction, notify */
 /* exported loadScript, newScript */
 
