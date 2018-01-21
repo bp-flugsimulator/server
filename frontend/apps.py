@@ -39,14 +39,22 @@ class FrontendConfig(AppConfig):
         # avialabel in every module
         builtins.FSIM_CURRENT_SCHEDULER = Scheduler()
 
-        # Flush status tables DO NOT DELETE!
-        flush('ProgramStatus', 'SlaveStatus')
-
-        # removes the status flags from the script
         try:
-            from .models import Script as ScriptModel
-            for script in ScriptModel.objects.all():
-                script.reset()
-                script.save()
+            from .models import Slave
+            Slave.objects.all().update(online=False, command_uuid=None)
         except OperationalError:
             pass
+
+        try:
+            from .models import Script
+            Script.objects.all().update(
+                error_code=None,
+                is_running=False,
+                is_initialized=False,
+                current_index=-1,
+            )
+        except OperationalError:
+            pass
+
+        # Flush status tables DO NOT DELETE!
+        flush('ProgramStatus')

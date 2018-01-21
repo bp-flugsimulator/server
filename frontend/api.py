@@ -12,7 +12,6 @@ from server.utils import StatusResponse
 
 from .models import (
     Slave as SlaveModel,
-    SlaveStatus as SlaveStatusModel,
     Program as ProgramModel,
     Script as ScriptModel,
     File as FileModel,
@@ -111,8 +110,7 @@ def shutdown_slave(request, slave_id):
     if request.method == 'GET':
         if SlaveModel.objects.filter(id=slave_id).exists():
             slave = SlaveModel.objects.get(id=slave_id)
-            if SlaveStatusModel.objects.filter(
-                    slave=slave) and slave.slavestatus.online:
+            if slave.is_online:
                 Group('client_' + str(slave_id)).send({
                     'text':
                     Command(method="shutdown").to_json()

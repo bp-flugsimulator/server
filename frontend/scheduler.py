@@ -289,7 +289,7 @@ class Scheduler:
         """
         from .models import Script
 
-        if Script.objects.get(id=self.__script).check_online():
+        if Script.check_online(self.__script.id):
             LOGGER.info("All slaves online")
             self.__state = SchedulerStatus.NEXT_STEP
             self.event.set()
@@ -405,7 +405,8 @@ class Scheduler:
             is_running=False,
             error_code='',
         )
-        Script.objects.get(id=self.__script).set_last_started()
+
+        Script.set_last_started(self.__script.id)
 
     def __state_error(self):
         """

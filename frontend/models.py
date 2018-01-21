@@ -86,25 +86,27 @@ def validate_mac_address(mac_addr):
 
 class Slave(Model):
     """
-    Represents a slave which is node in the network.
-    This is stored in a database.
+    Represents a slave which is node in the network. This is stored in a
+    database.
 
     Members
     -------
-    name: str
-        The name of the slave
+    name: str The name of the slave
 
-    ip_address: GenericIPAddressField
-        The IP address of the slave.
+    ip_address: GenericIPAddressField The IP address of the slave.
 
-    mac_address: str
-        The MAC address of the slave.
+    mac_address: str The MAC address of the slave.
 
     """
     name = CharField(unique=True, max_length=200)
     ip_address = GenericIPAddressField(unique=True)
     mac_address = CharField(
-        unique=True, max_length=17, validators=[validate_mac_address])
+        unique=True,
+        max_length=17,
+        validators=[validate_mac_address],
+    )
+    command_uuid = CharField(blank=True, null=True, max_length=32, unique=True)
+    online = BooleanField(unique=False, default=False)
 
     def wake_on_lan(self):
         """
@@ -117,10 +119,7 @@ class Slave(Model):
         """
         Returns true of the current slave has connected to the master.
         """
-        try:
-            return self.slavestatus.online
-        except SlaveStatus.DoesNotExist:
-            return False
+        return self.online
 
     @property
     def has_error(self):
@@ -138,41 +137,31 @@ class Slave(Model):
         """
         Returns true if any program or file is in an error state.
         """
-        for prog in self.program_set.all():
-            if prog.is_running:
-                return True
-
-        return False
+        return self.program_set.filter(programstatus__running=True).exists()
 
 
 class Program(Model):
     """
-    Represents a program on a slave
-    This is stored in a database.
+    Represents a program on a slave This is stored in a database.
 
     Members
     -------
-    name: str
-        The name of the program (has to be unique for every slave)
+    name: str The name of the program (has to be unique for every slave)
 
-    path: str
-        The path to the binary file that will be executed
+    path: str The path to the binary file that will be executed
 
-    arguments: str
-        The arguments which will be passed to the
-        executable on execution
+    arguments: str The arguments which will be passed to the executable on
+        execution
 
-    slave: Slave
-        The slave on which the command will be executed
+    slave: Slave The slave on which the command will be executed
 
-    start_time: int
-        The amount of time a program needs to start.
+    start_time: int The amount of time a program needs to start.
     """
     name = CharField(unique=False, max_length=200)
     path = CharField(unique=False, max_length=200)
     arguments = CharField(unique=False, blank=True, max_length=200)
     slave = ForeignKey(Slave, on_delete=CASCADE)
-    start_time = IntegerField(null=False, default=-1)
+    start_time = IntegerField(default=-1)
 
     class Meta:
         unique_together = (('name', 'slave'), )
@@ -301,22 +290,18 @@ class Program(Model):
 
 class File(Model):
     """
-    Represents a file on a slave
-    This is stored in a database.
+    Represents a file on a slave This is stored in a database.
 
     Members
     -------
-    name: str
-        The name of the file (has to be unique for every slave)
+    name: str The name of the file (has to be unique for every slave)
 
-    sourcePath: str
-        The path to the source of the file
+    sourcePath: str The path to the source of the file
 
-    destinationPath: str
-        The path there the file should be used in the file system
+    destinationPath: str The path there the file should be used in the file
+        system
 
-    slave: Slave
-        The slave on which the file belongs to
+    slave: Slave The slave on which the file belongs to
     """
     name = CharField(unique=False, max_length=200)
     sourcePath = CharField(unique=False, max_length=200)
@@ -373,19 +358,21 @@ class Script(Model):
         """
         return self.error_code != ''
 
-    def set_last_started(self):
+    @staticmethod
+    def set_last_started(script):
         """
         Sets the last_ran flag for this script and disables the flag for all
         other scripts.
+
+        Arguments
+        ---------
+        script: Script identifier
         """
-        for script in Script.objects.all():
-            script.last_ran = False
-            script.save()
+        Script.objects.all().update(last_ran=False)
+        Script.objects.filter(id=script).update(last_ran=True)
 
-        self.last_ran = True
-        self.save()
-
-    def check_online(self):
+    @staticmethod
+    def check_online(script):
         """
         Checks if all needed slaves are online.
 
@@ -394,15 +381,11 @@ class Script(Model):
         Returns True if all needed slaves are online or if the script already
         run successful.
         """
-        slaves = self.get_involved_slaves()
-        all_online = True
 
-        for slave in slaves:
-            if not slave.is_online:
-                all_online = False
-                break
-
-        return all_online
+        return not Program.objects.filter(
+            scriptgraphprograms__script=script,
+            slave__online=False,
+        ).exists()
 
     def get_involved_slaves(self):
         """
@@ -412,26 +395,10 @@ class Script(Model):
         -------
             A list of slaves
         """
-
-        query_set = ScriptGraphPrograms.objects.filter(
-            script=self).values('program').annotate(dcount=Count('program'))
-
-        return list(
-            set(
-                map(
-                    lambda q: Program.objects.get(id=q['program']).slave,
-                    query_set,
-                )))
-
-    def reset(self):
-        """
-        Resets the status information.
-        """
-        self.error_code = ""
-        self.is_running = False
-        self.is_initialized = False
-        self.current_index = -1
-        self.save()
+        return Program.objects.filter(
+            scriptgraphprograms__script=self).annotate(
+                dcount=Count('slave')).values_list(
+                    'slave', flat=True)
 
 
 class ScriptGraphPrograms(Model):
@@ -492,22 +459,3 @@ class ProgramStatus(Model):
     command_uuid = CharField(max_length=32, unique=True)
     running = BooleanField(unique=False, default=True)
     timeouted = BooleanField(unique=False, default=False)
-
-
-class SlaveStatus(Model):
-    """
-    Represents the current status of the slaves.
-
-    Members
-    -------
-        slave: Slave id
-        command_uuid: uuid of the send 'online' request
-        online: true if the slave is currently online, otherwise false
-    """
-    slave = OneToOneField(
-        Slave,
-        on_delete=CASCADE,
-        primary_key=True,
-    )
-    command_uuid = CharField(max_length=32, unique=True)
-    online = BooleanField(unique=False, default=False)
