@@ -76,13 +76,7 @@ class Scheduler:
         """
         self.lock.acquire()
 
-        if self.__thread is None:
-            LOGGER.debug(
-                "Thread information: name: %s, ident: %s",
-                self.__thread.name,
-                self.__thread.ident,
-            )
-
+        if self.__thread is not None:
             alive = self.__thread.is_alive()
             LOGGER.debug(
                 "Thread is %s",
