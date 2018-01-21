@@ -272,10 +272,12 @@ class Scheduler:
         self.__state = SchedulerStatus.WAITING_FOR_SLAVES
         self.event.set()
 
-        Timer(
+        timer = Timer(
             300.0,
             self.timer_scheduler_slave_timeout,
-        ).start()
+        )
+        timer.daemon = True
+        timer.start()
 
         notify({
             'script_status': 'waiting_for_slaves',
@@ -349,14 +351,12 @@ class Scheduler:
             ScriptGraphFiles,
         )
 
-        LOGGER.info("Waiting for programs to finish")
-
         progs = ScriptGraphPrograms.objects.filter(
             script=self.__script,
             index=self.__index,
         )
 
-        step = True if progs else False
+        step = True
 
         for sgp in progs:
             prog = sgp.program

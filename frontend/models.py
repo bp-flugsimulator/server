@@ -254,11 +254,13 @@ class Program(Model):
             ProgramStatus(program=self, command_uuid=cmd.uuid).save()
 
             if self.start_time > 0:
-                Timer(
+                timer = Timer(
                     self.start_time,
                     timer_timeout_program,
                     (self.id, ),
-                ).start()
+                )
+                timer.daemon = True
+                timer.start()
 
             return True
         else:

@@ -147,7 +147,7 @@ def wol_slave(request, slave_id):
     """
     if request.method == 'GET':
         try:
-            SlaveModel.objects.get(id=slave_id).wake_on_lan()
+            SlaveModel.wake_on_lan(slave_id)
         except Exception as err:  # pylint: disable=W0703
             return StatusResponse(Status.err(repr(err)), status=500)
 
