@@ -13,6 +13,7 @@ from .forms import FileForm
 from os import listdir, getcwd
 from os.path import getsize, join
 
+
 class WelcomeView(TemplateView):
     """
     generates view for /welcome
@@ -50,6 +51,7 @@ class SlavesView(ListView):
         context['navbar_link'] = "slaves"
         return context
 
+
 class DownloadView(TemplateView):
     """
     generates view for /downloads
@@ -63,20 +65,18 @@ class DownloadView(TemplateView):
         for file in listdir('downloads'):
             entry = dict()
             entry['name'] = file
-            size = entry['size'] = getsize(join(getcwd(),'downloads', file))
-            if size < pow(2,10):
+            size = entry['size'] = getsize(join(getcwd(), 'downloads', file))
+            if size < pow(2, 10):
                 entry['size'] = str(size) + ' B'
-            elif size < pow(2,20):
-                entry['size'] = str(round(size/pow(2,10))) + ' KiB'
-            elif size < pow(2,30):
-                entry['size'] = str(round(size/pow(2,20))) + ' MiB'
+            elif size < pow(2, 20):
+                entry['size'] = str(round(size / pow(2, 10))) + ' KiB'
+            elif size < pow(2, 30):
+                entry['size'] = str(round(size / pow(2, 20))) + ' MiB'
             else:
-                entry['size'] = str(round(size/pow(2,30))) + ' GiB'
+                entry['size'] = str(round(size / pow(2, 30))) + ' GiB'
 
             file_list.append(entry)
 
         context['file_list'] = file_list
         context['navbar_link'] = "downloads"
         return context
-
-

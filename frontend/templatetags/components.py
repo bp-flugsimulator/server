@@ -104,6 +104,7 @@ def file_entry(file):
     """
     return {'file': file}
 
+
 @register.inclusion_tag('frontend/downloads/file.html')
 def download_entry(file):
     """

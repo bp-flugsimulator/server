@@ -16,7 +16,6 @@ urlpatterns = [  # pylint: disable=C0103
     url(r'^slaves/$', views.SlavesView.as_view(), name='slaves'),
     url(r'^scripts/$', views.ScriptsView.as_view(), name='scripts'),
     url(r'^downloads/$', views.DownloadView.as_view(), name='downloads'),
-
     url(r'^api/scripts$', api.add_script, name='add_script'),
     url(r'^api/script/([0-9]+)$', api.manage_script, name='manage_script'),
     url(r'^api/slaves', api.add_slave, name='add_slaves'),
