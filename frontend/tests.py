@@ -77,7 +77,7 @@ class FrontendTests(TestCase):
     def test_script_delete(self):
         slave = SlaveModel(
             name="test_slave",
-            ip_address="0.0.0.0",
+            ip_address="127.0.0.1",
             mac_address="00:00:00:00:00:00")
         slave.save()
 
@@ -129,7 +129,7 @@ class FrontendTests(TestCase):
     def test_slave_with_program_get(self):
         slave = SlaveModel(
             name='slave',
-            ip_address='0.0.0.0',
+            ip_address='127.0.0.1',
             mac_address='00:00:00:00:00:00')
         slave.save()
         ProgramModel(
@@ -232,7 +232,7 @@ class ApiTests(TestCase):
         fill_database_slaves_set_1()
         slave = SlaveModel(
             name="test_slave",
-            ip_address="0.0.0.0",
+            ip_address="127.0.0.1",
             mac_address="00:00:00:00:00:00",
         )
         slave.save()
@@ -306,7 +306,7 @@ class ApiTests(TestCase):
         fill_database_slaves_set_1()
         slave = SlaveModel(
             name="test_slave",
-            ip_address="0.0.0.0",
+            ip_address="127.0.0.1",
             mac_address="00:00:00:00:00:00",
         )
         slave.save()
@@ -347,7 +347,7 @@ class ApiTests(TestCase):
         fill_database_slaves_set_1()
         slave = SlaveModel(
             name="test_slave",
-            ip_address="0.0.0.0",
+            ip_address="127.0.0.1",
             mac_address="00:00:00:00:00:00",
         )
         slave.save()
@@ -387,7 +387,7 @@ class ApiTests(TestCase):
         fill_database_slaves_set_1()
         slave = SlaveModel(
             name="test_slave",
-            ip_address="0.0.0.0",
+            ip_address="127.0.0.1",
             mac_address="00:00:00:00:00:00")
         slave.save()
 
@@ -427,7 +427,7 @@ class ApiTests(TestCase):
         fill_database_slaves_set_1()
         slave = SlaveModel(
             name="test_slave",
-            ip_address="0.0.0.0",
+            ip_address="127.0.0.1",
             mac_address="00:00:00:00:00:00")
         slave.save()
 
@@ -474,7 +474,7 @@ class ApiTests(TestCase):
         fill_database_slaves_set_1()
         slave = SlaveModel(
             name="test_slave",
-            ip_address="0.0.0.0",
+            ip_address="127.0.0.1",
             mac_address="00:00:00:00:00:00")
         slave.save()
 
@@ -509,7 +509,7 @@ class ApiTests(TestCase):
         fill_database_slaves_set_1()
         slave = SlaveModel(
             name="test_slave",
-            ip_address="0.0.0.0",
+            ip_address="127.0.0.1",
             mac_address="00:00:00:00:00:00",
         )
         slave.save()
@@ -544,7 +544,7 @@ class ApiTests(TestCase):
     def test_file_autocomplete(self):
         slave = SlaveModel(
             name="test_slave",
-            ip_address="0.0.0.0",
+            ip_address="127.0.0.1",
             mac_address="00:00:00:00:00:00",
         )
         slave.save()
@@ -571,7 +571,7 @@ class ApiTests(TestCase):
     def test_program_autocomplete(self):
         slave = SlaveModel(
             name="test_slave",
-            ip_address="0.0.0.0",
+            ip_address="127.0.0.1",
             mac_address="00:00:00:00:00:00",
         )
         slave.save()
@@ -598,7 +598,7 @@ class ApiTests(TestCase):
     def test_slave_autocomplete(self):
         slave = SlaveModel(
             name="test_slave",
-            ip_address="0.0.0.0",
+            ip_address="127.0.0.1",
             mac_address="00:00:00:00:00:00",
         )
         slave.save()
@@ -2397,7 +2397,7 @@ class ScriptTests(TestCase):
     def test_model_support_strings(self):
         slave = SlaveModel(
             name="test_slave",
-            ip_address="0.0.0.0",
+            ip_address="127.0.0.1",
             mac_address="00:00:00:00:00:00")
         slave.save()
 
@@ -2434,7 +2434,7 @@ class ScriptTests(TestCase):
     def test_model_support_ids(self):
         slave = SlaveModel(
             name="test_slave",
-            ip_address="0.0.0.0",
+            ip_address="127.0.0.1",
             mac_address="00:00:00:00:00:00")
         slave.save()
 
@@ -2458,7 +2458,7 @@ class ScriptTests(TestCase):
 
         slave = SlaveModel(
             name="test_slave",
-            ip_address="0.0.0.0",
+            ip_address="127.0.0.1",
             mac_address="00:00:00:00:00:00")
         slave.save()
 
@@ -2484,7 +2484,7 @@ class ScriptTests(TestCase):
         from django.db.utils import IntegrityError
         slave = SlaveModel(
             name="test_slave",
-            ip_address="0.0.0.0",
+            ip_address="127.0.0.1",
             mac_address="00:00:00:00:00:00")
         slave.save()
 
@@ -2507,7 +2507,7 @@ class ScriptTests(TestCase):
         from django.db.utils import IntegrityError
         slave = SlaveModel(
             name="test_slave",
-            ip_address="0.0.0.0",
+            ip_address="127.0.0.1",
             mac_address="00:00:00:00:00:00")
         slave.save()
 
