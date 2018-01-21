@@ -455,3 +455,24 @@ def add_file(request):
                     ]))))
     else:
         return HttpResponseForbidden()
+
+
+def manage_file(request, file_id):
+    """
+    Process DELETE, PUT and POST requests for the FileModel ressource.
+
+    Parameters
+    ----------
+        request: HttpRequest
+        slaveId: Unique identifier of a slave
+        fileId: Unique identifier of a file
+
+    Returns
+    -------
+        A StatusResponse or HttpResponseForbidden if the request method was
+        other than GET.
+    """
+    if request.method == 'DELETE':
+        FileModel.objects.filter(id=file_id).delete()
+        return StatusResponse(Status.ok(''))
+

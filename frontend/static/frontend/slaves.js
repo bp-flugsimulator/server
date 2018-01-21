@@ -197,6 +197,10 @@ $(document).ready(function () {
         modalDeleteAction($('#programForm'), 'program');
     });
 
+    $('#deleteFileModalButton').click(function () {
+        modalDeleteAction($('#fileForm'), 'file');
+    });
+
     $('.program-action-delete').click(function () {
         //get id and name of the program and create deletion message
         let id = $(this).data('program-id');
@@ -207,6 +211,7 @@ $(document).ready(function () {
         //changing button visibility and message of the delete modal
         let deleteWarning = $('#deleteWarning');
         deleteWarning.children().find('#deleteSlaveModalButton').hide();
+        deleteWarning.children().find('#deleteFileModalButton').hide();
         deleteWarning.children().find('#deleteProgramModalButton').show();
         deleteWarning.children().find('.modal-body').empty(message);
         deleteWarning.children().find('.modal-body').append(message);
@@ -250,7 +255,24 @@ $(document).ready(function () {
     });
 
     $('.file-action-delete').click(function () {
-        alert('Unimplemented');
+       //get id and name of the program and create deletion message
+        let id = $(this).data('file-id');
+        let name = $(this).data('file-name');
+        let message = '<a>Are you sure you want to remove file </a><b>' + name + '</b>?</a>';
+
+        //
+        //changing button visibility and message of the delete modal
+        let deleteWarning = $('#deleteWarning');
+        deleteWarning.children().find('#deleteSlaveModalButton').hide();
+        deleteWarning.children().find('#deleteProgramModalButton').hide();
+        deleteWarning.children().find('#deleteFileModalButton').show();
+        deleteWarning.children().find('.modal-body').empty(message);
+        deleteWarning.children().find('.modal-body').append(message);
+
+
+        //adding id to modal and set it visible
+        deleteWarning.data('sqlId', id);
+        deleteWarning.modal('toggle');
     });
 
     // fileForm Handler
@@ -392,6 +414,7 @@ $(document).ready(function () {
         let deleteWarning = $('#deleteWarning');
         deleteWarning.children().find('#deleteProgramModalButton').hide();
         deleteWarning.children().find('#deleteSlaveModalButton').show();
+        deleteWarning.children().find('#deleteFileModalButton').hide();
         deleteWarning.children().find('.modal-body').empty(message);
         deleteWarning.children().find('.modal-body').append(message);
 

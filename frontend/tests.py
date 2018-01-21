@@ -1589,6 +1589,57 @@ class ApiTests(TestCase):
 
         model.delete()
 
+    def test_delete_file(self):
+        slave = SlaveModel(
+            name="file_delete_slave",
+            ip_address="0.0.5.255",
+            mac_address="00:00:00:00:04:fe",
+        )
+
+        # saving slave in database
+        slave.save()
+
+        #  get the database entry for the slave because his id is needed to delete a program
+        slave_in_database = SlaveModel.objects.get(name=slave.name)
+
+        data_set = [
+            FileModel(
+                name="Masterplan.pdf",
+                sourcePath=":\\Users\Admin\Desktop\masterplan.pdf",
+                destinationPath="C:\\Users\Admin\Temp\masterplan.pdf",
+                slave=slave_in_database,
+            ),
+            FileModel(
+                name="Bundeslade.jpg",
+                sourcePath="C:\Bundeslade.jpg",
+                destinationPath="E:\Bundeslade.jpg",
+                slave=slave_in_database,
+            ),
+            FileModel(
+                name="FeelsBadMan.png",
+                sourcePath="C:\Memes\FeelsBadMan.png",
+                destinationPath="C:\DankMemes\FeelsBadMan.png",
+                slave=slave_in_database,
+            ),
+        ]
+
+        # saving programs in database
+        for data in data_set:
+            data.save()
+
+        #  get all the database entries because the ids are needed to delete
+        data_in_database_set = []
+        for data in data_set:
+            data_in_database_set.append(
+                FileModel.objects.get(name=data.name))
+
+        #  make a request to delete the program entry
+        for data in data_in_database_set:
+            api_response = self.client.delete('/api/file/' + str(data.id))
+            self.assertEqual(api_response.status_code, 200)
+            self.assertEquals(api_response.json()['status'], 'ok')
+            self.assertFalse(FileModel.objects.filter(id=data.id).exists())
+
     def test_stop_program(self):
         SlaveModel(
             name='stop_program',
