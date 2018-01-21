@@ -147,16 +147,16 @@ $(document).ready(function () {
 
         //clear input fields
 
-        programForm.find('input[name="name"]').val('');
-        programForm.find('input[name="path"]').val('');
-        programForm.find('input[name="arguments"]').val('');
+        programForm.find('[name="name"]').val('');
+        programForm.find('[name="path"]').val('');
+        programForm.find('[name="arguments"]').val('');
 
         //clear error messages
         clearErrorMessages(programForm);
 
         //find slave id and store it in the form
         let slaveId = $(this).data('slave-id');
-        programForm.find('input[name="slave"]').val(slaveId);
+        programForm.find('[name="slave"]').val(slaveId);
         programModal.modal('toggle');
     });
 
@@ -178,16 +178,16 @@ $(document).ready(function () {
         programForm.children().find('.submit-btn').text('Edit');
 
         //clear input fields
-        programForm.find('input[name="name"]').val(name);
-        programForm.find('input[name="path"]').val(path);
-        programForm.find('input[name="arguments"]').val(args);
+        programForm.find('[name="name"]').val(name);
+        programForm.find('[name="path"]').val(path);
+        programForm.find('[name="arguments"]').val(args);
 
         //clear error messages
         clearErrorMessages(programForm);
 
         //find slave id and store it in the form
         let slaveId = $(this).data('slave-id');
-        programForm.find('input[name="slave"]').val(slaveId);
+        programForm.find('[name="slave"]').val(slaveId);
 
         //find slave id and store it in the form
         programModal.modal('toggle');
@@ -232,16 +232,16 @@ $(document).ready(function () {
         fileForm.children().find('.submit-btn').text('Add');
 
         //clear input fields
-        fileForm.find('input[name="name"]').val('');
-        fileForm.find('input[name="sourcePath"]').val('');
-        fileForm.find('input[name="destinationPath"]').val('');
+        fileForm.find('[name="name"]').val('');
+        fileForm.find('[name="sourcePath"]').val('');
+        fileForm.find('[name="destinationPath"]').val('');
 
         //clear error messages
         clearErrorMessages(fileForm);
 
         //find slave id and store it in the form
         let slaveId = $(this).data('slave-id');
-        fileForm.find('input[name="slave"]').val(slaveId);
+        fileForm.find('[name="slave"]').val(slaveId);
         fileModal.modal('toggle');
     });
 
@@ -341,9 +341,9 @@ $(document).ready(function () {
         slaveForm.children().find('.submit-btn').text('Add');
 
         //clear input fields
-        slaveForm.find('input[name="name"]').val('');
-        slaveForm.find('input[name="ip_address"]').val('');
-        slaveForm.find('input[name="mac_address"]').val('');
+        slaveForm.find('[name="name"]').val('');
+        slaveForm.find('[name="ip_address"]').val('');
+        slaveForm.find('[name="mac_address"]').val('');
 
         //clear error messages
         clearErrorMessages(slaveForm);
@@ -369,9 +369,9 @@ $(document).ready(function () {
         slaveForm.children().find('.submit-btn').text('Edit');
 
         //insert values into input field
-        slaveForm.find('input[name="name"]').val(name);
-        slaveForm.find('input[name="ip_address"]').val(ip);
-        slaveForm.find('input[name="mac_address"]').val(mac);
+        slaveForm.find('[name="name"]').val(name);
+        slaveForm.find('[name="ip_address"]').val(ip);
+        slaveForm.find('[name="mac_address"]').val(mac);
 
         //clear error messages
         clearErrorMessages(slaveForm);
