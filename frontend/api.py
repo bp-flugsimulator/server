@@ -2,11 +2,9 @@
 This module contains all functions that handle requests on the REST api.
 """
 
-from shlex import split
-
 from django.http import HttpResponseForbidden
 from django.http.request import QueryDict
-from django.core.exceptions import ValidationError, ObjectDoesNotExist
+from django.core.exceptions import ValidationError
 from django.db.utils import IntegrityError
 from channels import Group
 from utils import Status, Command
@@ -16,12 +14,10 @@ from .models import (
     Slave as SlaveModel,
     SlaveStatus as SlaveStatusModel,
     Program as ProgramModel,
-    ProgramStatus as ProgramStatusModel,
     Script as ScriptModel,
     File as FileModel,
 )
 
-from .scheduler import Scheduler
 from .scripts import Script
 from .forms import SlaveForm, ProgramForm, FileForm
 from .consumers import notify

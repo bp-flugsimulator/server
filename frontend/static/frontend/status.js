@@ -1,3 +1,6 @@
+/* eslint-env browser*/
+/* exported uuid, Status */
+
 function uuid() {
     let uuid = '', i, random;
     for (i = 0; i < 32; i++) {

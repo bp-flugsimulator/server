@@ -898,7 +898,8 @@ class ApiTests(TestCase):
                     mac_address=data.mac_address,
                 ).get())
 
-        # make an edit request for every entry in data_set_1 with the data from dataset 2
+        # make an edit request for every entry in data_set_1 with the data from
+        # dataset 2
         for (data, new_data) in zip(data_in_database_set, data_set_2):
             api_response = self.client.put(
                 '/api/slave/' + str(data.id),
@@ -1728,7 +1729,7 @@ class ApiTests(TestCase):
 
 
 class WebsocketTests(TestCase):
-    def test_rpc_commands_fails_unkown_slave(self):
+    def test_rpc_commands_fails_unknown_slave(self):
         ws_client = WSClient()
         self.assertRaisesMessage(
             AssertionError,

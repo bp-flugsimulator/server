@@ -1,5 +1,5 @@
 /* eslint-env browser*/
-/* global $, getCookie, modalDeleteAction, handleFormStatus, clearErrorMessages, Status, fsimWebsocket, notify*/
+/* global $, getCookie, modalDeleteAction, handleFormStatus, clearErrorMessages, Status, fsimWebsocket, notify, swapText, styleSlaveByStatus*/
 
 /**
  * Creates a function which handles from submits.
@@ -75,13 +75,13 @@ var socketEventHandler = {
         let statusTab = $('#slaveTab' + payload.sid);
         let startstopButton = $('#slaveStartStop_' + payload.sid);
 
-        statusContainer.attr('data-state', 'unkown');
-        statusTab.attr('data-state', 'unkown');
+        statusContainer.attr('data-state', 'unknown');
+        statusTab.attr('data-state', 'unknown');
 
         $('#slavesObjectsProgramsContent' + payload.sid)
             .find('.fsim-box[data-state]')
             .each(function (idx, val) {
-                $(val).attr('data-state', 'unkown');
+                $(val).attr('data-state', 'unknown');
             });
 
         // Use Python notation !!!

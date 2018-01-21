@@ -159,14 +159,14 @@ var options = {
 
 var editors = {};
 
-var createEditor = function (json, id) {
+function createEditor(json, id) {
     let container = document.getElementById('jsoneditor_' + id);
     let editor = new JSONEditor(container, options, json);
     editors['jsoneditor_' + id] = editor;
     editor.expandAll();
-};
+}
 
-var loadScript = function (id) {
+function loadScript(id) {
     $.ajax({
         url: '/api/script/' + id + '?programs=str&files=str&slaves=str',
         beforeSend(xhr) {
@@ -186,9 +186,9 @@ var loadScript = function (id) {
             notify('Transport error', 'Could not load script from server (' + errorCode + ')', 'danger');
         }
     });
-};
+}
 
-var newScript = function (name) {
+function newScript(name) {
     let defaultJson = {
         name,
         programs: [],
@@ -196,7 +196,7 @@ var newScript = function (name) {
     };
 
     createEditor(defaultJson, name);
-};
+}
 
 $(document).ready(function () {
     // Set color of the current selected.

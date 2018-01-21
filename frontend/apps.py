@@ -43,6 +43,9 @@ class FrontendConfig(AppConfig):
         flush('ProgramStatus', 'SlaveStatus')
 
         # removes the status flags from the script
-        from .models import Script as ScriptModel
-        for script in ScriptModel.objects.all():
-            script.reset()
+        try:
+            from .models import Script as ScriptModel
+            for script in ScriptModel.objects.all():
+                script.reset()
+        except OperationalError:
+            pass

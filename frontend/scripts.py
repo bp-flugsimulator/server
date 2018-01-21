@@ -4,7 +4,6 @@ to javascript
 """
 
 import json
-from django.db import transaction
 from .models import Script as ScriptModel
 from .models import (
     ScriptGraphFiles as SGFModel,
@@ -26,7 +25,8 @@ def get_slave(slave):
 
     Returns
     -------
-        Slave object if it is in the database or None if it is not string or int
+        Slave object if it is in the database or None if it is not string or
+        int
     """
     if isinstance(slave, str):
         return SlaveModel.objects.get(name=slave)
@@ -166,8 +166,8 @@ class Script:
 
         except Exception as err:
             script.delete()
-            for d in done:
-                d.delete()
+            for did in done:
+                did.delete()
             raise err
 
     def to_json(self):
@@ -208,7 +208,8 @@ class ScriptEntryFile:
         self.slave = slave
 
     def __eq__(self, other):
-        return self.index == other.index and self.file == other.file and self.slave == other.slave
+        return (self.index == other.index and self.file == other.file
+                and self.slave == other.slave)
 
     def __iter__(self):
         for key, val in vars(self).items():
@@ -217,7 +218,8 @@ class ScriptEntryFile:
     @classmethod
     def from_query(cls, query, slaves_type, programs_type):
         """
-        Retrieves values from a django query (for ScriptGraphFiles or ScriptGraphPrograms).
+        Retrieves values from a django query (for ScriptGraphFiles or
+        ScriptGraphPrograms).
 
         Arguments
         ----------
@@ -337,7 +339,8 @@ class ScriptEntryProgram:
         self.slave = slave
 
     def __eq__(self, other):
-        return self.index == other.index and self.program == other.program and self.slave == other.slave
+        return (self.index == other.index and self.program == other.program
+                and self.slave == other.slave)
 
     def __iter__(self):
         for key, val in vars(self).items():

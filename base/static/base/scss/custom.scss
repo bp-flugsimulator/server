@@ -578,7 +578,7 @@ footer {
 
 }
 
-.fsim-box[data-state=unkown] {
+.fsim-box[data-state=unknown] {
     background: linear-gradient(to right, $gray-100 0, $gray-100 5px, transparent 5px, transparent 100%) no-repeat;
 
 }
@@ -634,7 +634,7 @@ footer {
     @extend .mdi-check;
 }
 
-.fsim-box[data-state=unkown] .fsim-status-icon {
+.fsim-box[data-state=unknown] .fsim-status-icon {
     @extend .mdi;
     @extend .mdi-all-inclusive;
 }

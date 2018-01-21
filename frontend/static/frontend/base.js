@@ -65,19 +65,19 @@ function modalDeleteAction(form, route) {
             if (status.is_ok()) {
                 window.location.reload();
             } else {
-                $.notify({
-                    message: JSON.stringify(status.payload)
-                }, {
-                        type: 'danger'
-                    });
+                notify(
+                    'Error while deleting',
+                    JSON.stringify(status.payload),
+                    'danger'
+                );
             }
         },
         error(xhr, errorString, errorCode) {
-            $.notify({
-                message: 'Could not deliver delete request to server (' + errorCode + ')'
-            }, {
-                    type: 'danger'
-                });
+            notify(
+                'Transport error',
+                'Could not deliver delete request to server (' + errorCode + ')',
+                'danger'
+            );
         }
     });
 }
@@ -157,6 +157,15 @@ function styleSlaveByStatus(sid) {
     }
 }
 
+/**
+ * Spawns a notification box for the user where the given information are
+ * displayed.
+ *
+ * @param {String} title The title in the message box
+ * @param {String} message The body message in the message box
+ * @param {['danger'|'warning'|'info']} type The type or color of the message
+ * box
+ */
 function notify(title, message, type) {
     $.notify({
         title,
@@ -174,7 +183,6 @@ function notify(title, message, type) {
                 '</div>'
         });
 }
-
 
 $(document).ready(function () {
     $.notifyDefaults({

@@ -1,5 +1,5 @@
 /* eslint-env browser*/
-/* global $, Status */
+/* global Status, notify */
 /* export fsimWebsocket */
 /*eslint no-console: ["error", { allow: ["log"] }] */
 

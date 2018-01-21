@@ -20,16 +20,14 @@ from django.db.models import (
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from channels import Group
-
-from server.utils import notify, notify_err
-
 from wakeonlan.wol import send_magic_packet
-from utils import Command, Status
+from utils import Command
+from server.utils import notify
 
-logger = logging.getLogger("models")
+LOGGER = logging.getLogger("models")
 
 
-def timer_timeout_program(id):
+def timer_timeout_program(identifier):
     """
     Sets the timeout flag for a program.
 
@@ -38,7 +36,7 @@ def timer_timeout_program(id):
         id: Program id
     """
 
-    me = ProgramStatus.objects.filter(program=id).update(timeouted=True)
+    ProgramStatus.objects.filter(program=identifier).update(timeouted=True)
     FSIM_CURRENT_SCHEDULER.notify()
 
 
@@ -212,7 +210,8 @@ class Program(Model):
     @property
     def is_error(self):
         """
-        Returns true if the current program was executed not successful, which means the error code was 0.
+        Returns true if the current program was executed not successful, which
+        means the error code was 0.
         """
         # NOTICE: no try and catch needed because self.is_executed is False
         # if ProgramStatus.DoesNotExist is thrown, thus the whole expression
@@ -245,10 +244,11 @@ class Program(Model):
                 arguments=split(self.arguments),
             )
 
-            logger.info("Starting program {} on slave {}".format(
+            LOGGER.info(
+                "Starting program %s on slave %s",
                 self.name,
                 self.slave.name,
-            ))
+            )
 
             # send command to the client
             Group('client_' + str(self.slave.id)).send({'text': cmd.to_json()})
@@ -283,10 +283,11 @@ class Program(Model):
         """
 
         if self.is_running:
-            logger.info("Stoping program {} on slave {}".format(
+            LOGGER.info(
+                "Stoping program %s on slave %s",
                 self.name,
                 self.slave.name,
-            ))
+            )
             Group('client_' + str(self.slave.id)).send({
                 'text':
                 Command(
@@ -348,8 +349,8 @@ class Script(Model):
     @property
     def indexes(self):
         """
-        Returns a query which contains the index and 'id__count' which holds the
-        amount of index for one script.
+        Returns a query which contains the index and 'id__count' which holds
+        the amount of index for one script.
 
         Returns
         -------
@@ -363,6 +364,13 @@ class Script(Model):
 
     @property
     def has_error(self):
+        """
+        Returns true if the error code is set.
+
+        Returns
+        -------
+            bool
+        """
         return self.error_code != ''
 
     def set_last_started(self):
@@ -411,7 +419,7 @@ class Script(Model):
         return list(
             set(
                 map(
-                    lambda query: Program.objects.get(id=query['program']).slave,
+                    lambda q: Program.objects.get(id=q['program']).slave,
                     query_set,
                 )))
 
