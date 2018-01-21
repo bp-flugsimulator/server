@@ -131,8 +131,18 @@ class FrontendTests(TestCase):
             ip_address='0.0.0.0',
             mac_address='00:00:00:00:00:00')
         slave.save()
-        ProgramModel(name='p_asdodahgh', path='path', arguments='', slave=slave,).save()
-        FileModel(name='f_asdodahgh', sourcePath='src', destinationPath='dst', slave=slave,).save()
+        ProgramModel(
+            name='p_asdodahgh',
+            path='path',
+            arguments='',
+            slave=slave,
+        ).save()
+        FileModel(
+            name='f_asdodahgh',
+            sourcePath='src',
+            destinationPath='dst',
+            slave=slave,
+        ).save()
 
         response = self.client.get(reverse('frontend:slaves'))
         self.assertEqual(response.status_code, 200)
