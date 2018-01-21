@@ -1640,6 +1640,8 @@ class ApiTests(TestCase):
             self.assertEquals(api_response.json()['status'], 'ok')
             self.assertFalse(FileModel.objects.filter(id=data.id).exists())
 
+        slave_in_database.delete();
+
     def test_stop_program(self):
         SlaveModel(
             name='stop_program',
