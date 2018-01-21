@@ -207,19 +207,7 @@ $(document).ready(function () {
         let name = $(this).data('program-name');
         let message = '<a>Are you sure you want to remove program </a><b>' + name + '</b>?</a>';
 
-        //
-        //changing button visibility and message of the delete modal
-        let deleteWarning = $('#deleteWarning');
-        deleteWarning.children().find('#deleteSlaveModalButton').hide();
-        deleteWarning.children().find('#deleteFileModalButton').hide();
-        deleteWarning.children().find('#deleteProgramModalButton').show();
-        deleteWarning.children().find('.modal-body').empty(message);
-        deleteWarning.children().find('.modal-body').append(message);
-
-
-        //adding id to modal and set it visible
-        deleteWarning.data('sqlId', id);
-        deleteWarning.modal('toggle');
+        prepareDeleteModal("program", id, message);
     });
 
     // programForm Handler
@@ -260,19 +248,7 @@ $(document).ready(function () {
         let name = $(this).data('file-name');
         let message = '<a>Are you sure you want to remove file </a><b>' + name + '</b>?</a>';
 
-        //
-        //changing button visibility and message of the delete modal
-        let deleteWarning = $('#deleteWarning');
-        deleteWarning.children().find('#deleteSlaveModalButton').hide();
-        deleteWarning.children().find('#deleteProgramModalButton').hide();
-        deleteWarning.children().find('#deleteFileModalButton').show();
-        deleteWarning.children().find('.modal-body').empty(message);
-        deleteWarning.children().find('.modal-body').append(message);
-
-
-        //adding id to modal and set it visible
-        deleteWarning.data('sqlId', id);
-        deleteWarning.modal('toggle');
+        prepareDeleteModal("file", id, message);
     });
 
     // fileForm Handler
@@ -410,11 +386,27 @@ $(document).ready(function () {
 
         let message = '<a>Are you sure you want to remove client </a><b>' + name + '</b>?</a>';
 
-        //changing button visibility and message of the delete modal
+        prepareDeleteModal("slave", id, message);
+    });
+
+    function prepareDeleteModal(show, id, message){
+         //changing button visibility and message of the delete modal
         let deleteWarning = $('#deleteWarning');
         deleteWarning.children().find('#deleteProgramModalButton').hide();
-        deleteWarning.children().find('#deleteSlaveModalButton').show();
+        deleteWarning.children().find('#deleteSlaveModalButton').hide();
         deleteWarning.children().find('#deleteFileModalButton').hide();
+        switch(show) {
+        case "file":
+            deleteWarning.children().find('#deleteFileModalButton').show();
+            break;
+        case "program":
+            deleteWarning.children().find('#deleteProgramModalButton').show();
+            break;
+        case "slave":
+            deleteWarning.children().find('#deleteSlaveModalButton').show();
+            break;
+        default:
+        }
         deleteWarning.children().find('.modal-body').empty(message);
         deleteWarning.children().find('.modal-body').append(message);
 
@@ -422,7 +414,7 @@ $(document).ready(function () {
         //adding id to modal and set it visible
         deleteWarning.data('sqlId', id);
         deleteWarning.modal('toggle');
-    });
+    }
 
     /*function for deleting a program, it is added to the program-action-delete
     button*/
