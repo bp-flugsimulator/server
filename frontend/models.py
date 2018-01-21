@@ -15,12 +15,11 @@ from django.db.models import (
     IntegerField,
     BooleanField,
     OneToOneField,
+    TextField,
     Count,
 )
+
 from django.db.utils import OperationalError
-from django.db.models import (Model, CharField, GenericIPAddressField,
-                              ForeignKey, CASCADE, IntegerField, BooleanField,
-                              OneToOneField, TextField)
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from channels import Group
@@ -49,8 +48,6 @@ def timer_timeout_program(identifier):
         except OperationalError:
             tries -= 1
     FSIM_CURRENT_SCHEDULER.notify()
-
-from shlex import split
 
 
 def validate_mac_address(mac_addr):
