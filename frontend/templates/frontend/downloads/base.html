@@ -1,0 +1,17 @@
+{% extends "base/base.html" %}
+{% load staticfiles %}
+{% load components %}
+{% block title %} Downloads {% endblock %}
+{% block premain %}
+{% endblock %}
+{% block content %}
+
+<ul>
+{% for file in file_list %}
+    {%  download_entry file %}
+{% endfor %}
+</ul>
+
+{% endblock %}
+{% block script %}
+{% endblock %}
