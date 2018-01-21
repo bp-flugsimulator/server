@@ -9,6 +9,8 @@
 <ul>
 {% for file in file_list %}
     {%  download_entry file %}
+{% empty %}
+    No files are present in the download folder.
 {% endfor %}
 </ul>
 
