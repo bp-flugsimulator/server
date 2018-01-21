@@ -103,3 +103,19 @@ def file_entry(file):
         A context which maps the file object to file.
     """
     return {'file': file}
+
+@register.inclusion_tag('frontend/downloads/file.html')
+def download_entry(file):
+    """
+    File tag {% file_entry file %} is used to display a single
+    file.
+
+    Arguments
+    ---------
+        file: File object
+
+    Returns
+    -------
+        A context which maps the file object to file.
+    """
+    return {'file': file}
