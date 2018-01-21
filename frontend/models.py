@@ -18,6 +18,9 @@ from django.db.models import (
     Count,
 )
 from django.db.utils import OperationalError
+from django.db.models import (Model, CharField, GenericIPAddressField,
+                              ForeignKey, CASCADE, IntegerField, BooleanField,
+                              OneToOneField, TextField)
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from channels import Group
@@ -46,6 +49,8 @@ def timer_timeout_program(identifier):
         except OperationalError:
             tries -= 1
     FSIM_CURRENT_SCHEDULER.notify()
+
+from shlex import split
 
 
 def validate_mac_address(mac_addr):
@@ -90,6 +95,30 @@ def validate_mac_address(mac_addr):
             _('Enter a valid MAC Address.'),
             code='invalid_mac_few',
         )
+
+
+def validate_argument_list(args):
+    """
+    Validates that given argument list is parsable by shlex.
+
+    Parameters
+    ----------
+    args: str
+        argument list
+
+    Returns
+    -------
+    nothing
+
+    Exception
+    ---------
+    Raises an ValidationError if the given argument list is
+    not parsable by shlex.
+    """
+    try:
+        split(args)
+    except ValueError:
+        raise ValidationError(_('Enter a valid argument list.'), )
 
 
 class Slave(Model):
@@ -167,9 +196,13 @@ class Program(Model):
 
     start_time: int The amount of time a program needs to start.
     """
-    name = CharField(unique=False, max_length=200)
-    path = CharField(unique=False, max_length=200)
-    arguments = CharField(unique=False, blank=True, max_length=200)
+    name = CharField(unique=False, max_length=1000)
+    path = TextField(unique=False)
+    arguments = TextField(
+        unique=False,
+        blank=True,
+        validators=[validate_argument_list],
+    )
     slave = ForeignKey(Slave, on_delete=CASCADE)
     start_time = IntegerField(default=-1)
 

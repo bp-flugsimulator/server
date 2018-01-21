@@ -20,6 +20,7 @@ from channels import Group
 from .models import (
     Slave as SlaveModel,
     validate_mac_address,
+    validate_argument_list,
     Program as ProgramModel,
     ProgramStatus as ProgramStatusModel,
     ScriptGraphPrograms as SGP,
@@ -1055,14 +1056,8 @@ class ApiTests(TestCase):
         self.assertEqual(
             Status.err({
                 "name": [
-                    "Ensure this value has at most 200 characters (it has 2000)."
+                    "Ensure this value has at most 1000 characters (it has 2000)."
                 ],
-                "path": [
-                    "Ensure this value has at most 200 characters (it has 2000)."
-                ],
-                "arguments": [
-                    "Ensure this value has at most 200 characters (it has 2000)."
-                ]
             }),
             Status.from_json(api_response.content.decode('utf-8')),
         )
@@ -1309,14 +1304,8 @@ class ApiTests(TestCase):
         self.assertEqual(
             Status.err({
                 "name": [
-                    "Ensure this value has at most 200 characters (it has 2000)."
+                    "Ensure this value has at most 1000 characters (it has 2000)."
                 ],
-                "path": [
-                    "Ensure this value has at most 200 characters (it has 2000)."
-                ],
-                "arguments": [
-                    "Ensure this value has at most 200 characters (it has 2000)."
-                ]
             }),
             Status.from_json(api_response.content.decode('utf-8')),
         )
@@ -2436,6 +2425,17 @@ class DatabaseTests(TestCase):
         status.save()
 
         self.assertTrue(prog.is_timeouted)
+
+    def test_validate_argument_list(self):
+        self.assertIsNone(validate_argument_list('a b c d e f g'))
+
+    def test_validate_argument_list_raises(self):
+        self.assertRaisesMessage(
+            ValidationError,
+            'Enter a valid argument list.',
+            validate_argument_list,
+            'a "abc',
+        )
 
     def test_slave_has_err(self):
         slave = SlaveModel(

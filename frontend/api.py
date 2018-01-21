@@ -50,8 +50,7 @@ def add_slave(request):
             Status.ok(
                 list(
                     set([
-                        obj['name']
-                        for obj in SlaveModel.objects.filter(
+                        obj['name'] for obj in SlaveModel.objects.filter(
                             name__contains=query).values("name")
                     ]))))
     else:
@@ -197,8 +196,7 @@ def add_program(request):
             Status.ok(
                 list(
                     set([
-                        obj['name']
-                        for obj in ProgramModel.objects.filter(
+                        obj['name'] for obj in ProgramModel.objects.filter(
                             name__contains=query).values("name")
                     ]))))
     else:
@@ -449,8 +447,7 @@ def add_file(request):
             Status.ok(
                 list(
                     set([
-                        obj['name']
-                        for obj in FileModel.objects.filter(
+                        obj['name'] for obj in FileModel.objects.filter(
                             name__contains=query).values("name")
                     ]))))
     else:
