@@ -263,12 +263,11 @@ class Scheduler:
         """
         In this state all slaves are started.
         """
-        from .models import Script
+        from .models import Script, Slave
 
-        for slave in Script.objects.get(
-                id=self.__script).get_involved_slaves():
-            LOGGER.debug("Starting slave `%s`", slave.name)
-            slave.wake_on_lan()
+        for slave in Script.get_involved_slaves(self.__script):
+            LOGGER.debug("Starting slave `%s`", slave)
+            Slave.wake_on_lan(slave)
 
         self.__state = SchedulerStatus.WAITING_FOR_SLAVES
         self.event.set()
@@ -289,7 +288,7 @@ class Scheduler:
         """
         from .models import Script
 
-        if Script.check_online(self.__script.id):
+        if Script.check_online(self.__script):
             LOGGER.info("All slaves online")
             self.__state = SchedulerStatus.NEXT_STEP
             self.event.set()
@@ -312,6 +311,7 @@ class Scheduler:
         )
 
         (last_index, all_done) = self.__next_stage()
+        max_start_time = 0
 
         Script.objects.filter(id=self.__script).update(
             current_index=self.__index)
@@ -324,8 +324,6 @@ class Scheduler:
         else:
             self.__state = SchedulerStatus.WAITING_FOR_PROGRAMS
 
-            max_start_time = 0
-
             for sgp in ScriptGraphPrograms.objects.filter(
                     script=self.__script,
                     index=self.__index,
@@ -334,13 +332,13 @@ class Scheduler:
                     max_start_time = sgp.program.start_time
                 sgp.program.enable()
 
-            notify({
-                'script_status': 'next_step',
-                'index': self.__index,
-                'last_index': last_index,
-                'start_time': max_start_time,
-                'script_id': self.__script,
-            })
+        notify({
+            'script_status': 'next_step',
+            'index': self.__index,
+            'last_index': last_index,
+            'start_time': max_start_time,
+            'script_id': self.__script,
+        })
 
     def __state_wait_programs(self):
         """
@@ -406,7 +404,7 @@ class Scheduler:
             error_code='',
         )
 
-        Script.set_last_started(self.__script.id)
+        Script.set_last_started(self.__script)
 
     def __state_error(self):
         """

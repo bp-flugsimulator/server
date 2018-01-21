@@ -2275,7 +2275,7 @@ class DatabaseTests(TestCase):
         sgp2.save()
 
         self.assertEqual(
-            list(script.get_involved_slaves()), [
+            list(ScriptModel.get_involved_slaves(script)), [
                 slave1.id,
                 slave2.id,
             ])

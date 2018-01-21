@@ -108,11 +108,13 @@ class Slave(Model):
     command_uuid = CharField(blank=True, null=True, max_length=32, unique=True)
     online = BooleanField(unique=False, default=False)
 
-    def wake_on_lan(self):
+    @staticmethod
+    def wake_on_lan(slave):
         """
         Sends wake on lan package to the slave.
         """
-        send_magic_packet(self.mac_address)
+        (mac, ) = Slave.objects.values_list('mac_address').get(id=slave)
+        send_magic_packet(mac)
 
     @property
     def is_online(self):
@@ -387,7 +389,8 @@ class Script(Model):
             slave__online=False,
         ).exists()
 
-    def get_involved_slaves(self):
+    @staticmethod
+    def get_involved_slaves(script):
         """
         Returns all slaves which are involved.
 
@@ -396,7 +399,7 @@ class Script(Model):
             A list of slaves
         """
         return Program.objects.filter(
-            scriptgraphprograms__script=self).annotate(
+            scriptgraphprograms__script=script).annotate(
                 dcount=Count('slave')).values_list(
                     'slave', flat=True)
 

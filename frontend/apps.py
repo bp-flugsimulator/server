@@ -48,7 +48,7 @@ class FrontendConfig(AppConfig):
         try:
             from .models import Script
             Script.objects.all().update(
-                error_code=None,
+                error_code="",
                 is_running=False,
                 is_initialized=False,
                 current_index=-1,

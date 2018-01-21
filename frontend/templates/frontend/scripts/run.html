@@ -20,6 +20,12 @@
         {% endfor %}
     </ul>
 
+    {% if not scripts %}
+        <div class="tab-pane fade show active">
+            <span class="background-text-large">No scripts created</span>
+        </div>
+    {% endif %}
+
     <br>
     <br>
     <br>
