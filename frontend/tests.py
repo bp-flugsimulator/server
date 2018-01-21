@@ -14,8 +14,8 @@ from channels.test import WSClient
 from channels import Group
 
 import json
-from os import getcwd, remove
-from os.path import join
+from os import getcwd, remove, mkdir, rmdir
+from os.path import join, isdir
 
 from .models import (
     Slave as SlaveModel,
@@ -2570,6 +2570,21 @@ class ScriptTests(TestCase):
 
 class DownloadTests(TestCase):
     DOWNLOAD_FOLDER = 'downloads'
+
+    @classmethod
+    def setUpClass(cls):
+        if not isdir(cls.DOWNLOAD_FOLDER):
+            mkdir(cls.DOWNLOAD_FOLDER)
+        super().setUpClass()
+
+    def test_download_page_no_folder(self):
+        rmdir(self.DOWNLOAD_FOLDER)
+        response = self.client.get(reverse('frontend:downloads'))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(
+            'No files are present in the download folder.',
+            str(response.content),
+        )
 
     def test_download_page_0_byte(self):
         with open(

@@ -10,9 +10,8 @@ from .forms import SlaveForm
 from .forms import ProgramForm
 from .forms import FileForm
 
-from os import listdir, getcwd
-from os.path import getsize, join
-
+from os import listdir, getcwd, mkdir
+from os.path import getsize, join, isdir
 
 class WelcomeView(TemplateView):
     """
@@ -60,6 +59,9 @@ class DownloadView(TemplateView):
 
     def get_context_data(self, **kwargs):  # pylint: disable=w0221
         context = super(DownloadView, self).get_context_data(**kwargs)
+
+        if not isdir('downloads'):
+            mkdir('downloads')
 
         file_list = []
         for file in listdir('downloads'):
