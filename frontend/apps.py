@@ -47,5 +47,6 @@ class FrontendConfig(AppConfig):
             from .models import Script as ScriptModel
             for script in ScriptModel.objects.all():
                 script.reset()
+                script.save()
         except OperationalError:
             pass

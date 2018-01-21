@@ -1,19 +1,19 @@
-#  pylint: disable=C0111
-#  pylint: disable=C0103
+#  pylint: disable=C0111,R0904,R0903,C0103
 
-from django.test import TestCase
-from django.urls import reverse
-from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from urllib.parse import urlencode
-from utils import Status, Command
 from shlex import split
 from datetime import datetime
 from uuid import uuid4
+import json
+
+from django.core.exceptions import ValidationError
+from django.test import TestCase
+from django.urls import reverse
+
+from utils import Status, Command
 
 from channels.test import WSClient
 from channels import Group
-
-import json
 
 from .models import (
     Slave as SlaveModel,
@@ -28,6 +28,8 @@ from .models import (
 )
 
 from .scripts import Script, ScriptEntryFile, ScriptEntryProgram
+
+from .scheduler import Scheduler, SchedulerStatus
 
 
 def fill_database_slaves_set_1():
@@ -123,8 +125,35 @@ class FrontendTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Scripts")
 
+    def test_run_script_get(self):
+        response = self.client.get(reverse('frontend:scripts_run'))
+        self.assertEqual(response.status_code, 200)
+
 
 class ApiTests(TestCase):
+    # def test_script_run_still_running(self):
+    #     script = ScriptModel.objects.create(name="test_api_scripts")
+
+    #     response = self.client.get("/api/script/" + str(script.id) + "/run")
+    #     self.assertEqual(response.status_code, 200)
+    #     self.assertContains(response, "Started script")
+
+    #     response = self.client.get("/api/script/" + str(script.id) + "/run")
+    #     self.assertEqual(response.status_code, 200)
+    #     self.assertContains(response, "A script is still running")
+
+    def test_script_run_get_unknown_scriptlave(self):
+        response = self.client.get("/api/script/0/run")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            "The script with the id 0 does not exist",
+        )
+
+    def test_script_run_forbidden(self):
+        response = self.client.put("/api/script/0/run")
+        self.assertEqual(response.status_code, 403)
+
     def test_add_script_forbidden(self):
         response = self.client.put("/api/scripts")
         self.assertEqual(response.status_code, 403)
@@ -1159,7 +1188,8 @@ class ApiTests(TestCase):
         # saving slave in database
         slave.save()
 
-        #  get the database entry for the slave because his id is needed to delete a program
+        #  get the database entry for the slave because his id is needed to
+        #  delete a program
         slave_in_database = SlaveModel.objects.get(name=slave.name)
 
         data_set = [
@@ -1171,7 +1201,7 @@ class ApiTests(TestCase):
             ),
             ProgramModel(
                 name="command",
-                path="C:\Windows\System32\cmd.exe",
+                path="C:\\Windows\\System32\\cmd.exe",
                 arguments="",
                 slave=slave_in_database,
             ),
@@ -1197,7 +1227,7 @@ class ApiTests(TestCase):
         for data in data_in_database_set:
             api_response = self.client.delete('/api/program/' + str(data.id))
             self.assertEqual(api_response.status_code, 200)
-            self.assertEquals(api_response.json()['status'], 'ok')
+            self.assertEqual(api_response.json()['status'], 'ok')
             self.assertFalse(ProgramModel.objects.filter(id=data.id).exists())
 
     def test_manage_program_wrong_http_method(self):
@@ -1928,6 +1958,35 @@ class WebsocketTests(TestCase):
 
         slave.delete()
 
+    def test_ws_notifications_receive_online_try(self):
+        slave = SlaveModel(
+            name="test_ws_notifications_receive_online",
+            ip_address='0.0.10.2',
+            mac_address='00:00:00:00:10:02',
+        )
+
+        slave.save()
+
+        uuid = uuid4().hex
+        expected_status = Status.ok({'method': 'online'})
+        expected_status.uuid = uuid
+
+        # connect webinterface on /notifications
+        webinterface = WSClient()
+        webinterface.join_group('notifications')
+
+        # send online answer
+        ws_client = WSClient()
+        ws_client.send_and_consume(
+            'websocket.receive',
+            path='/notifications',
+            content={'text': expected_status.to_json()},
+        )
+
+        self.assertIsNone(webinterface.receive())
+
+        slave.delete()
+
     def test_ws_notifications_receive_online_status_err(self):
         SlaveModel(
             name="test_ws_notifications_receive_online_status_err",
@@ -2033,6 +2092,44 @@ class WebsocketTests(TestCase):
 
         slave.delete()
 
+    def test_ws_notifications_receive_execute_try(self):
+        slave = SlaveModel(
+            name="test_ws_notifications_receive_execute",
+            ip_address='0.0.10.3',
+            mac_address='00:00:00:00:10:03',
+        )
+        slave.save()
+
+        program = ProgramModel(
+            name='program',
+            path='path',
+            arguments='',
+            slave=slave,
+        )
+        program.save()
+
+        uuid = uuid4().hex
+        expected_status = Status.ok({'method': 'execute', 'result': 0})
+        expected_status.uuid = uuid
+
+        #  connect webinterface
+        webinterface = WSClient()
+        webinterface.send_and_consume(
+            'websocket.connect',
+            path='/notifications',
+        )
+
+        ws_client = WSClient()
+        ws_client.send_and_consume(
+            'websocket.receive',
+            path='/notifications',
+            content={'text': expected_status.to_json()},
+        )
+
+        self.assertIsNone(webinterface.receive())
+
+        slave.delete()
+
     def test_ws_notifications_receive_execute_status_err(self):
         SlaveModel(
             name="test_ws_notifications_receive_execute_status_err",
@@ -2109,6 +2206,176 @@ class WebsocketTests(TestCase):
 
 
 class DatabaseTests(TestCase):
+    def test_script_online(self):
+        script = ScriptModel(name="t1")
+        script.save()
+
+        self.assertTrue(script.check_online())
+
+        slave1 = SlaveModel(
+            name="test_slave1",
+            ip_address="0.1.2.0",
+            mac_address="01:00:01:00:00100",
+        )
+        slave1.save()
+
+        self.assertTrue(script.check_online())
+
+        slave2 = SlaveModel(
+            name="test_slave2",
+            ip_address="0.1.2.1",
+            mac_address="00:02:01:01:00:00",
+        )
+        slave2.save()
+
+        self.assertTrue(script.check_online())
+
+        prog1 = ProgramModel(name="test_program1", path="none", slave=slave1)
+        prog1.save()
+        self.assertTrue(script.check_online())
+
+        prog2 = ProgramModel(name="test_program2", path="none", slave=slave2)
+        prog2.save()
+        self.assertTrue(script.check_online())
+
+        sgp1 = SGP(index=0, program=prog1, script=script)
+        sgp1.save()
+        self.assertFalse(script.check_online())
+
+        sgp2 = SGP(index=2, program=prog2, script=script)
+        sgp2.save()
+        self.assertFalse(script.check_online())
+
+        slave3 = SlaveModel(
+            name="test_slave3",
+            ip_address="1.0.2.0",
+            mac_address="01:00:00:00:00:10",
+        )
+        slave3.save()
+
+        self.assertFalse(script.check_online())
+
+        SlaveStatusModel(
+            slave=slave1,
+            command_uuid=uuid4().hex,
+            online=True,
+        ).save()
+
+        self.assertFalse(script.check_online())
+
+        SlaveStatusModel(
+            slave=slave3,
+            command_uuid=uuid4().hex,
+            online=True,
+        ).save()
+
+        self.assertFalse(script.check_online())
+
+        SlaveStatusModel(
+            slave=slave2,
+            command_uuid=uuid4().hex,
+            online=True,
+        ).save()
+
+        self.assertTrue(script.check_online())
+
+    def test_script_last_started(self):
+        script = ScriptModel(name="t1")
+        script.save()
+
+        has = False
+
+        for osc in ScriptModel.objects.all():
+            if osc.last_ran:
+                if has:
+                    raise ValueError("Two last ran!")
+                else:
+                    has = True
+
+        self.assertFalse(script.last_ran)
+        script.set_last_started()
+        self.assertTrue(ScriptModel.objects.get(name="t1").last_ran)
+
+        has = False
+
+        for osc in ScriptModel.objects.all():
+            if osc.last_ran:
+                if has:
+                    raise ValueError("Two last ran!")
+                else:
+                    has = True
+
+    def test_script_has_error(self):
+        script = ScriptModel(name="t1")
+        script.save()
+
+        self.assertFalse(script.has_error)
+
+        script.error_code = "oops"
+
+        self.assertTrue(script.has_error)
+
+    def test_script_indexes(self):
+        script = ScriptModel(name="t1")
+        script.save()
+
+        slave = SlaveModel(
+            name="test_slave",
+            ip_address="0.0.2.0",
+            mac_address="00:00:00:00:00:00",
+        )
+        slave.save()
+
+        prog1 = ProgramModel(name="test_program1", path="none", slave=slave)
+        prog1.save()
+
+        prog2 = ProgramModel(name="test_program2", path="none", slave=slave)
+        prog2.save()
+
+        sgp1 = SGP(index=0, program=prog1, script=script)
+        sgp1.save()
+
+        sgp2 = SGP(index=2, program=prog2, script=script)
+        sgp2.save()
+
+        self.assertEqual([{
+            'index': sgp1.index,
+            'id__count': 1
+        }, {
+            'index': sgp2.index,
+            'id__count': 1
+        }], list(script.indexes))
+
+    def test_script_str_repr(self):
+        self.assertEqual(
+            str(ScriptModel(name="test_scrs")),
+            "test_scrs",
+        )
+
+    def test_program_is_timeouted(self):
+        slave = SlaveModel(
+            name="test_slave",
+            ip_address="0.0.2.0",
+            mac_address="00:00:00:00:00:00",
+        )
+        slave.save()
+
+        prog = ProgramModel(name="test_program", path="none", slave=slave)
+        prog.save()
+
+        self.assertFalse(prog.is_timeouted)
+
+        uuid = uuid4().hex
+        status = ProgramStatusModel(program=prog, command_uuid=uuid)
+        status.save()
+
+        self.assertFalse(prog.is_timeouted)
+
+        status.timeouted = True
+        status.save()
+
+        self.assertTrue(prog.is_timeouted)
+
     def test_slave_has_err(self):
         slave = SlaveModel(
             name="test_slave",
@@ -2335,6 +2602,30 @@ class ComponentTests(TestCase):
         response = script_entry("test")
         self.assertEqual({"script": "test"}, response)
 
+    def test_slave_entry(self):
+        from .templatetags.components import slave_entry
+        response = slave_entry("test", [], [])
+        self.assertJSONEqual(
+            '{"slave": "test", "programs": [], "files": []}',
+            response,
+        )
+
+    def test_program_entry(self):
+        from .templatetags.components import program_entry
+        response = program_entry("test")
+        self.assertEqual({"program": "test"}, response)
+
+    def test_file_entry(self):
+        from .templatetags.components import file_entry
+        response = file_entry("test")
+        self.assertEqual({"file": "test"}, response)
+
+    def test_modal_entry(self):
+        from .templatetags.components import modal_form
+        response = modal_form({'csrf_token': None}, {}, "prefix")
+        self.assertJSONEqual(
+            '{"form": {}, "prefix": "prefix", "csrf_token": null}', response)
+
 
 class ScriptTests(TestCase):
     def test_from_json_no_list(self):
@@ -2368,8 +2659,13 @@ class ScriptTests(TestCase):
         self.assertRaises(ValueError, Script, "name", [], ["String"])
 
     def test_script_entry_program_wrong_type_program(self):
-        self.assertRaises(ValueError, ScriptEntryProgram, "a name", "whoops",
-                          0)
+        self.assertRaises(
+            ValueError,
+            ScriptEntryProgram,
+            "a name",
+            "whoops",
+            0,
+        )
 
     def test_script_entry_program_wrong_type_index(self):
         self.assertRaises(ValueError, ScriptEntryProgram, [], "whoops", 0)
@@ -2396,8 +2692,11 @@ class ScriptTests(TestCase):
         string = '{"name": "test", "files": [{"index": 0, "slave": 0, "file": "no name"}],\
             "programs": [{"index": 0, "slave": 0, "program": "no name"}]}'
 
-        script = Script("test", [ScriptEntryProgram(0, "no name", 0)],
-                        [ScriptEntryFile(0, "no name", 0)])
+        script = Script(
+            "test",
+            [ScriptEntryProgram(0, "no name", 0)],
+            [ScriptEntryFile(0, "no name", 0)],
+        )
 
         self.assertEqual(Script.from_json(string), script)
         self.assertEqual(Script.from_json(script.to_json()), script)
@@ -2409,7 +2708,9 @@ class ScriptTests(TestCase):
 
         self.assertEqual(ScriptEntryProgram.from_json(string), script)
         self.assertEqual(
-            ScriptEntryProgram.from_json(script.to_json()), script)
+            ScriptEntryProgram.from_json(script.to_json()),
+            script,
+        )
 
     def test_script_entry_file_json(self):
         string = '{"index": 0, "slave": 0, "file": "no name"}'
@@ -2443,11 +2744,16 @@ class ScriptTests(TestCase):
         slave = SlaveModel(
             name="test_slave",
             ip_address="0.0.0.0",
-            mac_address="00:00:00:00:00:00")
+            mac_address="00:00:00:00:00:00",
+        )
         slave.save()
 
         program = ProgramModel(
-            name="test_program", path="None", arguments="None", slave=slave)
+            name="test_program",
+            path="None",
+            arguments="None",
+            slave=slave,
+        )
         program.save()
 
         file = FileModel(
@@ -2457,9 +2763,11 @@ class ScriptTests(TestCase):
             slave=slave)
         file.save()
 
-        script = Script("test_script",
-                        [ScriptEntryProgram(0, "test_program", "test_slave")],
-                        [ScriptEntryFile(0, "test_file", "test_slave")])
+        script = Script(
+            "test_script",
+            [ScriptEntryProgram(0, "test_program", "test_slave")],
+            [ScriptEntryFile(0, "test_file", "test_slave")],
+        )
         script.save()
 
         self.assertTrue(
@@ -2468,27 +2776,37 @@ class ScriptTests(TestCase):
             SGP.objects.filter(
                 script=ScriptModel.objects.get(name="test_script"),
                 index=0,
-                program=program).exists())
+                program=program,
+            ).exists())
 
         self.assertTrue(
             SGF.objects.filter(
                 script=ScriptModel.objects.get(name="test_script"),
                 index=0,
-                file=file).exists())
+                file=file,
+            ).exists())
 
     def test_model_support_ids(self):
         slave = SlaveModel(
             name="test_slave",
             ip_address="0.0.0.0",
-            mac_address="00:00:00:00:00:00")
+            mac_address="00:00:00:00:00:00",
+        )
         slave.save()
 
         program = ProgramModel(
-            name="test_program", path="None", arguments="None", slave=slave)
+            name="test_program",
+            path="None",
+            arguments="None",
+            slave=slave,
+        )
         program.save()
 
-        script = Script("test_script",
-                        [ScriptEntryProgram(0, program.id, slave.id)], [])
+        script = Script(
+            "test_script",
+            [ScriptEntryProgram(0, program.id, slave.id)],
+            [],
+        )
         script.save()
 
         self.assertTrue(
@@ -2497,10 +2815,10 @@ class ScriptTests(TestCase):
             SGP.objects.filter(
                 script=ScriptModel.objects.get(name="test_script"),
                 index=0,
-                program=program).exists())
+                program=program,
+            ).exists())
 
     def test_model_support_error_in_entry(self):
-
         slave = SlaveModel(
             name="test_slave",
             ip_address="0.0.0.0",
@@ -2539,14 +2857,16 @@ class ScriptTests(TestCase):
         slave = SlaveModel(
             name="test_slave",
             ip_address="0.0.0.0",
-            mac_address="00:00:00:00:00:00")
+            mac_address="00:00:00:00:00:00",
+        )
         slave.save()
 
         file = FileModel(
             name="test_file",
             sourcePath="None",
             destinationPath="None",
-            slave=slave)
+            slave=slave,
+        )
         file.save()
 
         script = ScriptModel(name="test_script")
@@ -2573,8 +2893,11 @@ class ScriptTests(TestCase):
         script.save()
 
         with_int = ScriptEntryProgram(0, program.id, slave.id).as_model(script)
-        with_str = ScriptEntryProgram(0, program.name,
-                                      slave.name).as_model(script)
+        with_str = ScriptEntryProgram(
+            0,
+            program.name,
+            slave.name,
+        ).as_model(script)
         with_int.save()
         self.assertRaises(IntegrityError, with_str.save)
 
@@ -2625,3 +2948,264 @@ class ScriptTests(TestCase):
     def test_script_get_slave(self):
         from .scripts import get_slave
         self.assertEqual(None, get_slave(None))
+
+    def test_script_non_neg_index(self):
+        slave = SlaveModel(
+            name="test_slave",
+            ip_address="0.0.0.0",
+            mac_address="00:00:00:00:00:00",
+        )
+        slave.save()
+
+        program = ProgramModel(
+            name="test_program",
+            path="None",
+            arguments="None",
+            slave=slave,
+        )
+        program.save()
+
+        file = FileModel(
+            name="test_file",
+            sourcePath="None",
+            destinationPath="None",
+            slave=slave,
+        )
+        file.save()
+
+        self.assertRaisesRegex(
+            ValueError,
+            "Use positive or null for the index.",
+            ScriptEntryProgram,
+            -1,
+            "test_program",
+            "test_slave",
+        )
+
+        self.assertRaisesRegex(
+            ValueError,
+            "Use positive or null for the index.",
+            ScriptEntryFile,
+            -1,
+            "test_file",
+            "test_slave",
+        )
+
+    def test_does_not_exist(self):
+        slave = SlaveModel(
+            name="test_slave",
+            ip_address="0.0.0.0",
+            mac_address="00:00:00:00:00:00",
+        )
+        slave.save()
+
+        program = ProgramModel(
+            name="test_program",
+            path="None",
+            arguments="None",
+            slave=slave,
+        )
+        program.save()
+
+        file = FileModel(
+            name="test_file",
+            sourcePath="None",
+            destinationPath="None",
+            slave=slave,
+        )
+        file.save()
+
+        script = ScriptModel(name="tsts")
+        script.save()
+
+        self.assertRaisesRegex(
+            ValueError,
+            "Client with name/id test_slave_li does not exist.",
+            ScriptEntryProgram(
+                0,
+                "test_program",
+                "test_slave_li",
+            ).as_model,
+            script,
+        )
+
+        self.assertRaisesRegex(
+            ValueError,
+            "Program with name test_program_li does not exist.",
+            ScriptEntryProgram(
+                0,
+                "test_program_li",
+                "test_slave",
+            ).as_model,
+            script,
+        )
+
+        self.assertRaisesRegex(
+            ValueError,
+            "Program with id 123912 does not exist.",
+            ScriptEntryProgram(
+                0,
+                123912,
+                "test_slave",
+            ).as_model,
+            script,
+        )
+
+        self.assertRaisesRegex(
+            ValueError,
+            "Client with name/id test_slave_li does not exist.",
+            ScriptEntryFile(
+                0,
+                "test_program",
+                "test_slave_li",
+            ).as_model,
+            script,
+        )
+
+        self.assertRaisesRegex(
+            ValueError,
+            "File with name test_file_li does not exist.",
+            ScriptEntryFile(
+                0,
+                "test_file_li",
+                "test_slave",
+            ).as_model,
+            script,
+        )
+
+        self.assertRaisesRegex(
+            ValueError,
+            "File with id 1239129 does not exist.",
+            ScriptEntryFile(
+                0,
+                1239129,
+                "test_slave",
+            ).as_model,
+            script,
+        )
+
+    def test_name_is_string(self):
+        slave = SlaveModel(
+            name="test_slave",
+            ip_address="0.0.0.0",
+            mac_address="00:00:00:00:00:00",
+        )
+        slave.save()
+
+        program = ProgramModel(
+            name="test_program",
+            path="None",
+            arguments="None",
+            slave=slave,
+        )
+        program.save()
+
+        file = FileModel(
+            name="test_file",
+            sourcePath="None",
+            destinationPath="None",
+            slave=slave)
+        file.save()
+
+        self.assertRaisesRegex(
+            ValueError,
+            "Name has to be a string",
+            Script,
+            0,
+            [ScriptEntryProgram(0, "test_program", "test_slave")],
+            [ScriptEntryFile(0, "test_file", "test_slave")],
+        )
+
+    def test_clean_after_error(self):
+        slave = SlaveModel(
+            name="test_slave",
+            ip_address="0.0.0.0",
+            mac_address="00:00:00:00:00:00",
+        )
+        slave.save()
+
+        program = ProgramModel(
+            name="test_program",
+            path="None",
+            arguments="None",
+            slave=slave,
+        )
+        program.save()
+
+        self.assertRaisesRegex(
+            ValueError,
+            "File with name unknown_file_whcih_does-not_exist does not exist.",
+            Script(
+                "test_script",
+                [ScriptEntryProgram(0, "test_program", "test_slave")],
+                [
+                    ScriptEntryFile(0, "unknown_file_whcih_does-not_exist",
+                                    "test_slave")
+                ],
+            ).save,
+        )
+
+
+class SchedulerTests(TestCase):
+    def setUp(self):
+        script = ScriptModel(name="t1")
+        script.save()
+
+        slave1 = SlaveModel(
+            name="test_slav21",
+            ip_address="0.1.2.0",
+            mac_address="01:01:01:00:00100",
+        )
+        slave1.save()
+
+        slave2 = SlaveModel(
+            name="test_sl1ve2",
+            ip_address="0.1.2.1",
+            mac_address="00:02:01:01:00:00",
+        )
+        slave2.save()
+
+        prog1 = ProgramModel(name="test_program1", path="none", slave=slave1)
+        prog1.save()
+
+        prog2 = ProgramModel(name="test_program2", path="none", slave=slave2)
+        prog2.save()
+
+        sgp1 = SGP(index=0, program=prog1, script=script)
+        sgp1.save()
+
+        sgp2 = SGP(index=2, program=prog2, script=script)
+        sgp2.save()
+
+        self.sched = Scheduler()
+        self.script = script
+        self.slave1 = slave1
+        self.slave2 = slave2
+
+    def tearDown(self):
+        self.script.delete()
+
+    def test_start(self):
+        self.assertTrue(self.sched.start(self.script.id))
+        self.assertTrue(self.sched.is_running())
+        self.assertFalse(self.sched.start(self.script.id))
+        self.assertFalse(self.sched.should_stop())
+
+        # SlaveStatusModel(
+        #     slave=self.slave1,
+        #     online=True,
+        #     command_uuid=uuid4().hex,
+        # ).save()
+
+        # self.sched.notify()
+
+        # SlaveStatusModel(
+        #     slave=self.slave2,
+        #     online=True,
+        #     command_uuid=uuid4().hex,
+        # ).save()
+
+        # self.sched.notify()
+
+        self.sched.stop()
+        self.assertTrue(self.sched.should_stop())

@@ -5,9 +5,7 @@ on server start
 """
 
 from django.conf.urls import url
-
-from frontend import views
-from frontend import api
+from frontend import views, api
 
 app_name = 'frontend'  # pylint: disable=C0103
 

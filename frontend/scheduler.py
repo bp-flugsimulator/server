@@ -112,7 +112,10 @@ class Scheduler:
         self.lock.acquire()
         self.__stop = True
         self.event.set()
-        self.__thread.join(timeout=2)
+
+        if self.__thread is not None:
+            self.__thread.join(timeout=2)
+
         self.lock.release()
 
     def start(self, script):
@@ -147,11 +150,11 @@ class Scheduler:
                 target=self.__run__,
             )
 
-            db_obj = Script.objects.get(id=self.__script)
-            db_obj.is_running = True
-            db_obj.is_initialized = True
-            db_obj.current_index = -1
-            db_obj.save()
+            Script.objects.filter(id=self.__script).update(
+                is_running=True,
+                is_initialized=True,
+                current_index=-1,
+            )
 
             self.__thread.start()
             self.lock.release()
@@ -208,8 +211,6 @@ class Scheduler:
         ---------
             scheduler: SchedulerStatus object
         """
-        from .models import Script
-
         self.lock.acquire()
         if self.__state == SchedulerStatus.WAITING_FOR_SLAVES:
             LOGGER.debug("Scheduler for slaves timeouted")
@@ -227,37 +228,38 @@ class Scheduler:
         while self.event.wait():
             self.event.clear()
 
-            if self.should_stop():
+            if self.__stop:
+                LOGGER.info("Exit thread -> should_stop() == True")
                 return
 
             self.lock.acquire()
             LOGGER.debug("Current state: %s", self.__state)
 
             if self.__state == SchedulerStatus.INIT:
-                self.__state__init()
+                self.__state_init()
 
             elif self.__state == SchedulerStatus.WAITING_FOR_SLAVES:
-                self.__state__wait_slaves()
+                self.__state_wait_slaves()
 
             elif self.__state == SchedulerStatus.NEXT_STEP:
-                self.__state__next()
+                self.__state_next()
 
             elif self.__state == SchedulerStatus.WAITING_FOR_PROGRAMS:
-                self.__state__wait_programs()
+                self.__state_wait_programs()
 
             elif self.__state == SchedulerStatus.SUCCESS:
-                self.__state__success()
+                self.__state_success()
                 self.lock.release()
                 return
 
             elif self.__state == SchedulerStatus.ERROR:
-                self.__state__error()
+                self.__state_error()
                 self.lock.release()
                 return
 
             self.lock.release()
 
-    def __state__init(self):
+    def __state_init(self):
         """
         In this state all slaves are started.
         """
@@ -281,7 +283,7 @@ class Scheduler:
             'script_id': self.__script,
         })
 
-    def __state__wait_slaves(self):
+    def __state_wait_slaves(self):
         """
         In this state the scheduler waits for all needed slaves to start.
         """
@@ -294,7 +296,7 @@ class Scheduler:
         else:
             LOGGER.info("Waiting for all slaves to be online.")
 
-    def __state__next(self):
+    def __state_next(self):
         """
         In this state the next index is selected and the programs are started.
         """
@@ -311,9 +313,8 @@ class Scheduler:
 
         (last_index, all_done) = self.__next_stage()
 
-        db_obj = Script.objects.get(id=self.__script)
-        db_obj.current_index = self.__index
-        db_obj.save()
+        Script.objects.filter(id=self.__script).update(
+            current_index=self.__index)
 
         if all_done:
             LOGGER.info("Everything done ... scheduler done")
@@ -341,7 +342,7 @@ class Scheduler:
                 'script_id': self.__script,
             })
 
-    def __state__wait_programs(self):
+    def __state_wait_programs(self):
         """
         In this state the scheduler waits for all started programs to finish.
         """
@@ -387,7 +388,7 @@ class Scheduler:
         else:
             LOGGER.info("Not all programs are finished.")
 
-    def __state__success(self):
+    def __state_success(self):
         """
         In this state the scheduler clean up and save the results.
         """
@@ -400,13 +401,13 @@ class Scheduler:
             'script_id': self.__script,
         })
 
-        db_obj = Script.objects.get(id=self.__script)
-        db_obj.is_running = False
-        db_obj.error_code = ''
-        db_obj.set_last_started()
-        db_obj.save()
+        Script.objects.filter(id=self.__script).update(
+            is_running=False,
+            error_code='',
+        )
+        Script.objects.get(id=self.__script).set_last_started()
 
-    def __state__error(self):
+    def __state_error(self):
         """
         In this state the scheduler clean up and save the results.
         """
@@ -414,10 +415,10 @@ class Scheduler:
 
         LOGGER.info("Scheduler is already finished. (ERROR)")
 
-        db_obj = Script.objects.get(id=self.__script)
-        db_obj.is_running = False
-        db_obj.error_code = self.__error_code
-        db_obj.save()
+        Script.objects.filter(id=self.__script).update(
+            is_running=False,
+            error_code=self.__error_code,
+        )
 
         notify({
             'script_status': 'error',

@@ -1,5 +1,6 @@
 """
-This module contains all forms based on the models from the frontend application.
+This module contains all forms based on the models from the frontend
+application.
 """
 
 from django.forms import (
@@ -8,10 +9,11 @@ from django.forms import (
     HiddenInput,
 )
 
-from .models import Slave as SlaveModel
-from .models import Program as ProgramModel
-from .models import File as FileModel
-from .models import Script as ScriptModel
+from .models import (
+    Slave as SlaveModel,
+    Program as ProgramModel,
+    File as FileModel,
+)
 
 
 class SlaveForm(ModelForm):

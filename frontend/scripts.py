@@ -166,8 +166,10 @@ class Script:
 
         except Exception as err:
             script.delete()
+
             for did in done:
                 did.delete()
+
             raise err
 
     def to_json(self):
