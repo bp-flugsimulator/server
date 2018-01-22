@@ -1,155 +1,34 @@
 #  pylint: disable=C0111
 #  pylint: disable=C0103
 
+from uuid import uuid4
+import json
+from urllib.parse import urlencode
+from shlex import split
+
 from django.test import TestCase
 from django.urls import reverse
-from django.core.exceptions import ValidationError
-from urllib.parse import urlencode
-from utils import Status, Command
-from shlex import split
-from datetime import datetime
-from uuid import uuid4
-
 from channels.test import WSClient
+<<<<<<< HEAD:frontend/tests.py
 from channels import Group
 
 import json
 from os import getcwd, remove, mkdir, rmdir
 from os.path import join, isdir
+=======
+>>>>>>> Split tests:frontend/tests/test_api.py
 
-from .models import (
+from utils import Status, Command
+from frontend.models import (
     Slave as SlaveModel,
-    validate_mac_address,
-    validate_argument_list,
     Program as ProgramModel,
-    SlaveStatus as SlaveStatusModel,
     ProgramStatus as ProgramStatusModel,
-    ScriptGraphPrograms as SGP,
-    ScriptGraphFiles as SGF,
-    Script as ScriptModel,
+    SlaveStatus as SlaveStatusModel,
     File as FileModel,
+    Script as ScriptModel,
 )
-
-from .scripts import Script, ScriptEntryFile, ScriptEntryProgram
-
-
-def fill_database_slaves_set_1():
-    data_set = [
-        SlaveModel(
-            name="Slave1",
-            ip_address="192.168.2.39",
-            mac_address="00:00:00:00:00:01",
-        ),
-        SlaveModel(
-            name="Slave2",
-            ip_address="192.168.3.39",
-            mac_address="02:00:00:00:00:00",
-        ),
-        SlaveModel(
-            name="Slave3",
-            ip_address="192.168.5.39",
-            mac_address="00:02:00:00:00:00",
-        ),
-        SlaveModel(
-            name="Slave4",
-            ip_address="192.168.6.39",
-            mac_address="00:00:02:00:00:00",
-        ),
-        SlaveModel(
-            name="Slave5",
-            ip_address="192.168.7.39",
-            mac_address="00:00:00:02:00:00",
-        )
-    ]
-
-    for data in data_set:
-        data.save()
-
-    return data_set
-
-
-class FrontendTests(TestCase):
-    def test_welcome_get(self):
-        response = self.client.get(reverse('frontend:welcome'))
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "welcome")
-
-    def test_script_delete(self):
-        slave = SlaveModel(
-            name="test_slave",
-            ip_address="127.0.0.1",
-            mac_address="00:00:00:00:00:00")
-        slave.save()
-
-        program = ProgramModel(
-            name="test_program",
-            path="None",
-            arguments="None",
-            slave=slave,
-        )
-        program.save()
-
-        file = FileModel(
-            name="test_file",
-            sourcePath="None",
-            destinationPath="None",
-            slave=slave)
-        file.save()
-
-        script = Script(
-            "test_script",
-            [ScriptEntryProgram(0, "test_program", "test_slave")],
-            [ScriptEntryFile(0, "test_file", "test_slave")],
-        )
-        script.save()
-
-        db_script = ScriptModel.objects.get(name="test_script")
-
-        response = self.client.delete("/api/script/" + str(db_script.id))
-        self.assertEqual(response.status_code, 200)
-        self.assertFalse(
-            ScriptModel.objects.filter(name="test_script").exists())
-
-    def test_slave_get(self):
-        data_set = fill_database_slaves_set_1()
-
-        response = self.client.get(reverse('frontend:slaves'))
-        self.assertEqual(response.status_code, 200)
-
-        for data in data_set:
-            self.assertContains(response, data.name)
-            self.assertContains(response, data.mac_address)
-            self.assertContains(response, data.ip_address)
-
-    def test_scripts_get(self):
-        response = self.client.get(reverse('frontend:scripts'))
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Scripts")
-
-    def test_slave_with_program_get(self):
-        slave = SlaveModel(
-            name='slave',
-            ip_address='127.0.0.1',
-            mac_address='00:00:00:00:00:00')
-        slave.save()
-        ProgramModel(
-            name='p_asdodahgh',
-            path='path',
-            arguments='',
-            slave=slave,
-        ).save()
-        FileModel(
-            name='f_asdodahgh',
-            sourcePath='src',
-            destinationPath='dst',
-            slave=slave,
-        ).save()
-
-        response = self.client.get(reverse('frontend:slaves'))
-        self.assertEqual(response.status_code, 200)
-        self.assertIn('p_asdodahgh', str(response.content))
-        self.assertIn('f_asdodahgh', str(response.content))
-
+from frontend.scripts import Script, ScriptEntryFile, ScriptEntryProgram
+from frontend.tests.utils import fill_database_slaves_set_1
 
 class ApiTests(TestCase):
     def test_add_script_forbidden(self):
@@ -1689,6 +1568,7 @@ class ApiTests(TestCase):
         self.assertEqual(
             Status.err('Can not stop a not running Program'),
             Status.from_json(api_response.content.decode('utf-8')))
+<<<<<<< HEAD:frontend/tests.py
 
 
 class WebsocketTests(TestCase):
@@ -2669,3 +2549,6 @@ class DownloadTests(TestCase):
                       str(response.content))
 
         remove(join(getcwd(), self.DOWNLOAD_FOLDER, 'testfile4.txt'), )
+=======
+            
+>>>>>>> Split tests:frontend/tests/test_api.py
