@@ -73,3 +73,26 @@ class FrontendTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Scripts")
         
+    def test_slave_with_program_get(self):
+        slave = SlaveModel(
+            name='slave',
+            ip_address='127.0.0.1',
+            mac_address='00:00:00:00:00:00')
+        slave.save()
+        ProgramModel(
+            name='p_asdodahgh',
+            path='path',
+            arguments='',
+            slave=slave,
+        ).save()
+        FileModel(
+            name='f_asdodahgh',
+            sourcePath='src',
+            destinationPath='dst',
+            slave=slave,
+        ).save()
+
+        response = self.client.get(reverse('frontend:slaves'))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('p_asdodahgh', str(response.content))
+        self.assertIn('f_asdodahgh', str(response.content))

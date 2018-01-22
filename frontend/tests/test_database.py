@@ -13,9 +13,21 @@ from frontend.models import (
     Program as ProgramModel,
     ProgramStatus as ProgramStatusModel,
     validate_mac_address,
+    validate_argument_list,
 )
 
 class DatabaseTests(TestCase):
+    def test_validate_argument_list(self):
+        self.assertIsNone(validate_argument_list('a b c d e f g'))
+
+    def test_validate_argument_list_raises(self):
+        self.assertRaisesMessage(
+            ValidationError,
+            'Enter a valid argument list.',
+            validate_argument_list,
+            'a "abc',
+)
+
     def test_slave_has_err(self):
         slave = SlaveModel(
             name="test_slave",
