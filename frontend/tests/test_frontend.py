@@ -15,7 +15,7 @@ from frontend.scripts import Script, ScriptEntryFile, ScriptEntryProgram
 from frontend.tests.utils import fill_database_slaves_set_1
 
 
-class FrontendTests(TestCase):
+class FrontendTests(TestCase): # pylint: diasble=unused-variable
     def test_welcome_get(self):
         response = self.client.get(reverse('frontend:welcome'))
         self.assertEqual(response.status_code, 200)
@@ -24,7 +24,7 @@ class FrontendTests(TestCase):
     def test_script_delete(self):
         slave = SlaveModel(
             name="test_slave",
-            ip_address="0.0.0.0",
+            ip_address="127.0.0.1",
             mac_address="00:00:00:00:00:00")
         slave.save()
 

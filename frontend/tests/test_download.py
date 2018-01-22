@@ -7,7 +7,7 @@ from os.path import join, isdir
 from django.test import TestCase
 from django.urls import reverse
 
-class DownloadTests(TestCase):
+class DownloadTests(TestCase): # pylint: diasble=unused-variable
     DOWNLOAD_FOLDER = 'downloads'
 
     @classmethod

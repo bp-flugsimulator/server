@@ -16,7 +16,7 @@ from frontend.models import (
     validate_argument_list,
 )
 
-class DatabaseTests(TestCase):
+class DatabaseTests(TestCase): # pylint: diasble=unused-variable
     def test_validate_argument_list(self):
         self.assertIsNone(validate_argument_list('a b c d e f g'))
 

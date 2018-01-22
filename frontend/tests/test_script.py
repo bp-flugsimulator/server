@@ -14,7 +14,7 @@ from frontend.models import (
 from frontend.scripts import Script, ScriptEntryFile, ScriptEntryProgram
 
 
-class ScriptTests(TestCase):
+class ScriptTests(TestCase): # pylint: diasble=unused-variable
     def test_from_json_no_list(self):
         self.assertRaisesRegex(
             ValueError,
@@ -103,7 +103,7 @@ class ScriptTests(TestCase):
     def test_model_support_strings(self):
         slave = SlaveModel(
             name="test_slave",
-            ip_address="0.0.0.0",
+            ip_address="127.0.0.0",
             mac_address="00:00:00:00:00:00")
         slave.save()
 
@@ -231,7 +231,7 @@ class ScriptTests(TestCase):
         self.assertRaises(IntegrityError, with_str.save)
 
     def test_from_query_error(self):
-        class Dummy:
+        class Dummy: # pylint: diasble=unused-variable
             def __init__(self):
                 class Dummy:
                     def __init__(self):

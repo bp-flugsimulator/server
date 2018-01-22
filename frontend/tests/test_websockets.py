@@ -10,14 +10,13 @@ from channels.test import WSClient
 
 from utils import Status, Command
 from frontend.models import (
-    Slave as SlaveModel,   
+    Slave as SlaveModel,
     SlaveStatus as SlaveStatusModel,
     ProgramStatus as ProgramStatusModel,
     Program as ProgramModel,
 )
-from utils import Command
 
-class WebsocketTests(TestCase):
+class WebsocketTests(TestCase): # pylint: diasble=unused-variable
     def test_rpc_commands_fails_unkown_slave(self):
         ws_client = WSClient()
         self.assertRaisesMessage(

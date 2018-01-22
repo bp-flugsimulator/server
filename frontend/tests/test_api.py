@@ -27,7 +27,7 @@ from frontend.models import (
 from frontend.scripts import Script, ScriptEntryFile, ScriptEntryProgram
 from frontend.tests.utils import fill_database_slaves_set_1
 
-class ApiTests(TestCase):
+class ApiTests(TestCase): # pylint: diasble=unused-variable
     def test_add_script_forbidden(self):
         response = self.client.put("/api/scripts")
         self.assertEqual(response.status_code, 403)
@@ -1565,4 +1565,3 @@ class ApiTests(TestCase):
         self.assertEqual(
             Status.err('Can not stop a not running Program'),
             Status.from_json(api_response.content.decode('utf-8')))
-               
