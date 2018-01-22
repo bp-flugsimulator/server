@@ -41,11 +41,7 @@ class SafeLoop:
 
     def __init__(self):
         self.lock = threading.Lock()
-        if os.name == 'nt':
-            self.loop = asyncio.ProactorEventLoop()
-        else:
-            self.loop = asyncio.new_event_loop()
-        self.thread = None
+        self.loop = asyncio.new_event_loop()
 
     def spawn(self, timer, function, *args):
         """
@@ -57,7 +53,13 @@ class SafeLoop:
 
         """
         LOGGER.debug("Spawned task in event loop in thread %s", self.thread)
-        self.loop.call_soon_threadsafe(self.loop.call_later, timer,function, *args)
+
+        self.loop.call_soon_threadsafe(
+            self.loop.call_later,
+            timer,
+            function,
+            *args,
+        )
 
     def __run__(self):
         LOGGER.debug(
