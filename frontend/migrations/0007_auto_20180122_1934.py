@@ -14,7 +14,9 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='program',
             name='arguments',
-            field=models.TextField(blank=True, validators=[frontend.models.validate_argument_list]),
+            field=models.TextField(
+                blank=True,
+                validators=[frontend.models.validate_argument_list]),
         ),
         migrations.AlterField(
             model_name='program',

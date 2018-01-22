@@ -2,13 +2,15 @@
 This module contains the 'deploy' command
 """
 
-from django.core.management.base import BaseCommand
-from shutil import rmtree, make_archive, copytree
-from os import getcwd, mkdir, pardir, remove, walk
-from os.path import join, exists, isdir
 from subprocess import call
 
-import sass
+from os import getcwd, pardir, remove, walk
+from os.path import join, isdir
+
+from shutil import rmtree, make_archive, copytree
+
+from django.core.management.base import BaseCommand
+from django.core.management import utils
 
 
 class Command(BaseCommand):
@@ -22,12 +24,32 @@ class Command(BaseCommand):
         'appveyor.yml',
         'Dockerfile',
         'Jenkinsfile',
+        'bp-client.dockerfile',
     ]
 
     def handle(self, *args, **options):
         # copy folder
         self.stdout.write('copy folder')
         copytree(getcwd(), self.DEPLOY_FOLDER)
+
+        # modify settings
+        lines = list()
+        with open(join(self.DEPLOY_FOLDER, 'server', 'settings.py'),
+                  'r') as settings:
+            for line in settings:
+                if 'DEBUG' in line:
+                    line = 'DEBUG = False\n'
+                    self.stdout.write('disabled debug mode')
+                if 'SECRET_KEY' in line:
+                    line = "SECRET_KEY = '"
+                    line += utils.get_random_secret_key() + "'\n"
+                    self.stdout.write('generated secret key')
+                lines.append(line)
+
+        with open(join(self.DEPLOY_FOLDER, 'server', 'settings.py'),
+                  'w') as settings:
+            for line in lines:
+                settings.write(line)
 
         # update npm
         if isdir(join(self.DEPLOY_FOLDER, 'node_modules')):
@@ -37,14 +59,26 @@ class Command(BaseCommand):
         call(['npm', 'install'], cwd=self.DEPLOY_FOLDER)
 
         # compile sass
-        self.stdout.write('compile sass')
         call(
-            ['python', 'manage.py', 'compilesass'],
+            ['python', 'manage.py', 'compilesass',],
             cwd=self.DEPLOY_FOLDER,
         )
 
+        # clone client
+        call(
+            ['git', 'clone', 'https://github.com/bp-flugsimulator/client.git'],
+            cwd=join(self.DEPLOY_FOLDER, 'downloads'),
+        )
+
         # update packages
-        call(['python', 'install.py', '--update'], cwd=self.DEPLOY_FOLDER)
+        call(
+            ['python', 'install.py', '--update'],
+            cwd=self.DEPLOY_FOLDER,
+        )
+        call(
+            ['python', 'install.py', '--update'],
+            cwd=join(self.DEPLOY_FOLDER, 'downloads'),
+        )
 
         # delete unused files
         for path, dir_names, file_names in walk(self.DEPLOY_FOLDER):
@@ -60,7 +94,29 @@ class Command(BaseCommand):
                     remove(join(path, file))
                     self.stdout.write('removed ' + join(path, file))
 
-        # zip
-        print('zip folder')
+        # zip client and delete folder
+        print('zip client')
         make_archive(
-            join(getcwd(), pardir, 'server'), 'zip', self.DEPLOY_FOLDER)
+            join(self.DEPLOY_FOLDER, 'downloads', 'client'),
+            'zip',
+            join(self.DEPLOY_FOLDER, 'downloads', 'client'),
+        )
+        self.stdout.write('delete client folder')
+        rmtree(join(self.DEPLOY_FOLDER, 'downloads', 'client'))
+
+        # collect static files
+        self.stdout.write('collect static files')
+        call(
+            ['python', 'manage.py', 'collectstatic', '--noinput'],
+            cwd=self.DEPLOY_FOLDER,
+        )
+
+        # zip
+        self.stdout.write('zip server')
+        make_archive(
+            join(getcwd(), pardir, 'server'),
+            'zip',
+            self.DEPLOY_FOLDER,
+        )
+        self.stdout.write('delete deploy folder')
+        rmtree(self.DEPLOY_FOLDER)
