@@ -136,7 +136,7 @@ class FrontendTests(TestCase):
     def test_run_script_get(self):
         response = self.client.get(reverse('frontend:scripts_run'))
         self.assertEqual(response.status_code, 200)
-   
+
     def test_slave_with_program_get(self):
         slave = SlaveModel(
             name='slave',
@@ -2984,11 +2984,13 @@ class ScriptTests(TestCase):
         script.save()
 
         with_int = ScriptEntryProgram(0, program.id, slave.id).as_model(script)
+
         with_str = ScriptEntryProgram(
             0,
             program.name,
             slave.name,
         ).as_model(script)
+
         with_int.save()
         self.assertRaises(IntegrityError, with_str.save)
 
@@ -3237,10 +3239,11 @@ class ScriptTests(TestCase):
         )
 
 
-# class SchedulerTests(unittest.TestCase):
+# class SchedulerTests(TestCase):
 
-#     @classmethod
-#     def setUpClass(cls):
+#     def setUp(self):
+#         super(SchedulerTests, self).setUp()
+
 #         script = ScriptModel(name="t1")
 #         script.save()
 
@@ -3275,8 +3278,6 @@ class ScriptTests(TestCase):
 #         sgp2 = SGP(index=2, program=prog2, script=script)
 #         sgp2.save()
 
-#         self = cls()
-
 #         self.sched = Scheduler()
 #         self.script = script
 #         self.slave1 = slave1
@@ -3284,9 +3285,7 @@ class ScriptTests(TestCase):
 #         self.prog1 = prog1
 #         self.prog2 = prog2
 
-#         return self
-
-#     def tearDownClass(self):
+#     def tearDown(self):
 #         self.script.delete()
 #         self.slave1.delete()
 #         self.slave2.delete()

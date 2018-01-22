@@ -4,6 +4,7 @@ to javascript
 """
 
 import json
+from django.db import transaction
 from .models import Script as ScriptModel
 from .models import (
     ScriptGraphFiles as SGFModel,
@@ -142,6 +143,7 @@ class Script:
             [ScriptEntryFile(**file) for file in data['files']],
         )
 
+    @transaction.atomic
     def save(self):
         """
         Saves this object to the database.
@@ -150,27 +152,8 @@ class Script:
         script = ScriptModel(name=self.name)
         script.save()
 
-        done = []
-
-        try:
-            programs = [obj.as_model(script) for obj in self.programs]
-
-            for prog in programs:
-                prog.save()
-                done.append(prog)
-
-            files = [obj.as_model(script) for obj in self.files]
-            for fil in files:
-                fil.save()
-                done.append(fil)
-
-        except Exception as err:
-            script.delete()
-
-            for did in done:
-                did.delete()
-
-            raise err
+        [obj.as_model(script) for obj in self.programs]
+        [obj.as_model(script) for obj in self.files]
 
     def to_json(self):
         """
@@ -290,7 +273,11 @@ class ScriptEntryFile:
         try:
             if isinstance(self.file, str):
                 obj = FileModel.objects.get(slave=slave, name=self.file)
-                return SGFModel(script=script, index=self.index, file=obj)
+                SGFModel.objects.create(
+                    script=script,
+                    index=self.index,
+                    file=obj,
+                )
         except FileModel.DoesNotExist:
             raise ValueError("File with name {} does not exist.".format(
                 self.file))
@@ -298,7 +285,11 @@ class ScriptEntryFile:
         try:
             if isinstance(self.file, int):
                 obj = FileModel.objects.get(slave=slave, id=self.file)
-                return SGFModel(script=script, index=self.index, file=obj)
+                SGFModel.objects.create(
+                    script=script,
+                    index=self.index,
+                    file=obj,
+                )
         except FileModel.DoesNotExist:
             raise ValueError("File with id {} does not exist.".format(
                 self.file))
@@ -429,7 +420,11 @@ class ScriptEntryProgram:
         try:
             if isinstance(self.program, str):
                 obj = ProgramModel.objects.get(slave=slave, name=self.program)
-                return SGPModel(script=script, index=self.index, program=obj)
+                SGPModel.objects.create(
+                    script=script,
+                    index=self.index,
+                    program=obj,
+                )
         except ProgramModel.DoesNotExist:
             raise ValueError("Program with name {} does not exist.".format(
                 self.program))
@@ -437,7 +432,11 @@ class ScriptEntryProgram:
         try:
             if isinstance(self.program, int):
                 obj = ProgramModel.objects.get(slave=slave, id=self.program)
-                return SGPModel(script=script, index=self.index, program=obj)
+                SGPModel.objects.create(
+                    script=script,
+                    index=self.index,
+                    program=obj,
+                )
         except ProgramModel.DoesNotExist:
             raise ValueError("Program with id {} does not exist.".format(
                 self.program))
