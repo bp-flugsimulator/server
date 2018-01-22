@@ -3,7 +3,6 @@ This module contains the configuration of the 'frontend' application
 """
 import builtins
 import asyncio
-import os
 import threading
 import logging
 
@@ -53,6 +52,8 @@ class SafeLoop:
             function: callable function
 
         """
+        self.lock.acquire()
+
         LOGGER.debug("Spawned task in event loop in thread %s", self.thread)
         self.loop.call_soon_threadsafe(
             self.loop.call_later,
@@ -60,6 +61,8 @@ class SafeLoop:
             function,
             *args,
         )
+
+        self.lock.release()
 
     def __run__(self):
         LOGGER.debug(
