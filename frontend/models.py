@@ -40,6 +40,7 @@ def timer_timeout_program(identifier):
     ---------
         id: Program id
     """
+    LOGGER.debug("TEST")
     ProgramStatus.objects.filter(program=identifier).update(timeouted=True)
     FSIM_CURRENT_SCHEDULER.notify()
 

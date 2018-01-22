@@ -278,7 +278,7 @@ class Scheduler:
 
         self.__state = SchedulerStatus.WAITING_FOR_SLAVES
         self.event.set()
-        FSIM_CURRENT_EVENT_LOOP.spawn(10,self.timer_scheduler_slave_timeout)
+        FSIM_CURRENT_EVENT_LOOP.spawn(300,self.timer_scheduler_slave_timeout)
 
         notify({
             'script_status': 'waiting_for_slaves',
