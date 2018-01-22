@@ -581,6 +581,11 @@ footer {
 
 }
 
+.fsim-box[data-state=teal] {
+    background: linear-gradient(to right, $teal 0, $teal 5px, transparent 5px, transparent 100%) no-repeat;
+
+}
+
 .fsim-box[data-state=unkown] {
     background: linear-gradient(to right, $gray-100 0, $gray-100 5px, transparent 5px, transparent 100%) no-repeat;
 

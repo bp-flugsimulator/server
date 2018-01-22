@@ -14,6 +14,8 @@ from channels.test import WSClient
 from channels import Group
 
 import json
+from os import getcwd, remove, mkdir, rmdir
+from os.path import join, isdir
 
 from .models import (
     Slave as SlaveModel,
@@ -75,7 +77,7 @@ class FrontendTests(TestCase):
     def test_script_delete(self):
         slave = SlaveModel(
             name="test_slave",
-            ip_address="0.0.0.0",
+            ip_address="127.0.0.1",
             mac_address="00:00:00:00:00:00")
         slave.save()
 
@@ -123,6 +125,30 @@ class FrontendTests(TestCase):
         response = self.client.get(reverse('frontend:scripts'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Scripts")
+
+    def test_slave_with_program_get(self):
+        slave = SlaveModel(
+            name='slave',
+            ip_address='127.0.0.1',
+            mac_address='00:00:00:00:00:00')
+        slave.save()
+        ProgramModel(
+            name='p_asdodahgh',
+            path='path',
+            arguments='',
+            slave=slave,
+        ).save()
+        FileModel(
+            name='f_asdodahgh',
+            sourcePath='src',
+            destinationPath='dst',
+            slave=slave,
+        ).save()
+
+        response = self.client.get(reverse('frontend:slaves'))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('p_asdodahgh', str(response.content))
+        self.assertIn('f_asdodahgh', str(response.content))
 
 
 class ApiTests(TestCase):
@@ -206,7 +232,7 @@ class ApiTests(TestCase):
         fill_database_slaves_set_1()
         slave = SlaveModel(
             name="test_slave",
-            ip_address="0.0.0.0",
+            ip_address="127.0.0.1",
             mac_address="00:00:00:00:00:00",
         )
         slave.save()
@@ -280,7 +306,7 @@ class ApiTests(TestCase):
         fill_database_slaves_set_1()
         slave = SlaveModel(
             name="test_slave",
-            ip_address="0.0.0.0",
+            ip_address="127.0.0.1",
             mac_address="00:00:00:00:00:00",
         )
         slave.save()
@@ -321,7 +347,7 @@ class ApiTests(TestCase):
         fill_database_slaves_set_1()
         slave = SlaveModel(
             name="test_slave",
-            ip_address="0.0.0.0",
+            ip_address="127.0.0.1",
             mac_address="00:00:00:00:00:00",
         )
         slave.save()
@@ -361,7 +387,7 @@ class ApiTests(TestCase):
         fill_database_slaves_set_1()
         slave = SlaveModel(
             name="test_slave",
-            ip_address="0.0.0.0",
+            ip_address="127.0.0.1",
             mac_address="00:00:00:00:00:00")
         slave.save()
 
@@ -401,7 +427,7 @@ class ApiTests(TestCase):
         fill_database_slaves_set_1()
         slave = SlaveModel(
             name="test_slave",
-            ip_address="0.0.0.0",
+            ip_address="127.0.0.1",
             mac_address="00:00:00:00:00:00")
         slave.save()
 
@@ -448,7 +474,7 @@ class ApiTests(TestCase):
         fill_database_slaves_set_1()
         slave = SlaveModel(
             name="test_slave",
-            ip_address="0.0.0.0",
+            ip_address="127.0.0.1",
             mac_address="00:00:00:00:00:00")
         slave.save()
 
@@ -483,7 +509,7 @@ class ApiTests(TestCase):
         fill_database_slaves_set_1()
         slave = SlaveModel(
             name="test_slave",
-            ip_address="0.0.0.0",
+            ip_address="127.0.0.1",
             mac_address="00:00:00:00:00:00",
         )
         slave.save()
@@ -518,7 +544,7 @@ class ApiTests(TestCase):
     def test_file_autocomplete(self):
         slave = SlaveModel(
             name="test_slave",
-            ip_address="0.0.0.0",
+            ip_address="127.0.0.1",
             mac_address="00:00:00:00:00:00",
         )
         slave.save()
@@ -545,7 +571,7 @@ class ApiTests(TestCase):
     def test_program_autocomplete(self):
         slave = SlaveModel(
             name="test_slave",
-            ip_address="0.0.0.0",
+            ip_address="127.0.0.1",
             mac_address="00:00:00:00:00:00",
         )
         slave.save()
@@ -572,7 +598,7 @@ class ApiTests(TestCase):
     def test_slave_autocomplete(self):
         slave = SlaveModel(
             name="test_slave",
-            ip_address="0.0.0.0",
+            ip_address="127.0.0.1",
             mac_address="00:00:00:00:00:00",
         )
         slave.save()
@@ -1613,10 +1639,11 @@ class ApiTests(TestCase):
         slave_ws.join_group('client_' + str(slave.id))
 
         # test api
-        api_response = self.client.get(path=reverse(
-            'frontend:stop_program',
-            args=[program.id],
-        ))
+        api_response = self.client.get(
+            path=reverse(
+                'frontend:stop_program',
+                args=[program.id],
+            ))
         self.assertEqual(200, api_response.status_code)
         self.assertEqual(
             Status.ok(''),
@@ -2370,7 +2397,7 @@ class ScriptTests(TestCase):
     def test_model_support_strings(self):
         slave = SlaveModel(
             name="test_slave",
-            ip_address="0.0.0.0",
+            ip_address="127.0.0.1",
             mac_address="00:00:00:00:00:00")
         slave.save()
 
@@ -2407,7 +2434,7 @@ class ScriptTests(TestCase):
     def test_model_support_ids(self):
         slave = SlaveModel(
             name="test_slave",
-            ip_address="0.0.0.0",
+            ip_address="127.0.0.1",
             mac_address="00:00:00:00:00:00")
         slave.save()
 
@@ -2431,7 +2458,7 @@ class ScriptTests(TestCase):
 
         slave = SlaveModel(
             name="test_slave",
-            ip_address="0.0.0.0",
+            ip_address="127.0.0.1",
             mac_address="00:00:00:00:00:00")
         slave.save()
 
@@ -2457,7 +2484,7 @@ class ScriptTests(TestCase):
         from django.db.utils import IntegrityError
         slave = SlaveModel(
             name="test_slave",
-            ip_address="0.0.0.0",
+            ip_address="127.0.0.1",
             mac_address="00:00:00:00:00:00")
         slave.save()
 
@@ -2480,7 +2507,7 @@ class ScriptTests(TestCase):
         from django.db.utils import IntegrityError
         slave = SlaveModel(
             name="test_slave",
-            ip_address="0.0.0.0",
+            ip_address="127.0.0.1",
             mac_address="00:00:00:00:00:00")
         slave.save()
 
@@ -2539,3 +2566,106 @@ class ScriptTests(TestCase):
     def test_script_get_slave(self):
         from .scripts import get_slave
         self.assertEqual(None, get_slave(None))
+
+
+class DownloadTests(TestCase):
+    DOWNLOAD_FOLDER = 'downloads'
+
+    @classmethod
+    def setUpClass(cls):
+        if not isdir(cls.DOWNLOAD_FOLDER):
+            mkdir(cls.DOWNLOAD_FOLDER)
+        super().setUpClass()
+
+    def test_download_page_no_folder(self):
+        rmdir(self.DOWNLOAD_FOLDER)
+        response = self.client.get(reverse('frontend:downloads'))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(
+            'No files are present in the download folder',
+            str(response.content),
+        )
+
+    def test_download_page_0_byte(self):
+        with open(
+                join(getcwd(), self.DOWNLOAD_FOLDER, 'testfile1.txt'),
+                'w',
+        ) as file:
+            file.close()
+
+        response = self.client.get(reverse('frontend:downloads'))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(
+            '0 B',
+            str(response.content),
+        )
+        self.assertIn(
+            'href="/static/downloads/testfile1.txt"',
+            str(response.content),
+        )
+
+        remove(join(getcwd(), self.DOWNLOAD_FOLDER, 'testfile1.txt'), )
+
+    def test_download_page_1_kib(self):
+        with open(
+                join(getcwd(), self.DOWNLOAD_FOLDER, 'testfile2.txt'),
+                'w',
+        ) as file:
+            file.seek(pow(2, 10))
+            file.write('\0')
+            file.close()
+
+        response = self.client.get(reverse('frontend:downloads'))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(
+            '1 KiB',
+            str(response.content),
+        )
+        self.assertIn(
+            'href="/static/downloads/testfile2.txt"',
+            str(response.content),
+        )
+
+        remove(join(getcwd(), self.DOWNLOAD_FOLDER, 'testfile2.txt'), )
+
+    def test_download_page_1_mib(self):
+        with open(
+                join(getcwd(), self.DOWNLOAD_FOLDER, 'testfile3.txt'),
+                'w',
+        ) as file:
+            file.seek(pow(2, 20))
+            file.write('\0')
+            file.close()
+
+        response = self.client.get(reverse('frontend:downloads'))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(
+            '1 MiB',
+            str(response.content),
+        )
+        self.assertIn(
+            'href="/static/downloads/testfile3.txt"',
+            str(response.content),
+        )
+
+        remove(join(getcwd(), self.DOWNLOAD_FOLDER, 'testfile3.txt'), )
+
+    def test_download_page_1_gib(self):
+        with open(
+                join(getcwd(), self.DOWNLOAD_FOLDER, 'testfile4.txt'),
+                'w',
+        ) as file:
+            file.seek(pow(2, 30))
+            file.write("\0")
+            file.close()
+
+        response = self.client.get(reverse('frontend:downloads'))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(
+            '1 GiB',
+            str(response.content),
+        )
+        self.assertIn('href="/static/downloads/testfile4.txt"',
+                      str(response.content))
+
+        remove(join(getcwd(), self.DOWNLOAD_FOLDER, 'testfile4.txt'), )

@@ -10,6 +10,8 @@ from .forms import SlaveForm
 from .forms import ProgramForm
 from .forms import FileForm
 
+from os import listdir, getcwd, mkdir
+from os.path import getsize, join, isdir
 
 class WelcomeView(TemplateView):
     """
@@ -46,4 +48,37 @@ class SlavesView(ListView):
         context['program_form'] = ProgramForm()
         context['file_form'] = FileForm()
         context['navbar_link'] = "slaves"
+        return context
+
+
+class DownloadView(TemplateView):
+    """
+    generates view for /downloads
+    """
+    template_name = "frontend/downloads/base.html"
+
+    def get_context_data(self, **kwargs):  # pylint: disable=w0221
+        context = super(DownloadView, self).get_context_data(**kwargs)
+
+        if not isdir('downloads'):
+            mkdir('downloads')
+
+        file_list = []
+        for file in listdir('downloads'):
+            entry = dict()
+            entry['name'] = file
+            size = entry['size'] = getsize(join(getcwd(), 'downloads', file))
+            if size < pow(2, 10):
+                entry['size'] = str(size) + ' B'
+            elif size < pow(2, 20):
+                entry['size'] = str(round(size / pow(2, 10))) + ' KiB'
+            elif size < pow(2, 30):
+                entry['size'] = str(round(size / pow(2, 20))) + ' MiB'
+            else:
+                entry['size'] = str(round(size / pow(2, 30))) + ' GiB'
+
+            file_list.append(entry)
+
+        context['file_list'] = file_list
+        context['navbar_link'] = "downloads"
         return context
