@@ -123,6 +123,7 @@ STATIC_URL = '/static/'
 
 STATICFILES_DIRS = [
     ('node', 'node_modules'),
+    ('downloads', 'downloads'),
 ]
 
 # Message Storage

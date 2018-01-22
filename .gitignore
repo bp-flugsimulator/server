@@ -7,3 +7,4 @@ db.sqlite3
 htmlcov
 base/static/base/css/custom.css
 .eslintrc.json
+downloads/*

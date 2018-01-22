@@ -1,0 +1,22 @@
+{% load staticfiles %}
+<div class="row-1 mb-2 pt-2 pb-2 pl-4 pr-4 fsim-box" data-state="teal">
+    <div class="row">
+        <div class="file-name col mt-1 font-weight-bold">
+            <i class="mdi mdi-insert-drive-file"></i>
+            <span>{{ file.name }}</span>
+        </div>
+
+        <div class="file-name col mt-1 font-weight-bold">
+            <span>{{ file.size }}</span>
+        </div>
+
+        <div class="btn-toolbar col d-flex justify-content-end" role="toolbar">
+            <div class="btn-group mr-2" role="group">
+                <a class="btn btn-outline-dark file-action-modify font-weight-light" href="{% static 'downloads/' %}{{ file.name }}" download>
+                    <i class="mdi mdi-file-download"></i>
+                    DOWNLOAD
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
