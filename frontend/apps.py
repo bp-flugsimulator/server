@@ -47,7 +47,7 @@ class SafeLoop:
             self.loop = asyncio.new_event_loop()
         self.thread = None
 
-    def spawn(self, function):
+    def spawn(self, timer, function, *args):
         """
         Creates a task and adds it to the loop.
 
@@ -57,8 +57,7 @@ class SafeLoop:
 
         """
         LOGGER.debug("Spawned task in event loop in thread %s", self.thread)
-        self.loop.create_task(function())
-        LOGGER.debug("Spawned")
+        self.loop.call_soon_threadsafe(self.loop.call_later, timer,function, *args)
 
     def __run__(self):
         LOGGER.debug(

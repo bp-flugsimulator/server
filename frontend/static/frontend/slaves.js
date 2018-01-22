@@ -274,10 +274,10 @@ $(document).ready(function () {
         programForm.children().find('.submit-btn').text('Edit');
 
         //clear input fields
-        programForm.find('input[name="name"]').val(name);
-        programForm.find('input[name="path"]').val(path);
-        programForm.find('input[name="arguments"]').val(args);
-        programForm.find('input[name="start_time"]').val(startTime);
+        programForm.find('[name="name"]').val(name);
+        programForm.find('[name="path"]').val(path);
+        programForm.find('[name="arguments"]').val(args);
+        programForm.find('[name="start_time"]').val(startTime);
 
         //clear error messages
         clearErrorMessages(programForm);

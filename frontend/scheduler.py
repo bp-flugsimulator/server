@@ -204,7 +204,7 @@ class Scheduler:
 
         return (old_index, all_done)
 
-    def timer_scheduler_slave_timeout(self, time):
+    def timer_scheduler_slave_timeout(self):
         """
         Spawns a timer function into the event loop which will set the timeoute
         the scheduler if there was no progress.
@@ -215,28 +215,17 @@ class Scheduler:
             time: Amount of time to wait
         """
 
-        @asyncio.coroutine
-        def timer_async():
-            """
-            Wrapper
-            """
-            LOGGER.debug("ASYNC SLAVE TIMEOUT")
-            yield from asyncio.sleep(time)
+        LOGGER.debug("ASYNC SLAVE TIMEOUT")
 
-            self.lock.acquire()
-            if self.__state == SchedulerStatus.WAITING_FOR_SLAVES:
-                LOGGER.debug("Scheduler for slaves timeouted")
-                self.__error_code = 'Not all slaves connected within 5 minutes.'
-                self.__state = SchedulerStatus.ERROR
-                self.event.set()
+        self.lock.acquire()
+        if self.__state == SchedulerStatus.WAITING_FOR_SLAVES:
+            LOGGER.debug("Scheduler for slaves timeouted")
+            self.__error_code = 'Not all slaves connected within 5 minutes.'
+            self.__state = SchedulerStatus.ERROR
+            self.event.set()
 
-            self.lock.release()
+        self.lock.release()
 
-        LOGGER.debug(
-            "Want to add task (slave-timeout) to event loop %s",
-            FSIM_CURRENT_EVENT_LOOP.thread,
-        )
-        FSIM_CURRENT_EVENT_LOOP.spawn(timer_async)
 
     def __run__(self):
         """
@@ -289,8 +278,7 @@ class Scheduler:
 
         self.__state = SchedulerStatus.WAITING_FOR_SLAVES
         self.event.set()
-
-        self.timer_scheduler_slave_timeout(300.0)
+        FSIM_CURRENT_EVENT_LOOP.spawn(10,self.timer_scheduler_slave_timeout)
 
         notify({
             'script_status': 'waiting_for_slaves',

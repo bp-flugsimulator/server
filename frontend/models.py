@@ -32,7 +32,7 @@ from server.utils import notify
 LOGGER = logging.getLogger("models")
 
 
-def timer_timeout_program(identifier, time):
+def timer_timeout_program(identifier):
     """
     Sets the timeout flag for a program.
 
@@ -40,19 +40,8 @@ def timer_timeout_program(identifier, time):
     ---------
         id: Program id
     """
-
-    @asyncio.coroutine
-    def timer_async():
-        LOGGER.debug("ASYNC PROGRAM TIMEOUT")
-        yield from asyncio.sleep(time)
-        ProgramStatus.objects.filter(program=identifier).update(timeouted=True)
-        FSIM_CURRENT_SCHEDULER.notify()
-
-    LOGGER.debug(
-        "Want to add task (prog-timeout) to event loop %s",
-        FSIM_CURRENT_EVENT_LOOP.thread,
-    )
-    FSIM_CURRENT_EVENT_LOOP.spawn(timer_async())
+    ProgramStatus.objects.filter(program=identifier).update(timeouted=True)
+    FSIM_CURRENT_SCHEDULER.notify()
 
 
 def validate_mac_address(mac_addr):
@@ -297,7 +286,8 @@ class Program(Model):
             ProgramStatus(program=self, command_uuid=cmd.uuid).save()
 
             if self.start_time > 0:
-                timer_timeout_program(self.id, self.start_time)
+                LOGGER.debug('started timeout on %s, for %d seconds', self.name, self.start_time)
+                FSIM_CURRENT_EVENT_LOOP.spawn(self.start_time,timer_timeout_program,self.id)
 
             return True
         else:
