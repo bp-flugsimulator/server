@@ -44,6 +44,9 @@ class Command(BaseCommand):
                     line = "SECRET_KEY = '"
                     line += utils.get_random_secret_key() + "'\n"
                     self.stdout.write('generated secret key')
+                if 'ALLOWED_HOSTS' in line:
+                    line = "ALLOWED_HOSTS = ['*']"
+                    
                 lines.append(line)
 
         with open(join(self.DEPLOY_FOLDER, 'server', 'settings.py'),
