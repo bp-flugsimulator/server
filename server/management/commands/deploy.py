@@ -46,7 +46,8 @@ class Command(BaseCommand):
                     self.stdout.write('generated secret key')
                 if 'ALLOWED_HOSTS' in line:
                     line = "ALLOWED_HOSTS = ['*']"
-                    
+                if 'STATIC_ROOT' in line:
+                    line = "STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles'\n"
                 lines.append(line)
 
         with open(join(self.DEPLOY_FOLDER, 'server', 'settings.py'),
