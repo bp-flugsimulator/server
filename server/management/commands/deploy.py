@@ -4,8 +4,8 @@ This module contains the 'deploy' command
 
 from subprocess import call
 
-from os import getcwd, pardir, remove, walk
-from os.path import join, isdir
+from os import getcwd, pardir, remove, walk, listdir
+from os.path import join, isdir, isfile
 
 from shutil import rmtree, make_archive, copytree
 
@@ -60,7 +60,11 @@ class Command(BaseCommand):
 
         # compile sass
         call(
-            ['python', 'manage.py', 'compilesass',],
+            [
+                'python',
+                'manage.py',
+                'compilesass',
+            ],
             cwd=self.DEPLOY_FOLDER,
         )
 
@@ -108,6 +112,43 @@ class Command(BaseCommand):
         self.stdout.write('collect static files')
         call(
             ['python', 'manage.py', 'collectstatic', '--noinput'],
+            cwd=self.DEPLOY_FOLDER,
+        )
+
+        # set up database
+        if isfile(join(self.DEPLOY_FOLDER, 'db.sqlite3')):
+            remove(join(self.DEPLOY_FOLDER, 'db.sqlite3'))
+            self.stdout.write('deleted database')
+
+        for file in listdir(
+                join(self.DEPLOY_FOLDER, 'frontend', 'migrations')):
+            if isfile(
+                    join(
+                        self.DEPLOY_FOLDER,
+                        'frontend',
+                        'migrations',
+                        file,
+                    )) and not ('0001_initial.py' in file
+                                or '__init__.py' in file):
+                remove(
+                    join(
+                        self.DEPLOY_FOLDER,
+                        'frontend',
+                        'migrations',
+                        file,
+                    ))
+                self.stdout.write('remove ' + join(
+                    self.DEPLOY_FOLDER,
+                    'frontend',
+                    'migrations',
+                    file,
+                ))
+        call(
+            ['python', 'manage.py', 'makemigrations'],
+            cwd=self.DEPLOY_FOLDER,
+        )
+        call(
+            ['python', 'manage.py', 'migrate'],
             cwd=self.DEPLOY_FOLDER,
         )
 
