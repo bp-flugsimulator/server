@@ -3,6 +3,8 @@ This module contains all databasemodels from the frontend application.
 """
 
 import logging
+import asyncio
+
 from threading import Timer
 from shlex import split
 
@@ -30,7 +32,7 @@ from server.utils import notify
 LOGGER = logging.getLogger("models")
 
 
-def timer_timeout_program(identifier):
+def timer_timeout_program(identifier, time):
     """
     Sets the timeout flag for a program.
 
@@ -38,16 +40,19 @@ def timer_timeout_program(identifier):
     ---------
         id: Program id
     """
-    tries = 5
 
-    while tries > 0:
-        try:
-            ProgramStatus.objects.filter(program=identifier).update(
-                timeouted=True)
-            break
-        except OperationalError:
-            tries -= 1
-    FSIM_CURRENT_SCHEDULER.notify()
+    @asyncio.coroutine
+    def timer_async():
+        LOGGER.debug("ASYNC PROGRAM TIMEOUT")
+        yield from asyncio.sleep(time)
+        ProgramStatus.objects.filter(program=identifier).update(timeouted=True)
+        FSIM_CURRENT_SCHEDULER.notify()
+
+    LOGGER.debug(
+        "Want to add task (prog-timeout) to event loop %s",
+        FSIM_CURRENT_EVENT_LOOP.thread,
+    )
+    FSIM_CURRENT_EVENT_LOOP.spawn(timer_async())
 
 
 def validate_mac_address(mac_addr):
@@ -292,13 +297,7 @@ class Program(Model):
             ProgramStatus(program=self, command_uuid=cmd.uuid).save()
 
             if self.start_time > 0:
-                timer = Timer(
-                    self.start_time,
-                    timer_timeout_program,
-                    (self.id, ),
-                )
-                timer.daemon = True
-                timer.start()
+                timer_timeout_program(self.id, self.start_time)
 
             return True
         else:

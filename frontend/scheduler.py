@@ -4,6 +4,7 @@ This module contains a scheduler which runs programs on the different clients.
 
 from threading import Timer
 import threading
+import asyncio
 
 import logging
 from server.utils import notify
@@ -203,22 +204,39 @@ class Scheduler:
 
         return (old_index, all_done)
 
-    def timer_scheduler_slave_timeout(self):
+    def timer_scheduler_slave_timeout(self, time):
         """
-        Callback function for slave timeout.
+        Spawns a timer function into the event loop which will set the timeoute
+        the scheduler if there was no progress.
 
         Arguments
         ---------
             scheduler: SchedulerStatus object
+            time: Amount of time to wait
         """
-        self.lock.acquire()
-        if self.__state == SchedulerStatus.WAITING_FOR_SLAVES:
-            LOGGER.debug("Scheduler for slaves timeouted")
-            self.__error_code = 'Not all slaves connected within 5 minutes.'
-            self.__state = SchedulerStatus.ERROR
-            self.event.set()
 
-        self.lock.release()
+        @asyncio.coroutine
+        def timer_async():
+            """
+            Wrapper
+            """
+            LOGGER.debug("ASYNC SLAVE TIMEOUT")
+            yield from asyncio.sleep(time)
+
+            self.lock.acquire()
+            if self.__state == SchedulerStatus.WAITING_FOR_SLAVES:
+                LOGGER.debug("Scheduler for slaves timeouted")
+                self.__error_code = 'Not all slaves connected within 5 minutes.'
+                self.__state = SchedulerStatus.ERROR
+                self.event.set()
+
+            self.lock.release()
+
+        LOGGER.debug(
+            "Want to add task (slave-timeout) to event loop %s",
+            FSIM_CURRENT_EVENT_LOOP.thread,
+        )
+        FSIM_CURRENT_EVENT_LOOP.spawn(timer_async)
 
     def __run__(self):
         """
@@ -272,12 +290,7 @@ class Scheduler:
         self.__state = SchedulerStatus.WAITING_FOR_SLAVES
         self.event.set()
 
-        timer = Timer(
-            300.0,
-            self.timer_scheduler_slave_timeout,
-        )
-        timer.daemon = True
-        timer.start()
+        self.timer_scheduler_slave_timeout(300.0)
 
         notify({
             'script_status': 'waiting_for_slaves',
