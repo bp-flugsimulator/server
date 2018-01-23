@@ -5,8 +5,7 @@ from uuid import uuid4
 import json
 from urllib.parse import urlencode
 from shlex import split
-from os import remove, mkdir, rmdir
-from os.path import isdir
+from os import mkdir, rmdir
 
 from django.test import TestCase
 from django.urls import reverse

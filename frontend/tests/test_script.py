@@ -164,7 +164,7 @@ class ScriptTests(TestCase): # pylint: disable=unused-variable
 
         slave = SlaveModel(
             name="test_slave",
-            ip_address="0.0.0.0",
+            ip_address="127.0.0.1",
             mac_address="00:00:00:00:00:00")
         slave.save()
 
@@ -190,7 +190,7 @@ class ScriptTests(TestCase): # pylint: disable=unused-variable
         from django.db.utils import IntegrityError
         slave = SlaveModel(
             name="test_slave",
-            ip_address="0.0.0.0",
+            ip_address="127.0.0.1",
             mac_address="00:00:00:00:00:00")
         slave.save()
 
@@ -213,7 +213,7 @@ class ScriptTests(TestCase): # pylint: disable=unused-variable
         from django.db.utils import IntegrityError
         slave = SlaveModel(
             name="test_slave",
-            ip_address="0.0.0.0",
+            ip_address="127.0.0.1",
             mac_address="00:00:00:00:00:00")
         slave.save()
 
