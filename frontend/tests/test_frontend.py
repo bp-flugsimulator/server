@@ -15,7 +15,7 @@ from frontend.scripts import Script, ScriptEntryFile, ScriptEntryProgram
 from frontend.tests.utils import fill_database_slaves_set_1
 
 
-class FrontendTests(TestCase): # pylint: diasble=unused-variable
+class FrontendTests(TestCase): # pylint: disable=unused-variable
     def test_welcome_get(self):
         response = self.client.get(reverse('frontend:welcome'))
         self.assertEqual(response.status_code, 200)
@@ -72,7 +72,7 @@ class FrontendTests(TestCase): # pylint: diasble=unused-variable
         response = self.client.get(reverse('frontend:scripts'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Scripts")
-        
+
     def test_slave_with_program_get(self):
         slave = SlaveModel(
             name='slave',

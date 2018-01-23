@@ -14,7 +14,7 @@ from frontend.models import (
 from frontend.scripts import Script, ScriptEntryFile, ScriptEntryProgram
 
 
-class ScriptTests(TestCase): # pylint: diasble=unused-variable
+class ScriptTests(TestCase): # pylint: disable=unused-variable
     def test_from_json_no_list(self):
         self.assertRaisesRegex(
             ValueError,
@@ -140,7 +140,7 @@ class ScriptTests(TestCase): # pylint: diasble=unused-variable
     def test_model_support_ids(self):
         slave = SlaveModel(
             name="test_slave",
-            ip_address="0.0.0.0",
+            ip_address="127.0.0.1",
             mac_address="00:00:00:00:00:00")
         slave.save()
 
@@ -231,11 +231,11 @@ class ScriptTests(TestCase): # pylint: diasble=unused-variable
         self.assertRaises(IntegrityError, with_str.save)
 
     def test_from_query_error(self):
-        class Dummy: # pylint: diasble=unused-variable
+        class Dummy: # pylint: disable=unused-variable
             def __init__(self):
-                class Dummy:
+                class Dummy: # pylint: disable=unused-variable
                     def __init__(self):
-                        class Dummy:
+                        class Dummy: # pylint: disable=unused-variable
                             def __init__(self):
                                 self.id = None
 

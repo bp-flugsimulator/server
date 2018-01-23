@@ -16,7 +16,7 @@ from frontend.models import (
     Program as ProgramModel,
 )
 
-class WebsocketTests(TestCase): # pylint: diasble=unused-variable
+class WebsocketTests(TestCase): # pylint: disable=unused-variable
     def test_rpc_commands_fails_unkown_slave(self):
         ws_client = WSClient()
         self.assertRaisesMessage(

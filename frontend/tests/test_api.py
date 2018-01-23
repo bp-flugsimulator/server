@@ -5,15 +5,12 @@ from uuid import uuid4
 import json
 from urllib.parse import urlencode
 from shlex import split
+from os import remove, mkdir, rmdir
+from os.path import isdir
 
 from django.test import TestCase
 from django.urls import reverse
 from channels.test import WSClient
-from channels import Group
-
-import json
-from os import getcwd, remove, mkdir, rmdir
-from os.path import join, isdir
 
 from utils import Status, Command
 from frontend.models import (
@@ -27,7 +24,7 @@ from frontend.models import (
 from frontend.scripts import Script, ScriptEntryFile, ScriptEntryProgram
 from frontend.tests.utils import fill_database_slaves_set_1
 
-class ApiTests(TestCase): # pylint: diasble=unused-variable
+class ApiTests(TestCase): # pylint: disable=unused-variable
     def test_add_script_forbidden(self):
         response = self.client.put("/api/scripts")
         self.assertEqual(response.status_code, 403)
