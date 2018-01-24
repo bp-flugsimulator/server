@@ -1248,12 +1248,7 @@ class ApiTests(TestCase):
 
     def test_modify_program(self):
         # fill database
-        SlaveModel(
-            name="test_modify_program",
-            ip_address='0.0.7.0',
-            mac_address='00:00:00:00:07:00',
-        ).save()
-        slave = SlaveModel.objects.get(
+        slave = SlaveModel.objects.create(
             name="test_modify_program",
             ip_address='0.0.7.0',
             mac_address='00:00:00:00:07:00',
@@ -1261,12 +1256,12 @@ class ApiTests(TestCase):
 
         programs = []
         for i in range(100):
-            ProgramModel(
+            ProgramModel.objects.create(
                 name="name_" + str(i),
                 path="path_" + str(i),
                 arguments="arguments_" + str(i),
                 slave=slave,
-            ).save()
+            )
             programs.append(
                 ProgramModel.objects.get(
                     name="name_" + str(i),
@@ -1291,9 +1286,6 @@ class ApiTests(TestCase):
                 Status.ok(''),
                 Status.from_json(api_response.content.decode('utf-8')),
             )
-
-        # clear database
-        slave.delete()
 
     def test_modify_program_fail(self):
         # fill database
@@ -1382,8 +1374,6 @@ class ApiTests(TestCase):
             Status.from_json(api_response.content.decode('utf-8')),
         )
 
-        slave.delete()
-
     def test_execute_program(self):
         SlaveModel(
             name="test_execute_program",
@@ -1452,7 +1442,6 @@ class ApiTests(TestCase):
 
         #  test if the programstatus entry exists
         self.assertTrue(ProgramStatusModel.objects.filter())
-        slave.delete()
 
     def test_execute_program_fail_slave_offline(self):
         SlaveModel(
@@ -1491,7 +1480,6 @@ class ApiTests(TestCase):
         )
 
         self.assertIsNone(client.receive())
-        slave.delete()
 
     def test_shutdown_slave(self):
         slave = SlaveModel(
@@ -1524,8 +1512,6 @@ class ApiTests(TestCase):
             Command.from_json(json.dumps(ws_client.receive())),
         )
 
-        slave.delete()
-
     def test_shutdown_slave_unknown_slave(self):
         #  make request
         api_response = self.client.get('/api/slave/111/shutdown')
@@ -1555,8 +1541,6 @@ class ApiTests(TestCase):
             Status.err('Can not shutdown offline Client'),
             Status.from_json(api_response.content.decode('utf-8')),
         )
-
-        slave.delete()
 
     def test_shutdown_slave_forbidden_function(self):
         api_response = self.client.delete('/api/slave/1/shutdown')
@@ -1595,9 +1579,6 @@ class ApiTests(TestCase):
                     slave=model,
                 ))
 
-        # delete all entries
-        model.delete()
-
     def test_add_file_fail_length(self):
         SlaveModel(
             name='add_file_fail',
@@ -1631,9 +1612,6 @@ class ApiTests(TestCase):
                     "Ensure this value has at most 200 characters (it has 2000)."
                 ]
             }), Status.from_json(api_response.content.decode('utf-8')))
-
-        # delete slave
-        model.delete()
 
     def test_add_file_fail_not_unique(self):
         SlaveModel(
@@ -1671,9 +1649,6 @@ class ApiTests(TestCase):
             }),
             Status.from_json(api_response.content.decode('utf-8')),
         )
-
-        # delete slave
-        model.delete()
 
     def test_add_file_unsupported_function(self):
         SlaveModel(
@@ -1733,8 +1708,6 @@ class ApiTests(TestCase):
             Command(method='execute', uuid=cmd_uuid),
             Command.from_json(json.dumps(slave_ws.receive())),
         )
-
-        slave.delete()
 
     def test_stop_program_unknown_request(self):
         api_request = self.client.post(
@@ -1818,8 +1791,6 @@ class WebsocketTests(TestCase):
         )
         self.assertEqual(ws_client.receive(json=False), 'ok')
 
-        slave.delete()
-
     def test_ws_rpc_disconnect(self):
         slave = SlaveModel(
             name="test_ws_rpc_disconnect",
@@ -1886,8 +1857,6 @@ class WebsocketTests(TestCase):
                 'slave_status': 'disconnected',
                 'sid': str(slave.id)
             }), Status.from_json(json.dumps(webinterface.receive())))
-
-        slave.delete()
 
     def test_ws_rpc_disconnect_try(self):
         slave = SlaveModel(
@@ -2010,8 +1979,6 @@ class WebsocketTests(TestCase):
             Status.from_json(json.dumps(webinterface.receive())),
         )
 
-        slave.delete()
-
     def test_ws_notifications_receive_online_try(self):
         slave = SlaveModel(
             name="test_ws_notifications_receive_online",
@@ -2038,8 +2005,6 @@ class WebsocketTests(TestCase):
         )
 
         self.assertIsNone(webinterface.receive())
-
-        slave.delete()
 
     def test_ws_notifications_receive_online_status_err(self):
         uuid = uuid4().hex
@@ -2079,8 +2044,6 @@ class WebsocketTests(TestCase):
                     slave.name)),
             Status.from_json(json.dumps(webinterface.receive())),
         )
-
-        slave.delete()
 
     def test_ws_notifications_receive_execute(self):
         SlaveModel(
@@ -2140,8 +2103,6 @@ class WebsocketTests(TestCase):
             Status.from_json(json.dumps(webinterface.receive())),
         )
 
-        slave.delete()
-
     def test_ws_notifications_receive_execute_try(self):
         slave = SlaveModel(
             name="test_ws_notifications_receive_execute",
@@ -2177,8 +2138,6 @@ class WebsocketTests(TestCase):
         )
 
         self.assertIsNone(webinterface.receive())
-
-        slave.delete()
 
     def test_ws_notifications_receive_execute_status_err(self):
         SlaveModel(
@@ -2239,8 +2198,6 @@ class WebsocketTests(TestCase):
             }),
             Status.from_json(json.dumps(webinterface.receive())),
         )
-
-        slave.delete()
 
     def test_ws_notifications_receive_unknown_method(self):
         ws_client = WSClient()
