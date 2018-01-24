@@ -121,10 +121,10 @@ class Slave(Model):
     Members
     -------
     name: str The name of the slave
-
     ip_address: GenericIPAddressField The IP address of the slave.
-
     mac_address: str The MAC address of the slave.
+    command_uuid: The UUID which is related to the RPC command.
+    online: If the client has connected to the server
 
     """
     name = CharField(unique=True, max_length=200)
@@ -287,8 +287,10 @@ class Program(Model):
             ProgramStatus(program=self, command_uuid=cmd.uuid).save()
 
             if self.start_time > 0:
-                LOGGER.debug('started timeout on %s, for %d seconds', self.name, self.start_time)
-                FSIM_CURRENT_EVENT_LOOP.spawn(self.start_time,timer_timeout_program,self.id)
+                LOGGER.debug('started timeout on %s, for %d seconds',
+                             self.name, self.start_time)
+                FSIM_CURRENT_EVENT_LOOP.spawn(self.start_time,
+                                              timer_timeout_program, self.id)
 
             return True
         else:

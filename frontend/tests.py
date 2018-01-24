@@ -1,7 +1,4 @@
 #  pylint: disable=C0111,R0904,R0903,C0103
-
-import unittest
-
 from urllib.parse import urlencode
 from shlex import split
 from datetime import datetime
@@ -668,12 +665,11 @@ class ApiTests(TestCase):
         self.assertNotContains(response, "test_program")
 
     def test_slave_autocomplete(self):
-        slave = SlaveModel(
+        SlaveModel.objects.create(
             name="test_slave",
             ip_address="127.0.0.1",
             mac_address="00:00:00:00:00:00",
         )
-        slave.save()
 
         response = self.client.get("/api/slaves?q=")
         self.assertContains(response, "test_slave")
@@ -1046,7 +1042,7 @@ class ApiTests(TestCase):
             )
 
         # test if all programs are in the database
-        for slave_id in range(100):
+        for slave_id in range(10):
             self.assertTrue(
                 ProgramModel.objects.filter(
                     name='name' + str(slave_id),
@@ -1054,9 +1050,6 @@ class ApiTests(TestCase):
                     arguments='arguments' + str(slave_id),
                     slave=model,
                 ))
-
-        # delete all entries
-        model.delete()
 
     def test_add_program_fail_length(self):
         SlaveModel(
@@ -1088,9 +1081,6 @@ class ApiTests(TestCase):
             }),
             Status.from_json(api_response.content.decode('utf-8')),
         )
-
-        # delete slave
-        model.delete()
 
     def test_add_program_fail_not_unique(self):
         SlaveModel(
@@ -1133,9 +1123,6 @@ class ApiTests(TestCase):
             Status.from_json(api_response.content.decode('utf-8')),
         )
 
-        # delete slave
-        model.delete()
-
     def test_add_program_unsupported_function(self):
         SlaveModel(
             name='add_program_unsupported',
@@ -1146,13 +1133,6 @@ class ApiTests(TestCase):
 
         api_response = self.client.delete('/api/programs')
         self.assertEqual(api_response.status_code, 403)
-        SlaveModel.objects.get(
-            name='add_program_unsupported',
-            ip_address='0.0.7.0',
-            mac_address='00:00:00:00:07:00',
-        ).delete()
-
-        model.delete()
 
     #  test wake on lan
     def test_wol(self):
@@ -1255,22 +1235,16 @@ class ApiTests(TestCase):
         )
 
         programs = []
-        for i in range(100):
-            ProgramModel.objects.create(
+        for i in range(10):
+            progs = ProgramModel.objects.create(
                 name="name_" + str(i),
                 path="path_" + str(i),
                 arguments="arguments_" + str(i),
                 slave=slave,
             )
-            programs.append(
-                ProgramModel.objects.get(
-                    name="name_" + str(i),
-                    path="path_" + str(i),
-                    arguments="arguments_" + str(i),
-                    slave=slave,
-                ))
+            programs.append(progs)
 
-        for i in range(100):
+        for i in range(10):
             api_response = self.client.put(
                 "/api/program/" + str(programs[i].id),
                 data=urlencode({
@@ -1328,7 +1302,6 @@ class ApiTests(TestCase):
             }),
             Status.from_json(api_response.content.decode('utf-8')),
         )
-        slave.delete()
 
     def test_edit_program_unique_fail(self):
         # fill database
@@ -1555,7 +1528,7 @@ class ApiTests(TestCase):
         model = SlaveModel.objects.get(name='add_file')
 
         # add all programs
-        for i in range(100):
+        for i in range(10):
             api_response = self.client.post(
                 '/api/files', {
                     'name': 'name' + str(i),
@@ -1570,7 +1543,7 @@ class ApiTests(TestCase):
             )
 
         # test if all programs are in the database
-        for i in range(100):
+        for i in range(10):
             self.assertTrue(
                 FileModel.objects.filter(
                     name='name' + str(i),
@@ -1665,8 +1638,6 @@ class ApiTests(TestCase):
             ip_address='0.0.7.0',
             mac_address='00:00:00:00:07:00',
         ).delete()
-
-        model.delete()
 
     def test_stop_program(self):
         SlaveModel(
@@ -1859,7 +1830,7 @@ class WebsocketTests(TestCase):
             }), Status.from_json(json.dumps(webinterface.receive())))
 
     def test_ws_rpc_disconnect_try(self):
-        slave = SlaveModel(
+        slave = SlaveModel.objects.create(
             name="test_ws_rpc_disconnect",
             ip_address='0.0.10.1',
             mac_address='00:00:00:00:10:01',
@@ -1867,18 +1838,16 @@ class WebsocketTests(TestCase):
             command_uuid='abcdefg',
         )
 
-        slave.save()
-
         #  register program
-        ProgramModel(
+        ProgramModel.objects.create(
             slave=slave,
             name='name',
             path='path',
             arguments='',
-        ).save()
+        )
 
         program = ProgramModel.objects.get(slave=slave)
-        ProgramStatusModel(program=program, command_uuid='abcdefg').save()
+        ProgramStatusModel.objects.create(program=program, command_uuid='abcdefg',)
 
         # connect client on /commands
         ws_client = WSClient()
@@ -1896,13 +1865,17 @@ class WebsocketTests(TestCase):
             path='/notifications',
         )
 
+        # delete slave before disconnect
         slave.delete()
 
         #  throw away connect response
         ws_client.receive()
         ws_client.send_and_consume('websocket.disconnect', path='/commands')
 
-        self.assertEqual(SlaveModel.objects.filter(id=slave.id).count(), 0)
+        self.assertEqual(
+            SlaveModel.objects.filter(id=slave.id).count(),
+            0,
+        )
 
         #  test if program status was removed
         self.assertFalse(
