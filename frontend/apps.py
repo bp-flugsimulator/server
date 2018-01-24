@@ -55,12 +55,8 @@ class SafeLoop:
         self.lock.acquire()
 
         LOGGER.debug("Spawned task in event loop in thread %s", self.thread)
-        self.loop.call_soon_threadsafe(
-            self.loop.call_later,
-            timer,
-            function,
-            *args,
-        )
+        self.loop.call_soon_threadsafe(self.loop.call_later, timer, function,
+                                       *args)
 
         self.lock.release()
 
