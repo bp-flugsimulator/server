@@ -853,8 +853,6 @@ class ApiTests(TestCase): # pylint: disable=unused-variable
                     slave=model,
                 ))
 
-        # delete all entries
-        model.delete()
 
     def test_add_program_fail_length(self):
         SlaveModel(
@@ -887,9 +885,6 @@ class ApiTests(TestCase): # pylint: disable=unused-variable
             }),
             Status.from_json(api_response.content.decode('utf-8')),
         )
-
-        # delete slave
-        model.delete()
 
     def test_add_program_fail_not_unique(self):
         SlaveModel(
@@ -934,9 +929,6 @@ class ApiTests(TestCase): # pylint: disable=unused-variable
             Status.from_json(api_response.content.decode('utf-8')),
         )
 
-        # delete slave
-        model.delete()
-
     def test_add_program_unsupported_function(self):
         SlaveModel(
             name='add_program_unsupported',
@@ -947,13 +939,6 @@ class ApiTests(TestCase): # pylint: disable=unused-variable
 
         api_response = self.client.delete('/api/programs')
         self.assertEqual(api_response.status_code, 403)
-        SlaveModel.objects.get(
-            name='add_program_unsupported',
-            ip_address='0.0.7.0',
-            mac_address='00:00:00:00:07:00',
-        ).delete()
-
-        model.delete()
 
     #  test wake on lan
     def test_wol(self):
@@ -1086,8 +1071,6 @@ class ApiTests(TestCase): # pylint: disable=unused-variable
                 Status.from_json(api_response.content.decode('utf-8')),
             )
 
-        # clear database
-        slave.delete()
 
     def test_modify_program_fail(self):
         # fill database
@@ -1130,7 +1113,6 @@ class ApiTests(TestCase): # pylint: disable=unused-variable
             }),
             Status.from_json(api_response.content.decode('utf-8')),
         )
-        slave.delete()
 
     def test_edit_program_unique_fail(self):
         # fill database
@@ -1176,7 +1158,6 @@ class ApiTests(TestCase): # pylint: disable=unused-variable
             Status.from_json(api_response.content.decode('utf-8')),
         )
 
-        slave.delete()
 
     def test_execute_program(self):
         SlaveModel(
@@ -1240,7 +1221,6 @@ class ApiTests(TestCase): # pylint: disable=unused-variable
 
         #  test if the programstatus entry exists
         self.assertTrue(ProgramStatusModel.objects.filter())
-        slave.delete()
 
     def test_execute_program_fail_slave_offline(self):
         SlaveModel(
@@ -1279,7 +1259,6 @@ class ApiTests(TestCase): # pylint: disable=unused-variable
         )
 
         self.assertIsNone(client.receive())
-        slave.delete()
 
     def test_shutdown_slave(self):
         SlaveModel(
@@ -1314,8 +1293,6 @@ class ApiTests(TestCase): # pylint: disable=unused-variable
             Command(method='shutdown'),
             Command.from_json(json.dumps(ws_client.receive())))
 
-        slave.delete()
-
     def test_shutdown_slave_unknown_slave(self):
         #  make request
         api_response = self.client.get('/api/slave/111/shutdown')
@@ -1346,7 +1323,6 @@ class ApiTests(TestCase): # pylint: disable=unused-variable
             Status.from_json(api_response.content.decode('utf-8')),
         )
 
-        slave.delete()
 
     def test_shutdown_slave_forbidden_function(self):
         api_response = self.client.delete('/api/slave/1/shutdown')
@@ -1385,8 +1361,6 @@ class ApiTests(TestCase): # pylint: disable=unused-variable
                     slave=model,
                 ))
 
-        # delete all entries
-        model.delete()
 
     def test_add_file_fail_length(self):
         SlaveModel(
@@ -1423,8 +1397,6 @@ class ApiTests(TestCase): # pylint: disable=unused-variable
                 ]
             }), Status.from_json(api_response.content.decode('utf-8')))
 
-        # delete slave
-        model.delete()
 
     def test_add_file_fail_not_unique(self):
         SlaveModel(
@@ -1465,9 +1437,6 @@ class ApiTests(TestCase): # pylint: disable=unused-variable
             Status.from_json(api_response.content.decode('utf-8')),
         )
 
-        # delete slave
-        model.delete()
-
     def test_add_file_unsupported_function(self):
         SlaveModel(
             name='add_file_unsupported',
@@ -1478,13 +1447,6 @@ class ApiTests(TestCase): # pylint: disable=unused-variable
 
         api_response = self.client.delete('/api/files')
         self.assertEqual(api_response.status_code, 403)
-        SlaveModel.objects.get(
-            name='add_file_unsupported',
-            ip_address='0.0.7.0',
-            mac_address='00:00:00:00:07:00',
-        ).delete()
-
-        model.delete()
 
     def test_stop_program(self):
         SlaveModel(
@@ -1527,7 +1489,6 @@ class ApiTests(TestCase): # pylint: disable=unused-variable
             Command.from_json(json.dumps(slave_ws.receive())),
         )
 
-        slave.delete()
 
     def test_stop_program_unknown_request(self):
         api_request = self.client.post(

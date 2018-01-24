@@ -64,8 +64,6 @@ class WebsocketTests(TestCase): # pylint: disable=unused-variable
         )
         self.assertEqual(ws_client.receive(json=False), 'ok')
 
-        slave.delete()
-
     def test_ws_rpc_disconnect(self):
         SlaveModel(
             name="test_ws_rpc_disconnect",
@@ -141,8 +139,6 @@ class WebsocketTests(TestCase): # pylint: disable=unused-variable
                 'sid': str(slave.id)
             }), Status.from_json(json.dumps(webinterface.receive())))
 
-        slave.delete()
-
     def test_ws_notifications_connect_and_ws_disconnect(self):
         ws_client = WSClient()
         ws_client.send_and_consume(
@@ -214,8 +210,6 @@ class WebsocketTests(TestCase): # pylint: disable=unused-variable
             Status.from_json(json.dumps(webinterface.receive())),
         )
 
-        slave.delete()
-
     def test_ws_notifications_receive_online_status_err(self):
         SlaveModel(
             name="test_ws_notifications_receive_online_status_err",
@@ -258,8 +252,6 @@ class WebsocketTests(TestCase): # pylint: disable=unused-variable
                     slave.name)),
             Status.from_json(json.dumps(webinterface.receive())),
         )
-
-        slave.delete()
 
     def test_ws_notifications_receive_execute(self):
         SlaveModel(
@@ -318,8 +310,6 @@ class WebsocketTests(TestCase): # pylint: disable=unused-variable
             }),
             Status.from_json(json.dumps(webinterface.receive())),
         )
-
-        slave.delete()
 
     def test_ws_notifications_receive_execute_status_err(self):
         SlaveModel(
