@@ -142,7 +142,7 @@ $(document).ready(function () {
         deleteWarning.children().find('#deleteFileModalButton').hide();
 
 	deleteWarning.children().find('#delete' + show +'ModalButton').show();
-	    
+    
 	deleteWarning.children().find('.modal-body').empty(message);
         deleteWarning.children().find('.modal-body').append(message);
 
