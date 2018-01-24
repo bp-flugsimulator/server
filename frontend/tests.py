@@ -22,7 +22,6 @@ from os.path import join, isdir
 
 import json
 
-
 from .models import (
     Slave as SlaveModel,
     validate_mac_address,
@@ -36,8 +35,6 @@ from .models import (
 )
 
 from .scripts import Script, ScriptEntryFile, ScriptEntryProgram
-
-from .scheduler import Scheduler, SchedulerStatus
 
 
 def fill_database_slaves_set_1():
@@ -160,7 +157,6 @@ class FrontendTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn('p_asdodahgh', str(response.content))
         self.assertIn('f_asdodahgh', str(response.content))
-
 
 
 class ApiTests(TestCase):
@@ -2910,20 +2906,18 @@ class ScriptTests(TestCase):
             ).exists())
 
     def test_model_support_error_in_entry(self):
-        slave = SlaveModel(
+        slave = SlaveModel.objects.create(
             name="test_slave",
             ip_address="127.0.0.1",
             mac_address="00:00:00:00:00:00",
         )
-        slave.save()
 
-        program = ProgramModel(
+        program = ProgramModel.objects.create(
             name="test_program",
             path="None",
             arguments="None",
             slave=slave,
         )
-        program.save()
 
         script = Script(
             "test_scripts",
@@ -2936,63 +2930,66 @@ class ScriptTests(TestCase):
 
         self.assertRaisesRegex(
             ValueError,
-            "Program with id 2 does not exist.",
+            "Program with id {} does not exist.".format(program.id + 1),
             script.save,
         )
-        self.assertTrue(
-            not ScriptModel.objects.filter(name="test_script").exists())
+        self.assertFalse(
+            ScriptModel.objects.filter(name="test_scripts").exists())
         self.assertTrue(len(SGP.objects.all()) == 0)
 
     def test_from_model_file_id_eq_str(self):
         from django.db.utils import IntegrityError
-        slave = SlaveModel(
+        slave = SlaveModel.objects.create(
             name="test_slave",
             ip_address="127.0.0.1",
             mac_address="00:00:00:00:00:00",
         )
-        slave.save()
 
-        file = FileModel(
+        file = FileModel.objects.create(
             name="test_file",
             sourcePath="None",
             destinationPath="None",
             slave=slave,
         )
-        file.save()
 
-        script = ScriptModel(name="test_script")
-        script.save()
+        script = ScriptModel.objects.create(name="test_script")
 
-        a = ScriptEntryFile(0, file.id, slave.id).as_model(script)
-        b = ScriptEntryFile(0, file.name, slave.name).as_model(script)
-        a.save()
-        self.assertRaises(IntegrityError, b.save)
+        ScriptEntryFile(0, file.id, slave.id).save(script)
+
+        self.assertRaises(
+            IntegrityError,
+            ScriptEntryFile(0, file.name, slave.name).save,
+            script,
+        )
 
     def test_from_model_program_id_eq_str(self):
         from django.db.utils import IntegrityError
-        slave = SlaveModel(
+        slave = SlaveModel.objects.create(
             name="test_slave",
             ip_address="127.0.0.1",
-            mac_address="00:00:00:00:00:00")
-        slave.save()
+            mac_address="00:00:00:00:00:00",
+        )
 
-        program = ProgramModel(
-            name="test_program", path="None", arguments="None", slave=slave)
-        program.save()
+        program = ProgramModel.objects.create(
+            name="test_program",
+            path="None",
+            arguments="None",
+            slave=slave,
+        )
 
-        script = ScriptModel(name="test_script")
-        script.save()
+        script = ScriptModel.objects.create(name="test_script")
 
-        with_int = ScriptEntryProgram(0, program.id, slave.id).as_model(script)
+        with_int = ScriptEntryProgram(0, program.id, slave.id).save(script)
 
-        with_str = ScriptEntryProgram(
-            0,
-            program.name,
-            slave.name,
-        ).as_model(script)
-
-        with_int.save()
-        self.assertRaises(IntegrityError, with_str.save)
+        self.assertRaises(
+            IntegrityError,
+            ScriptEntryProgram(
+                0,
+                program.name,
+                slave.name,
+            ).save,
+            script,
+        )
 
     def test_from_query_error(self):
         class Dummy:
@@ -3118,7 +3115,7 @@ class ScriptTests(TestCase):
                 0,
                 "test_program",
                 "test_slave_li",
-            ).as_model,
+            ).save,
             script,
         )
 
@@ -3129,7 +3126,7 @@ class ScriptTests(TestCase):
                 0,
                 "test_program_li",
                 "test_slave",
-            ).as_model,
+            ).save,
             script,
         )
 
@@ -3140,7 +3137,7 @@ class ScriptTests(TestCase):
                 0,
                 123912,
                 "test_slave",
-            ).as_model,
+            ).save,
             script,
         )
 
@@ -3151,7 +3148,7 @@ class ScriptTests(TestCase):
                 0,
                 "test_program",
                 "test_slave_li",
-            ).as_model,
+            ).save,
             script,
         )
 
@@ -3162,7 +3159,7 @@ class ScriptTests(TestCase):
                 0,
                 "test_file_li",
                 "test_slave",
-            ).as_model,
+            ).save,
             script,
         )
 
@@ -3173,7 +3170,7 @@ class ScriptTests(TestCase):
                 0,
                 1239129,
                 "test_slave",
-            ).as_model,
+            ).save,
             script,
         )
 
@@ -3237,349 +3234,6 @@ class ScriptTests(TestCase):
                 ],
             ).save,
         )
-
-
-# class SchedulerTests(TestCase):
-
-#     def setUp(self):
-#         super(SchedulerTests, self).setUp()
-
-#         script = ScriptModel(name="t1")
-#         script.save()
-
-#         slave1 = SlaveModel(
-#             name="test_slav21",
-#             ip_address="0.1.2.0",
-#             mac_address="01:01:01:00:00100",
-#         )
-#         slave1.save()
-
-#         slave2 = SlaveModel(
-#             name="test_sl1ve2",
-#             ip_address="0.1.2.1",
-#             mac_address="00:02:01:01:00:00",
-#         )
-#         slave2.save()
-
-#         prog1 = ProgramModel(name="test_program1", path="none", slave=slave1)
-#         prog1.save()
-
-#         prog2 = ProgramModel(
-#             name="test_program2",
-#             path="none",
-#             slave=slave2,
-#             start_time=1,
-#         )
-#         prog2.save()
-
-#         sgp1 = SGP(index=0, program=prog1, script=script)
-#         sgp1.save()
-
-#         sgp2 = SGP(index=2, program=prog2, script=script)
-#         sgp2.save()
-
-#         self.sched = Scheduler()
-#         self.script = script
-#         self.slave1 = slave1
-#         self.slave2 = slave2
-#         self.prog1 = prog1
-#         self.prog2 = prog2
-
-#     def tearDown(self):
-#         self.script.delete()
-#         self.slave1.delete()
-#         self.slave2.delete()
-
-#     def test_start(self):
-#         self.assertTrue(self.sched.start(self.script.id))
-#         self.assertTrue(self.sched.is_running())
-#         self.assertFalse(self.sched.start(self.script.id))
-#         self.assertFalse(self.sched.should_stop())
-#         self.sched.stop()
-#         self.assertTrue(self.sched.should_stop())
-
-#     def test_state_init(self):
-#         webinterface = WSClient()
-#         webinterface.join_group('notifications')
-
-#         self.sched._Scheduler__script = self.script.id
-#         self.sched._Scheduler__state = SchedulerStatus.INIT
-#         self.sched._Scheduler__state_init()
-
-#         self.assertEqual(
-#             self.sched._Scheduler__state,
-#             SchedulerStatus.WAITING_FOR_SLAVES,
-#         )
-
-#         self.assertEqual(
-#             Status.ok({
-#                 'script_status': 'waiting_for_slaves',
-#                 'script_id': self.script.id,
-#             }),
-#             Status.from_json(json.dumps(webinterface.receive())),
-#         )
-
-#     def test_state_waiting_slaves(self):
-#         self.sched._Scheduler__script = self.script.id
-#         self.sched._Scheduler__state = SchedulerStatus.WAITING_FOR_SLAVES
-#         self.sched._Scheduler__state_wait_slaves()
-
-#         self.assertEqual(
-#             self.sched._Scheduler__state,
-#             SchedulerStatus.WAITING_FOR_SLAVES,
-#         )
-
-#         SlaveModel.objects.filter(id=self.slave1.id).update(
-#             online=True,
-#             command_uuid=uuid4().hex,
-#         )
-
-#         self.sched._Scheduler__state_wait_slaves()
-
-#         self.assertEqual(
-#             self.sched._Scheduler__state,
-#             SchedulerStatus.WAITING_FOR_SLAVES,
-#         )
-
-#         SlaveModel.objects.filter(id=self.slave2.id).update(
-#             online=True,
-#             command_uuid=uuid4().hex,
-#         )
-
-#         self.sched._Scheduler__state_wait_slaves()
-
-#         self.assertEqual(
-#             self.sched._Scheduler__state,
-#             SchedulerStatus.NEXT_STEP,
-#         )
-
-#     def test_state_next(self):
-#         webinterface = WSClient()
-#         webinterface.join_group('notifications')
-
-#         self.sched._Scheduler__index = -1
-#         self.sched._Scheduler__script = self.script.id
-#         self.sched._Scheduler__state = SchedulerStatus.NEXT_STEP
-#         self.sched._Scheduler__state_next()
-
-#         self.assertEqual(
-#             self.sched._Scheduler__state,
-#             SchedulerStatus.WAITING_FOR_PROGRAMS,
-#         )
-
-#         self.assertEqual(
-#             Status.ok({
-#                 'script_status': 'next_step',
-#                 'index': 0,
-#                 'last_index': -1,
-#                 'start_time': 0,
-#                 'script_id': self.script.id,
-#             }),
-#             Status.from_json(json.dumps(webinterface.receive())),
-#         )
-
-#         self.sched._Scheduler__state = SchedulerStatus.NEXT_STEP
-#         self.sched._Scheduler__state_next()
-
-#         self.assertEqual(
-#             self.sched._Scheduler__state,
-#             SchedulerStatus.WAITING_FOR_PROGRAMS,
-#         )
-
-#         self.assertEqual(
-#             Status.ok({
-#                 'script_status': 'next_step',
-#                 'index': 2,
-#                 'last_index': 0,
-#                 'start_time': 1,
-#                 'script_id': self.script.id,
-#             }),
-#             Status.from_json(json.dumps(webinterface.receive())),
-#         )
-
-#         self.sched._Scheduler__state = SchedulerStatus.NEXT_STEP
-#         self.sched._Scheduler__state_next()
-
-#         self.assertEqual(
-#             self.sched._Scheduler__state,
-#             SchedulerStatus.SUCCESS,
-#         )
-
-#         self.assertEqual(
-#             Status.ok({
-#                 'script_status': 'next_step',
-#                 'index': 3,
-#                 'last_index': 2,
-#                 'start_time': 0,
-#                 'script_id': self.script.id,
-#             }),
-#             Status.from_json(json.dumps(webinterface.receive())),
-#         )
-
-#     def test_state_waiting_programs(self):
-#         self.sched._Scheduler__script = self.script.id
-#         self.sched._Scheduler__index = 0
-#         self.sched._Scheduler__state = SchedulerStatus.WAITING_FOR_PROGRAMS
-
-#         ProgramStatusModel(
-#             running=True,
-#             program=self.prog1,
-#             command_uuid=uuid4().hex,
-#         ).save()
-#         ProgramStatusModel(
-#             running=False,
-#             program=self.prog2,
-#             command_uuid=uuid4().hex,
-#         ).save()
-
-#         self.sched._Scheduler__state_wait_programs()
-
-#         self.assertEqual(
-#             self.sched._Scheduler__state,
-#             SchedulerStatus.WAITING_FOR_PROGRAMS,
-#         )
-
-#         ProgramStatusModel.objects.filter(program=self.prog1).update(
-#             running=False, )
-
-#         self.sched._Scheduler__state_wait_programs()
-
-#         self.assertEqual(
-#             self.sched._Scheduler__state,
-#             SchedulerStatus.NEXT_STEP,
-#         )
-
-#         self.sched._Scheduler__index = 2
-#         self.sched._Scheduler__state = SchedulerStatus.WAITING_FOR_PROGRAMS
-
-#         ProgramStatusModel.objects.filter(program=self.prog2).update(
-#             running=False, )
-
-#         self.sched._Scheduler__state_wait_programs()
-
-#         self.assertEqual(
-#             self.sched._Scheduler__state,
-#             SchedulerStatus.NEXT_STEP,
-#         )
-
-#     def test_state_waiting_programs_error(self):
-#         self.sched._Scheduler__script = self.script.id
-#         self.sched._Scheduler__index = 0
-#         self.sched._Scheduler__state = SchedulerStatus.WAITING_FOR_PROGRAMS
-
-#         ProgramStatusModel(
-#             running=True,
-#             program=self.prog1,
-#             command_uuid=uuid4().hex,
-#         ).save()
-
-#         ProgramStatusModel(
-#             running=False,
-#             program=self.prog2,
-#             command_uuid=uuid4().hex,
-#         ).save()
-
-#         self.sched._Scheduler__state_wait_programs()
-
-#         self.assertEqual(
-#             self.sched._Scheduler__state,
-#             SchedulerStatus.WAITING_FOR_PROGRAMS,
-#         )
-
-#         ProgramStatusModel.objects.filter(program=self.prog1).update(
-#             running=False, )
-
-#         self.sched._Scheduler__state_wait_programs()
-
-#         self.assertEqual(
-#             self.sched._Scheduler__state,
-#             SchedulerStatus.NEXT_STEP,
-#         )
-
-#         self.sched._Scheduler__index = 2
-#         self.sched._Scheduler__state = SchedulerStatus.WAITING_FOR_PROGRAMS
-
-#         ProgramStatusModel.objects.filter(program=self.prog2).update(
-#             running=False,
-#             code="Some error",
-#         )
-
-#         self.sched._Scheduler__state_wait_programs()
-
-#         self.assertEqual(
-#             self.sched._Scheduler__state,
-#             SchedulerStatus.ERROR,
-#         )
-
-#     def test_state_success(self):
-#         webinterface = WSClient()
-#         webinterface.join_group('notifications')
-
-#         self.sched._Scheduler__script = self.script.id
-#         self.sched._Scheduler__state = SchedulerStatus.SUCCESS
-#         self.sched._Scheduler__state_success()
-
-#         self.assertEqual(
-#             self.sched._Scheduler__state,
-#             SchedulerStatus.SUCCESS,
-#         )
-
-#         self.assertEqual(
-#             Status.ok({
-#                 'script_status': 'success',
-#                 'script_id': self.script.id,
-#             }),
-#             Status.from_json(json.dumps(webinterface.receive())),
-#         )
-
-#     def test_state_error(self):
-#         webinterface = WSClient()
-#         webinterface.join_group('notifications')
-
-#         self.sched._Scheduler__script = self.script.id
-#         self.sched._Scheduler__error_code = "Wow an error occurred."
-#         self.sched._Scheduler__state = SchedulerStatus.ERROR
-#         self.sched._Scheduler__state_error()
-
-#         self.assertEqual(
-#             self.sched._Scheduler__state,
-#             SchedulerStatus.ERROR,
-#         )
-
-#         self.assertEqual(
-#             Status.ok({
-#                 'script_status': 'error',
-#                 'error_code': 'Wow an error occurred.',
-#                 'script_id': self.script.id,
-#             }),
-#             Status.from_json(json.dumps(webinterface.receive())),
-#         )
-
-#     def test_timer_slave_timeout(self):
-#         from threading import Timer
-#         webinterface = WSClient()
-#         webinterface.join_group('notifications')
-
-#         self.sched._Scheduler__script = self.script.id
-#         self.sched._Scheduler__state = SchedulerStatus.WAITING_FOR_SLAVES
-
-#         t = Timer(
-#             1,
-#             self.sched.timer_scheduler_slave_timeout,
-#         )
-
-#         t.start()
-#         t.join()
-
-#         self.assertEqual(
-#             self.sched._Scheduler__state,
-#             SchedulerStatus.ERROR,
-#         )
-
-#         self.assertEqual(
-#             self.sched._Scheduler__error_code,
-#             "Not all slaves connected within 5 minutes.",
-#         )
 
 
 class DownloadTests(TestCase):

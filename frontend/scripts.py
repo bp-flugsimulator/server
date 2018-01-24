@@ -4,9 +4,11 @@ to javascript
 """
 
 import json
+
 from django.db import transaction
-from .models import Script as ScriptModel
+
 from .models import (
+    Script as ScriptModel,
     ScriptGraphFiles as SGFModel,
     ScriptGraphPrograms as SGPModel,
     Program as ProgramModel,
@@ -149,11 +151,13 @@ class Script:
         Saves this object to the database.
         """
 
-        script = ScriptModel(name=self.name)
-        script.save()
+        script = ScriptModel.objects.create(name=self.name)
 
-        [obj.as_model(script) for obj in self.programs]
-        [obj.as_model(script) for obj in self.files]
+        for obj in self.programs:
+            obj.save(script)
+
+        for obj in self.files:
+            obj.save(script)
 
     def to_json(self):
         """
@@ -251,9 +255,11 @@ class ScriptEntryFile:
             data['slave'],
         )
 
-    def as_model(self, script):
+    @transaction.atomic
+    def save(self, script):
         """
-        Transforms this object into ScriptGraphFiles.
+        Transforms this object into ScriptGraphFiles and saves it to the
+        database.
 
         Arguments
         ---------
@@ -399,9 +405,11 @@ class ScriptEntryProgram:
             data['slave'],
         )
 
-    def as_model(self, script):
+    @transaction.atomic
+    def save(self, script):
         """
-        Transforms this object into ScriptGraphPrograms.
+        Transforms this object into ScriptGraphPrograms and saves it to the
+        database.
 
         Arguments
         ---------
