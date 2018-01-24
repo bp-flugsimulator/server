@@ -140,20 +140,10 @@ $(document).ready(function () {
         deleteWarning.children().find('#deleteProgramModalButton').hide();
         deleteWarning.children().find('#deleteSlaveModalButton').hide();
         deleteWarning.children().find('#deleteFileModalButton').hide();
-        switch(show) {
-        case 'file':
-            deleteWarning.children().find('#deleteFileModalButton').show();
-            break;
-        case 'program':
-            deleteWarning.children().find('#deleteProgramModalButton').show();
-            break;
-        case 'slave':
-            deleteWarning.children().find('#deleteSlaveModalButton').show();
-            break;
-        default:
-            alert('invalid identifier');
-        }
-        deleteWarning.children().find('.modal-body').empty(message);
+
+	deleteWarning.children().find('#delete' + show +'ModalButton').show();
+	    
+	deleteWarning.children().find('.modal-body').empty(message);
         deleteWarning.children().find('.modal-body').append(message);
 
 
@@ -235,7 +225,7 @@ $(document).ready(function () {
         let name = $(this).data('program-name');
         let message = '<a>Are you sure you want to remove program </a><b>' + name + '</b>?</a>';
 
-        prepareDeleteModal('program', id, message);
+        prepareDeleteModal('Program', id, message);
     });
 
     // programForm Handler
@@ -276,7 +266,7 @@ $(document).ready(function () {
         let name = $(this).data('file-name');
         let message = '<a>Are you sure you want to remove file </a><b>' + name + '</b>?</a>';
 
-        prepareDeleteModal('file', id, message);
+        prepareDeleteModal('File', id, message);
     });
 
     // fileForm Handler
@@ -414,7 +404,7 @@ $(document).ready(function () {
 
         let message = '<a>Are you sure you want to remove client </a><b>' + name + '</b>?</a>';
 
-        prepareDeleteModal('slave', id, message);
+        prepareDeleteModal('Slave', id, message);
     });
 
     /*function for deleting a program, it is added to the program-action-delete

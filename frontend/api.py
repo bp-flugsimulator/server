@@ -464,7 +464,6 @@ def manage_file(request, file_id):
     Parameters
     ----------
         request: HttpRequest
-        slaveId: Unique identifier of a slave
         fileId: Unique identifier of a file
 
     Returns
