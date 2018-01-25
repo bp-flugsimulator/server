@@ -1,42 +1,42 @@
 
-<div class="card program-card mb-2" data-id="{{ program.id }}"
-style="background-color: #292929;">
-    <div class="card-body">
-        <div class="row">
-            <div class="program-name col">
-                <h5 class="mt-2">{{ program.name }}</h5>
-            </div>
-            <div class="program-path" style="display: none">{{ program.path }}</div>
-            <div class="program-arguments" style="display: none">{{ program.arguments }}</div>
-            <div class="btn-toolbar" role="toolbar">
-                <div class="btn-group mr-4" role="group">
-                        {% if program.programstatus.running and program.programstatus.code == '' %}
-                            <button id="programStatus_{{ program.id }}" type="button" class="btn btn-success" data-toggle="tooltip" data-placement="top" title="Running">
-                        {% elif not program.programstatus.running and program.programstatus.code != '' %}
-                            <button id="programStatus_{{ program.id }}" type="button" class="btn btn-danger" data-toggle="tooltip" data-placement="top" title="Stopped with Code {{ program.programstatus.code }} ">
-                        {% else %}
-                            <button id="programStatus_{{ program.id }}" type="button" class="btn btn-danger" data-toggle="tooltip" data-placement="top" title="Status">
-                        {% endif %}
-                        <i class="material-icons">error_outline</i>
-                    </button>
-                </div>
-                <div class="btn-group mr-2" role="group">
-                    <button type="button" class="btn btn-outline-light start-program-btn" data-toggle="tooltip" data-placement="top" title="Start/Stop">
-                        <i class="material-icons">power_settings_new</i>
-                    </button>
-                    <button type="button" class="btn btn-outline-light" data-toggle="tooltip" data-placement="top" title="Restart">
-                        <i class="material-icons">refresh</i>
-                    </button>
-                </div>
-                <div class="btn-group mr-2" role="group">
-                    <button type="button" class="btn btn-outline-danger modify-program-btn" data-toggle="tooltip" data-placement="top" title="Edit">
-                        <i class="material-icons">edit</i>
-                    </button>
-                    <button type="button" class="btn btn-outline-danger delete_program" data-toggle="tooltip" data-placement="top" title="Delete">
-                        <i class="material-icons">delete</i>
-                    </button>
-                </div>
-            </div>
+<div class="row-1 mb-2 pt-2 pb-2 pl-4 pr-4 fsim-box" data-state="{% if program.is_successful %}success{% elif program.is_error %}error{% elif program.is_running %}warning{% else %}unkown{% endif %}" id="programStatusContainer_{{ program.id }}">
+
+    <div class="row">
+        <div class="program-name col mt-1 font-weight-bold">
+            <i class="fsim-status-icon align-middle" id="programStatusIcon_{{ program.id }}">
+            </i>
+            <span class="align-middle">{{ program.name }}</span>
         </div>
+
+        <div class="btn-toolbar col d-flex justify-content-end" role="toolbar">
+            <div class="btn-group mr-2" role="group">
+                <button type="button" id="programStartStop_{{ program.id }}" class="btn btn-outline-dark font-weight-light program-action-start-stop" data-program-id="{{ program.id }}" data-is-running="{{ program.is_running }}">
+                    <i class="mdi mdi-power-settings-new"></i>
+                    <i class="button-status-display">
+                        {% if program.is_running %}STOP{% else %}START{% endif %}
+                    </i>
+                </button>
+            </div>
+
+            <div class="btn-group mr-2" role="group">
+                <button type="button" class="btn btn-outline-dark program-action-modify font-weight-light" data-program-id="{{ program.id }}" data-program-name="{{ program.name }}" data-slave-id="{{ program.slave.id }}" data-program-path="{{ program.path }}" data-program-arguments="{{ program.arguments }}">
+                    <i class="mdi mdi-edit"></i> EDIT
+                </button>
+
+                <button type="button" class="btn btn-outline-dark program-action-delete font-weight-light" data-program-id="{{ program.id }}" data-slave-id="{{ program.slave }}" data-program-name="{{ program.name }}">
+                    <i class="mdi mdi-delete"></i> DELETE
+                </button>
+            </div>
+
+            <button class="btn btn-outline-dark font-weight-light" id="programCardButton_{{ program.id }}" type="button" data-toggle="collapse" data-target="#programCard_{{ program.id }}" {% if not program.is_error %} disabled {% endif %}>
+                <i class="mdi mdi-arrow-drop-down"></i> MORE
+            </button>
+        </div>
+    </div>
+
+    <div class="collapse pl-4 pr-4 mt-2 row" id="programCard_{{ program.id }}">
+        {% if program.is_error %}
+            {{ program.programstatus.code }}
+        {% endif %}
     </div>
 </div>

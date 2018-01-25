@@ -35,7 +35,7 @@ class ProgramForm(ModelForm):
         configures the form
         """
         model = ProgramModel
-        fields = ['name', 'path', 'arguments']
+        fields = ['name', 'path', 'arguments', 'start_time']
 
 
 class FileForm(ModelForm):

@@ -4,44 +4,19 @@
 
 	<head>
 		<title>{% block title %}{% endblock %} | Flugsimulator</title>
+		<link rel="icon" type="image/svg+xml" href="{% static 'base/favicon.svg' %}" sizes="any">
+
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
+        <!-- Stylesheets -->
 		<link href="{% static 'node/jsoneditor/dist/jsoneditor.min.css' %}" rel="stylesheet" type="text/css">
 		<link rel="stylesheet" href="{% static 'node/animate.css/animate.min.css' %}" />
 		<!--Import Google Icon Font-->
-		<link rel="stylesheet" href="{% static 'node/material-design-icons/iconfont/material-icons.css' %}">
+        <link rel="stylesheet" href="{% static 'node/bootstrap-material-icons/css/material-icons.css' %}">
+        <link rel="stylesheet" href="{% static 'node/font-awesome/css/font-awesome.css' %}">
 
-		<link rel="stylesheet" href="{% static 'base/css/custom.css' %}" />
-	</head>
-
-	<body style="position: relative; background: #292929;">
-		<!-- Header -->
-
-		<nav class="navbar navbar-expand-lg navbar-dark bg-dark navbar-toggleable-md bg-faded">
-			<div class="container">
-				<a class="navbar-brand" href="#">Flugsimulator</a>
-				<div class="collapse navbar-collapse" id="navbarNav">
-					<ul class="navbar-nav">
-						<li class="nav-item">
-							<a class="nav-link {% if navbar_link == 'slaves' %}active{% endif %}" href="/slaves">Clients</a>
-						</li>
-						<li class="nav-item {% if navbar_link == 'scripts' %}active{% endif %}">
-							<a class="nav-link" href="/scripts">Skripte</a>
-						</li>
-					</ul>
-				</div>
-			</div>
-
-			<button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-				<span class="navbar-toggler-icon"></span>
-			</button>
-		</nav>
-
-		{% block premain%}{% endblock %}
-		<main class="container">
-		{% block content %}{% endblock %}
-		</main>
+        <link rel="stylesheet" href="{% static 'base/css/custom.css' %}" />
 
 		<!-- Scripts -->
 		<script src="{% static 'node/jquery/dist/jquery.min.js'%}"></script>
@@ -51,4 +26,54 @@
 		<script src="{% static 'frontend/ws.js' %}"></script>
 		<script src="{% static 'frontend/status.js' %}"></script>
 		{% block script %}{% endblock %}
+	</head>
+
+	<body>
+		<!-- Navigation -->
+		<nav class="navbar navbar-expand-lg bg-dark navbar-dark navbar-toggleable-md bg-faded mb-4">
+			<a class="navbar-brand text-uppercase font-weight-bold" href="#">
+				<img src="{% static 'base/favicon.svg' %}" width="32" height="32" class="d-inline-block align-top" alt="FS">
+				Flugsimulator
+			</a>
+			<div class="collapse navbar-collapse" id="navbarNav">
+				<ul class="navbar-nav">
+					<li class="nav-item">
+						<a class="nav-link text-uppercase font-weight-bold {% if navbar_link == 'slaves' %}active{% endif %}" href="/slaves">Clients</a>
+					</li>
+					<li class="nav-item text-uppercase font-weight-bold {% if navbar_link == 'scripts' %}active{% endif %}">
+						<a class="nav-link" href="/scripts">Scripts</a>
+					</li>
+					<li class="nav-item text-uppercase font-weight-bold {% if navbar_link == 'downloads' %}active{% endif %}">
+						<a class="nav-link" href="/downloads">Downloads</a>
+					</li>
+				</ul>
+			</div>
+
+			<button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+				<span class="navbar-toggler-icon"></span>
+			</button>
+		</nav>
+
+        {% block premain%}{% endblock %}
+
+		<main class="container-fluid">
+		{% block content %}{% endblock %}
+		</main>
+
+		<footer class="navbar navbar-expand-lg navbar-fixed-bottom bg-dark navbar-dark">
+			<ul class="navbar-nav">
+				<li class="nav-item">
+					<a href="https://github.com/bp-flugsimulator/server" class="nav-link text-uppercase font-weight-bold">
+						<i class="fa fa-github fa-inverse"></i>
+						Repository
+					</a>
+				</li>
+				<li class="nav-item">
+					<a href="https://github.com/bp-flugsimulator/server" class="nav-link text-uppercase font-weight-bold">
+						<i class="fa fa-copyright fa-inverse"></i>
+						MIT-LICENSE
+					</a>
+				</li>
+			</ul>
+		</footer>
 	</body>

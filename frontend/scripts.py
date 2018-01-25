@@ -15,6 +15,27 @@ from .models import (
 )
 
 
+def get_slave(slave):
+    """
+    Checks if the given object is string or integer and queries the slave from
+    that.
+
+    Arguments
+    ---------
+        slave: slave name (string) or slave id (int)
+
+    Returns
+    -------
+        Slave object if it is in the database or None if it is not string or int
+    """
+    if isinstance(slave, str):
+        return SlaveModel.objects.get(name=slave)
+    elif isinstance(slave, int):
+        return SlaveModel.objects.get(id=slave)
+    else:
+        return None
+
+
 class Script:
     """
     Fields
@@ -105,6 +126,13 @@ class Script:
             Script object
         """
         data = json.loads(string)
+
+        if not isinstance(data['programs'], list):
+            raise ValueError('Programs has to be a list')
+
+        if not isinstance(data['files'], list):
+            raise ValueError('Files has to be a list')
+
         return cls(
             data['name'],
             [ScriptEntryProgram(**program) for program in data['programs']],
@@ -240,10 +268,8 @@ class ScriptEntryFile:
         -------
             Django model
         """
-        if isinstance(self.slave, str):
-            slave = SlaveModel.objects.get(name=self.slave)
-        elif isinstance(self.slave, int):
-            slave = SlaveModel.objects.get(id=self.slave)
+
+        slave = get_slave(self.slave)
 
         if isinstance(self.file, str):
             obj = FileModel.objects.get(slave=slave, name=self.file)
@@ -366,10 +392,7 @@ class ScriptEntryProgram:
         -------
             Django model
         """
-        if isinstance(self.slave, str):
-            slave = SlaveModel.objects.get(name=self.slave)
-        elif isinstance(self.slave, int):
-            slave = SlaveModel.objects.get(id=self.slave)
+        slave = get_slave(self.slave)
 
         if isinstance(self.program, str):
             obj = ProgramModel.objects.get(slave=slave, name=self.program)

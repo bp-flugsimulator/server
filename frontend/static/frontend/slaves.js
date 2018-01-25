@@ -1,131 +1,391 @@
-/**
- * Get a cookie by it the name. If the cookie is not present 'null' will be
- * returned.
- * @param {string} name Cookie name
- */
-function getCookie(name) {
-    if (document.cookie && document.cookie !== '') {
-        let cookie = document.cookie.split(',').find(function (raw_cookie) {
-            let cookie = jQuery.trim(raw_cookie);
-            return cookie.substring(0, name.length + 1) === (name + '=');
-        });
-
-        if (cookie != null) {
-            return decodeURIComponent(cookie.substring(name.length + 1));
-        }
-    }
-    return null;
-}
+/* eslint-env browser*/
+/* global $, getCookie, modalDeleteAction, handleFormStatus, clearErrorMessages, Status*/
 
 /**
- * This function can be used for any kind delete actions. Insert the ID into the
- * #deleteWarning with .data('sqlId', id).
+ * Creates a function which handles from submits.
  *
- * @param {HTMLElement} form A valid HTML form.
- * @param {string} route A sub string of a valid REST route which accesses a
- * single object by it's id.
+ * @param {String} id Form identifier without '#'
  */
-function modalDeleteAction(form, route) {
-    let id = $('#deleteWarning').data('sqlId');
+const onFormSubmit = function (id) {
+    return function (event) {
+        //Stop form from submitting normally
+        event.preventDefault();
 
-    $.ajax({
-        type: 'DELETE',
-        url: '/api/' + route + '/' + id,
-        beforeSend: function (xhr) {
-            xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
-        },
-        converters: {
-            'text json': Status.from_json
-        },
-        success: function (status) {
-            if (status.is_ok()) {
-                window.location.reload();
-            } else {
+        //send request to given url and with given method
+        //data field contains information about the slave
+        $.ajax({
+            type: $(this).attr('method'),
+            url: $(this).attr('action'),
+            data: $(this).serialize(),
+            converters: {
+                'text json': Status.from_json
+            },
+            beforeSend(xhr) {
+                xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
+            },
+            success(status) {
+                handleFormStatus($('#' + id), status);
+            },
+            error(xhr, errorString, errorCode) {
                 $.notify({
-                    message: JSON.stringify(response.payload)
+                    message: 'Could not deliver ' + $(this).attr('method') + ' request to server (' + errorCode + ')'
                 }, {
-                    type: 'danger'
-                });
+                        type: 'danger'
+                    });
             }
-        }
-    });
-}
-
-/**
- * Handles the incoming status from a form request. The page will be reloaded or
- * the errors will be marked in the input field.
- *
- * @param {HTMLElement} form
- * @param {Status} status
- */
-function handleFormStatus(form, status) {
-    if (status.is_ok()) {
-        console.log('OK');
-        window.location.reload();
-    } else {
-        console.log('Err');
-        console.log(status.to_json());
-      
-        // remove previous feedback
-        form.find("div[class='invalid-feedback']").each(function (index, item) {
-            item.remove();
         });
-
-        // remove previous feedback
-        form.find('.is-invalid').each(function (index, item) {
-            $(item).removeClass('is-invalid');
-        });
-
-        // insert new feedback
-        $.each(status.payload, function (id, msg) {
-            let node = form.find('input[name=' + id + ']');
-            node.addClass('is-invalid');
-            node.parent().append("<div class='invalid-feedback'>" + msg + "</div>");
-        });
-    }
-}
-
-
-/**
- * Cleares the errorfields of a given form
- *
- * @param {HTMLElement} form
- */
-function clearErrorMessages(form){
-    form.find("div[class='invalid-feedback']").each(function (index, item) {
-        item.remove();
-    });
-
-    form.find('.is-invalid').each(function (index, item) {
-        $(item).removeClass('is-invalid');
-    });
-}
+    };
+};
 
 $(document).ready(function () {
     // set defaults for notifications
-    $.notifyDefaults({
-        type: 'success',
-        placement: {
-            from: 'bottom',
-            align: 'right'
-        },
-        animate: {
-            enter: 'animated fadeInRight',
-            exit: 'animated fadeOutRight'
+
+    const restoreSlaveInnerTab = function (slaveId) {
+        let tabStatus = localStorage.getItem('tab-status');
+
+        if (tabStatus !== null) {
+            if (tabStatus === 'program') {
+                $('#slavesObjectsPrograms' + slaveId).click();
+            }
+            else if (tabStatus === 'file') {
+                $('#slavesObjectsFiles' + slaveId).click();
+            }
+        }
+    };
+
+    // Restores the last clicked slave
+    (function () {
+        let href = localStorage.getItem('status');
+        if (href !== null) {
+            let iter = $('.slave-tab-link').filter(function (idx, val) {
+                return val.hasAttribute('href') && val.getAttribute('href') === href;
+            });
+
+            iter.click();
+
+            let slaveId = iter.attr('data-slave-id');
+            restoreSlaveInnerTab(slaveId);
+        }
+    }());
+
+    // Set color of the current selected.
+    $('.slave-tab-link.active').parent('li').css('background-color', '#dbdbdc');
+
+    // Changes the color of the clicked slave, if it was not clicked before.
+    $('.slave-tab-link').click(function () {
+        if (!$(this).hasClass('active')) {
+            // Remove color from the old tabs
+            $('.slave-tab-link').each(function (idx, val) {
+                $(val).parent('li').css('background-color', 'transparent');
+            });
+
+            // Save Class when opening for every Slave
+            localStorage.setItem('status', $(this).attr('href'));
+
+            // Change the color of the current tab
+            $(this).parent('li').css('background-color', '#dbdbdc');
         }
     });
 
-    // Enable tool tips.
-    $(function () {
-        $("[data-toggle='tooltip']").tooltip()
+    $('.slave-file-tab').click(function () {
+        localStorage.setItem('tab-status', 'file');
     });
 
-    /*function for deleting a slave, it is added to the delete_slave button*/
-    $('.delete_slave').click(function () {
+    $('.slave-program-tab').click(function () {
+        localStorage.setItem('tab-status', 'program');
+    });
 
+    $('.program-action-start-stop').click(function () {
+        let apiRequest = function (url, type) {
+            $.ajax({
+                type,
+                url,
+                beforeSend(xhr) {
+                    xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
+                },
+                converters: {
+                    'text json': Status.from_json
+                },
+                success(status) {
+                    if (status.is_err()) {
+                        $.notify({
+                            message: status.payload
+                        }, {
+                                type: 'danger'
+                            });
+                    }
+                },
+                error(xhr, errorString, errorCode) {
+                    $.notify({
+                        message: 'Could not deliver ' + type + ' request to server (' + errorCode + ')'
+                    }, {
+                            type: 'danger'
+                        });
+                }
+            });
+        };
+
+        let id = $(this).data('program-id');
+
+        if ($(this).attr('data-is-running') === 'True') {
+            apiRequest('/api/program/' + id + '/stop', 'GET');
+        } else {
+            apiRequest('/api/program/' + id, 'POST');
+        }
+    });
+
+    //opens the programModal to add a new program
+    $('.program-action-add').click(function () {
+        let programModal = $('#programModal');
+        programModal.children().find('.modal-title').text('Add Program');
+
+        //modify the form for the submit button
+        let programForm = programModal.children().find('#programForm');
+        programForm.attr('action', '/api/programs');
+        programForm.attr('method', 'POST');
+        programForm.children().find('.submit-btn').text('Add');
+
+        //clear input fields
+
+        programForm.find('[name="name"]').val('');
+        programForm.find('[name="path"]').val('');
+        programForm.find('[name="arguments"]').val('');
+
+        //clear error messages
+        clearErrorMessages(programForm);
+
+        //find slave id and store it in the form
+        let slaveId = $(this).data('slave-id');
+        programForm.find('[name="slave"]').val(slaveId);
+        programModal.modal('toggle');
+    });
+
+    //opens the programModal to modify a program
+    $('.program-action-modify').click(function () {
+        let programModal = $('#programModal');
+        let programForm = programModal.children().find('#programForm');
+
+        //get info of program
+        let id = $(this).data('program-id');
+        let name = $(this).data('program-name');
+        let path = $(this).data('program-path');
+        let args = $(this).data('program-arguments');
+
+        //modify the form for the submit button
+        programModal.children().find('.modal-title').text('Edit Program');
+        programForm.attr('action', '/api/program/' + id);
+        programForm.attr('method', 'PUT');
+        programForm.children().find('.submit-btn').text('Edit');
+
+        //clear input fields
+        programForm.find('[name="name"]').val(name);
+        programForm.find('[name="path"]').val(path);
+        programForm.find('[name="arguments"]').val(args);
+
+        //clear error messages
+        clearErrorMessages(programForm);
+
+        //find slave id and store it in the form
+        let slaveId = $(this).data('slave-id');
+        programForm.find('[name="slave"]').val(slaveId);
+
+        //find slave id and store it in the form
+        programModal.modal('toggle');
+    });
+
+    $('#deleteProgramModalButton').click(function () {
+        modalDeleteAction($('#programForm'), 'program');
+    });
+
+    $('.program-action-delete').click(function () {
+        //get id and name of the program and create deletion message
+        let id = $(this).data('program-id');
+        let name = $(this).data('program-name');
+        let message = '<a>Are you sure you want to remove program </a><b>' + name + '</b>?</a>';
+
+        //
+        //changing button visibility and message of the delete modal
+        let deleteWarning = $('#deleteWarning');
+        deleteWarning.children().find('#deleteSlaveModalButton').hide();
+        deleteWarning.children().find('#deleteProgramModalButton').show();
+        deleteWarning.children().find('.modal-body').empty(message);
+        deleteWarning.children().find('.modal-body').append(message);
+
+
+        //adding id to modal and set it visible
+        deleteWarning.data('sqlId', id);
+        deleteWarning.modal('toggle');
+    });
+
+    // programForm Handler
+    $('#programForm').submit(onFormSubmit('programForm'));
+
+    //opens the fileModal to add a new program
+    $('.file-action-add').click(function () {
+        let fileModal = $('#fileModal');
+        fileModal.children().find('.modal-title').text('Add File');
+
+        //modify the form for the submit button
+        let fileForm = fileModal.children().find('#fileForm');
+        fileForm.attr('action', '/api/files');
+        fileForm.attr('method', 'POST');
+        fileForm.children().find('.submit-btn').text('Add');
+
+        //clear input fields
+        fileForm.find('[name="name"]').val('');
+        fileForm.find('[name="sourcePath"]').val('');
+        fileForm.find('[name="destinationPath"]').val('');
+
+        //clear error messages
+        clearErrorMessages(fileForm);
+
+        //find slave id and store it in the form
+        let slaveId = $(this).data('slave-id');
+        fileForm.find('[name="slave"]').val(slaveId);
+        fileModal.modal('toggle');
+    });
+
+    $('.file-action-modify').click(function () {
+        alert('Unimplemented');
+    });
+
+    $('.file-action-delete').click(function () {
+        alert('Unimplemented');
+    });
+
+    // fileForm Handler
+    $('#fileForm').submit(onFormSubmit('fileForm'));
+
+    $('.slave-action-start-stop').click(function () {
+        if ($(this).attr('data-is-running') === 'True') {
+            let id = $(this).data('slave-id');
+            let el = $(this);
+
+            $.ajax({
+                type: 'GET',
+                url: '/api/slave/' + id + '/shutdown',
+                beforeSend(xhr) {
+                    xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
+                },
+                success(data) {
+                    let status = Status.from_json(JSON.stringify(data));
+                    if (status.is_ok()) {
+                        el.addClass('animated pulse');
+                        el.one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend', function () {
+                            el.removeClass('animated pulse');
+                        });
+                    } else {
+                        $.notify({
+                            message: 'Error: ' + data.payload
+                        }, {
+                                type: 'danger'
+                            });
+                    }
+                },
+                error(xhr, errorString, errorCode) {
+                    $.notify({
+                        message: 'Could not deliver shutdown request to server (' + errorCode + ')'
+                    }, {
+                            type: 'danger'
+                        });
+                }
+            });
+
+        } else {
+            let id = $(this).data('slave-id');
+            let el = $(this);
+
+            $.ajax({
+                type: 'GET',
+                url: '/api/slave/' + id + '/wol',
+                beforeSend(xhr) {
+                    xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
+                },
+                success(data) {
+                    let status = Status.from_json(JSON.stringify(data));
+                    if (status.is_ok()) {
+                        el.addClass('animated pulse');
+                        el.one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend', function () {
+                            el.removeClass('animated pulse');
+                        });
+                    } else {
+                        $.notify({
+                            message: 'Error: ' + data.payload
+                        }, {
+                                type: 'danger'
+                            });
+                    }
+
+                },
+                error(xhr, errorString, errorCode) {
+                    $.notify({
+                        message: 'Could not deliver Wake-On-Lan request to server (' + errorCode + ')'
+                    }, {
+                            type: 'danger'
+                        });
+                }
+            });
+
+        }
+    });
+
+    //opens the slaveModal to add a new slave
+    $('.slave-action-add').click(function () {
+        let slaveModal = $('#slaveModal');
+        slaveModal.children().find('.modal-title').text('Add Client');
+
+        //modify the form for the submit button
+        let slaveForm = slaveModal.children().find('#slaveForm');
+        slaveForm.attr('action', '/api/slaves');
+        slaveForm.attr('method', 'POST');
+        slaveForm.children().find('.submit-btn').text('Add');
+
+        //clear input fields
+        slaveForm.find('[name="name"]').val('');
+        slaveForm.find('[name="ip_address"]').val('');
+        slaveForm.find('[name="mac_address"]').val('');
+
+        //clear error messages
+        clearErrorMessages(slaveForm);
+        slaveModal.modal('toggle');
+    });
+
+
+    //opens the slaveModal to modify an existing slave
+    $('.slave-action-modify').click(function () {
+        //get info of slave
+        let id = $(this).data('slave-id');
+        let name = $(this).data('slave-name');
+        let ip = $(this).data('slave-ip');
+        let mac = $(this).data('slave-mac');
+
+        let slaveModal = $('#slaveModal');
+        slaveModal.children().find('.modal-title').text('Edit Client');
+
+        //modify the form for the submit button
+        let slaveForm = slaveModal.children().find('#slaveForm');
+        slaveForm.attr('action', '/api/slave/' + id);
+        slaveForm.attr('method', 'PUT');
+        slaveForm.children().find('.submit-btn').text('Edit');
+
+        //insert values into input field
+        slaveForm.find('[name="name"]').val(name);
+        slaveForm.find('[name="ip_address"]').val(ip);
+        slaveForm.find('[name="mac_address"]').val(mac);
+
+        //clear error messages
+        clearErrorMessages(slaveForm);
+
+        //open modal
+        slaveModal.modal('toggle');
+    });
+
+    /*function for deleting a slave, it is added to the slave-action-delete button*/
+    $('.slave-action-delete').click(function () {
         //get id and name of the slave and create deletion message
-        let id = $(this).parents('.slave-card').attr('id');
-        let name = $(this).parents('.slave-card').children().find('.slave-name').text();
+        let id = $(this).data('slave-id');
+        let name = $(this).data('slave-name');
+
         let message = '<a>Are you sure you want to remove client </a><b>' + name + '</b>?</a>';
 
         //changing button visibility and message of the delete modal
@@ -141,385 +401,12 @@ $(document).ready(function () {
         deleteWarning.modal('toggle');
     });
 
-    /*function for deleting a program, it is added to the delete_program button*/
-    $('.delete_program').click(function () {
-        //get id and name of the program and create deletion message
-        let id = $(this).parents('.program-card').attr('data-id');
-        let name = $(this).parents('.program-card').children().find('.program-name').text();
-        let message = '<a>Are you sure you want to remove program </a><b>' + name + '</b>?</a>';
-
-        //
-               //changing button visibility and message of the delete modal
-        let deleteWarning = $('#deleteWarning');
-        deleteWarning.children().find('#deleteSlaveModalButton').hide();
-        deleteWarning.children().find('#deleteProgramModalButton').show();
-        deleteWarning.children().find('.modal-body').empty(message);
-        deleteWarning.children().find('.modal-body').append(message);
-
-
-        //adding id to modal and set it visible
-        deleteWarning.data('sqlId', id);
-        deleteWarning.modal('toggle');
-    });
-
+    /*function for deleting a program, it is added to the program-action-delete
+    button*/
     $('#deleteSlaveModalButton').click(function () {
         modalDeleteAction($('#slaveForm'), 'slave');
     });
 
-    $('#deleteProgramModalButton').click(function () {
-        modalDeleteAction($('#programForm'), 'program')
-    });
-
-    $('.start-program-btn').click(function () {
-        let id = $(this).parents('.program-card').attr('data-id');
-        $.ajax({
-            type: 'POST',
-            url: '/api/program/' + id,
-            beforeSend: function (xhr) {
-                xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
-            },
-            converters: {
-                'text json': Status.from_json
-            },
-            success: function (status) {
-                if (status.is_err()) {
-                    $.notify({
-                        message: status.payload
-                    }, {
-                        type: 'danger'
-                    });
-                }
-            },
-            error: function () {
-                $.notify({
-                    message: 'Error in Ajax Request.'
-                }, {
-                    type: 'danger'
-                });
-            }
-        });
-    });
-
-    //opens the programModal to add a new program
-    $('.add-program-btn').click(function () {
-        let programModal = $('#programModal');
-        programModal.children().find('.modal-title').text('Add Program');
-
-
-        //modify the form for the submit button
-        let programForm = programModal.children().find('#programForm');
-        programForm.attr('action', '/api/programs');
-        programForm.attr('method', 'POST');
-        programForm.children().find('.submit-btn').text('Add');
-
-        //clear input fields
-
-        programForm.find("input[name='name']").val('');
-        programForm.find("input[name='path']").val('');
-        programForm.find("input[name='arguments']").val('');
-
-        //clear error messages
-        clearErrorMessages(programForm);
-
-        //find slave id and store it in the form
-        let card = $(this).parents('.slave-card');
-        programForm.find("input[name='slave']").val(card.attr('id'));
-        programModal.modal('toggle');
-    });
-
-    //opens the programModal to modify a program
-    $('.modify-program-btn').click(function () {
-        let programModal = $('#programModal');
-        let programForm = programModal.children().find('#programForm');
-
-        //get info of program
-        let card = $(this).parents('.program-card');
-        let id = card.attr('data-id');
-        let name = card.children().find('.program-name').text().trim();
-        let path = card.children().find('.program-path').text().trim();
-        let args = card.children().find('.program-arguments').text().trim();
-
-        console.log('id:' + id + ' name:' + name + ' path:' + path + ' args:' + args);
-
-        //modify the form for the submit button
-        programModal.children().find('.modal-title').text('Edit Program');
-        programForm.attr('action', '/api/program/' + id);
-        programForm.attr('method', 'PUT');
-        programForm.children().find('.submit-btn').text('Edit');
-
-        //clear input fields
-        programForm.find("input[name='name']").val(name);
-        programForm.find("input[name='path']").val(path);
-        programForm.find("input[name='arguments']").val(args);
-
-        //clear error messages
-        clearErrorMessages(programForm);
-
-        //find slave id and store it in the form
-        let slaveCard = $(this).parents('.slave-card');
-        programForm.find("input[name='slave']").val(slaveCard.attr('id'));
-        //find slave id and store it in the form
-        programModal.modal('toggle');
-    });
-    
-	//opens the fileModal to add a new program
-    $('.add-file-btn').click(function () {
-        let fileModal = $('#fileModal');
-        fileModal.children().find('.modal-title').text('Add File');
-
-
-        //modify the form for the submit button
-        let fileForm = fileModal.children().find('#fileForm');
-        fileForm.attr('action', '/api/files');
-        fileForm.attr('method', 'POST');
-        fileForm.children().find('.submit-btn').text('Add');
-
-        //clear input fields
-
-        fileForm.find("input[name='name']").val('');
-        fileForm.find("input[name='sourcePath']").val('');
-        fileForm.find("input[name='destinationPath']").val('');
-
-        //clear error messages
-        clearErrorMessages(fileForm);
-
-        //find slave id and store it in the form
-        let card = $(this).parents('.slave-card');
-        fileForm.find("input[name='slave']").val(card.attr('id'));
-        fileModal.modal('toggle');
-    });
-
-    //opens the slaveModal to add a new slave
-    $('.add-slave-btn').click(function () {
-        let slaveModal = $('#slaveModal');
-        slaveModal.children().find('.modal-title').text('Add Client');
-
-        //modify the form for the submit button
-        let slaveForm = slaveModal.children().find('#slaveForm');
-        slaveForm.attr('action', '/api/slaves');
-        slaveForm.attr('method', 'POST');
-        slaveForm.children().find('.submit-btn').text('Add');
-
-        //clear input fields
-        slaveForm.find("input[name='name']").val('');
-        slaveForm.find("input[name='ip_address']").val('');
-        slaveForm.find("input[name='mac_address']").val('');
-
-        //clear error messages
-        clearErrorMessages(slaveForm);
-        slaveModal.modal('toggle');
-    });
-
-    //opens the slaveModal to modify an existing slave
-    $('.modify-slave-btn').click(function () {
-        //get info of slave
-        let card = $(this).parents('.card');
-        let id = card.attr('id');
-        let name = card.children().find('.slave-name').text().trim();
-        let ip = card.children().find('.slave-ip').text().trim();
-        let mac = card.children().find('.slave-mac').text().trim();
-
-        let slaveModal = $('#slaveModal');
-        slaveModal.children().find('.modal-title').text('Edit Client');
-
-        //modify the form for the submit button
-        let slaveForm = slaveModal.children().find('#slaveForm');
-        slaveForm.attr('action', '/api/slave/' + id);
-        slaveForm.attr('method', 'PUT');
-        slaveForm.children().find('.submit-btn').text('Edit');
-
-        //insert values into input field
-        slaveForm.find("input[name='name']").val(name);
-        slaveForm.find("input[name='ip_address']").val(ip);
-        slaveForm.find("input[name='mac_address']").val(mac);
-
-        //clear errormessages
-        clearErrorMessages(slaveForm);
-
-        //open modal
-        slaveModal.modal('toggle');
-    });
-
-    // programForm Handler
-    $('#programForm').submit(function (event) {
-        //Stop form from submitting normally
-        event.preventDefault();
-        console.log($(this).serialize());
-
-        //send request to given url and with given method
-        //data field contains information about the slave
-        $.ajax({
-            type: $(this).attr('method'),
-            url: $(this).attr('action'),
-            data: $(this).serialize(),
-            converters: {
-                'text json': Status.from_json
-            },
-            beforeSend: function (xhr) {
-                xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
-            },
-            success: function (status) {
-                handleFormStatus($('#programForm'), status);
-            },
-            error: function () {
-                $.notify({
-                    message: 'Error in Ajax Request.'
-                }, {
-                    type: 'danger'
-                });
-            }
-        });
-    });
-
-    // fileForm Handler
-    $('#fileForm').submit(function (event) {
-        //Stop form from submitting normally
-        event.preventDefault();
-        console.log($(this).serialize());
-
-        //send request to given url and with given method
-        //data field contains information about the slave
-        $.ajax({
-            type: $(this).attr('method'),
-            url: $(this).attr('action'),
-            data: $(this).serialize(),
-            converters: {
-                'text json': Status.from_json
-            },
-            beforeSend: function (xhr) {
-                xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
-            },
-            success: function (status) {
-                handleFormStatus($('#fileForm'), status);
-            },
-            error: function () {
-                $.notify({
-                    message: 'Error in Ajax Request.'
-                }, {
-                    type: 'danger'
-                });
-            }
-        });
-    });
-
-
     // slaveForm Handler
-    $('#slaveForm').submit(function (event) {
-        //Stop form from submitting normally
-        event.preventDefault();
-        //send request to given url and with given method
-        //data field contains information about the slave
-        $.ajax({
-            type: $(this).attr('method'),
-            url: $(this).attr('action'),
-            data: $('#slaveForm').serialize(),
-            beforeSend: function (xhr) {
-                xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
-            },
-            converters: {
-                'text json': Status.from_json
-            },
-            success: function (status) {
-                handleFormStatus($('#slaveForm'), status);
-            },
-            error: function () {
-                $.notify({
-                    message: 'Error in Ajax Request.'
-                }, {
-                    type: 'danger'
-                });
-            }
-        });
-    });
-
-    $('.start-slave').click(function () {
-        let id = $(this).parents('.card').attr('id');
-        let el = $(this);
-        $.get({
-            url: '/api/slave/' + id + '/wol',
-            beforeSend: function (xhr) {
-                xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'))
-            }
-        }).done(function (data) {
-            let status = Status.from_json(JSON.stringify(data));
-            if (status.is_ok()) {
-                el.addClass('animated pulse');
-                el.one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend', function () {
-                    el.removeClass('animated pulse');
-                });
-            } else {
-                $.notify({
-                    message: 'Error: ' + data.payload
-                }, {
-                    type: 'danger'
-                });
-            }
-        }).fail(function () {
-            $.notify({
-                message: 'Error in Ajax Request.'
-            }, {
-                type: 'danger'
-            });
-        });
-    });
-
-    $('.stop-slave').click(function () {
-        let id = $(this).parents('.card').attr('id');
-        let el = $(this);
-        $.get({
-            url: '/api/slave/' + id + '/shutdown',
-            beforeSend: function (xhr) {
-                xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'))
-            }
-        }).done(function (data) {
-            let status = Status.from_json(JSON.stringify(data));
-            if (status.is_ok()) {
-                el.addClass('animated pulse');
-                el.one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend', function () {
-                    el.removeClass('animated pulse');
-                });
-            } else {
-                $.notify({
-                    message: 'Error: ' + data.payload
-                }, {
-                    type: 'danger'
-                });
-            }
-        }).fail(function () {
-            $.notify({
-                message: 'Error in Ajax Request.'
-            }, {
-                type: 'danger'
-            });
-        });
-    });
-
-    // Save Class when opening/closing accordion for every Slave
-    $('#accordion').children().each(function () {
-        let child_id = this.id;
-        let collapse_id = "#collapse" + child_id;
-        let status = "collapseStatus" + child_id;
-
-        $(collapse_id).on('show.bs.collapse', function () {
-            localStorage.setItem(status, "show");
-            $('div[href="' + collapse_id + '"]').children(".btn")
-                .attr('data-original-title', "Show Less")
-                .tooltip('show')
-                .html('<i class="material-icons">expand_less</i>');
-        });
-        $(collapse_id).on('hide.bs.collapse', function () {
-            localStorage.setItem(status, "");
-            $('div[href="' + collapse_id + '"]').children()
-                .attr('data-original-title', "Show More")
-                .tooltip('show')
-                .html('<i class="material-icons">expand_more</i>');
-        });
-        // restore saved class
-        $(collapse_id).addClass(localStorage.getItem(status));
-    });
-
-    // fixes the tooltip from staying after button is pressed
-    $('[data-toggle="tooltip"]').tooltip({
-        trigger: 'hover'
-    })
+    $('#slaveForm').submit(onFormSubmit('slaveForm'));
 });

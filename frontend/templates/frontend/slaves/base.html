@@ -1,55 +1,73 @@
 {% extends "base/base.html" %}
 {% load staticfiles %}
 {% load components %}
-{% block title %} Slaves {% endblock %}
+{% block title %} Clients {% endblock %}
 {% block premain %}
 {% endblock %}
 {% block content %}
 
-
-<div class="jumbotron" style="background: #292929; color: #FFF;">
-
-    <!-- Modal for deletion warnings used for slave and program deletion-->
-    <div id="deleteWarning" class="modal fade" role="dialog">
-        <div class="modal-dialog">
-            <div class="modal-content"
-            style="background: #292929; color: #FFF;">
-                <div class="modal-header">
-                    <h4 class="modal-title">Deletion Warning!</h4>
-                    <button type="button" class="close" data-dismiss="modal">&times;</button>
-                </div>
-                <div class="modal-body">
-                </div>
-                <div class="modal-footer">
-                    <button type='button' class='btn btn-info' id='deleteSlaveModalButton'>OK</button>
-                    <button type='button' class='btn btn-info' id='deleteProgramModalButton'>OK</button>
-                    <button type='reset' class='btn btn-danger' data-dismiss='modal'>Cancel</button>
-                </div>
+<!-- Modal for deletion warnings used for slave and program deletion-->
+<div id="deleteWarning" class="modal fade" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Deletion Warning!</h4>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+            </div>
+            <div class="modal-footer">
+                <button type='button' class='btn btn-info' id='deleteSlaveModalButton'>OK</button>
+                <button type='button' class='btn btn-info' id='deleteProgramModalButton'>OK</button>
+                <button type='reset' class='btn btn-danger' data-dismiss='modal'>Cancel</button>
             </div>
         </div>
     </div>
+</div>
 
-    {% modal_form program_form "program" %}
-    {% modal_form slave_form "slave" %}
-    {% modal_form file_form "file" %}
+<div class="row ml-4 mr-4">
+    <div class="col-2">
+        <div class="row-1 form-group" >
+            <label class="client-header font-weight-bold">
+                CLIENTS
+                <button type="button" class="btn slave-action-add inline-add-button">
+                    <i class="mdi mdi-add font-weight-bold"></i>
+                </button>
+            </label>
+        </div>
 
-    <h4>Clients</h4>
-    <div id="accordion" role="tablist">
+        <div class="row-1">
+            <ul class="nav flex-column col" id="slaveTabList" role="tablist">
+                {% for slave in slaves %}
+                    <li class="nav-item mb-2 pt-2 pb-2 pr-4 pl-4 font-weight-bold fsim-box" data-state="{% if slave.has_error %}error{% elif slave.has_running %}warning{% elif slave.is_online %}success{% else %}unkown{% endif %}" id="slaveTab{{ slave.id }}">
+                        <a class="nav-link slave-tab-link {% if forloop.first %} active {% endif %}" data-toggle="tab" href="#slaveTabContent{{ slave.id }}" role="tab" data-slave-id="{{ slave.id }}">
+                            <i class="fsim-slave-status-icon"></i> {{ slave.name }}
+                        </a>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <div class="container-fluid tab-content col" id="slaveTabContent">
         {% for slave in slaves %}
-            {% slave_entry slave slave.program_set.all slave.file_set.all %}
+            <div class="tab-pane fade show {% if forloop.first %}active{% endif %}" id="slaveTabContent{{ slave.id }}" role="tabpanel">
+                {% slave_entry slave slave.program_set.all slave.file_set.all %}
+            </div>
         {% empty %}
-            <div class="card alert alert-info">
-                <strong>Info!</strong> No clients in system.
+            <div>
+                <span class="background-text-large">No clients registered</span>
             </div>
         {% endfor %}
     </div>
-
-    <button type="button" class="btn btn-info add-slave-btn float-right mt-2 mr-2" data-toggle="tooltip" data-placement="top" title="Add client">
-            <span>Client</span>
-            <i class="material-icons" style="font-size:30px; vertical-align: middle;">add</i>
-    </button>
 </div>
+
+{% modal_form program_form "program" %}
+{% modal_form slave_form "slave" %}
+{% modal_form file_form "file" %}
+
 {% endblock %}
 {% block script %}
+    <script src="{% static 'frontend/base.js'%}"></script>
     <script src="{% static 'frontend/slaves.js'%}"></script>
 {% endblock %}

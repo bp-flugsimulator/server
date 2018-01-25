@@ -2,10 +2,13 @@
 This module contains all databasemodels from the frontend application.
 """
 
-from django.db.models import Model, CharField, GenericIPAddressField,\
-    ForeignKey, CASCADE, IntegerField, BooleanField, OneToOneField
+from django.db.models import (Model, CharField, GenericIPAddressField,
+                              ForeignKey, CASCADE, IntegerField, BooleanField,
+                              OneToOneField, TextField)
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
+
+from shlex import split
 
 
 def validate_mac_address(mac_addr):
@@ -52,6 +55,30 @@ def validate_mac_address(mac_addr):
         )
 
 
+def validate_argument_list(args):
+    """
+    Validates that given argument list is parsable by shlex.
+
+    Parameters
+    ----------
+    args: str
+        argument list
+
+    Returns
+    -------
+    nothing
+
+    Exception
+    ---------
+    Raises an ValidationError if the given argument list is
+    not parsable by shlex.
+    """
+    try:
+        split(args)
+    except ValueError:
+        raise ValidationError(_('Enter a valid argument list.'), )
+
+
 class Slave(Model):
     """
     Represents a slave which is node in the network.
@@ -74,6 +101,38 @@ class Slave(Model):
     mac_address = CharField(
         unique=True, max_length=17, validators=[validate_mac_address])
 
+    @property
+    def is_online(self):
+        """
+        Returns true of the current slave has connected to the master.
+        """
+        try:
+            return self.slavestatus.online
+        except SlaveStatus.DoesNotExist:
+            return False
+
+    @property
+    def has_error(self):
+        """
+        Returns true if any program or file is in an error state.
+        """
+        for prog in self.program_set.all():
+            if prog.is_error:
+                return True
+
+        return False
+
+    @property
+    def has_running(self):
+        """
+        Returns true if any program or file is in an error state.
+        """
+        for prog in self.program_set.all():
+            if prog.is_running:
+                return True
+
+        return False
+
 
 class Program(Model):
     """
@@ -94,14 +153,62 @@ class Program(Model):
 
     slave: Slave
         The slave on which the command will be executed
+
+    start_time: int
+        The amount of time a program needs to start.
     """
-    name = CharField(unique=False, max_length=200)
-    path = CharField(unique=False, max_length=200)
-    arguments = CharField(unique=False, blank=True, max_length=200)
+    name = CharField(unique=False, max_length=1000)
+    path = TextField(unique=False)
+    arguments = TextField(
+        unique=False,
+        blank=True,
+        validators=[validate_argument_list],
+    )
     slave = ForeignKey(Slave, on_delete=CASCADE)
+    start_time = IntegerField(null=False, default=-1)
 
     class Meta:
         unique_together = (('name', 'slave'), )
+
+    @property
+    def is_running(self):
+        """
+        Returns true if program is currently running.
+        """
+        try:
+            return self.programstatus.running
+        except ProgramStatus.DoesNotExist:
+            return False
+
+    @property
+    def is_executed(self):
+        """
+        Returns true if the program exited.
+        """
+        try:
+            return not self.is_running and self.programstatus.code != ''
+        except ProgramStatus.DoesNotExist:
+            return False
+
+    @property
+    def is_error(self):
+        """
+        Returns true if the current program was executed not successful, which means the error code was 0.
+        """
+        # NOTICE: no try and catch needed because self.is_executed is False
+        # if ProgramStatus.DoesNotExist is thrown, thus the whole expression
+        # is false
+        return self.is_executed and self.programstatus.code != '0'
+
+    @property
+    def is_successful(self):
+        """
+        Returns true if the current program was executed successful.
+        """
+        # NOTICE: no try and catch needed because self.is_executed is False
+        # if ProgramStatus.DoesNotExist is thrown, thus the whole expression
+        # is false
+        return self.is_executed and self.programstatus.code == '0'
 
 
 class File(Model):

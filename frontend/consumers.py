@@ -58,19 +58,19 @@ def handle_execute_answer(status):
 
     if status.is_ok():
         # update return code
-        program_status.code = status.payload['result']
         LOGGER.info("Saved status of {} with code {}.".format(
             program.name, program_status.code))
     else:
         # Report exception to webinterface
-        notify_err('An Exception occured while trying to execute {}'.format(
+        notify_err('An Exception occurred while trying to execute {}'.format(
             program.name))
         LOGGER.info(
             colored(
-                'Following exeption occured on the client while executing {}: \n {}'.
+                'Following exeption occurred on the client while executing {}: \n {}'.
                 format(program.name, status.payload['result']), 'red'))
 
     # update status
+    program_status.code = status.payload['result']
     program_status.running = False
     program_status.save()
     # tell webinterface that the program has ended
@@ -103,12 +103,12 @@ def handle_online_answer(status):
         notify({'slave_status': 'connected', 'sid': str(slave.id)})
     else:
         # notify the webinterface
-        notify_err('An error occured while connecting to client {}!'.format(
+        notify_err('An error occurred while connecting to client {}!'.format(
             slave.name))
 
         LOGGER.info(
             colored(
-                'Following exeption occured on the client {} while handeling an "online-request": \n {}'.
+                'Following exeption occurred on the client {} while handeling an "online-request": \n {}'.
                 format(slave.name, status.payload['result']), 'red'))
 
 
@@ -177,11 +177,6 @@ def ws_rpc_disconnect(message):
 
         # if a slave disconnects all programs stop
         for program in ProgramModel.objects.filter(slave=slave):
-            notify({
-                'program_status': 'finished',
-                'pid': program.id,
-                'code': 'Status',
-            })
             if ProgramStatusModel.objects.filter(program=program).exists():
                 ProgramStatusModel.objects.get(program=program).delete()
 

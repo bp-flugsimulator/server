@@ -7,6 +7,7 @@ from shlex import split
 from django.http import HttpResponseForbidden
 from django.http.request import QueryDict
 from django.core.exceptions import ValidationError
+from django.db.utils import IntegrityError
 from channels import Group
 from utils.status import Status
 from utils import Command
@@ -50,8 +51,7 @@ def add_slave(request):
             Status.ok(
                 list(
                     set([
-                        obj['name']
-                        for obj in SlaveModel.objects.filter(
+                        obj['name'] for obj in SlaveModel.objects.filter(
                             name__contains=query).values("name")
                     ]))))
     else:
@@ -198,8 +198,7 @@ def add_program(request):
             Status.ok(
                 list(
                     set([
-                        obj['name']
-                        for obj in ProgramModel.objects.filter(
+                        obj['name'] for obj in ProgramModel.objects.filter(
                             name__contains=query).values("name")
                     ]))))
     else:
@@ -280,9 +279,79 @@ def manage_program(request, program_id):
         return HttpResponseForbidden()
 
 
+def stop_program(request, program_id):
+    """
+    Process GET requests which will stop a running programm on a slave.
+
+    Parameters
+    ----------
+        request: HttpRequest
+        id: Unique identifier of a program
+
+    Returns
+    -------
+        A StatusResponse or HttpResponseForbidden if the request method was
+        other than GET.
+    """
+    if request.method == 'GET':
+        if ProgramModel.objects.filter(id=program_id).exists():
+            program = ProgramModel.objects.get(id=program_id)
+            if ProgramStatusModel.objects.filter(
+                    program=program) and program.programstatus.running:
+                Group('client_' + str(program.slave.id)).send({
+                    'text':
+                    Command(
+                        method="execute",
+                        uuid=program.programstatus.command_uuid).to_json()
+                })
+                return StatusResponse(Status.ok(''))
+            else:
+                return StatusResponse(
+                    Status.err('Can not stop a not running Program'))
+        else:
+            return StatusResponse(Status.err('Can not stop unknown Program'))
+
+    else:
+        return HttpResponseForbidden()
+
+
+def add_script(request):
+    """
+    Process POST requests which adds new SlaveModel.
+
+    Parameters
+    ----------
+        request: HttpRequest
+
+    Returns
+    -------
+        A StatusResponse or HttpResponseForbidden if the request method was
+        other than GET.
+    """
+    if request.method == 'POST':
+        try:
+            script = Script.from_json(request.body.decode('utf-8'))
+            script.save()
+            return StatusResponse(Status.ok(""))
+        except KeyError as err:
+            return StatusResponse(
+                Status.err("Could not find required key {}".format(
+                    err.args[0])))
+        except TypeError:
+            return StatusResponse(Status.err("Wrong array items."))
+        except ValueError:
+            return StatusResponse(
+                Status.err("One or more values does contain not valid types."))
+        except IntegrityError:
+            return StatusResponse(
+                Status.err("Script with that name already exists."))
+    else:
+        return HttpResponseForbidden()
+
+
 def manage_script(request, script_id):
     """
-    Process GET requests for the ScriptModel ressource.
+    Process GET, DELETE requests for the ScriptModel ressource.
 
     Parameters
     ----------
@@ -329,6 +398,11 @@ def manage_script(request, script_id):
             return StatusResponse(Status.ok(dict(script)))
         except ScriptModel.DoesNotExist:
             return StatusResponse(Status.err("Script does not exist."))
+
+    elif request.method == 'DELETE':
+        ScriptModel.objects.filter(id=script_id).delete()
+        return StatusResponse(Status.ok(''))
+
     else:
         return HttpResponseForbidden()
 
@@ -374,8 +448,7 @@ def add_file(request):
             Status.ok(
                 list(
                     set([
-                        obj['name']
-                        for obj in FileModel.objects.filter(
+                        obj['name'] for obj in FileModel.objects.filter(
                             name__contains=query).values("name")
                     ]))))
     else:

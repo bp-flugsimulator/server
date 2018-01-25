@@ -14,11 +14,22 @@ from channels.test import WSClient
 from channels import Group
 
 import json
+from os import getcwd, remove, mkdir, rmdir
+from os.path import join, isdir
 
-from .models import Slave as SlaveModel, validate_mac_address,\
- Program as ProgramModel, SlaveStatus as SlaveStatusModel,\
- ProgramStatus as ProgramStatusModel, ScriptGraphPrograms as SGP,\
- ScriptGraphFiles as SGF, Script as ScriptModel, File as FileModel
+from .models import (
+    Slave as SlaveModel,
+    validate_mac_address,
+    validate_argument_list,
+    Program as ProgramModel,
+    SlaveStatus as SlaveStatusModel,
+    ProgramStatus as ProgramStatusModel,
+    ScriptGraphPrograms as SGP,
+    ScriptGraphFiles as SGF,
+    Script as ScriptModel,
+    File as FileModel,
+)
+
 from .scripts import Script, ScriptEntryFile, ScriptEntryProgram
 
 
@@ -63,6 +74,42 @@ class FrontendTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "welcome")
 
+    def test_script_delete(self):
+        slave = SlaveModel(
+            name="test_slave",
+            ip_address="127.0.0.1",
+            mac_address="00:00:00:00:00:00")
+        slave.save()
+
+        program = ProgramModel(
+            name="test_program",
+            path="None",
+            arguments="None",
+            slave=slave,
+        )
+        program.save()
+
+        file = FileModel(
+            name="test_file",
+            sourcePath="None",
+            destinationPath="None",
+            slave=slave)
+        file.save()
+
+        script = Script(
+            "test_script",
+            [ScriptEntryProgram(0, "test_program", "test_slave")],
+            [ScriptEntryFile(0, "test_file", "test_slave")],
+        )
+        script.save()
+
+        db_script = ScriptModel.objects.get(name="test_script")
+
+        response = self.client.delete("/api/script/" + str(db_script.id))
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(
+            ScriptModel.objects.filter(name="test_script").exists())
+
     def test_slave_get(self):
         data_set = fill_database_slaves_set_1()
 
@@ -79,33 +126,87 @@ class FrontendTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Scripts")
 
-    def test_script_get(self):
+    def test_slave_with_program_get(self):
         slave = SlaveModel(
-            name="test_slave",
-            ip_address="0.0.0.0",
-            mac_address="00:00:00:00:00:00")
+            name='slave',
+            ip_address='127.0.0.1',
+            mac_address='00:00:00:00:00:00')
         slave.save()
+        ProgramModel(
+            name='p_asdodahgh',
+            path='path',
+            arguments='',
+            slave=slave,
+        ).save()
+        FileModel(
+            name='f_asdodahgh',
+            sourcePath='src',
+            destinationPath='dst',
+            slave=slave,
+        ).save()
 
-        program = ProgramModel(
-            name="test_program", path="None", arguments="None", slave=slave)
-        program.save()
-
-        file = FileModel(
-            name="test_file",
-            sourcePath="None",
-            destinationPath="None",
-            slave=slave)
-        file.save()
-
-        script = Script("test_script",
-                        [ScriptEntryProgram(0, "test_program", "test_slave")],
-                        [ScriptEntryFile(0, "test_file", "test_slave")])
-        script.save()
-
-        db_script = ScriptModel.objects.get(name="test_script")
-
-        response = self.client.get("/script/" + str(db_script.id))
+        response = self.client.get(reverse('frontend:slaves'))
         self.assertEqual(response.status_code, 200)
+        self.assertIn('p_asdodahgh', str(response.content))
+        self.assertIn('f_asdodahgh', str(response.content))
+
+
+class ApiTests(TestCase):
+    def test_add_script_forbidden(self):
+        response = self.client.put("/api/scripts")
+        self.assertEqual(response.status_code, 403)
+
+    def test_add_script_type_error(self):
+        response = self.client.post(
+            "/api/scripts",
+            data='{"name": "test", "programs": [], "files": [null]}',
+            content_type="application/json",
+        )
+        self.assertContains(
+            response,
+            "Wrong array items.",
+        )
+
+    def test_add_script_json_error(self):
+        response = self.client.post(
+            "/api/scripts", data={
+                "name": "test",
+                "programs": {},
+                "files": {}
+            })
+        self.assertContains(
+            response,
+            "One or more values does contain not valid types.",
+        )
+
+    def test_add_script_value_error(self):
+        response = self.client.post(
+            "/api/scripts",
+            data='{"name": "test", "programs": {}, "files": {}}',
+            content_type="application/json",
+        )
+        self.assertContains(
+            response,
+            "One or more values does contain not valid types.",
+        )
+
+    def test_add_script_unique_error(self):
+        response = self.client.post(
+            "/api/scripts",
+            data='{"name": "test", "programs":  [], "files": []}',
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '"status": "ok"')
+        response = self.client.post(
+            "/api/scripts",
+            data='{"name": "test", "programs":  [], "files": []}',
+            content_type="application/json",
+        )
+        self.assertContains(
+            response,
+            "Script with that name already exists.",
+        )
 
 class ApiTests(TestCase):
     def test_manage_file_forbidden(self):
@@ -169,30 +270,57 @@ class ApiTests(TestCase):
                 sourcePath="file.sourcePath",
                 destinationPath="file.destinationPath").to_json(),
                 ws_response)
+        
+    def test_add_script_key_error(self):
+        response = self.client.post(
+            "/api/scripts",
+            data='{"name": "test", "program":  [], "files": []}',
+            content_type="application/json",
+        )
+        self.assertContains(
+            response,
+            "Could not find required key {}".format("program"),
+        )
 
-class ApiTests(TestCase):
+    def test_add_script(self):
+        response = self.client.post(
+            "/api/scripts",
+            data='{"name": "test", "programs":  [], "files": []}',
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '"status": "ok"')
+
     def test_get_script(self):
         fill_database_slaves_set_1()
         slave = SlaveModel(
             name="test_slave",
-            ip_address="0.0.0.0",
-            mac_address="00:00:00:00:00:00")
+            ip_address="127.0.0.1",
+            mac_address="00:00:00:00:00:00",
+        )
         slave.save()
 
         program = ProgramModel(
-            name="test_program", path="None", arguments="None", slave=slave)
+            name="test_program",
+            path="None",
+            arguments="None",
+            slave=slave,
+        )
         program.save()
 
         file = FileModel(
             name="test_file",
             sourcePath="None",
             destinationPath="None",
-            slave=slave)
+            slave=slave,
+        )
         file.save()
 
-        script = Script("test_script",
-                        [ScriptEntryProgram(0, program.id, slave.id)],
-                        [ScriptEntryFile(0, file.id, slave.id)])
+        script = Script(
+            "test_script",
+            [ScriptEntryProgram(0, program.id, slave.id)],
+            [ScriptEntryFile(0, file.id, slave.id)],
+        )
         script.save()
 
         db_script = ScriptModel.objects.get(name="test_script")
@@ -201,25 +329,32 @@ class ApiTests(TestCase):
 
         self.assertEqual(
             Status.ok(dict(script)),
-            Status.from_json(response.content.decode('utf-8')))
+            Status.from_json(response.content.decode('utf-8')),
+        )
 
     def test_script_wrong_type_slaves(self):
         response = self.client.get("/api/script/0?slaves=float")
         self.assertContains(response, "err")
-        self.assertContains(response,
-                            "slaves only allow str or int. (given float)")
+        self.assertContains(
+            response,
+            "slaves only allow str or int. (given float)",
+        )
 
     def test_script_wrong_type_programs(self):
         response = self.client.get("/api/script/0?programs=float")
         self.assertContains(response, "err")
-        self.assertContains(response,
-                            "programs only allow str or int. (given float)")
+        self.assertContains(
+            response,
+            "programs only allow str or int. (given float)",
+        )
 
     def test_script_wrong_type_files(self):
         response = self.client.get("/api/script/0?files=float")
         self.assertContains(response, "err")
-        self.assertContains(response,
-                            "files only allow str or int. (given float)")
+        self.assertContains(
+            response,
+            "files only allow str or int. (given float)",
+        )
 
     def test_script_not_exist(self):
         response = self.client.get("/api/script/0")
@@ -234,12 +369,17 @@ class ApiTests(TestCase):
         fill_database_slaves_set_1()
         slave = SlaveModel(
             name="test_slave",
-            ip_address="0.0.0.0",
-            mac_address="00:00:00:00:00:00")
+            ip_address="127.0.0.1",
+            mac_address="00:00:00:00:00:00",
+        )
         slave.save()
 
         program = ProgramModel(
-            name="test_program", path="None", arguments="None", slave=slave)
+            name="test_program",
+            path="None",
+            arguments="None",
+            slave=slave,
+        )
         program.save()
 
         file = FileModel(
@@ -249,9 +389,11 @@ class ApiTests(TestCase):
             slave=slave)
         file.save()
 
-        script = Script("test_script",
-                        [ScriptEntryProgram(0, program.id, slave.id)],
-                        [ScriptEntryFile(0, file.id, slave.id)])
+        script = Script(
+            "test_script",
+            [ScriptEntryProgram(0, program.id, slave.id)],
+            [ScriptEntryFile(0, file.id, slave.id)],
+        )
         script.save()
 
         db_script = ScriptModel.objects.get(name="test_script")
@@ -261,18 +403,24 @@ class ApiTests(TestCase):
 
         self.assertEqual(
             Status.ok(dict(script)),
-            Status.from_json(response.content.decode('utf-8')))
+            Status.from_json(response.content.decode('utf-8')),
+        )
 
     def test_get_script_program_type_int(self):
         fill_database_slaves_set_1()
         slave = SlaveModel(
             name="test_slave",
-            ip_address="0.0.0.0",
-            mac_address="00:00:00:00:00:00")
+            ip_address="127.0.0.1",
+            mac_address="00:00:00:00:00:00",
+        )
         slave.save()
 
         program = ProgramModel(
-            name="test_program", path="None", arguments="None", slave=slave)
+            name="test_program",
+            path="None",
+            arguments="None",
+            slave=slave,
+        )
         program.save()
 
         file = FileModel(
@@ -282,9 +430,11 @@ class ApiTests(TestCase):
             slave=slave)
         file.save()
 
-        script = Script("test_script",
-                        [ScriptEntryProgram(0, program.id, slave.id)],
-                        [ScriptEntryFile(0, file.id, slave.id)])
+        script = Script(
+            "test_script",
+            [ScriptEntryProgram(0, program.id, slave.id)],
+            [ScriptEntryFile(0, file.id, slave.id)],
+        )
         script.save()
 
         db_script = ScriptModel.objects.get(name="test_script")
@@ -300,24 +450,31 @@ class ApiTests(TestCase):
         fill_database_slaves_set_1()
         slave = SlaveModel(
             name="test_slave",
-            ip_address="0.0.0.0",
+            ip_address="127.0.0.1",
             mac_address="00:00:00:00:00:00")
         slave.save()
 
         program = ProgramModel(
-            name="test_program", path="None", arguments="None", slave=slave)
+            name="test_program",
+            path="None",
+            arguments="None",
+            slave=slave,
+        )
         program.save()
 
         file = FileModel(
             name="test_file",
             sourcePath="None",
             destinationPath="None",
-            slave=slave)
+            slave=slave,
+        )
         file.save()
 
-        script = Script("test_script",
-                        [ScriptEntryProgram(0, program.id, slave.id)],
-                        [ScriptEntryFile(0, file.id, slave.id)])
+        script = Script(
+            "test_script",
+            [ScriptEntryProgram(0, program.id, slave.id)],
+            [ScriptEntryFile(0, file.id, slave.id)],
+        )
         script.save()
 
         db_script = ScriptModel.objects.get(name="test_script")
@@ -333,24 +490,31 @@ class ApiTests(TestCase):
         fill_database_slaves_set_1()
         slave = SlaveModel(
             name="test_slave",
-            ip_address="0.0.0.0",
+            ip_address="127.0.0.1",
             mac_address="00:00:00:00:00:00")
         slave.save()
 
         program = ProgramModel(
-            name="test_program", path="None", arguments="None", slave=slave)
+            name="test_program",
+            path="None",
+            arguments="None",
+            slave=slave,
+        )
         program.save()
 
         file = FileModel(
             name="test_file",
             sourcePath="None",
             destinationPath="None",
-            slave=slave)
+            slave=slave,
+        )
         file.save()
 
-        script = Script("test_script",
-                        [ScriptEntryProgram(0, program.id, slave.id)],
-                        [ScriptEntryFile(0, file.id, slave.id)])
+        script = Script(
+            "test_script",
+            [ScriptEntryProgram(0, program.id, slave.id)],
+            [ScriptEntryFile(0, file.id, slave.id)],
+        )
         script.save()
 
         db_script = ScriptModel.objects.get(name="test_script")
@@ -366,22 +530,30 @@ class ApiTests(TestCase):
         expected_json['files'][0]['slave'] = slave.name
         self.assertEqual(
             Status.ok(expected_json),
-            Status.from_json(response.content.decode('utf-8')))
+            Status.from_json(response.content.decode('utf-8')),
+        )
 
     def test_get_script_slave_type_str(self):
         fill_database_slaves_set_1()
         slave = SlaveModel(
             name="test_slave",
-            ip_address="0.0.0.0",
+            ip_address="127.0.0.1",
             mac_address="00:00:00:00:00:00")
         slave.save()
 
         program = ProgramModel(
-            name="test_program", path="None", arguments="None", slave=slave)
+            name="test_program",
+            path="None",
+            arguments="None",
+            slave=slave,
+        )
         program.save()
 
-        script = Script("test_script",
-                        [ScriptEntryProgram(0, program.id, slave.id)], [])
+        script = Script(
+            "test_script",
+            [ScriptEntryProgram(0, program.id, slave.id)],
+            [],
+        )
         script.save()
 
         db_script = ScriptModel.objects.get(name="test_script")
@@ -393,22 +565,31 @@ class ApiTests(TestCase):
         expected_json['programs'][0]['slave'] = slave.name
         self.assertEqual(
             Status.ok(expected_json),
-            Status.from_json(response.content.decode('utf-8')))
+            Status.from_json(response.content.decode('utf-8')),
+        )
 
     def test_get_script_program_type_str(self):
         fill_database_slaves_set_1()
         slave = SlaveModel(
             name="test_slave",
-            ip_address="0.0.0.0",
-            mac_address="00:00:00:00:00:00")
+            ip_address="127.0.0.1",
+            mac_address="00:00:00:00:00:00",
+        )
         slave.save()
 
         program = ProgramModel(
-            name="test_program", path="None", arguments="None", slave=slave)
+            name="test_program",
+            path="None",
+            arguments="None",
+            slave=slave,
+        )
         program.save()
 
-        script = Script("test_script",
-                        [ScriptEntryProgram(0, program.id, slave.id)], [])
+        script = Script(
+            "test_script",
+            [ScriptEntryProgram(0, program.id, slave.id)],
+            [],
+        )
         script.save()
 
         db_script = ScriptModel.objects.get(name="test_script")
@@ -420,20 +601,23 @@ class ApiTests(TestCase):
         expected_json['programs'][0]['program'] = program.name
         self.assertEqual(
             Status.ok(expected_json),
-            Status.from_json(response.content.decode('utf-8')))
+            Status.from_json(response.content.decode('utf-8')),
+        )
 
     def test_file_autocomplete(self):
         slave = SlaveModel(
             name="test_slave",
-            ip_address="0.0.0.0",
-            mac_address="00:00:00:00:00:00")
+            ip_address="127.0.0.1",
+            mac_address="00:00:00:00:00:00",
+        )
         slave.save()
 
         file = FileModel(
             name="test_file",
             sourcePath="None",
             destinationPath="None",
-            slave=slave)
+            slave=slave,
+        )
         file.save()
 
         response = self.client.get("/api/files?q=")
@@ -450,12 +634,17 @@ class ApiTests(TestCase):
     def test_program_autocomplete(self):
         slave = SlaveModel(
             name="test_slave",
-            ip_address="0.0.0.0",
-            mac_address="00:00:00:00:00:00")
+            ip_address="127.0.0.1",
+            mac_address="00:00:00:00:00:00",
+        )
         slave.save()
 
         program = ProgramModel(
-            name="test_program", path="None", arguments="None", slave=slave)
+            name="test_program",
+            path="None",
+            arguments="None",
+            slave=slave,
+        )
         program.save()
 
         response = self.client.get("/api/programs?q=")
@@ -472,8 +661,9 @@ class ApiTests(TestCase):
     def test_slave_autocomplete(self):
         slave = SlaveModel(
             name="test_slave",
-            ip_address="0.0.0.0",
-            mac_address="00:00:00:00:00:00")
+            ip_address="127.0.0.1",
+            mac_address="00:00:00:00:00:00",
+        )
         slave.save()
 
         response = self.client.get("/api/slaves?q=")
@@ -523,7 +713,8 @@ class ApiTests(TestCase):
             self.assertEqual(api_response.status_code, 200)
             self.assertEqual(
                 Status.ok(''),
-                Status.from_json(api_response.content.decode('utf-8')))
+                Status.from_json(api_response.content.decode('utf-8')),
+            )
 
         # test if all slaves get displayed
         view_response = self.client.get(reverse('frontend:slaves'))
@@ -544,12 +735,13 @@ class ApiTests(TestCase):
             reverse('frontend:add_slaves'), {
                 'name': data.name,
                 'ip_address': data.ip_address,
-                'mac_address': data.mac_address
+                'mac_address': data.mac_address,
             })
         self.assertEqual(api_response.status_code, 200)
         self.assertEqual(
             Status.ok(''),
-            Status.from_json(api_response.content.decode('utf-8')))
+            Status.from_json(api_response.content.decode('utf-8')),
+        )
 
         # insert data a second time
         api_response = self.client.post(
@@ -573,7 +765,8 @@ class ApiTests(TestCase):
             SlaveModel.objects.filter(
                 name=data.name,
                 ip_address=data.ip_address,
-                mac_address=data.mac_address).exists())
+                mac_address=data.mac_address,
+            ).exists())
 
     def test_add_slave_false_input_fail(self):
         data = SlaveModel(
@@ -603,7 +796,8 @@ class ApiTests(TestCase):
             SlaveModel.objects.filter(
                 name=data.name,
                 ip_address=data.ip_address,
-                mac_address=data.mac_address).exists())
+                mac_address=data.mac_address,
+            ).exists())
 
     def test_add_slave_no_post(self):
         api_response = self.client.put(reverse('frontend:add_slaves'))
@@ -649,7 +843,8 @@ class ApiTests(TestCase):
             self.assertEqual(api_response.status_code, 200)
             self.assertEqual(
                 Status.ok(''),
-                Status.from_json(api_response.content.decode('utf-8')))
+                Status.from_json(api_response.content.decode('utf-8')),
+            )
 
         # get all the database entries because the ids are needed to delete
         data_in_database_set = []
@@ -658,7 +853,8 @@ class ApiTests(TestCase):
                 SlaveModel.objects.filter(
                     name=data.name,
                     ip_address=data.ip_address,
-                    mac_address=data.mac_address).get())
+                    mac_address=data.mac_address,
+                ).get())
 
         # make a request to delete the slave entry
         for data in data_in_database_set:
@@ -666,7 +862,8 @@ class ApiTests(TestCase):
             self.assertEqual(api_response.status_code, 200)
             self.assertEqual(
                 Status.ok(''),
-                Status.from_json(api_response.content.decode('utf-8')))
+                Status.from_json(api_response.content.decode('utf-8')),
+            )
             self.assertFalse(SlaveModel.objects.filter(id=data.id).exists())
 
     def test_edit_slave(self):
@@ -726,7 +923,8 @@ class ApiTests(TestCase):
             self.assertEqual(api_response.status_code, 200)
             self.assertEqual(
                 Status.ok(''),
-                Status.from_json(api_response.content.decode('utf-8')))
+                Status.from_json(api_response.content.decode('utf-8')),
+            )
 
         # get all the database entries because the ids are needed to delete
         data_in_database_set = []
@@ -735,7 +933,8 @@ class ApiTests(TestCase):
                 SlaveModel.objects.filter(
                     name=data.name,
                     ip_address=data.ip_address,
-                    mac_address=data.mac_address).get())
+                    mac_address=data.mac_address,
+                ).get())
 
         # make an edit request for every entry in data_set_1 with the data from dataset 2
         for (data, new_data) in zip(data_in_database_set, data_set_2):
@@ -749,7 +948,8 @@ class ApiTests(TestCase):
             self.assertEqual(api_response.status_code, 200)
             self.assertEqual(
                 Status.ok(''),
-                Status.from_json(api_response.content.decode('utf-8')))
+                Status.from_json(api_response.content.decode('utf-8')),
+            )
 
         # test if the changes have affected the database
         for (data, new_data) in zip(data_set_1, data_set_2):
@@ -757,12 +957,14 @@ class ApiTests(TestCase):
                 SlaveModel.objects.filter(
                     name=data.name,
                     ip_address=data.ip_address,
-                    mac_address=data.mac_address).exists())
+                    mac_address=data.mac_address,
+                ).exists())
             self.assertTrue(
                 SlaveModel.objects.filter(
                     name=new_data.name,
                     ip_address=new_data.ip_address,
-                    mac_address=new_data.mac_address).exists())
+                    mac_address=new_data.mac_address,
+                ).exists())
 
     def test_edit_slave_already_exists(self):
         api_response = self.client.post(
@@ -774,7 +976,8 @@ class ApiTests(TestCase):
         self.assertEqual(api_response.status_code, 200)
         self.assertEqual(
             Status.ok(''),
-            Status.from_json(api_response.content.decode('utf-8')))
+            Status.from_json(api_response.content.decode('utf-8')),
+        )
 
         api_response = self.client.post(
             reverse('frontend:add_slaves'), {
@@ -785,7 +988,8 @@ class ApiTests(TestCase):
         self.assertEqual(api_response.status_code, 200)
         self.assertEqual(
             Status.ok(''),
-            Status.from_json(api_response.content.decode('utf-8')))
+            Status.from_json(api_response.content.decode('utf-8')),
+        )
 
         data = SlaveModel.objects.filter(
             name='edit_slave_fail_0',
@@ -822,12 +1026,14 @@ class ApiTests(TestCase):
                     'name': 'name' + str(slave_id),
                     'path': 'path' + str(slave_id),
                     'arguments': 'arguments' + str(slave_id),
-                    'slave': str(model.id)
+                    'slave': str(model.id),
+                    'start_time': -1,
                 })
             self.assertEqual(200, api_response.status_code)
             self.assertEqual(
                 Status.ok(''),
-                Status.from_json(api_response.content.decode('utf-8')))
+                Status.from_json(api_response.content.decode('utf-8')),
+            )
 
         # test if all programs are in the database
         for slave_id in range(100):
@@ -836,7 +1042,8 @@ class ApiTests(TestCase):
                     name='name' + str(slave_id),
                     path='path' + str(slave_id),
                     arguments='arguments' + str(slave_id),
-                    slave=model))
+                    slave=model,
+                ))
 
         # delete all entries
         model.delete()
@@ -859,21 +1066,16 @@ class ApiTests(TestCase):
                 'name': long_str,
                 'path': long_str,
                 'arguments': long_str,
-                'slave': str(model.id)
+                'slave': str(model.id),
+                'start_time': -1,
             })
 
         self.assertEqual(api_response.status_code, 200)
         self.assertEqual(
             Status.err({
                 "name": [
-                    "Ensure this value has at most 200 characters (it has 2000)."
+                    "Ensure this value has at most 1000 characters (it has 2000)."
                 ],
-                "path": [
-                    "Ensure this value has at most 200 characters (it has 2000)."
-                ],
-                "arguments": [
-                    "Ensure this value has at most 200 characters (it has 2000)."
-                ]
             }),
             Status.from_json(api_response.content.decode('utf-8')),
         )
@@ -894,13 +1096,15 @@ class ApiTests(TestCase):
                 'name': 'name',
                 'path': 'path',
                 'arguments': '',
-                'slave': str(model.id)
+                'slave': str(model.id),
+                'start_time': -1,
             })
 
         self.assertEqual(api_response.status_code, 200)
         self.assertEqual(
             Status.ok(''),
-            Status.from_json(api_response.content.decode('utf-8')))
+            Status.from_json(api_response.content.decode('utf-8')),
+        )
 
         # try to add program with the same name
 
@@ -909,7 +1113,8 @@ class ApiTests(TestCase):
                 'name': 'name',
                 'path': 'path',
                 'arguments': '',
-                'slave': str(model.id)
+                'slave': str(model.id),
+                'start_time': -1,
             })
 
         self.assertEqual(api_response.status_code, 200)
@@ -917,7 +1122,9 @@ class ApiTests(TestCase):
             Status.err({
                 'name':
                 ['Program with this Name already exists on this Client.']
-            }), Status.from_json(api_response.content.decode('utf-8')))
+            }),
+            Status.from_json(api_response.content.decode('utf-8')),
+        )
 
         # delete slave
         model.delete()
@@ -946,7 +1153,8 @@ class ApiTests(TestCase):
         test_model = SlaveModel(
             name='wol_client',
             ip_address='0.0.5.0',
-            mac_address='00:00:00:00:05:00')
+            mac_address='00:00:00:00:05:00',
+        )
         test_model.save()
 
         #  non existent slave
@@ -1043,13 +1251,15 @@ class ApiTests(TestCase):
                 name="name_" + str(i),
                 path="path_" + str(i),
                 arguments="arguments_" + str(i),
-                slave=slave).save()
+                slave=slave,
+            ).save()
             programs.append(
                 ProgramModel.objects.get(
                     name="name_" + str(i),
                     path="path_" + str(i),
                     arguments="arguments_" + str(i),
-                    slave=slave))
+                    slave=slave,
+                ))
 
         for i in range(100):
             api_response = self.client.put(
@@ -1058,13 +1268,15 @@ class ApiTests(TestCase):
                     'name': str(i),
                     'path': str(i),
                     'arguments': str(i),
-                    'slave': str(slave.id)
+                    'slave': str(slave.id),
+                    'start_time': -1,
                 }))
 
             self.assertEqual(200, api_response.status_code)
             self.assertEqual(
                 Status.ok(''),
-                Status.from_json(api_response.content.decode('utf-8')))
+                Status.from_json(api_response.content.decode('utf-8')),
+            )
 
         # clear database
         slave.delete()
@@ -1097,22 +1309,19 @@ class ApiTests(TestCase):
                 'name': long_str,
                 'path': long_str,
                 'arguments': long_str,
-                'slave': str(slave.id)
+                'slave': str(slave.id),
+                'start_time': -1,
             }))
 
         self.assertEqual(api_response.status_code, 200)
         self.assertEqual(
             Status.err({
                 "name": [
-                    "Ensure this value has at most 200 characters (it has 2000)."
+                    "Ensure this value has at most 1000 characters (it has 2000)."
                 ],
-                "path": [
-                    "Ensure this value has at most 200 characters (it has 2000)."
-                ],
-                "arguments": [
-                    "Ensure this value has at most 200 characters (it has 2000)."
-                ]
-            }), Status.from_json(api_response.content.decode('utf-8')))
+            }),
+            Status.from_json(api_response.content.decode('utf-8')),
+        )
         slave.delete()
 
     def test_edit_program_unique_fail(self):
@@ -1134,7 +1343,11 @@ class ApiTests(TestCase):
         ProgramModel(name="", path="path", arguments="", slave=slave).save()
 
         program = ProgramModel.objects.get(
-            name="", path="path", arguments="", slave=slave)
+            name="",
+            path="path",
+            arguments="",
+            slave=slave,
+        )
 
         api_response = self.client.put(
             "/api/program/" + str(program.id),
@@ -1142,7 +1355,8 @@ class ApiTests(TestCase):
                 'name': 'name',
                 'path': 'path',
                 'arguments': '',
-                'slave': str(slave.id)
+                'slave': str(slave.id),
+                'start_time': -1,
             }))
 
         self.assertEqual(api_response.status_code, 200)
@@ -1150,7 +1364,9 @@ class ApiTests(TestCase):
             Status.err({
                 "name":
                 ["Program with this Name already exists on this Client."]
-            }), Status.from_json(api_response.content.decode('utf-8')))
+            }),
+            Status.from_json(api_response.content.decode('utf-8')),
+        )
 
         slave.delete()
 
@@ -1170,7 +1386,11 @@ class ApiTests(TestCase):
             name="program", path="path", arguments="", slave=slave).save()
 
         program = ProgramModel.objects.get(
-            name="program", path="path", arguments="", slave=slave)
+            name="program",
+            path="path",
+            arguments="",
+            slave=slave,
+        )
 
         slave_status = SlaveStatusModel(slave=slave, command_uuid='abcdefg')
         slave_status.online = True
@@ -1188,7 +1408,8 @@ class ApiTests(TestCase):
         self.assertEqual(api_response.status_code, 200)
         self.assertEqual(
             Status.ok(''),
-            Status.from_json(api_response.content.decode('utf-8')))
+            Status.from_json(api_response.content.decode('utf-8')),
+        )
 
         #  test if the client receives the command
         self.assertEqual(
@@ -1196,14 +1417,18 @@ class ApiTests(TestCase):
                 method='execute',
                 path=program.path,
                 arguments=split(program.arguments),
-            ), Command.from_json(json.dumps(client.receive())))
+            ),
+            Command.from_json(json.dumps(client.receive())),
+        )
 
         #  test if the webinterface gets the "started" message
         self.assertEqual(
             Status.ok({
                 'program_status': 'started',
                 'pid': program.id
-            }), Status.from_json(json.dumps(webinterface.receive())))
+            }),
+            Status.from_json(json.dumps(webinterface.receive())),
+        )
 
         #  test if the programstatus entry exists
         self.assertTrue(ProgramStatusModel.objects.filter())
@@ -1225,7 +1450,11 @@ class ApiTests(TestCase):
             name="program", path="path", arguments="", slave=slave).save()
 
         program = ProgramModel.objects.get(
-            name="program", path="path", arguments="", slave=slave)
+            name="program",
+            path="path",
+            arguments="",
+            slave=slave,
+        )
 
         client = WSClient()
         client.join_group("commands_" + str(slave.id))
@@ -1235,8 +1464,11 @@ class ApiTests(TestCase):
 
         self.assertEqual(
             Status.err('Can not start {} because {} is offline!'.format(
-                program.name, slave.name)),
-            Status.from_json(api_response.content.decode('utf-8')))
+                program.name,
+                slave.name,
+            )),
+            Status.from_json(api_response.content.decode('utf-8')),
+        )
 
         self.assertIsNone(client.receive())
         slave.delete()
@@ -1259,11 +1491,15 @@ class ApiTests(TestCase):
 
         #  make request
         api_response = self.client.get(
-            path=reverse('frontend:shutdown_slave', args=[slave.id]))
+            path=reverse(
+                'frontend:shutdown_slave',
+                args=[slave.id],
+            ))
         self.assertEqual(api_response.status_code, 200)
         self.assertEqual(
             Status.ok(''),
-            Status.from_json(api_response.content.decode('utf-8')))
+            Status.from_json(api_response.content.decode('utf-8')),
+        )
 
         #  test if the slave gets the shutdown request
         self.assertEqual(
@@ -1278,7 +1514,8 @@ class ApiTests(TestCase):
         self.assertEqual(api_response.status_code, 200)
         self.assertEqual(
             Status.err('Can not shutdown unknown Client'),
-            Status.from_json(api_response.content.decode('utf-8')))
+            Status.from_json(api_response.content.decode('utf-8')),
+        )
 
     def test_shutdown_slave_offline_slave(self):
         SlaveModel(
@@ -1291,11 +1528,15 @@ class ApiTests(TestCase):
 
         #  make request
         api_response = self.client.get(
-            reverse('frontend:shutdown_slave', args=[slave.id]))
+            reverse(
+                'frontend:shutdown_slave',
+                args=[slave.id],
+            ))
         self.assertEqual(api_response.status_code, 200)
         self.assertEqual(
             Status.err('Can not shutdown offline Client'),
-            Status.from_json(api_response.content.decode('utf-8')))
+            Status.from_json(api_response.content.decode('utf-8')),
+        )
 
         slave.delete()
 
@@ -1323,7 +1564,8 @@ class ApiTests(TestCase):
             self.assertEqual(api_response.status_code, 200)
             self.assertEqual(
                 Status.ok(''),
-                Status.from_json(api_response.content.decode('utf-8')))
+                Status.from_json(api_response.content.decode('utf-8')),
+            )
 
         # test if all programs are in the database
         for i in range(100):
@@ -1332,7 +1574,8 @@ class ApiTests(TestCase):
                     name='name' + str(i),
                     sourcePath='sourcePath' + str(i),
                     destinationPath='destinationPath' + str(i),
-                    slave=model))
+                    slave=model,
+                ))
 
         # delete all entries
         model.delete()
@@ -1388,13 +1631,14 @@ class ApiTests(TestCase):
                 'name': 'name',
                 'sourcePath': 'sourcePath',
                 'destinationPath': 'destinationPath',
-                'slave': str(model.id)
+                'slave': str(model.id),
             })
 
         self.assertEqual(api_response.status_code, 200)
         self.assertEqual(
             Status.ok(''),
-            Status.from_json(api_response.content.decode('utf-8')))
+            Status.from_json(api_response.content.decode('utf-8')),
+        )
 
         # try to add program with the same name
         api_response = self.client.post(
@@ -1402,7 +1646,7 @@ class ApiTests(TestCase):
                 'name': 'name',
                 'sourcePath': 'sourcePath',
                 'destinationPath': 'destinationPath',
-                'slave': str(model.id)
+                'slave': str(model.id),
             })
 
         self.assertEqual(api_response.status_code, 200)
@@ -1433,6 +1677,81 @@ class ApiTests(TestCase):
         ).delete()
 
         model.delete()
+
+    def test_stop_program(self):
+        SlaveModel(
+            name='stop_program',
+            ip_address='0.0.13.0',
+            mac_address='00:00:00:00:07:00').save()
+        slave = SlaveModel.objects.get(name='stop_program')
+        ProgramModel(
+            name='program',
+            path='path',
+            arguments='args',
+            slave=slave,
+        ).save()
+        program = ProgramModel.objects.get(name='program', slave=slave)
+        cmd_uuid = uuid4()
+        ProgramStatusModel(
+            program=program,
+            running=True,
+            command_uuid=cmd_uuid,
+        ).save()
+
+        slave_ws = WSClient()
+        slave_ws.join_group('client_' + str(slave.id))
+
+        # test api
+        api_response = self.client.get(
+            path=reverse(
+                'frontend:stop_program',
+                args=[program.id],
+            ))
+        self.assertEqual(200, api_response.status_code)
+        self.assertEqual(
+            Status.ok(''),
+            Status.from_json(api_response.content.decode('utf-8')),
+        )
+
+        # test message
+        self.assertEqual(
+            Command(method='execute', uuid=cmd_uuid),
+            Command.from_json(json.dumps(slave_ws.receive())),
+        )
+
+        slave.delete()
+
+    def test_stop_program_unknown_request(self):
+        api_request = self.client.post(
+            reverse('frontend:stop_program', args=[0]))
+        self.assertEqual(403, api_request.status_code)
+
+    def test_stop_program_unknown_program(self):
+        api_response = self.client.get(
+            reverse('frontend:stop_program', args=[9999]))
+        self.assertEqual(200, api_response.status_code)
+        self.assertEqual(
+            Status.err('Can not stop unknown Program'),
+            Status.from_json(api_response.content.decode('utf-8')))
+
+    def test_stop_program_stopped_program(self):
+        SlaveModel(
+            name='stop_program_stopped_program',
+            ip_address='0.0.13.1',
+            mac_address='00:00:00:00:07:01').save()
+        slave = SlaveModel.objects.get(name='stop_program_stopped_program')
+        ProgramModel(
+            name='program', path='path', arguments='args', slave=slave).save()
+        program = ProgramModel.objects.get(name='program', slave=slave)
+        ProgramStatusModel(
+            program=program, running=False, command_uuid=uuid4()).save()
+
+        api_response = self.client.get(
+            reverse('frontend:stop_program', args=[program.id]))
+        self.assertEqual(200, api_response.status_code)
+        self.assertEqual(
+            Status.err('Can not stop a not running Program'),
+            Status.from_json(api_response.content.decode('utf-8')))
 
 
 class WebsocketTests(TestCase):
@@ -1468,7 +1787,8 @@ class WebsocketTests(TestCase):
 
         self.assertEqual(
             Command(method="online"),
-            Command.from_json(json.dumps(ws_client.receive())))
+            Command.from_json(json.dumps(ws_client.receive())),
+        )
 
         #  test if the client is now part of the right groups
         Group('clients').send({'text': 'ok'}, immediately=True)
@@ -1504,7 +1824,11 @@ class WebsocketTests(TestCase):
 
         #  register program
         ProgramModel(
-            slave=slave, name='name', path='path', arguments='').save()
+            slave=slave,
+            name='name',
+            path='path',
+            arguments='',
+        ).save()
         program = ProgramModel.objects.get(slave=slave)
         ProgramStatusModel(program=program, command_uuid='abcdefg').save()
 
@@ -1548,14 +1872,6 @@ class WebsocketTests(TestCase):
         self.assertFalse(
             ProgramStatusModel.objects.filter(program=program).exists())
 
-        #  test if a "program finished" message has been send to the webinterface
-        self.assertEqual(
-            Status.ok({
-                'program_status': 'finished',
-                'pid': program.id,
-                'code': 'Status',
-            }), Status.from_json(json.dumps(webinterface.receive())))
-
         #  test if a "disconnected" message has been send to the webinterface
         self.assertEqual(
             Status.ok({
@@ -1575,7 +1891,9 @@ class WebsocketTests(TestCase):
         #  test if ws_client is part of 'notifications'
         Group('notifications').send({'text': Status.ok('').to_json()})
         self.assertEqual(
-            Status.ok(''), Status.from_json(json.dumps(ws_client.receive())))
+            Status.ok(''),
+            Status.from_json(json.dumps(ws_client.receive())),
+        )
 
         ws_client.send_and_consume(
             'websocket.disconnect',
@@ -1598,11 +1916,13 @@ class WebsocketTests(TestCase):
         SlaveModel(
             name="test_ws_notifications_receive_online",
             ip_address='0.0.10.2',
-            mac_address='00:00:00:00:10:02').save()
+            mac_address='00:00:00:00:10:02',
+        ).save()
         slave = SlaveModel.objects.get(
             name="test_ws_notifications_receive_online",
             ip_address='0.0.10.2',
-            mac_address='00:00:00:00:10:02')
+            mac_address='00:00:00:00:10:02',
+        )
 
         uuid = uuid4().hex
         SlaveStatusModel(slave=slave, command_uuid=uuid).save()
@@ -1618,9 +1938,8 @@ class WebsocketTests(TestCase):
         ws_client.send_and_consume(
             'websocket.receive',
             path='/notifications',
-            content={
-                'text': expected_status.to_json()
-            })
+            content={'text': expected_status.to_json()},
+        )
 
         self.assertTrue(SlaveStatusModel.objects.get(slave=slave).online)
 
@@ -1628,8 +1947,10 @@ class WebsocketTests(TestCase):
         self.assertEqual(
             Status.ok({
                 'slave_status': 'connected',
-                'sid': str(slave.id)
-            }), Status.from_json(json.dumps(webinterface.receive())))
+                'sid': str(slave.id),
+            }),
+            Status.from_json(json.dumps(webinterface.receive())),
+        )
 
         slave.delete()
 
@@ -1637,11 +1958,13 @@ class WebsocketTests(TestCase):
         SlaveModel(
             name="test_ws_notifications_receive_online_status_err",
             ip_address='0.0.10.15',
-            mac_address='00:00:00:00:10:15').save()
+            mac_address='00:00:00:00:10:15',
+        ).save()
         slave = SlaveModel.objects.get(
             name="test_ws_notifications_receive_online_status_err",
             ip_address='0.0.10.15',
-            mac_address='00:00:00:00:10:15')
+            mac_address='00:00:00:00:10:15',
+        )
 
         uuid = uuid4().hex
         SlaveStatusModel(slave=slave, command_uuid=uuid).save()
@@ -1669,9 +1992,10 @@ class WebsocketTests(TestCase):
         # test if a connected message was send on /notifications
         self.assertEqual(
             Status.err(
-                'An error occured while connecting to client {}!'.format(
+                'An error occurred while connecting to client {}!'.format(
                     slave.name)),
-            Status.from_json(json.dumps(webinterface.receive())))
+            Status.from_json(json.dumps(webinterface.receive())),
+        )
 
         slave.delete()
 
@@ -1679,17 +2003,23 @@ class WebsocketTests(TestCase):
         SlaveModel(
             name="test_ws_notifications_receive_execute",
             ip_address='0.0.10.3',
-            mac_address='00:00:00:00:10:03').save()
+            mac_address='00:00:00:00:10:03',
+        ).save()
         slave = SlaveModel.objects.get(
             name="test_ws_notifications_receive_execute",
             ip_address='0.0.10.3',
-            mac_address='00:00:00:00:10:03')
+            mac_address='00:00:00:00:10:03',
+        )
 
         ProgramModel(
             name='program', path='path', arguments='', slave=slave).save()
 
         program = ProgramModel.objects.get(
-            name='program', path='path', arguments='', slave=slave)
+            name='program',
+            path='path',
+            arguments='',
+            slave=slave,
+        )
 
         uuid = uuid4().hex
         program_status = ProgramStatusModel(program=program, command_uuid=uuid)
@@ -1710,9 +2040,8 @@ class WebsocketTests(TestCase):
         ws_client.send_and_consume(
             'websocket.receive',
             path='/notifications',
-            content={
-                'text': expected_status.to_json()
-            })
+            content={'text': expected_status.to_json()},
+        )
 
         query = ProgramStatusModel.objects.filter(program=program, code=0)
         self.assertTrue(query.count() == 1)
@@ -1723,8 +2052,10 @@ class WebsocketTests(TestCase):
             Status.ok({
                 'program_status': 'finished',
                 'pid': str(program.id),
-                'code': 0
-            }), Status.from_json(json.dumps(webinterface.receive())))
+                'code': 0,
+            }),
+            Status.from_json(json.dumps(webinterface.receive())),
+        )
 
         slave.delete()
 
@@ -1739,10 +2070,18 @@ class WebsocketTests(TestCase):
             mac_address='00:00:00:00:10:33')
 
         ProgramModel(
-            name='program', path='path', arguments='', slave=slave).save()
+            name='program',
+            path='path',
+            arguments='',
+            slave=slave,
+        ).save()
 
         program = ProgramModel.objects.get(
-            name='program', path='path', arguments='', slave=slave)
+            name='program',
+            path='path',
+            arguments='',
+            slave=slave,
+        )
 
         uuid = uuid4().hex
         program_status = ProgramStatusModel(program=program, command_uuid=uuid)
@@ -1751,7 +2090,7 @@ class WebsocketTests(TestCase):
 
         error_status = Status.err({
             'method': 'execute',
-            'result': str(Exception('foobar'))
+            'result': str(Exception('foobar')),
         })
         error_status.uuid = uuid
 
@@ -1763,21 +2102,20 @@ class WebsocketTests(TestCase):
         ws_client.send_and_consume(
             'websocket.receive',
             path='/notifications',
-            content={
-                'text': error_status.to_json()
-            })
+            content={'text': error_status.to_json()},
+        )
 
-        query = ProgramStatusModel.objects.filter(program=program)
-        self.assertTrue(query.count() == 1)
-        self.assertFalse(query.first().running)
-        self.assertEqual(query.first().code, '')
+        query = ProgramStatusModel.objects.get(program=program)
+        self.assertFalse(query.running)
+        self.assertEqual(query.code, 'foobar')
 
         #  test if the webinterface gets the error message
         self.assertEqual(
             Status.err(
-                'An Exception occured while trying to execute {}'.format(
+                'An Exception occurred while trying to execute {}'.format(
                     program.name)),
-            Status.from_json(json.dumps(webinterface.receive())))
+            Status.from_json(json.dumps(webinterface.receive())),
+        )
 
         slave.delete()
 
@@ -1795,6 +2133,60 @@ class WebsocketTests(TestCase):
 
 
 class DatabaseTests(TestCase):
+    def test_validate_argument_list(self):
+        self.assertIsNone(validate_argument_list('a b c d e f g'))
+
+    def test_validate_argument_list_raises(self):
+        self.assertRaisesMessage(
+            ValidationError,
+            'Enter a valid argument list.',
+            validate_argument_list,
+            'a "abc',
+        )
+
+    def test_slave_has_err(self):
+        slave = SlaveModel(
+            name="test_slave",
+            ip_address="192.168.5.0",
+            mac_address="00:02:00:00:00:00",
+        )
+
+        slave.save()
+
+        prog = ProgramModel(slave=slave, name="test_prog", path="None")
+        prog.save()
+
+        self.assertFalse(slave.has_error)
+        self.assertFalse(slave.has_running)
+
+    def test_slave_is_online_err(self):
+        slave = SlaveModel(
+            name="test_slave",
+            ip_address="192.168.5.0",
+            mac_address="00:02:00:00:00:00",
+        )
+
+        slave.save()
+
+        self.assertFalse(slave.is_online)
+
+    def test_program_is_err(self):
+        slave = SlaveModel(
+            name="test_slave",
+            ip_address="192.168.5.0",
+            mac_address="00:02:00:00:00:00",
+        )
+
+        slave.save()
+
+        prog = ProgramModel(slave=slave, name="test_prog", path="None")
+        prog.save()
+
+        self.assertFalse(prog.is_running)
+        self.assertFalse(prog.is_error)
+        self.assertFalse(prog.is_successful)
+        self.assertFalse(prog.is_executed)
+
     def test_slave_insert_valid(self):
         mod = SlaveModel(
             name="Tommo3",
@@ -1805,17 +2197,92 @@ class DatabaseTests(TestCase):
         mod.save()
         self.assertTrue(SlaveModel.objects.filter(name="Tommo3").exists())
 
+    def test_program_running(self):
+        slave = SlaveModel(
+            name="test_slave",
+            ip_address="0.0.2.0",
+            mac_address="00:00:00:00:00:00",
+        )
+        slave.save()
+
+        prog = ProgramModel(name="test_program", path="none", slave=slave)
+        prog.save()
+
+        ProgramStatusModel(
+            command_uuid=uuid4(),
+            code="",
+            program=prog,
+            running=True,
+        ).save()
+
+        self.assertTrue(slave.has_running)
+        self.assertFalse(slave.has_error)
+        self.assertTrue(prog.is_running)
+        self.assertFalse(prog.is_executed)
+        self.assertFalse(prog.is_successful)
+        self.assertFalse(prog.is_error)
+
+    def test_program_successful(self):
+        slave = SlaveModel(
+            name="test_slave",
+            ip_address="0.0.2.0",
+            mac_address="00:00:00:00:00:00",
+        )
+        slave.save()
+
+        prog = ProgramModel(name="test_program", path="none", slave=slave)
+        prog.save()
+
+        ProgramStatusModel(
+            command_uuid=uuid4(),
+            code="0",
+            program=prog,
+            running=False,
+        ).save()
+
+        self.assertFalse(slave.has_running)
+        self.assertFalse(slave.has_error)
+        self.assertFalse(prog.is_running)
+        self.assertTrue(prog.is_executed)
+        self.assertTrue(prog.is_successful)
+        self.assertFalse(prog.is_error)
+
+    def test_program_error(self):
+        slave = SlaveModel(
+            name="test_slave",
+            ip_address="0.0.2.0",
+            mac_address="00:00:00:00:00:00",
+        )
+        slave.save()
+
+        prog = ProgramModel(name="test_program", path="none", slave=slave)
+        prog.save()
+
+        ProgramStatusModel(
+            command_uuid=uuid4(),
+            code="1",
+            program=prog,
+            running=False,
+        ).save()
+
+        self.assertFalse(slave.has_running)
+        self.assertTrue(slave.has_error)
+        self.assertFalse(prog.is_running)
+        self.assertTrue(prog.is_executed)
+        self.assertFalse(prog.is_successful)
+        self.assertTrue(prog.is_error)
+
     def test_flush_error(self):
-        from .urls import flush
+        from .apps import flush
         SlaveModel(
             name='test_flush_error',
             ip_address='0.1.0.0',
-            mac_address='00:01:00:00:00:00').save()
+            mac_address='00:01:00:00:00:00',
+        ).save()
         flush('Slave')
         flush('UnknownModel')
         self.assertFalse(
             SlaveModel.objects.filter(name='test_flush_error').exists())
-
 
     def test_slave_insert_invalid_ip(self):
         self.assertRaises(
@@ -1874,7 +2341,11 @@ class DatabaseTests(TestCase):
         slave.save()
 
         prog = ProgramModel(
-            name="test", path="None", arguments="None", slave=slave)
+            name="test",
+            path="None",
+            arguments="None",
+            slave=slave,
+        )
         prog.save()
 
         status_slave = SlaveStatusModel(slave=slave, command_uuid='abc')
@@ -1886,7 +2357,7 @@ class DatabaseTests(TestCase):
         self.assertEqual(SlaveStatusModel.objects.count(), 1)
         self.assertEqual(ProgramStatusModel.objects.count(), 1)
 
-        from .urls import flush
+        from .apps import flush
         flush("SlaveStatus", "ProgramStatus")
 
         self.assertEqual(SlaveStatusModel.objects.count(), 0)
@@ -1901,6 +2372,21 @@ class ComponentTests(TestCase):
 
 
 class ScriptTests(TestCase):
+    def test_from_json_no_list(self):
+        self.assertRaisesRegex(
+            ValueError,
+            "Files has to be a list",
+            Script.from_json,
+            '{"name": "test", "files": {}, "programs": []}',
+        )
+
+        self.assertRaisesRegex(
+            ValueError,
+            "Programs has to be a list",
+            Script.from_json,
+            '{"name": "test", "files": [], "programs": {}}',
+        )
+
     def test_script_wrong_type_name(self):
         self.assertRaises(ValueError, Script, [], [], [])
 
@@ -1974,7 +2460,7 @@ class ScriptTests(TestCase):
     def test_model_support_strings(self):
         slave = SlaveModel(
             name="test_slave",
-            ip_address="0.0.0.0",
+            ip_address="127.0.0.1",
             mac_address="00:00:00:00:00:00")
         slave.save()
 
@@ -2011,7 +2497,7 @@ class ScriptTests(TestCase):
     def test_model_support_ids(self):
         slave = SlaveModel(
             name="test_slave",
-            ip_address="0.0.0.0",
+            ip_address="127.0.0.1",
             mac_address="00:00:00:00:00:00")
         slave.save()
 
@@ -2035,7 +2521,7 @@ class ScriptTests(TestCase):
 
         slave = SlaveModel(
             name="test_slave",
-            ip_address="0.0.0.0",
+            ip_address="127.0.0.1",
             mac_address="00:00:00:00:00:00")
         slave.save()
 
@@ -2061,7 +2547,7 @@ class ScriptTests(TestCase):
         from django.db.utils import IntegrityError
         slave = SlaveModel(
             name="test_slave",
-            ip_address="0.0.0.0",
+            ip_address="127.0.0.1",
             mac_address="00:00:00:00:00:00")
         slave.save()
 
@@ -2084,7 +2570,7 @@ class ScriptTests(TestCase):
         from django.db.utils import IntegrityError
         slave = SlaveModel(
             name="test_slave",
-            ip_address="0.0.0.0",
+            ip_address="127.0.0.1",
             mac_address="00:00:00:00:00:00")
         slave.save()
 
@@ -2096,8 +2582,9 @@ class ScriptTests(TestCase):
         script.save()
 
         with_int = ScriptEntryProgram(0, program.id, slave.id).as_model(script)
-        with_str = ScriptEntryProgram(0, program.name, slave.name).as_model(script)
-        with_int .save()
+        with_str = ScriptEntryProgram(0, program.name,
+                                      slave.name).as_model(script)
+        with_int.save()
         self.assertRaises(IntegrityError, with_str.save)
 
     def test_from_query_error(self):
@@ -2114,12 +2601,134 @@ class ScriptTests(TestCase):
                 self.program = Dummy()
                 self.file = Dummy()
 
-        self.assertRaises(ValueError, ScriptEntryProgram.from_query, Dummy(),
-                          "not int", "not str")
+        self.assertRaises(
+            ValueError,
+            ScriptEntryProgram.from_query,
+            Dummy(),
+            "not int",
+            "not str",
+        )
         self.assertRaises(ValueError, ScriptEntryProgram.from_query, Dummy(),
                           "int", "not str")
 
-        self.assertRaises(ValueError, ScriptEntryFile.from_query, Dummy(),
-                          "not int", "not str")
-        self.assertRaises(ValueError, ScriptEntryFile.from_query, Dummy(),
-                          "int", "not str")
+        self.assertRaises(
+            ValueError,
+            ScriptEntryFile.from_query,
+            Dummy(),
+            "not int",
+            "not str",
+        )
+        self.assertRaises(
+            ValueError,
+            ScriptEntryFile.from_query,
+            Dummy(),
+            "int",
+            "not str",
+        )
+
+    def test_script_get_slave(self):
+        from .scripts import get_slave
+        self.assertEqual(None, get_slave(None))
+
+
+class DownloadTests(TestCase):
+    DOWNLOAD_FOLDER = 'downloads'
+
+    @classmethod
+    def setUpClass(cls):
+        if not isdir(cls.DOWNLOAD_FOLDER):
+            mkdir(cls.DOWNLOAD_FOLDER)
+        super().setUpClass()
+
+    def test_download_page_no_folder(self):
+        rmdir(self.DOWNLOAD_FOLDER)
+        response = self.client.get(reverse('frontend:downloads'))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(
+            'No files are present in the download folder',
+            str(response.content),
+        )
+
+    def test_download_page_0_byte(self):
+        with open(
+                join(getcwd(), self.DOWNLOAD_FOLDER, 'testfile1.txt'),
+                'w',
+        ) as file:
+            file.close()
+
+        response = self.client.get(reverse('frontend:downloads'))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(
+            '0 B',
+            str(response.content),
+        )
+        self.assertIn(
+            'href="/static/downloads/testfile1.txt"',
+            str(response.content),
+        )
+
+        remove(join(getcwd(), self.DOWNLOAD_FOLDER, 'testfile1.txt'), )
+
+    def test_download_page_1_kib(self):
+        with open(
+                join(getcwd(), self.DOWNLOAD_FOLDER, 'testfile2.txt'),
+                'w',
+        ) as file:
+            file.seek(pow(2, 10))
+            file.write('\0')
+            file.close()
+
+        response = self.client.get(reverse('frontend:downloads'))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(
+            '1 KiB',
+            str(response.content),
+        )
+        self.assertIn(
+            'href="/static/downloads/testfile2.txt"',
+            str(response.content),
+        )
+
+        remove(join(getcwd(), self.DOWNLOAD_FOLDER, 'testfile2.txt'), )
+
+    def test_download_page_1_mib(self):
+        with open(
+                join(getcwd(), self.DOWNLOAD_FOLDER, 'testfile3.txt'),
+                'w',
+        ) as file:
+            file.seek(pow(2, 20))
+            file.write('\0')
+            file.close()
+
+        response = self.client.get(reverse('frontend:downloads'))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(
+            '1 MiB',
+            str(response.content),
+        )
+        self.assertIn(
+            'href="/static/downloads/testfile3.txt"',
+            str(response.content),
+        )
+
+        remove(join(getcwd(), self.DOWNLOAD_FOLDER, 'testfile3.txt'), )
+
+    def test_download_page_1_gib(self):
+        with open(
+                join(getcwd(), self.DOWNLOAD_FOLDER, 'testfile4.txt'),
+                'w',
+        ) as file:
+            file.seek(pow(2, 30))
+            file.write("\0")
+            file.close()
+
+        response = self.client.get(reverse('frontend:downloads'))
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(
+            '1 GiB',
+            str(response.content),
+        )
+        self.assertIn('href="/static/downloads/testfile4.txt"',
+                      str(response.content))
+
+        remove(join(getcwd(), self.DOWNLOAD_FOLDER, 'testfile4.txt'), )
