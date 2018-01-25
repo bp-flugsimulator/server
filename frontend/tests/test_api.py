@@ -23,6 +23,7 @@ from frontend.models import (
 from .factory import (
     SlaveFactory,
     ProgramFactory,
+    ScriptFactory,
     FileFactory,
     ProgramStatusFactory,
     SlaveStatusFactory,
@@ -30,6 +31,27 @@ from .factory import (
 
 
 class ScriptTest(TestCase):
+
+    def test_script_delete(self):
+        slave = SlaveFactory()
+        program = ProgramFactory(slave=slave)
+        file = FileFactory(slave=slave)
+        script_name = ScriptFactory.build().name
+
+        script = Script(
+            script_name,
+            [ScriptEntryProgram(0, program.name, slave.name)],
+            [ScriptEntryFile(0, file.name, slave.name)],
+        )
+        script.save()
+
+        db_script = ScriptModel.objects.get(name=script_name)
+
+        response = self.client.delete("/api/script/" + str(db_script.id))
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(
+            ScriptModel.objects.filter(name="test_script").exists())
+
     def test_add_script_forbidden(self):
         response = self.client.put("/api/scripts")
         self.assertEqual(response.status_code, 403)
