@@ -16,6 +16,8 @@ from frontend.models import (
 from .factory import (
     SlaveFactory,
     ScriptFactory,
+    ProgramFactory,
+    FileFactory,
 )
 
 
@@ -117,8 +119,8 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
 
     def test_model_support_strings(self):
         slave = SlaveFactory()
-        program = ProgramModel(slave=slave)
-        file = FileModel(slave=slave)
+        program = ProgramFactory(slave=slave)
+        file = FileFactory(slave=slave)
         script_name = ScriptFactory.build().name
 
         Script(
@@ -146,14 +148,14 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
 
     def test_model_support_ids(self):
         slave = SlaveFactory()
-        program = ProgramModel(slave=slave)
-        file = FileModel(slave=slave)
+        program = ProgramFactory(slave=slave)
+        file = FileFactory(slave=slave)
         script_name = ScriptFactory.build().name
 
         Script(
             script_name,
-            [ScriptEntryProgram(0, program.id, slave.id)],
-            [ScriptEntryFile(0, file.id, slave.id)],
+            [ScriptEntryProgram(0, int(program.id), int(slave.id))],
+            [ScriptEntryFile(0, int(file.id), int(slave.id))],
         ).save()
 
         script = ScriptModel.objects.get(name=script_name)
@@ -167,7 +169,7 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
             ).exists())
 
     def test_model_support_error_in_entry(self):
-        program = ProgramModel()
+        program = ProgramFactory()
         slave = program.slave
         script_name = ScriptFactory.build().name
 
@@ -185,7 +187,7 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
         self.assertTrue(len(SGP.objects.all()) == 0)
 
     def test_from_model_file_id_eq_str(self):
-        file = FileModel()
+        file = FileFactory()
         slave = file.slave
         script = ScriptFactory()
 
@@ -195,7 +197,7 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
         self.assertRaises(IntegrityError, b.save)
 
     def test_from_model_program_id_eq_str(self):
-        program = ProgramModel()
+        program = ProgramFactory()
         slave = program.slave
         script = ScriptFactory()
 

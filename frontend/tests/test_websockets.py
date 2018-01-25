@@ -1,5 +1,4 @@
-#  pylint: disable=C0111
-#  pylint: disable=C0103
+#  pylint: disable=C0111,C0103
 
 from uuid import uuid4
 import json
@@ -9,6 +8,7 @@ from channels import Group
 from channels.test import WSClient
 
 from utils import Status, Command
+
 from frontend.models import (
     Slave as SlaveModel,
     SlaveStatus as SlaveStatusModel,
@@ -16,8 +16,21 @@ from frontend.models import (
     Program as ProgramModel,
 )
 
-class WebsocketTests(TestCase): # pylint: disable=unused-variable
-    def test_rpc_commands_fails_unkown_slave(self):
+from .factory import (
+    SlaveFactory,
+    ProgramFactory,
+    ScriptFactory,
+    FileFactory,
+    ProgramStatusFactory,
+    SlaveStatusFactory,
+)
+
+
+class WebsocketTests(TestCase):
+    def test_rpc_commands_fails_unknown_slave(self):
+
+        slave = SlaveFactory.build()
+
         ws_client = WSClient()
         self.assertRaisesMessage(
             AssertionError,
@@ -25,26 +38,17 @@ class WebsocketTests(TestCase): # pylint: disable=unused-variable
             ws_client.send_and_consume,
             "websocket.connect",
             path="/commands",
-            content={'client': ['0.0.9.0', '00:00:00:00:09:00']},
+            content={'client': [slave.ip_address, slave.mac_address]},
         )
 
     def test_rpc_commands(self):
-        SlaveModel(
-            name="test_rpc_commands",
-            ip_address='0.0.10.0',
-            mac_address='00:00:00:00:10:00',
-        ).save()
-        slave = SlaveModel.objects.get(
-            name="test_rpc_commands",
-            ip_address='0.0.10.0',
-            mac_address='00:00:00:00:10:00',
-        )
+        slave = SlaveFactory()
 
         ws_client = WSClient()
         ws_client.send_and_consume(
             'websocket.connect',
             path='/commands',
-            content={'client': ['0.0.10.0', '00:00:00:00:10:00']},
+            content={'client': [slave.ip_address, slave.mac_address]},
         )
 
         self.assertEqual(
@@ -65,32 +69,10 @@ class WebsocketTests(TestCase): # pylint: disable=unused-variable
         self.assertEqual(ws_client.receive(json=False), 'ok')
 
     def test_ws_rpc_disconnect(self):
-        SlaveModel(
-            name="test_ws_rpc_disconnect",
-            ip_address='0.0.10.1',
-            mac_address='00:00:00:00:10:01',
-        ).save()
-
-        slave = SlaveModel.objects.get(
-            name="test_ws_rpc_disconnect",
-            ip_address='0.0.10.1',
-            mac_address='00:00:00:00:10:01',
-        )
-
-        SlaveStatusModel(slave=slave, command_uuid='abcdefg').save()
-        slave_status = SlaveStatusModel.objects.get(slave=slave)
-        slave_status.online = True
-        slave_status.save()
-
-        #  register program
-        ProgramModel(
-            slave=slave,
-            name='name',
-            path='path',
-            arguments='',
-        ).save()
-        program = ProgramModel.objects.get(slave=slave)
-        ProgramStatusModel(program=program, command_uuid='abcdefg').save()
+        slave_status = SlaveStatusFactory(online=True)
+        slave = slave_status.slave
+        program_status = ProgramStatusFactory(program__slave=slave)
+        program = program_status.program
 
         # connect client on /commands
         ws_client = WSClient()
@@ -98,7 +80,7 @@ class WebsocketTests(TestCase): # pylint: disable=unused-variable
             'websocket.connect',
             path='/commands',
             content={
-                'client': ['0.0.10.1', '00:00:00:00:10:01']
+                'client': [slave.ip_address, slave.mac_address]
             })
 
         # connect webinterface on /notifications
@@ -110,7 +92,6 @@ class WebsocketTests(TestCase): # pylint: disable=unused-variable
 
         #  throw away connect repsonse
         ws_client.receive()
-
         ws_client.send_and_consume('websocket.disconnect', path='/commands')
 
         #  test if SlaveStatus was to offline
@@ -171,21 +152,11 @@ class WebsocketTests(TestCase): # pylint: disable=unused-variable
         self.assertIsNone(ws_client.receive())
 
     def test_ws_notifications_receive_online(self):
-        SlaveModel(
-            name="test_ws_notifications_receive_online",
-            ip_address='0.0.10.2',
-            mac_address='00:00:00:00:10:02',
-        ).save()
-        slave = SlaveModel.objects.get(
-            name="test_ws_notifications_receive_online",
-            ip_address='0.0.10.2',
-            mac_address='00:00:00:00:10:02',
-        )
+        slave_status = SlaveStatusFactory(online=True)
+        slave = slave_status.slave
 
-        uuid = uuid4().hex
-        SlaveStatusModel(slave=slave, command_uuid=uuid).save()
         expected_status = Status.ok({'method': 'online'})
-        expected_status.uuid = uuid
+        expected_status.uuid = slave_status.command_uuid
 
         # connect webinterface on /notifications
         webinterface = WSClient()
@@ -211,24 +182,14 @@ class WebsocketTests(TestCase): # pylint: disable=unused-variable
         )
 
     def test_ws_notifications_receive_online_status_err(self):
-        SlaveModel(
-            name="test_ws_notifications_receive_online_status_err",
-            ip_address='0.0.10.15',
-            mac_address='00:00:00:00:10:15',
-        ).save()
-        slave = SlaveModel.objects.get(
-            name="test_ws_notifications_receive_online_status_err",
-            ip_address='0.0.10.15',
-            mac_address='00:00:00:00:10:15',
-        )
+        slave_status = SlaveStatusFactory(online=False)
+        slave = slave_status.slave
 
-        uuid = uuid4().hex
-        SlaveStatusModel(slave=slave, command_uuid=uuid).save()
         error_status = Status.err({
             'method': 'online',
             'result': str(Exception('foobar'))
         })
-        error_status.uuid = uuid
+        error_status.uuid = slave_status.command_uuid
 
         # connect webinterface on /notifications
         webinterface = WSClient()
@@ -254,34 +215,11 @@ class WebsocketTests(TestCase): # pylint: disable=unused-variable
         )
 
     def test_ws_notifications_receive_execute(self):
-        SlaveModel(
-            name="test_ws_notifications_receive_execute",
-            ip_address='0.0.10.3',
-            mac_address='00:00:00:00:10:03',
-        ).save()
-        slave = SlaveModel.objects.get(
-            name="test_ws_notifications_receive_execute",
-            ip_address='0.0.10.3',
-            mac_address='00:00:00:00:10:03',
-        )
-
-        ProgramModel(
-            name='program', path='path', arguments='', slave=slave).save()
-
-        program = ProgramModel.objects.get(
-            name='program',
-            path='path',
-            arguments='',
-            slave=slave,
-        )
-
-        uuid = uuid4().hex
-        program_status = ProgramStatusModel(program=program, command_uuid=uuid)
-        program_status.running = True
-        program_status.save()
+        program_status = ProgramStatusFactory(running=True)
+        program = program_status.program
 
         expected_status = Status.ok({'method': 'execute', 'result': 0})
-        expected_status.uuid = uuid
+        expected_status.uuid = program_status.command_uuid
 
         #  connect webinterface
         webinterface = WSClient()
@@ -312,39 +250,14 @@ class WebsocketTests(TestCase): # pylint: disable=unused-variable
         )
 
     def test_ws_notifications_receive_execute_status_err(self):
-        SlaveModel(
-            name="test_ws_notifications_receive_execute_status_err",
-            ip_address='0.0.10.33',
-            mac_address='00:00:00:00:10:33').save()
-        slave = SlaveModel.objects.get(
-            name="test_ws_notifications_receive_execute_status_err",
-            ip_address='0.0.10.33',
-            mac_address='00:00:00:00:10:33')
-
-        ProgramModel(
-            name='program',
-            path='path',
-            arguments='',
-            slave=slave,
-        ).save()
-
-        program = ProgramModel.objects.get(
-            name='program',
-            path='path',
-            arguments='',
-            slave=slave,
-        )
-
-        uuid = uuid4().hex
-        program_status = ProgramStatusModel(program=program, command_uuid=uuid)
-        program_status.running = True
-        program_status.save()
+        program_status = ProgramStatusFactory(running=True)
+        program = program_status.program
 
         error_status = Status.err({
             'method': 'execute',
             'result': str(Exception('foobar')),
         })
-        error_status.uuid = uuid
+        error_status.uuid = program_status.command_uuid
 
         #  connect webinterface
         webinterface = WSClient()
@@ -368,8 +281,6 @@ class WebsocketTests(TestCase): # pylint: disable=unused-variable
                     program.name)),
             Status.from_json(json.dumps(webinterface.receive())),
         )
-
-        slave.delete()
 
     def test_ws_notifications_receive_unknown_method(self):
         ws_client = WSClient()
