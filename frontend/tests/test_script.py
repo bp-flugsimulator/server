@@ -1,20 +1,25 @@
-#  pylint: disable=C0111
-#  pylint: disable=C0103
+#  pylint: disable=C0111,C0103
 
 from django.test import TestCase
+from django.db.utils import IntegrityError
+
+from frontend.scripts import Script, ScriptEntryFile, ScriptEntryProgram
 
 from frontend.models import (
-    Slave as SlaveModel,
     Program as ProgramModel,
     Script as ScriptModel,
     ScriptGraphPrograms as SGP,
     ScriptGraphFiles as SGF,
     File as FileModel,
 )
-from frontend.scripts import Script, ScriptEntryFile, ScriptEntryProgram
+
+from .factory import (
+    SlaveFactory,
+    ScriptFactory,
+)
 
 
-class ScriptTests(TestCase): # pylint: disable=unused-variable
+class ScriptTests(TestCase):  # pylint: disable=unused-variable
     def test_from_json_no_list(self):
         self.assertRaisesRegex(
             ValueError,
@@ -46,8 +51,13 @@ class ScriptTests(TestCase): # pylint: disable=unused-variable
         self.assertRaises(ValueError, Script, "name", [], ["String"])
 
     def test_script_entry_program_wrong_type_program(self):
-        self.assertRaises(ValueError, ScriptEntryProgram, "a name", "whoops",
-                          0)
+        self.assertRaises(
+            ValueError,
+            ScriptEntryProgram,
+            "a name",
+            "whoops",
+            0,
+        )
 
     def test_script_entry_program_wrong_type_index(self):
         self.assertRaises(ValueError, ScriptEntryProgram, [], "whoops", 0)
@@ -74,8 +84,11 @@ class ScriptTests(TestCase): # pylint: disable=unused-variable
         string = '{"name": "test", "files": [{"index": 0, "slave": 0, "file": "no name"}],\
             "programs": [{"index": 0, "slave": 0, "program": "no name"}]}'
 
-        script = Script("test", [ScriptEntryProgram(0, "no name", 0)],
-                        [ScriptEntryFile(0, "no name", 0)])
+        script = Script(
+            "test",
+            [ScriptEntryProgram(0, "no name", 0)],
+            [ScriptEntryFile(0, "no name", 0)],
+        )
 
         self.assertEqual(Script.from_json(string), script)
         self.assertEqual(Script.from_json(script.to_json()), script)
@@ -87,7 +100,9 @@ class ScriptTests(TestCase): # pylint: disable=unused-variable
 
         self.assertEqual(ScriptEntryProgram.from_json(string), script)
         self.assertEqual(
-            ScriptEntryProgram.from_json(script.to_json()), script)
+            ScriptEntryProgram.from_json(script.to_json()),
+            script,
+        )
 
     def test_script_entry_file_json(self):
         string = '{"index": 0, "slave": 0, "file": "no name"}'
@@ -101,79 +116,63 @@ class ScriptTests(TestCase): # pylint: disable=unused-variable
         self.assertNotEqual(Script("test", [], []), Script("test2", [], []))
 
     def test_model_support_strings(self):
-        slave = SlaveModel(
-            name="test_slave",
-            ip_address="127.0.0.0",
-            mac_address="00:00:00:00:00:00")
-        slave.save()
+        slave = SlaveFactory()
+        program = ProgramModel(slave=slave)
+        file = FileModel(slave=slave)
+        script_name = ScriptFactory.build().name
 
-        program = ProgramModel(
-            name="test_program", path="None", arguments="None", slave=slave)
-        program.save()
+        Script(
+            script_name,
+            [ScriptEntryProgram(0, program.name, slave.name)],
+            [ScriptEntryFile(0, file.name, slave.name)],
+        ).save()
 
-        file = FileModel(
-            name="test_file",
-            sourcePath="None",
-            destinationPath="None",
-            slave=slave)
-        file.save()
+        script = ScriptModel.objects.get(name=script_name)
 
-        script = Script("test_script",
-                        [ScriptEntryProgram(0, "test_program", "test_slave")],
-                        [ScriptEntryFile(0, "test_file", "test_slave")])
-        script.save()
-
-        self.assertTrue(
-            ScriptModel.objects.filter(name="test_script").exists())
+        self.assertTrue(ScriptModel.objects.filter(name=script_name).exists())
         self.assertTrue(
             SGP.objects.filter(
-                script=ScriptModel.objects.get(name="test_script"),
+                script=script,
                 index=0,
-                program=program).exists())
+                program=program,
+            ).exists())
 
         self.assertTrue(
             SGF.objects.filter(
-                script=ScriptModel.objects.get(name="test_script"),
+                script=script,
                 index=0,
-                file=file).exists())
+                file=file,
+            ).exists())
 
     def test_model_support_ids(self):
-        slave = SlaveModel(
-            name="test_slave",
-            ip_address="127.0.0.1",
-            mac_address="00:00:00:00:00:00")
-        slave.save()
+        slave = SlaveFactory()
+        program = ProgramModel(slave=slave)
+        file = FileModel(slave=slave)
+        script_name = ScriptFactory.build().name
 
-        program = ProgramModel(
-            name="test_program", path="None", arguments="None", slave=slave)
-        program.save()
+        Script(
+            script_name,
+            [ScriptEntryProgram(0, program.id, slave.id)],
+            [ScriptEntryFile(0, file.id, slave.id)],
+        ).save()
 
-        script = Script("test_script",
-                        [ScriptEntryProgram(0, program.id, slave.id)], [])
-        script.save()
+        script = ScriptModel.objects.get(name=script_name)
 
-        self.assertTrue(
-            ScriptModel.objects.filter(name="test_script").exists())
+        self.assertTrue(ScriptModel.objects.filter(name=script_name).exists())
         self.assertTrue(
             SGP.objects.filter(
-                script=ScriptModel.objects.get(name="test_script"),
+                script=script,
                 index=0,
-                program=program).exists())
+                program=program,
+            ).exists())
 
     def test_model_support_error_in_entry(self):
-
-        slave = SlaveModel(
-            name="test_slave",
-            ip_address="127.0.0.1",
-            mac_address="00:00:00:00:00:00")
-        slave.save()
-
-        program = ProgramModel(
-            name="test_program", path="None", arguments="None", slave=slave)
-        program.save()
+        program = ProgramModel()
+        slave = program.slave
+        script_name = ScriptFactory.build().name
 
         script = Script(
-            "test_scripts",
+            script_name,
             [
                 ScriptEntryProgram(0, program.id, slave.id),
                 ScriptEntryProgram(0, program.id + 1, slave.id),
@@ -182,27 +181,13 @@ class ScriptTests(TestCase): # pylint: disable=unused-variable
         )
 
         self.assertRaises(ProgramModel.DoesNotExist, script.save)
-        self.assertTrue(
-            not ScriptModel.objects.filter(name="test_script").exists())
+        self.assertFalse(ScriptModel.objects.filter(name=script_name).exists())
         self.assertTrue(len(SGP.objects.all()) == 0)
 
     def test_from_model_file_id_eq_str(self):
-        from django.db.utils import IntegrityError
-        slave = SlaveModel(
-            name="test_slave",
-            ip_address="127.0.0.1",
-            mac_address="00:00:00:00:00:00")
-        slave.save()
-
-        file = FileModel(
-            name="test_file",
-            sourcePath="None",
-            destinationPath="None",
-            slave=slave)
-        file.save()
-
-        script = ScriptModel(name="test_script")
-        script.save()
+        file = FileModel()
+        slave = file.slave
+        script = ScriptFactory()
 
         a = ScriptEntryFile(0, file.id, slave.id).as_model(script)
         b = ScriptEntryFile(0, file.name, slave.name).as_model(script)
@@ -210,32 +195,26 @@ class ScriptTests(TestCase): # pylint: disable=unused-variable
         self.assertRaises(IntegrityError, b.save)
 
     def test_from_model_program_id_eq_str(self):
-        from django.db.utils import IntegrityError
-        slave = SlaveModel(
-            name="test_slave",
-            ip_address="127.0.0.1",
-            mac_address="00:00:00:00:00:00")
-        slave.save()
-
-        program = ProgramModel(
-            name="test_program", path="None", arguments="None", slave=slave)
-        program.save()
-
-        script = ScriptModel(name="test_script")
-        script.save()
+        program = ProgramModel()
+        slave = program.slave
+        script = ScriptFactory()
 
         with_int = ScriptEntryProgram(0, program.id, slave.id).as_model(script)
-        with_str = ScriptEntryProgram(0, program.name,
-                                      slave.name).as_model(script)
+        with_str = ScriptEntryProgram(
+            0,
+            program.name,
+            slave.name,
+        ).as_model(script)
+
         with_int.save()
         self.assertRaises(IntegrityError, with_str.save)
 
     def test_from_query_error(self):
-        class Dummy: # pylint: disable=unused-variable
+        class Dummy:
             def __init__(self):
-                class Dummy: # pylint: disable=unused-variable
+                class Dummy:
                     def __init__(self):
-                        class Dummy: # pylint: disable=unused-variable
+                        class Dummy:
                             def __init__(self):
                                 self.id = None
 
@@ -251,8 +230,13 @@ class ScriptTests(TestCase): # pylint: disable=unused-variable
             "not int",
             "not str",
         )
-        self.assertRaises(ValueError, ScriptEntryProgram.from_query, Dummy(),
-                          "int", "not str")
+        self.assertRaises(
+            ValueError,
+            ScriptEntryProgram.from_query,
+            Dummy(),
+            "int",
+            "not str",
+        )
 
         self.assertRaises(
             ValueError,
