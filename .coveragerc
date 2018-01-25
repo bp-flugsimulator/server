@@ -8,5 +8,6 @@ omit =
 	manage.py
 	*/wsgi.py
 	install.py
+    server/management/commands/deploy.py
 source =
 	.
