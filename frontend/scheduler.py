@@ -56,7 +56,7 @@ class Scheduler:
     def __init__(self):
         self.lock = threading.Lock()
 
-        self.__event = asyncio.Event()
+        self.__event = None
         self.__task = None
         self.__error_code = None
         self.__stop = False
@@ -151,6 +151,7 @@ class Scheduler:
             self.__state = SchedulerStatus.INIT
             self.__index = -1
             self.__script = script
+            self.__event = asyncio.Event(loop=FSIM_CURRENT_EVENT_LOOP.loop)
 
             self.__task = FSIM_CURRENT_EVENT_LOOP.create_task(self.__run__())
 
@@ -186,6 +187,8 @@ class Scheduler:
             FSIM_CURRENT_EVENT_LOOP.run(callback)
         else:
             LOGGER.debug("Task is not running -> no notify!")
+
+        LOGGER.debug("NOTIFY SCOPE OUT")
 
     def __next_stage(self):
         """
