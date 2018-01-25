@@ -23,7 +23,7 @@ class SlaveFactory(DjangoModelFactory):
 
     name = FuzzyText(length=20, prefix="slave_")
     ip_address = Sequence(lambda n: socket.inet_ntoa(struct.pack('!L', n)))
-    mac_address = Sequence(lambda n: '-'.join(a+b for a,b in zip("{:012x}".format(n)[::2], "{:012x}".format(n)[1::2])))
+    mac_address = Sequence(lambda n: ':'.join(a+b for a,b in zip("{:012x}".format(n)[::2], "{:012x}".format(n)[1::2])))
 
 
 class SlaveStatusFactory(DjangoModelFactory):
