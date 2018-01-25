@@ -127,7 +127,7 @@ $(document).ready(function () {
 
         let id = $(this).data('program-id');
 
-        if ($(this).attr('data-is-running') === 'True') {
+        if ($(this).attr('data-is-running') !== '') {
             apiRequest('/api/program/' + id + '/stop', 'GET');
         } else {
             apiRequest('/api/program/' + id, 'POST');
@@ -284,9 +284,8 @@ $(document).ready(function () {
 
         let id = $(this).data('file-id');
 
-        if ($(this).attr('data-move') === 'True') {
-            alert('Unimplemented');
-            //apiRequest('/api/file/' + id + '/reset', 'GET');
+        if ($(this).attr('data-moved') === 'True') {
+            apiRequest('/api/file/' + id + '/restore', 'GET');
         } else {
             apiRequest('/api/file/' + id, 'POST');
         }

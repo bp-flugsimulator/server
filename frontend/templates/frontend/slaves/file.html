@@ -8,10 +8,10 @@
         <div class="btn-toolbar col d-flex justify-content-end" role="toolbar">
             <div class="btn-group mr-2" role="group">
                 <button type="button" id="fileMove_{{ file.id }}" class="btn btn-outline-dark font-weight-light file-action-move"
-                    data-file-id="{{ file.id }}" data-moved="{{ file.moved }}">
+                    data-file-id="{{ file.id }}" data-moved="{{ file.is_moved }}">
                     <i class="mdi mdi-power-settings-new"></i>
                     <i class="button-status-display">
-                        {% if file.moved %}RESTORE{% else %}MOVE{% endif %}
+                        {% if file.is_moved %}RESTORE{% else %}MOVE{% endif %}
                     </i>
                 </button>
             </div>

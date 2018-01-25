@@ -13,6 +13,7 @@ from utils.status import Status
 from utils import Command
 from wakeonlan.wol import send_magic_packet
 from server.utils import StatusResponse
+import os
 
 from .models import Slave as SlaveModel, Program as ProgramModel, ProgramStatus as ProgramStatusModel, SlaveStatus as SlaveStatusModel, Script as ScriptModel, ScriptGraphFiles as SGFModel, ScriptGraphPrograms as SGPModel, File as FileModel
 from .scripts import Script
@@ -474,14 +475,17 @@ def manage_file(request, file_id):
     A HttpResponse with a JSON object which
     can contain errors.
     """
+    back='_BACK'
+
     if request.method == 'POST':
         file_ = FileModel.objects.get(id=file_id)
-        slave = file.slave
+        slave = file_.slave
         if SlaveStatusModel.objects.filter(slave=slave):
             cmd = Command(
                 method="move_file",
                 source_path=file_.source_path,
                 destination_path=file_.destination_path,
+                backup_ending=back,
             )
 
             # send command to the client
@@ -494,6 +498,32 @@ def manage_file(request, file_id):
         else:
             return StatusResponse(
                 Status.err('Can not move {} because {} is offline!'.format(
+                    file_.name, slave.name)))
+    if request.method == 'GET':
+        file_ = FileModel.objects.get(id=file_id)
+        slave = file_.slave
+        if not file_.hash_value:
+            return StatusResponse(Status.err('😡 NO MEANS NO 😡'))
+
+        if SlaveStatusModel.objects.filter(slave=slave):
+            cmd = Command(
+                method="restore_file",
+                source_path=file_.source_path,
+                destination_path=file_.destination_path,
+                backup_ending=back,
+                hash_value=file_.hash_value,
+            )
+
+            # send command to the client
+            Group('client_' + str(slave.id)).send({'text': cmd.to_json()})
+
+            file_.command_uuid = cmd.uuid
+            file_.save()
+
+            return StatusResponse(Status.ok(''))
+        else:
+            return StatusResponse(
+                Status.err('Can not restore {} because {} is offline!'.format(
                     file_.name, slave.name)))
     else:
         return HttpResponseForbidden()

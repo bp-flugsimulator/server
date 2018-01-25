@@ -29,6 +29,7 @@ urlpatterns = [  # pylint: disable=C0103
     url(r'^api/program/([0-9]+)/stop$', api.stop_program, name='stop_program'),
     url(r'^api/files$', api.add_file, name='add_file'),
     url(r'^api/file/([0-9]+)$', api.manage_file, name='manage_file'),
+    url(r'^api/file/([0-9]+)/restore$', api.manage_file, name='manage_file'),
 ]
 
 # from .models import Slave as SlaveModel, Program as ProgramModel, File as FileModel, Script as ScriptModel

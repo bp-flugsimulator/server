@@ -233,12 +233,29 @@ class File(Model):
     name = CharField(unique=False, max_length=200)
     source_path = TextField(unique=False)
     destination_path = TextField(unique=False)
-    moved = BooleanField(default=False)
-    command_uuid = CharField(max_length=32, unique=True, default='')
+    command_uuid = CharField(
+        max_length=32,
+        unique=True,
+        blank=True,
+        null=True,
+    )
+    hash_value = CharField(
+        unique=True,
+        max_length=32,
+        blank=True,
+        null=True,
+    )
     slave = ForeignKey(Slave, on_delete=CASCADE)
 
     class Meta:
         unique_together = (('name', 'slave'), )
+
+    @property
+    def is_moved(self):
+        """
+        Returns true if file is moved.
+        """
+        return self.hash_value != None
 
 
 class Script(Model):

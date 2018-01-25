@@ -40,7 +40,7 @@ def notify_err(message):
     Group('notifications').send({'text': Status.err(message).to_json()})
 
 
-def handle_move_file_answer(status):
+def handle_file_answer(status):
     """
     Handles an incoming message on '/notification' that
     is an answer to an 'move_file' request on a slave
@@ -52,8 +52,15 @@ def handle_move_file_answer(status):
     """
     file_ = FileModel.objects.get(command_uuid=status.uuid)
 
-    if status.is_ok():
-        file_.moved = True
+    if status.payload['method'] == 'move_file':
+        if status.is_ok():
+            file_.hash_value = status.payload['result']
+            file_.save()
+
+    elif status.payload['method'] == 'restore_file':
+        if status.is_ok():
+            file_.hash_value = None
+            file_.save()
 
     notify({
         'moved': file_.moved,
@@ -250,7 +257,9 @@ def ws_notifications_receive(message):
         elif status.payload['method'] == 'execute':
             handle_execute_answer(status)
         elif status.payload['method'] == 'move_file':
-            handle_move_file_answer(status)
+            handle_file_answer(status)
+        elif status.payload['method'] == 'restore_file':
+            handle_file_answer(status)
         else:
             LOGGER.info(
                 colored('Client send answer from unknown function {}.'.format(
