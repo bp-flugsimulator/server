@@ -2,11 +2,10 @@
 This module contains a scheduler which runs programs on the different clients.
 """
 
-from threading import Timer
 import threading
 import asyncio
-
 import logging
+
 from server.utils import notify
 
 LOGGER = logging.getLogger("scheduler")
@@ -55,10 +54,10 @@ class Scheduler:
     """
 
     def __init__(self):
-        self.event = threading.Event()
         self.lock = threading.Lock()
 
-        self.__thread = None
+        self.__event = asyncio.Event()
+        self.__task = None
         self.__error_code = None
         self.__stop = False
         self.__state = SchedulerStatus.INIT
@@ -69,7 +68,7 @@ class Scheduler:
         """
         This function is thread-safe.
 
-        Returns if the underlying thread is still running.
+        Returns true if the underlying thread is still running.
 
         Returns
         -------
@@ -77,17 +76,18 @@ class Scheduler:
         """
         self.lock.acquire()
 
-        if self.__thread is not None:
-            alive = self.__thread.is_alive()
+        if self.__task is not None:
+            done = self.__task.done()
             LOGGER.debug(
-                "Thread is %s",
-                "online" if alive else "offline",
+                "Task is %s.",
+                "done" if done else "pending",
             )
         else:
-            LOGGER.debug("Thread is offline")
-            alive = False
+            LOGGER.debug("Thread is done.")
+            done = True
+
         self.lock.release()
-        return alive
+        return not done
 
     def should_stop(self):
         """
@@ -112,10 +112,15 @@ class Scheduler:
         """
         self.lock.acquire()
         self.__stop = True
-        self.event.set()
+        self.lock.release()
 
-        if self.__thread is not None:
-            self.__thread.join(timeout=2)
+        self.notify()
+
+        self.lock.acquire()
+
+        if self.__task is not None:
+            self.__task.cancel()
+            self.__task = None
 
         self.lock.release()
 
@@ -139,6 +144,7 @@ class Scheduler:
         else:
             from .models import Script
             self.lock.acquire()
+            LOGGER.debug("Starting task in event loop.")
 
             self.__error_code = None
             self.__stop = False
@@ -146,10 +152,7 @@ class Scheduler:
             self.__index = -1
             self.__script = script
 
-            self.__thread = threading.Thread(
-                daemon=True,
-                target=self.__run__,
-            )
+            self.__task = FSIM_CURRENT_EVENT_LOOP.create_task(self.__run__())
 
             Script.objects.filter(id=self.__script).update(
                 is_running=True,
@@ -157,7 +160,7 @@ class Scheduler:
                 current_index=-1,
             )
 
-            self.__thread.start()
+            LOGGER.debug("Task started")
             self.lock.release()
             return True
 
@@ -168,11 +171,21 @@ class Scheduler:
         Notifies the scheduler that something has changed. That means the
         scheduler will look at the data again.
         """
-        running = self.is_running()
-        self.lock.acquire()
-        if running and not self.event.is_set():
-            self.event.set()
-        self.lock.release()
+        if self.is_running():
+            LOGGER.debug("Task is running -> notify!")
+
+            def callback():
+                """
+                Run the __event.set in the Event Loop and not outside!
+                """
+                if not self.__event.is_set():
+                    LOGGER.debug("Event is not set -> Done. %d",
+                                 self.__event.is_set())
+                    self.__event.set()
+
+            FSIM_CURRENT_EVENT_LOOP.run(callback)
+        else:
+            LOGGER.debug("Task is not running -> no notify!")
 
     def __next_stage(self):
         """
@@ -217,28 +230,28 @@ class Scheduler:
 
         LOGGER.debug("ASYNC SLAVE TIMEOUT")
 
-        self.lock.acquire()
         if self.__state == SchedulerStatus.WAITING_FOR_SLAVES:
             LOGGER.debug("Scheduler for slaves timeouted")
             self.__error_code = 'Not all slaves connected within 5 minutes.'
             self.__state = SchedulerStatus.ERROR
-            self.event.set()
+            self.__event.set()
 
-        self.lock.release()
-
+    @asyncio.coroutine
     def __run__(self):
         """
         Function wich will be executed by the Thread.
         """
 
-        while self.event.wait():
-            self.event.clear()
+        while True:
+            LOGGER.debug("Waiting for notification.")
+            yield from self.__event.wait()
+            self.__event.clear()
+            LOGGER.debug("Notification received.")
 
             if self.__stop:
-                LOGGER.info("Exit thread -> should_stop() == True")
+                LOGGER.info("Exit task -> should_stop() == True")
                 return
 
-            self.lock.acquire()
             LOGGER.debug("Current state: %s", self.__state)
 
             if self.__state == SchedulerStatus.INIT:
@@ -255,15 +268,13 @@ class Scheduler:
 
             elif self.__state == SchedulerStatus.SUCCESS:
                 self.__state_success()
-                self.lock.release()
                 return
 
             elif self.__state == SchedulerStatus.ERROR:
                 self.__state_error()
-                self.lock.release()
                 return
 
-            self.lock.release()
+        LOGGER.debug("Task out of scope.")
 
     def __state_init(self):
         """
@@ -276,7 +287,8 @@ class Scheduler:
             Slave.wake_on_lan(slave)
 
         self.__state = SchedulerStatus.WAITING_FOR_SLAVES
-        self.event.set()
+        self.__event.set()
+
         FSIM_CURRENT_EVENT_LOOP.spawn(300, self.timer_scheduler_slave_timeout)
 
         notify({
@@ -293,7 +305,7 @@ class Scheduler:
         if Script.check_online(self.__script):
             LOGGER.info("All slaves online")
             self.__state = SchedulerStatus.NEXT_STEP
-            self.event.set()
+            self.__event.set()
         else:
             LOGGER.info("Waiting for all slaves to be online.")
 
@@ -321,7 +333,7 @@ class Scheduler:
         if all_done:
             LOGGER.info("Everything done ... scheduler done")
             self.__state = SchedulerStatus.SUCCESS
-            self.event.set()
+            self.__event.set()
 
         else:
             self.__state = SchedulerStatus.WAITING_FOR_PROGRAMS
@@ -367,7 +379,7 @@ class Scheduler:
                 self.__error_code = "Program {} has an error.".format(
                     prog.name)
                 step = False
-                self.event.set()
+                self.__event.set()
 
                 break
 
@@ -382,7 +394,7 @@ class Scheduler:
 
         if step:
             self.__state = SchedulerStatus.NEXT_STEP
-            self.event.set()
+            self.__event.set()
         else:
             LOGGER.info("Not all programs are finished.")
 

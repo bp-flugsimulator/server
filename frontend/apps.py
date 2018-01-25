@@ -45,6 +45,8 @@ class SafeLoop:
 
     def spawn(self, timer, function, *args):
         """
+        Thread-safe function.
+
         Creates a task and adds it to the loop.
 
         Arguments
@@ -53,12 +55,47 @@ class SafeLoop:
 
         """
         self.lock.acquire()
-
         LOGGER.debug("Spawned task in event loop in thread %s", self.thread)
         self.loop.call_soon_threadsafe(self.loop.call_later, timer, function,
                                        *args)
-
         self.lock.release()
+
+    def run(self, function, *args):
+        """
+        Thread-safe function.
+
+        Runs a future in the event loop without any timeout.
+
+        Arguments
+        ---------
+            function: callable function
+
+        """
+        self.lock.acquire()
+        LOGGER.debug(
+            "Spawn function callback into event loop without timeout.")
+        self.loop.call_soon_threadsafe(function, *args)
+        self.lock.release()
+
+    def create_task(self, coro):
+        """
+        Thread-safe function.
+
+        Creates a task in the event loop.
+
+        Arguments
+        ---------
+            coro: Coroutine
+
+        Returns
+        -------
+            TaskHandle
+        """
+        self.lock.acquire()
+        LOGGER.debug("Spawn task into event loop.")
+        task = self.loop.create_task(coro)
+        self.lock.release()
+        return task
 
     def __run__(self):
         LOGGER.debug(

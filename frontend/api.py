@@ -1,6 +1,7 @@
 """
 This module contains all functions that handle requests on the REST api.
 """
+import logging
 
 from django.http import HttpResponseForbidden
 from django.http.request import QueryDict
@@ -20,6 +21,8 @@ from .models import (
 from .scripts import Script
 from .forms import SlaveForm, ProgramForm, FileForm
 from .consumers import notify
+
+LOGGER = logging.getLogger("api-logger")
 
 
 def add_slave(request):
@@ -50,7 +53,8 @@ def add_slave(request):
             Status.ok(
                 list(
                     set([
-                        obj['name'] for obj in SlaveModel.objects.filter(
+                        obj['name']
+                        for obj in SlaveModel.objects.filter(
                             name__contains=query).values("name")
                     ]))))
     else:
@@ -196,7 +200,8 @@ def add_program(request):
             Status.ok(
                 list(
                     set([
-                        obj['name'] for obj in ProgramModel.objects.filter(
+                        obj['name']
+                        for obj in ProgramModel.objects.filter(
                             name__contains=query).values("name")
                     ]))))
     else:
@@ -391,6 +396,7 @@ def run_script(request, script_id):
     if request.method == 'GET':
         try:
             script = ScriptModel.objects.get(id=script_id)
+            LOGGER.debug("GIMME GIMME GGX GANG TriHard 7 in the chat")
             # only allow the start of a script if the old one is finished
             if FSIM_CURRENT_SCHEDULER.start(script.id):
                 FSIM_CURRENT_SCHEDULER.notify()
@@ -447,7 +453,8 @@ def add_file(request):
             Status.ok(
                 list(
                     set([
-                        obj['name'] for obj in FileModel.objects.filter(
+                        obj['name']
+                        for obj in FileModel.objects.filter(
                             name__contains=query).values("name")
                     ]))))
     else:
