@@ -51,7 +51,8 @@ def add_slave(request):
             Status.ok(
                 list(
                     set([
-                        obj['name'] for obj in SlaveModel.objects.filter(
+                        obj['name']
+                        for obj in SlaveModel.objects.filter(
                             name__contains=query).values("name")
                     ]))))
     else:
@@ -454,18 +455,18 @@ def add_file(request):
     else:
         return HttpResponseForbidden()
 
-def manage_file(request, fileId):
+def manage_file(request, file_id):
     """
-    Manages the file with the fileId.
+    Manages the file with the file_id.
 
     Arguments
     ----------
     request: HttpRequest
         a DELETE #TODO
         or a PUT  #TODO
-        or a POST request to copy the file with fileId
-            from sourcePath to destinationPath
-    fileId: int
+        or a POST request to copy the file with file_id
+            from source_path to destination_path
+    file_id: int
         the ID of the file
 
     Returns
@@ -473,33 +474,26 @@ def manage_file(request, fileId):
     A HttpResponse with a JSON object which
     can contain errors.
     """
-    # if request.method == 'DELETE':
-        #TODO
     if request.method == 'POST':
-        file = FileModel.objects.get(id=fileId)
+        file_ = FileModel.objects.get(id=file_id)
         slave = file.slave
         if SlaveStatusModel.objects.filter(slave=slave):
             cmd = Command(
-                    method="move_file",    # move file
-                    sourcePath=file.sourcePath,
-                    destinationPath=file.destinationPath)
+                method="move_file",
+                source_path=file_.source_path,
+                destination_path=file_.destination_path,
+            )
 
             # send command to the client
             Group('client_' + str(slave.id)).send({'text': cmd.to_json()})
 
-            # tell webinterface that the file was moved
-            Group('notifications').send({
-                'text':
-                Status.ok({
-                    "file_status": "moved",
-                    "pid": file.id
-                }).to_json()
-            })
+            file_.command_uuid = cmd.uuid
+            file_.save()
 
             return StatusResponse(Status.ok(''))
         else:
             return StatusResponse(
                 Status.err('Can not move {} because {} is offline!'.format(
-                    file.name, slave.name)))
+                    file_.name, slave.name)))
     else:
         return HttpResponseForbidden()

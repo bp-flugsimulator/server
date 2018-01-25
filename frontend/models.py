@@ -221,18 +221,20 @@ class File(Model):
     name: str
         The name of the file (has to be unique for every slave)
 
-    sourcePath: str
+    source_path: str
         The path to the source of the file
 
-    destinationPath: str
+    destination_path: str
         The path there the file should be used in the file system
 
     slave: Slave
         The slave on which the file belongs to
     """
     name = CharField(unique=False, max_length=200)
-    sourcePath = CharField(unique=False, max_length=200)
-    destinationPath = CharField(unique=False, max_length=200)
+    source_path = TextField(unique=False)
+    destination_path = TextField(unique=False)
+    moved = BooleanField(default=False)
+    command_uuid = CharField(max_length=32, unique=True, default='')
     slave = ForeignKey(Slave, on_delete=CASCADE)
 
     class Meta:

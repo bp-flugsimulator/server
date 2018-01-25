@@ -7,7 +7,8 @@ from channels.sessions import channel_session
 from termcolor import colored
 from utils import Command, Status
 from .models import SlaveStatus as SlaveStatusModel, Slave as SlaveModel,\
-    Program as ProgramModel, ProgramStatus as ProgramStatusModel
+    Program as ProgramModel, ProgramStatus as ProgramStatusModel,\
+    File as FileModel
 
 # Get an instance of a logger
 LOGGER = logging.getLogger('django.request')
@@ -37,6 +38,27 @@ def notify_err(message):
         the message that is going to be send
     """
     Group('notifications').send({'text': Status.err(message).to_json()})
+
+
+def handle_move_file_answer(status):
+    """
+    Handles an incoming message on '/notification' that
+    is an answer to an 'move_file' request on a slave
+
+    Parameters
+    ----------
+    status: Status
+        The statusobject that was send by the slave
+    """
+    file_ = FileModel.objects.get(command_uuid=status.uuid)
+
+    if status.is_ok():
+        file_.moved = True
+
+    notify({
+        'moved': file_.moved,
+        'fid': str(file_.id),
+    })
 
 
 def handle_execute_answer(status):
@@ -227,6 +249,8 @@ def ws_notifications_receive(message):
             handle_online_answer(status)
         elif status.payload['method'] == 'execute':
             handle_execute_answer(status)
+        elif status.payload['method'] == 'move_file':
+            handle_move_file_answer(status)
         else:
             LOGGER.info(
                 colored('Client send answer from unknown function {}.'.format(

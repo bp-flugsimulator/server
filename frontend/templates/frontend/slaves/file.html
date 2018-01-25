@@ -7,6 +7,16 @@
 
         <div class="btn-toolbar col d-flex justify-content-end" role="toolbar">
             <div class="btn-group mr-2" role="group">
+                <button type="button" id="fileMove_{{ file.id }}" class="btn btn-outline-dark font-weight-light file-action-move"
+                    data-file-id="{{ file.id }}" data-moved="{{ file.moved }}">
+                    <i class="mdi mdi-power-settings-new"></i>
+                    <i class="button-status-display">
+                        {% if file.moved %}RESTORE{% else %}MOVE{% endif %}
+                    </i>
+                </button>
+            </div>
+
+            <div class="btn-group mr-2" role="group">
                 <button type="button" class="btn btn-outline-dark file-action-modify font-weight-light" data-slave-id ="{{ file.slave }}" data-file-id="{{ file.id }}">
                     <i class="mdi mdi-edit"></i> EDIT
                 </button>

@@ -52,4 +52,4 @@ class FileForm(ModelForm):
         configures the form
         """
         model = FileModel
-        fields = ['name', 'sourcePath', 'destinationPath']
+        fields = ['name', 'source_path', 'destination_path']

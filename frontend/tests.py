@@ -91,8 +91,8 @@ class FrontendTests(TestCase):
 
         file = FileModel(
             name="test_file",
-            sourcePath="None",
-            destinationPath="None",
+            source_path="None",
+            destination_path="None",
             slave=slave)
         file.save()
 
@@ -140,8 +140,8 @@ class FrontendTests(TestCase):
         ).save()
         FileModel(
             name='f_asdodahgh',
-            sourcePath='src',
-            destinationPath='dst',
+            source_path='src',
+            destination_path='dst',
             slave=slave,
         ).save()
 
@@ -222,8 +222,8 @@ class ApiTests(TestCase):
 
         file = FileModel(
             name="file_fail_0",
-            sourcePath="file.sourcePath",
-            destinationPath="file.destinationPath",
+            source_path="file.source_path",
+            destination_path="file.destination_path",
             slave=slave_in_database)
         file.save()
 
@@ -246,8 +246,8 @@ class ApiTests(TestCase):
 
         file = FileModel(
             name="file_fail_0",
-            sourcePath="file.sourcePath",
-            destinationPath="file.destinationPath",
+            source_path="file.source_path",
+            destination_path="file.destination_path",
             slave=slave_in_database)
         file.save()
 
@@ -267,10 +267,10 @@ class ApiTests(TestCase):
             Command(
                 method='move_file',
                 fid=file.id,
-                sourcePath="file.sourcePath",
-                destinationPath="file.destinationPath").to_json(),
+                source_path="file.source_path",
+                destination_path="file.destination_path").to_json(),
                 ws_response)
-        
+
     def test_add_script_key_error(self):
         response = self.client.post(
             "/api/scripts",
@@ -310,8 +310,8 @@ class ApiTests(TestCase):
 
         file = FileModel(
             name="test_file",
-            sourcePath="None",
-            destinationPath="None",
+            source_path="None",
+            destination_path="None",
             slave=slave,
         )
         file.save()
@@ -384,8 +384,8 @@ class ApiTests(TestCase):
 
         file = FileModel(
             name="test_file",
-            sourcePath="None",
-            destinationPath="None",
+            source_path="None",
+            destination_path="None",
             slave=slave)
         file.save()
 
@@ -425,8 +425,8 @@ class ApiTests(TestCase):
 
         file = FileModel(
             name="test_file",
-            sourcePath="None",
-            destinationPath="None",
+            source_path="None",
+            destination_path="None",
             slave=slave)
         file.save()
 
@@ -464,8 +464,8 @@ class ApiTests(TestCase):
 
         file = FileModel(
             name="test_file",
-            sourcePath="None",
-            destinationPath="None",
+            source_path="None",
+            destination_path="None",
             slave=slave,
         )
         file.save()
@@ -504,8 +504,8 @@ class ApiTests(TestCase):
 
         file = FileModel(
             name="test_file",
-            sourcePath="None",
-            destinationPath="None",
+            source_path="None",
+            destination_path="None",
             slave=slave,
         )
         file.save()
@@ -614,8 +614,8 @@ class ApiTests(TestCase):
 
         file = FileModel(
             name="test_file",
-            sourcePath="None",
-            destinationPath="None",
+            source_path="None",
+            destination_path="None",
             slave=slave,
         )
         file.save()
@@ -1557,8 +1557,8 @@ class ApiTests(TestCase):
             api_response = self.client.post(
                 '/api/files', {
                     'name': 'name' + str(i),
-                    'sourcePath': 'sourcePath' + str(i),
-                    'destinationPath': 'destinationPath' + str(i),
+                    'source_path': 'source_path' + str(i),
+                    'destination_path': 'destination_path' + str(i),
                     'slave': str(model.id)
                 })
             self.assertEqual(api_response.status_code, 200)
@@ -1572,8 +1572,8 @@ class ApiTests(TestCase):
             self.assertTrue(
                 FileModel.objects.filter(
                     name='name' + str(i),
-                    sourcePath='sourcePath' + str(i),
-                    destinationPath='destinationPath' + str(i),
+                    source_path='source_path' + str(i),
+                    destination_path='destination_path' + str(i),
                     slave=model,
                 ))
 
@@ -1596,8 +1596,8 @@ class ApiTests(TestCase):
         api_response = self.client.post(
             '/api/files', {
                 'name': long_str,
-                'sourcePath': long_str,
-                'destinationPath': long_str,
+                'source_path': long_str,
+                'destination_path': long_str,
                 'slave': str(model.id)
             })
 
@@ -1607,10 +1607,10 @@ class ApiTests(TestCase):
                 "name": [
                     "Ensure this value has at most 200 characters (it has 2000)."
                 ],
-                "sourcePath": [
+                "source_path": [
                     "Ensure this value has at most 200 characters (it has 2000)."
                 ],
-                "destinationPath": [
+                "destination_path": [
                     "Ensure this value has at most 200 characters (it has 2000)."
                 ]
             }), Status.from_json(api_response.content.decode('utf-8')))
@@ -1629,8 +1629,8 @@ class ApiTests(TestCase):
         api_response = self.client.post(
             '/api/files', {
                 'name': 'name',
-                'sourcePath': 'sourcePath',
-                'destinationPath': 'destinationPath',
+                'source_path': 'source_path',
+                'destination_path': 'destination_path',
                 'slave': str(model.id),
             })
 
@@ -1644,8 +1644,8 @@ class ApiTests(TestCase):
         api_response = self.client.post(
             '/api/files', {
                 'name': 'name',
-                'sourcePath': 'sourcePath',
-                'destinationPath': 'destinationPath',
+                'source_path': 'source_path',
+                'destination_path': 'destination_path',
                 'slave': str(model.id),
             })
 
@@ -2470,8 +2470,8 @@ class ScriptTests(TestCase):
 
         file = FileModel(
             name="test_file",
-            sourcePath="None",
-            destinationPath="None",
+            source_path="None",
+            destination_path="None",
             slave=slave)
         file.save()
 
@@ -2553,8 +2553,8 @@ class ScriptTests(TestCase):
 
         file = FileModel(
             name="test_file",
-            sourcePath="None",
-            destinationPath="None",
+            source_path="None",
+            destination_path="None",
             slave=slave)
         file.save()
 

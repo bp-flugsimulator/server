@@ -44,7 +44,7 @@ urlpatterns = [  # pylint: disable=C0103
 # program.save()
 
 # file = FileModel(
-#     name="test_file", sourcePath="None", destinationPath="None", slave=slave)
+#     name="test_file", source_path="None", destination_path="None", slave=slave)
 # file.save()
 
 # script = Script("test_script",

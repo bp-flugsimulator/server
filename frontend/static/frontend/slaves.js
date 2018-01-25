@@ -233,8 +233,8 @@ $(document).ready(function () {
 
         //clear input fields
         fileForm.find('[name="name"]').val('');
-        fileForm.find('[name="sourcePath"]').val('');
-        fileForm.find('[name="destinationPath"]').val('');
+        fileForm.find('[name="source_path"]').val('');
+        fileForm.find('[name="destination_path"]').val('');
 
         //clear error messages
         clearErrorMessages(fileForm);
@@ -252,6 +252,45 @@ $(document).ready(function () {
     $('.file-action-delete').click(function () {
         alert('Unimplemented');
     });
+    $('.file-action-move').click(function () {
+        let apiRequest = function (url, type) {
+            $.ajax({
+                type,
+                url,
+                beforeSend(xhr) {
+                    xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
+                },
+                converters: {
+                    'text json': Status.from_json
+                },
+                success(status) {
+                    if (status.is_err()) {
+                        $.notify({
+                            message: status.payload
+                        }, {
+                                type: 'danger'
+                            });
+                    }
+                },
+                error(xhr, errorString, errorCode) {
+                    $.notify({
+                        message: 'Could not deliver ' + type + ' request to server (' + errorCode + ')'
+                    }, {
+                            type: 'danger'
+                        });
+                }
+            });
+        };
+
+        let id = $(this).data('file-id');
+
+        if ($(this).attr('data-move') === 'True') {
+            alert('Unimplemented');
+            //apiRequest('/api/file/' + id + '/reset', 'GET');
+        } else {
+            apiRequest('/api/file/' + id, 'POST');
+        }
+    })
 
     // fileForm Handler
     $('#fileForm').submit(onFormSubmit('fileForm'));
