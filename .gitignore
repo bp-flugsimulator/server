@@ -8,3 +8,5 @@ htmlcov
 base/static/base/css/custom.css
 .eslintrc.json
 downloads/*
+staticfiles/*
+.eslintrc.json

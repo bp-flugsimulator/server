@@ -13,6 +13,7 @@ from .forms import FileForm
 from os import listdir, getcwd, mkdir
 from os.path import getsize, join, isdir
 
+
 class WelcomeView(TemplateView):
     """
     generates view for /welcome

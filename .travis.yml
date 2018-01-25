@@ -29,7 +29,7 @@ script:
   - export PYTHONWARNINGS=all
   - python manage.py check
   - python manage.py test 
-  - coverage run --omit="*/migrations*" --source="." manage.py test
+  - coverage run manage.py test
 
 after_success:
   coveralls
