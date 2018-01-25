@@ -1,6 +1,5 @@
 #  pylint: disable=C0111,C0103
 
-from uuid import uuid4
 import json
 
 from django.test import TestCase
@@ -10,17 +9,12 @@ from channels.test import WSClient
 from utils import Status, Command
 
 from frontend.models import (
-    Slave as SlaveModel,
     SlaveStatus as SlaveStatusModel,
     ProgramStatus as ProgramStatusModel,
-    Program as ProgramModel,
 )
 
 from .factory import (
     SlaveFactory,
-    ProgramFactory,
-    ScriptFactory,
-    FileFactory,
     ProgramStatusFactory,
     SlaveStatusFactory,
 )

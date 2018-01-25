@@ -10,7 +10,6 @@ from frontend.models import (
     Script as ScriptModel,
     ScriptGraphPrograms as SGP,
     ScriptGraphFiles as SGF,
-    File as FileModel,
 )
 
 from .factory import (

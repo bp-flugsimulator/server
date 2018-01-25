@@ -1,4 +1,4 @@
-#  pylint: disable=C0111,C0103
+#  pylint: disable=C0111,C0103,R0201
 
 from django.test import TestCase
 from django.core.exceptions import ValidationError
