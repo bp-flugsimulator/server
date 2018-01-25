@@ -1,5 +1,4 @@
-#  pylint: disable=C0111
-#  pylint: disable=C0103
+#  pylint: disable=C0111,C0103
 
 from os import getcwd, remove, mkdir, rmdir
 from os.path import join, isdir
@@ -7,7 +6,8 @@ from os.path import join, isdir
 from django.test import TestCase
 from django.urls import reverse
 
-class DownloadTests(TestCase): # pylint: disable=unused-variable
+
+class DownloadTests(TestCase):
     DOWNLOAD_FOLDER = 'downloads'
 
     @classmethod
