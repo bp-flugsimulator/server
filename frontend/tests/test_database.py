@@ -1,28 +1,23 @@
-#  pylint: disable=C0111
-#  pylint: disable=C0103
-
-from uuid import uuid4
-from datetime import datetime
+#  pylint: disable=C0111,C0103
 
 from django.test import TestCase
 from django.core.exceptions import ValidationError
 
 from frontend.apps import flush
 
+from frontend.models import (
+    Slave as SlaveModel,
+    SlaveStatus as SlaveStatusModel,
+    ProgramStatus as ProgramStatusModel,
+    validate_mac_address,
+    validate_argument_list,
+)
+
 from .factory import (
     SlaveFactory,
     SlaveStatusFactory,
     ProgramFactory,
     ProgramStatusFactory,
-)
-
-from frontend.models import (
-    Slave as SlaveModel,
-    SlaveStatus as SlaveStatusModel,
-    Program as ProgramModel,
-    ProgramStatus as ProgramStatusModel,
-    validate_mac_address,
-    validate_argument_list,
 )
 
 
@@ -117,15 +112,12 @@ class DatabaseTests(TestCase):  # pylint: disable=unused-variable
 
     def test_mac_validator_upper(self):
         validate_mac_address("00:AA:BB:CC:DD:EE")
-        self.assertTrue(True)
 
     def test_mac_validator_lower(self):
         validate_mac_address("00:aa:bb:cc:dd:ee")
-        self.assertTrue(True)
 
     def test_mac_validator_mixed(self):
         validate_mac_address("00:Aa:Bb:cC:dD:EE")
-        self.assertTrue(True)
 
     def test_mac_validator_too_short(self):
         self.assertRaises(
@@ -159,8 +151,8 @@ class DatabaseTests(TestCase):  # pylint: disable=unused-variable
         slave = SlaveFactory()
         prog = ProgramFactory(slave=slave)
 
-        status_slave = SlaveStatusFactory(slave=slave)
-        status_program = ProgramStatusFactory(program=prog)
+        SlaveStatusFactory(slave=slave)
+        ProgramStatusFactory(program=prog)
 
         self.assertEqual(SlaveStatusModel.objects.count(), 1)
         self.assertEqual(ProgramStatusModel.objects.count(), 1)
