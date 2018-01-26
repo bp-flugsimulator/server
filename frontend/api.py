@@ -396,7 +396,6 @@ def run_script(request, script_id):
     if request.method == 'GET':
         try:
             script = ScriptModel.objects.get(id=script_id)
-            LOGGER.debug("GIMME GIMME GGX GANG TriHard 7 in the chat")
             # only allow the start of a script if the old one is finished
             if FSIM_CURRENT_SCHEDULER.start(script.id):
                 FSIM_CURRENT_SCHEDULER.notify()

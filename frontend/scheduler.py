@@ -180,15 +180,11 @@ class Scheduler:
                 Run the __event.set in the Event Loop and not outside!
                 """
                 if not self.__event.is_set():
-                    LOGGER.debug("Event is not set -> Done. %d",
-                                 self.__event.is_set())
                     self.__event.set()
 
             FSIM_CURRENT_EVENT_LOOP.run(callback)
         else:
             LOGGER.debug("Task is not running -> no notify!")
-
-        LOGGER.debug("NOTIFY SCOPE OUT")
 
     def __next_stage(self):
         """
@@ -231,8 +227,7 @@ class Scheduler:
             time: Amount of time to wait
         """
 
-        LOGGER.debug("ASYNC SLAVE TIMEOUT")
-
+        LOGGER.debug("Slave timeout call back.")
         if self.__state == SchedulerStatus.WAITING_FOR_SLAVES:
             LOGGER.debug("Scheduler for slaves timeouted")
             self.__error_code = 'Not all slaves connected within 5 minutes.'
