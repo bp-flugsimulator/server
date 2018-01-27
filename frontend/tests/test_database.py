@@ -40,14 +40,7 @@ class DatabaseTests(TestCase):  # pylint: disable=unused-variable
         self.assertFalse(slave.has_running)
 
     def test_slave_is_online_err(self):
-        slave = SlaveModel(
-            name="test_slave",
-            ip_address="192.168.5.0",
-            mac_address="00:02:00:00:00:00",
-        )
-
-        slave.save()
-
+        slave = SlaveFactory()
         self.assertFalse(slave.is_online)
 
     def test_program_is_err(self):

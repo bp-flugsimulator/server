@@ -50,7 +50,7 @@ class ScriptTest(TestCase):
         response = self.client.delete("/api/script/" + str(db_script.id))
         self.assertEqual(response.status_code, 200)
         self.assertFalse(
-            ScriptModel.objects.filter(name="test_script").exists())
+            ScriptModel.objects.filter(name=script_name).exists())
 
     def test_add_script_forbidden(self):
         response = self.client.put("/api/scripts")
@@ -133,15 +133,16 @@ class ScriptTest(TestCase):
         slave = SlaveFactory()
         program = ProgramFactory(slave=slave)
         file = FileFactory(slave=slave)
+        script_name = ScriptFactory.build().name
 
         script = Script(
-            "test_script",
+            script_name,
             [ScriptEntryProgram(0, program.id, slave.id)],
             [ScriptEntryFile(0, file.id, slave.id)],
         )
         script.save()
 
-        db_script = ScriptModel.objects.get(name="test_script")
+        db_script = ScriptModel.objects.get(name=script_name)
 
         response = self.client.get("/api/script/{}".format(db_script.id))
 
@@ -187,15 +188,16 @@ class ScriptTest(TestCase):
         slave = SlaveFactory()
         program = ProgramFactory(slave=slave)
         file = FileFactory(slave=slave)
+        script_name = ScriptFactory.build().name
 
         script = Script(
-            "test_script",
+            script_name,
             [ScriptEntryProgram(0, program.id, slave.id)],
             [ScriptEntryFile(0, file.id, slave.id)],
         )
         script.save()
 
-        db_script = ScriptModel.objects.get(name="test_script")
+        db_script = ScriptModel.objects.get(name=script_name)
 
         response = self.client.get("/api/script/{}?slaves=int".format(
             db_script.id))
@@ -209,15 +211,16 @@ class ScriptTest(TestCase):
         slave = SlaveFactory()
         program = ProgramFactory(slave=slave)
         file = FileFactory(slave=slave)
+        script_name = ScriptFactory.build().name
 
         script = Script(
-            "test_script",
+            script_name,
             [ScriptEntryProgram(0, program.id, slave.id)],
             [ScriptEntryFile(0, file.id, slave.id)],
         )
         script.save()
 
-        db_script = ScriptModel.objects.get(name="test_script")
+        db_script = ScriptModel.objects.get(name=script_name)
 
         response = self.client.get("/api/script/{}?programs=int".format(
             db_script.id))
@@ -230,15 +233,16 @@ class ScriptTest(TestCase):
         slave = SlaveFactory()
         program = ProgramFactory(slave=slave)
         file = FileFactory(slave=slave)
+        script_name = ScriptFactory.build().name
 
         script = Script(
-            "test_script",
+            script_name,
             [ScriptEntryProgram(0, program.id, slave.id)],
             [ScriptEntryFile(0, file.id, slave.id)],
         )
         script.save()
 
-        db_script = ScriptModel.objects.get(name="test_script")
+        db_script = ScriptModel.objects.get(name=script_name)
 
         response = self.client.get(
             "/api/script/{}?programs=int&slaves=int".format(db_script.id))
@@ -251,15 +255,16 @@ class ScriptTest(TestCase):
         slave = SlaveFactory()
         program = ProgramFactory(slave=slave)
         file = FileFactory(slave=slave)
+        script_name = ScriptFactory.build().name
 
         script = Script(
-            "test_script",
+            script_name,
             [ScriptEntryProgram(0, program.id, slave.id)],
             [ScriptEntryFile(0, file.id, slave.id)],
         )
         script.save()
 
-        db_script = ScriptModel.objects.get(name="test_script")
+        db_script = ScriptModel.objects.get(name=script_name)
 
         response = self.client.get(
             "/api/script/{}?programs=str&slaves=str&files=str".format(
@@ -279,15 +284,16 @@ class ScriptTest(TestCase):
     def test_get_script_slave_type_str(self):
         program = ProgramFactory()
         slave = program.slave
+        script_name = ScriptFactory.build().name
 
         raw_script = Script(
-            "test_script",
+            script_name,
             [ScriptEntryProgram(0, program.id, slave.id)],
             [],
         )
         raw_script.save()
 
-        script = ScriptModel.objects.get(name="test_script")
+        script = ScriptModel.objects.get(name=script_name)
 
         response = self.client.get("/api/script/{}?slaves=str".format(
             script.id))
@@ -303,15 +309,16 @@ class ScriptTest(TestCase):
     def test_get_script_program_type_str(self):
         program = ProgramFactory()
         slave = program.slave
+        script_name = ScriptFactory.build().name
 
         script = Script(
-            "test_script",
+            script_name,
             [ScriptEntryProgram(0, program.id, slave.id)],
             [],
         )
         script.save()
 
-        db_script = ScriptModel.objects.get(name="test_script")
+        db_script = ScriptModel.objects.get(name=script_name)
 
         response = self.client.get("/api/script/{}?programs=str".format(
             db_script.id))
