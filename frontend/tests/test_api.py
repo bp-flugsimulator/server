@@ -332,6 +332,15 @@ class ScriptTest(TestCase):
 
 
 class FileTests(TestCase):
+
+    def test_delete_file(self):
+        file = FileFactory()
+
+        api_response = self.client.delete('/api/file/' + str(file.id))
+        self.assertEqual(api_response.status_code, 200)
+        self.assertEquals(api_response.json()['status'], 'ok')
+        self.assertFalse(FileModel.objects.filter(id=file.id).exists())
+
     def test_file_autocomplete(self):
         file = FileFactory()
         name_half = int(len(file.name) / 2)
