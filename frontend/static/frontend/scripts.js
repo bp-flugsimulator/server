@@ -68,107 +68,45 @@ var schema = {
     'additionalProperties': false
 };
 
-var options = {
-    search: false,
-    navigationBar: false,
-    modes: ['tree'],
-    templates: [{
-        text: 'File',
-        title: 'Insert a File Node',
-        className: 'jsoneditor-type-object',
-        field: 'FileTemplate',
-        value: {
-            'index': 0,
-            'slave': '',
-            'file': ''
-        }
-    }, {
-        text: 'Program',
-        title: 'Insert a Program Node',
-        className: 'jsoneditor-type-object',
-        field: 'ProgramTemplate',
-        value: {
-            'index': 0,
-            'slave': '',
-            'program': ''
-        }
-    }],
-    schema,
-    autocomplete: {
-        caseSensitive: false,
-        //getOptions(text: string, path: string[], input: string, editor: JSONEditor)
-        getOptions(text, path) {
-            return new Promise(function (resolve, reject) {
-                switch (path[path.length - 1]) {
-                    case 'slave':
-                    case 'program':
-                    case 'file':
-                        $.ajax({
-                            url: '/api/' + path[path.length - 1] + 's?q=' + text,
-                            beforeSend(xhr) {
-                                xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
-                            },
-                            converters: {
-                                'text json': Status.from_json
-                            },
-                            success(status) {
-                                if (status.is_ok()) {
-                                    resolve(status.payload);
-                                } else {
-                                    $.notify({
-                                        message: 'Could not load autocomplete query from server (' + status.payload + ')'
-                                    }, {
-                                            type: 'danger'
-                                        });
-                                    reject();
-                                }
-                            },
-                            error(xhr, errorString, errorCode) {
-                                $.notify({
-                                    message: 'Could not load autocomplete query from server (' + errorCode + ')'
-                                }, {
-                                        type: 'danger'
-                                    });
-                            }
-                        });
-                        break;
-                    default:
-                        reject();
-                        break;
+function promise_query(url) {
+    return new Promise(function (resolve, reject) {
+        $.ajax({
+            url,
+            beforeSend(xhr) {
+                xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
+            },
+            converters: {
+                'text json': Status.from_json
+            },
+            success(status) {
+                if (status.is_ok()) {
+                    resolve(status.payload);
+                } else {
+                    console.log("Failed 4");
+                    reject();
                 }
-            });
-        }
-    },
-    onEditable(node) {
-        switch (node.field) {
-            case 'name':
-                return {
-                    field: false,
-                    value: true
-                };
-            case 'programs':
-                return {
-                    field: false,
-                    value: true
-                };
-            case 'files':
-                return {
-                    field: false,
-                    value: true
-                };
-            default:
-                return true;
-        }
-    }
-};
+            },
+            error(xhr, errorString, errorCode) {
+                console.log("Failed 3");
+                reject();
+            }
+        });
+    });
+}
 
-var editors = {};
+var options = {
+    query_slaves() {
+        console.log("query for slaves");
+        promise_query('/api/slaves?programs=True');
+    },
+    query_programs(slave) {
+        promise_query('/api/programs?slave_str=true&slave=' + slave);
+    },
+};
 
 var createEditor = function (json, id) {
     let container = document.getElementById('jsoneditor_' + id);
-    let editor = new JSONEditor(container, options, json);
-    editors['jsoneditor_' + id] = editor;
-    editor.expandAll();
+    JsonForm.loads(container, options, json);
 };
 
 var loadScript = function (id) {
@@ -184,19 +122,11 @@ var loadScript = function (id) {
             if (status.is_ok()) {
                 createEditor(status.payload, id);
             } else {
-                $.notify({
-                    message: 'Could not load script from server (' + status.payload + ')'
-                }, {
-                        type: 'danger'
-                    });
+                console.log("Failed 1");
             }
         },
         error(xhr, errorString, errorCode) {
-            $.notify({
-                message: 'Could not load script from server (' + errorCode + ')'
-            }, {
-                    type: 'danger'
-                });
+            console.log("Failed 2");
         }
     });
 };
@@ -210,7 +140,6 @@ var newScript = function (name) {
 
     createEditor(defaultJson, name);
 };
-
 
 $(document).ready(function () {
     // Set color of the current selected.

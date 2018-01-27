@@ -8,6 +8,7 @@ from django.http import HttpResponseForbidden
 from django.http.request import QueryDict
 from django.core.exceptions import ValidationError
 from django.db.utils import IntegrityError
+from django.db.models import Count
 from channels import Group
 from utils.status import Status
 from utils import Command
@@ -48,14 +49,47 @@ def add_slave(request):
     elif request.method == 'GET':
         # the URL takes an argument with ?q=<string>
         # e.g. /slaves?q=test
-        query = request.GET.get('q', '')
-        return StatusResponse(
-            Status.ok(
-                list(
-                    set([
-                        obj['name'] for obj in SlaveModel.objects.filter(
-                            name__contains=query).values("name")
-                    ]))))
+        query = request.GET.get('q', None)
+
+        programs = request.GET.get('programs', '')
+        files = request.GET.get('files', '')
+
+        programs = programs.lower() in ('yes', 'true', '1', 't', 'y')
+        files = files.lower() in ('yes', 'true', '1', 't', 'y')
+
+        if query is not None:
+            slaves = SlaveModel.objects.filter(
+                name__contains=query).values_list(
+                    "name",
+                    flat=True,
+                )
+        else:
+            if programs and files:
+                return StatusResponse(
+                    Status.err(
+                        "Can not query for files and programs at the same time."
+                    ))
+            elif programs:
+                slaves = SlaveModel.objects.all().annotate(
+                    prog_count=Count('program__pk')).filter(
+                        prog_count__gt=0).values_list(
+                            'name',
+                            flat=True,
+                        )
+            elif files:
+                slaves = SlaveModel.objects.all().annotate(
+                    file_count=Count('file__pk')).filter(
+                        file_count__gt=0).values_list(
+                            'name',
+                            flat=True,
+                        )
+            else:
+                slaves = SlaveModel.objects.all().values_list(
+                    'name',
+                    flat=True,
+                )
+
+        return StatusResponse(Status.ok(list(slaves)))
     else:
         return HttpResponseForbidden()
 
@@ -195,14 +229,52 @@ def add_program(request):
     elif request.method == 'GET':
         # the URL takes an argument with ?q=<string>
         # e.g. /programs?q=test
-        query = request.GET.get('q', '')
-        return StatusResponse(
-            Status.ok(
-                list(
-                    set([
-                        obj['name'] for obj in ProgramModel.objects.filter(
-                            name__contains=query).values("name")
-                    ]))))
+        query = request.GET.get('q', None)
+        slave = request.GET.get('slave', None)
+        slave_str = request.GET.get('slave_str', False)
+
+        if slave_str:
+            slave_str = slave_str.lower() in ('true', 't', 'y', 'yes', '1')
+
+        if query is not None:
+            progs = ProgramModel.objects.filter(
+                name__contains=query).values_list(
+                    "name",
+                    flat=True,
+                )
+        elif slave is not None:
+
+            try:
+                if slave_str:
+                    slave = SlaveModel.objects.get(name=slave)
+                else:
+                    try:
+                        slave = SlaveModel.objects.get(id=int(slave))
+                    except ValueError:
+                        return StatusResponse(
+                            Status.err(
+                                "Slaves has to be an integer identifier."))
+            except SlaveModel.DoesNotExist:
+                ret_err = "Could not find slave with"
+                if slave_str:
+                    ret_err += "name `{}`".format(slave)
+                else:
+                    ret_err += "id `{}`".format(slave)
+
+                return StatusResponse(Status.err(ret_err))
+
+            progs = ProgramModel.objects.filter(slave=slave).values_list(
+                "name",
+                flat=True,
+            )
+
+        else:
+            progs = ProgramModel.objects.all().values_list(
+                "name",
+                flat=True,
+            )
+
+        return StatusResponse(Status.ok(list(progs)))
     else:
         return HttpResponseForbidden()
 
@@ -444,14 +516,48 @@ def add_file(request):
     elif request.method == 'GET':
         # the URL takes an argument with ?q=<string>
         # e.g. /files?q=test
-        query = request.GET.get('q', '')
+        query = request.GET.get('q', None)
+        slave = request.GET.get('slave', None)
+        slave_str = request.GET.get('slave_str', False)
 
-        return StatusResponse(
-            Status.ok(
-                list(
-                    set([
-                        obj['name'] for obj in FileModel.objects.filter(
-                            name__contains=query).values("name")
-                    ]))))
+        if slave_str:
+            slave_str = slave_str.lower() in ('true', 't', 'y', 'yes', '1')
+
+        if query is not None:
+            files = FileModel.objects.filter(name__contains=query).values_list(
+                "name",
+                flat=True,
+            )
+        elif slave is not None:
+            try:
+                if slave_str:
+                    slave = SlaveModel.objects.get(name=slave)
+                else:
+                    try:
+                        slave = SlaveModel.objects.get(id=int(slave))
+                    except ValueError:
+                        return StatusResponse(
+                            Status.err(
+                                "Slaves has to be an integer identifier."))
+            except SlaveModel.DoesNotExist:
+                ret_err = "Could not find slave with"
+                if slave_str:
+                    ret_err += "name `{}`".format(slave)
+                else:
+                    ret_err += "id `{}`".format(slave)
+
+                return StatusResponse(Status.err(ret_err))
+
+            files = FileModel.objects.filter(slave=slave).values_list(
+                "name",
+                flat=True,
+            )
+        else:
+            files = FileModel.objects.all().values_list(
+                "name",
+                flat=True,
+            )
+
+        return StatusResponse(Status.ok(list(files)))
     else:
         return HttpResponseForbidden()

@@ -7,6 +7,7 @@
 {% endblock %}
 {% block content %}
 
+
 <div id="deleteWarning" class="modal fade" role="dialog">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -66,10 +67,10 @@
                 </div>
             </div>
 
-            <div class="row" id="jsoneditor_new_script" style="height: 90%;">
-                <!--
-                    INIT
-                -->
+            <div id="jsoneditor_new_script">
+                <script>
+                    newScript('new_script');
+                </script>
             </div>
         </div>
 
@@ -87,8 +88,67 @@
 {% endblock %}
 
 {% block script %}
-    <script src="{% static 'node/handlebars/dist/handlebars.min.js"></script>
+    {% verbatim %}
+    <script id="template_entry" type="text/x-handlebars-template">
+        <div class="script-{{type}}-entry">
+            <button class="script-{{type}}-remove" type="button">X</button>
+
+            <div class="form-group row">
+                <label class="col-1">Index</label>
+                <input class="form-control col script-{{type}}-index" type="number" value="{{#if index}}{{index}}{{else}}0{{/if}}" />
+            </div>
+
+            <div class="form-group row slave-choice">
+                <lable class="col-1">Client</lable>
+                <select class="form-control col script-{{type}}-slave" type="text">
+                    {{#each slaves}}
+                    <option {{#ifEq slave this}}selected{{/ifEq}}>{{this}}</option>
+                    {{/each}}
+                </select>
+            </div>
+
+            <div class="form-group row {{type}}-choice" >
+                <lable class="col-1">{{#if type-display}}{{type-display}}{{else}}{{type}}{{/if}}</lable>
+                <select class="form-control col script-{{type}}-{{type}}" type="text" {{#if selects}}{{else}}hidden{{/if}}>
+                    {{#each selects}}
+                    <option>{{this}}</option>
+                    {{/each}}
+                </select>
+            </div>
+        </div>
+    </script>
+
+    <script id="template_container" type="text/x-handlebars-template">
+        <div class="form-group row">
+            <lable class="col-2">Script Name</lable>
+            <input class="form-control col script-name" type="text" value="{{#if name}}{{name}}{{/if}}" />
+        </div>
+
+        <div class="row">
+            <div class="col-2">
+                <lable>Programs</lable>
+                <button type="button" class="script-program-add">+</button>
+            </div>
+
+            <div class="script-program-content" class="col">
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-2">
+                <lable>Files</lable>
+                <button type="button" class="script-file-add">+</button>
+            </div>
+
+            <div class="script-file-content" class="col">
+            </div>
+        </div>
+    </script>
+    {% endverbatim %}
+
+    <script src="{% static 'node/handlebars/dist/handlebars.min.js' %}"></script>
+    <script src="{% static 'frontend/jsonforms.js'%}"></script>
+
     <script src="{% static 'frontend/base.js'%}"></script>
     <script src="{% static 'frontend/scripts.js'%}"></script>
-    <script src="{% static 'frontend/jsonform.js'%}"></script>
 {% endblock %}
