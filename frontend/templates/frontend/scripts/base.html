@@ -67,9 +67,9 @@
             </div>
 
             <div class="row" id="jsoneditor_new_script" style="height: 90%;">
-                <script>
-                    newScript('new_script');
-                </script>
+                <!--
+                    INIT
+                -->
             </div>
         </div>
 
@@ -87,7 +87,8 @@
 {% endblock %}
 
 {% block script %}
-    <script src="{% static 'node/jsoneditor/dist/jsoneditor.min.js' %}"></script>
+    <script src="{% static 'node/handlebars/dist/handlebars.min.js"></script>
     <script src="{% static 'frontend/base.js'%}"></script>
     <script src="{% static 'frontend/scripts.js'%}"></script>
+    <script src="{% static 'frontend/jsonform.js'%}"></script>
 {% endblock %}

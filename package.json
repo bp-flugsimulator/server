@@ -11,6 +11,7 @@
     "jquery": "^3.2.1",
     "jsoneditor": "^5.13.1",
     "popper.js": "^1.12.6",
-    "standard": "^10.0.3"
+    "standard": "^10.0.3",
+    "handlebars": "^4.0.11"
   }
 }
