@@ -22,7 +22,7 @@ from .scripts import Script
 from .forms import SlaveForm, ProgramForm, FileForm
 from .consumers import notify
 
-LOGGER = logging.getLogger("api-logger")
+LOGGER = logging.getLogger("fsim.api")
 
 
 def add_slave(request):

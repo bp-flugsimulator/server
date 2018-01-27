@@ -3,9 +3,6 @@ This module contains all databasemodels from the frontend application.
 """
 
 import logging
-import asyncio
-
-from threading import Timer
 from shlex import split
 
 from django.db.models import (
@@ -21,7 +18,6 @@ from django.db.models import (
     Count,
 )
 
-from django.db.utils import OperationalError
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from channels import Group
@@ -29,7 +25,7 @@ from wakeonlan.wol import send_magic_packet
 from utils import Command
 from server.utils import notify
 
-LOGGER = logging.getLogger("models")
+LOGGER = logging.getLogger("fsim.models")
 
 
 def timer_timeout_program(identifier):
@@ -40,7 +36,6 @@ def timer_timeout_program(identifier):
     ---------
         id: Program id
     """
-    LOGGER.debug("TEST")
     ProgramStatus.objects.filter(program=identifier).update(timeouted=True)
     FSIM_CURRENT_SCHEDULER.notify()
 

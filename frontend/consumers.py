@@ -17,7 +17,7 @@ from .models import (
 from server.utils import notify_err, notify
 
 # Get an instance of a logger
-LOGGER = logging.getLogger('websockets')
+LOGGER = logging.getLogger('fsim.websockets')
 
 
 def handle_execute_answer(status):

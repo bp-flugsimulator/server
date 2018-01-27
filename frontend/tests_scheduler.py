@@ -1,12 +1,15 @@
+"""
+Test file for scheduler.py
+"""
 import json
 from unittest import TestCase
-from channels.test import WSClient
 from uuid import uuid4
-from utils import Status, Command
+from utils import Status
+
+from channels.test import WSClient
 
 from .models import (
     Slave as SlaveModel,
-    validate_mac_address,
     validate_argument_list,
     Program as ProgramModel,
     ProgramStatus as ProgramStatusModel,

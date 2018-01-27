@@ -8,7 +8,7 @@ import logging
 
 from server.utils import notify
 
-LOGGER = logging.getLogger("scheduler")
+LOGGER = logging.getLogger("fsim.scheduler")
 
 
 class SchedulerStatus:
@@ -312,7 +312,6 @@ class Scheduler:
         In this state the next index is selected and the programs are started.
         """
         from .models import (
-            Script,
             ScriptGraphPrograms,
             ScriptGraphFiles,
         )

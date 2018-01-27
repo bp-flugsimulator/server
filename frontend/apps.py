@@ -10,7 +10,7 @@ from django.apps import AppConfig
 from django.db.utils import OperationalError
 from .scheduler import Scheduler
 
-LOGGER = logging.getLogger("event loop")
+LOGGER = logging.getLogger("fsim.event_loop")
 
 
 def flush(*tables):
