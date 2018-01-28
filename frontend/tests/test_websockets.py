@@ -9,14 +9,14 @@ from channels.test import WSClient
 from utils import Status, Command
 
 from frontend.models import (
-    SlaveStatus as SlaveStatusModel,
+    Slave as SlaveModel,
     ProgramStatus as ProgramStatusModel,
 )
 
 from .factory import (
     SlaveFactory,
+    SlaveOnlineFactory,
     ProgramStatusFactory,
-    SlaveStatusFactory,
 )
 
 
@@ -63,8 +63,8 @@ class WebsocketTests(TestCase):
         self.assertEqual(ws_client.receive(json=False), 'ok')
 
     def test_ws_rpc_disconnect(self):
-        slave_status = SlaveStatusFactory(online=True)
-        slave = slave_status.slave
+        slave = SlaveOnlineFactory()
+
         program_status = ProgramStatusFactory(program__slave=slave)
         program = program_status.program
 
@@ -89,7 +89,7 @@ class WebsocketTests(TestCase):
         ws_client.send_and_consume('websocket.disconnect', path='/commands')
 
         #  test if SlaveStatus was to offline
-        self.assertFalse(SlaveStatusModel.objects.get(slave=slave).online)
+        self.assertFalse(SlaveModel.objects.get(id=slave.id).online)
 
         #  test if the client was removed from the correct groups
         Group('clients').send({'text': 'ok'}, immediately=True)
@@ -146,11 +146,10 @@ class WebsocketTests(TestCase):
         self.assertIsNone(ws_client.receive())
 
     def test_ws_notifications_receive_online(self):
-        slave_status = SlaveStatusFactory(online=True)
-        slave = slave_status.slave
+        slave = SlaveOnlineFactory(online=False)
 
         expected_status = Status.ok({'method': 'online'})
-        expected_status.uuid = slave_status.command_uuid
+        expected_status.uuid = slave.command_uuid
 
         # connect webinterface on /notifications
         webinterface = WSClient()
@@ -164,7 +163,7 @@ class WebsocketTests(TestCase):
             content={'text': expected_status.to_json()},
         )
 
-        self.assertTrue(SlaveStatusModel.objects.get(slave=slave).online)
+        self.assertTrue(SlaveModel.objects.get(id=slave.id).online)
 
         # test if a connected message was send on /notifications
         self.assertEqual(
@@ -176,14 +175,14 @@ class WebsocketTests(TestCase):
         )
 
     def test_ws_notifications_receive_online_status_err(self):
-        slave_status = SlaveStatusFactory(online=False)
-        slave = slave_status.slave
+        slave = SlaveOnlineFactory(online=False)
 
         error_status = Status.err({
             'method': 'online',
             'result': str(Exception('foobar'))
         })
-        error_status.uuid = slave_status.command_uuid
+
+        error_status.uuid = slave.command_uuid
 
         # connect webinterface on /notifications
         webinterface = WSClient()
@@ -198,7 +197,7 @@ class WebsocketTests(TestCase):
                 'text': error_status.to_json()
             })
 
-        self.assertFalse(SlaveStatusModel.objects.get(slave=slave).online)
+        self.assertFalse(SlaveModel.objects.get(id=slave.id).is_online)
 
         # test if a connected message was send on /notifications
         self.assertEqual(
@@ -270,9 +269,11 @@ class WebsocketTests(TestCase):
 
         #  test if the webinterface gets the error message
         self.assertEqual(
-            Status.err(
-                'An Exception occurred while trying to execute {}'.format(
-                    program.name)),
+            Status.ok({
+                'program_status': 'finished',
+                'pid': str(program.id),
+                'code': 'foobar',
+            }),
             Status.from_json(json.dumps(webinterface.receive())),
         )
 

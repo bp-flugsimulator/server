@@ -114,7 +114,10 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
         self.assertEqual(ScriptEntryFile.from_json(script.to_json()), script)
 
     def test_script_name_eq(self):
-        self.assertNotEqual(Script("test", [], []), Script("test2", [], []))
+        self.assertNotEqual(
+            Script("test", [ScriptEntryProgram(0, 0, 0)], []),
+            Script("test2", [ScriptEntryProgram(0, 0, 0)], []),
+        )
 
     def test_model_support_strings(self):
         slave = SlaveFactory()
@@ -181,7 +184,11 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
             [],
         )
 
-        self.assertRaises(ProgramModel.DoesNotExist, script.save)
+        self.assertRaisesRegex(
+            ValueError,
+            "Program with id {} does not exist.".format(program.id + 1),
+            script.save,
+        )
         self.assertFalse(ScriptModel.objects.filter(name=script_name).exists())
         self.assertTrue(len(SGP.objects.all()) == 0)
 
@@ -190,25 +197,25 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
         slave = file.slave
         script = ScriptFactory()
 
-        a = ScriptEntryFile(0, file.id, slave.id).as_model(script)
-        b = ScriptEntryFile(0, file.name, slave.name).as_model(script)
-        a.save()
-        self.assertRaises(IntegrityError, b.save)
+        ScriptEntryFile(0, file.id, slave.id).save(script)
+        b = ScriptEntryFile(0, file.name, slave.name)
+
+        self.assertRaises(IntegrityError, b.save, script)
 
     def test_from_model_program_id_eq_str(self):
         program = ProgramFactory()
         slave = program.slave
         script = ScriptFactory()
 
-        with_int = ScriptEntryProgram(0, program.id, slave.id).as_model(script)
+        ScriptEntryProgram(0, program.id, slave.id).save(script)
+
         with_str = ScriptEntryProgram(
             0,
             program.name,
             slave.name,
-        ).as_model(script)
+        )
 
-        with_int.save()
-        self.assertRaises(IntegrityError, with_str.save)
+        self.assertRaises(IntegrityError, with_str.save, script)
 
     def test_from_query_error(self):
         class Dummy:

@@ -7,7 +7,6 @@ from frontend.apps import flush
 
 from frontend.models import (
     Slave as SlaveModel,
-    SlaveStatus as SlaveStatusModel,
     ProgramStatus as ProgramStatusModel,
     validate_mac_address,
     validate_argument_list,
@@ -15,7 +14,6 @@ from frontend.models import (
 
 from .factory import (
     SlaveFactory,
-    SlaveStatusFactory,
     ProgramFactory,
     ProgramStatusFactory,
 )
@@ -144,13 +142,10 @@ class DatabaseTests(TestCase):  # pylint: disable=unused-variable
         slave = SlaveFactory()
         prog = ProgramFactory(slave=slave)
 
-        SlaveStatusFactory(slave=slave)
         ProgramStatusFactory(program=prog)
 
-        self.assertEqual(SlaveStatusModel.objects.count(), 1)
         self.assertEqual(ProgramStatusModel.objects.count(), 1)
 
-        flush("SlaveStatus", "ProgramStatus")
+        flush("ProgramStatus")
 
-        self.assertEqual(SlaveStatusModel.objects.count(), 0)
         self.assertEqual(ProgramStatusModel.objects.count(), 0)

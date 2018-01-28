@@ -8,7 +8,7 @@ from utils import Status
 
 from channels.test import WSClient
 
-from .models import (
+from frontend.models import (
     Slave as SlaveModel,
     validate_argument_list,
     Program as ProgramModel,
@@ -19,7 +19,7 @@ from .models import (
     File as FileModel,
 )
 
-from .scheduler import Scheduler, SchedulerStatus
+from frontend.scheduler import Scheduler, SchedulerStatus
 
 
 class SchedulerTests(TestCase):
