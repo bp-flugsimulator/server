@@ -34,6 +34,10 @@ class FrontendTests(TestCase):
         self.assertContains(response, "Scripts")
         self.assertContains(response, script.name)
 
+    def test_run_script_get(self):
+        response = self.client.get(reverse('frontend:scripts_run'))
+        self.assertEqual(response.status_code, 200)
+
     def test_slave_get(self):
         slave = SlaveFactory()
         program = ProgramFactory(slave=slave)

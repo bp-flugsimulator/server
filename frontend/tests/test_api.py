@@ -31,6 +31,18 @@ from .factory import (
 
 
 class ScriptTest(TestCase):
+    def test_script_run_forbidden(self):
+        response = self.client.put("/api/script/0/run")
+        self.assertEqual(response.status_code, 403)
+
+    def test_script_run_get_unknown_scriptlave(self):
+        response = self.client.get("/api/script/0/run")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            "The script with the id 0 does not exist",
+        )
+
     def test_script_delete(self):
         slave = SlaveFactory()
         program = ProgramFactory(slave=slave)

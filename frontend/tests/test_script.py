@@ -264,3 +264,112 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
     def test_script_get_slave(self):
         from frontend.scripts import get_slave
         self.assertEqual(None, get_slave(None))
+
+    def test_script_name_is_string(self):
+        self.assertRaisesRegex(
+            ValueError,
+            "Name has to be a string",
+            Script,
+            123123,
+            [
+                ScriptEntryProgram(0, 0, 0),
+            ],
+            [],
+        )
+
+    def test_script_positive_index(self):
+        self.assertRaisesRegex(
+            ValueError,
+            "Use positive or null for the index.",
+            ScriptEntryProgram,
+            -1,
+            0,
+            0,
+        )
+
+        self.assertRaisesRegex(
+            ValueError,
+            "Use positive or null for the index.",
+            ScriptEntryFile,
+            -1,
+            0,
+            0,
+        )
+
+    def test_script_programs_missing_slave(self):
+        slave = SlaveFactory()
+        script = ScriptFactory()
+
+        self.assertRaisesRegex(
+            ValueError,
+            "Program with id {} does not exist.".format(-1),
+            ScriptEntryProgram(
+                0,
+                -1,
+                int(slave.id),
+            ).save,
+            script,
+        )
+
+        self.assertRaisesRegex(
+            ValueError,
+            "Program with name {} does not exist.".format(""),
+            ScriptEntryProgram(
+                0,
+                "",
+                int(slave.id),
+            ).save,
+            script,
+        )
+
+        slave.delete()
+
+        self.assertRaisesRegex(
+            ValueError,
+            "Client with name/id {} does not exist.".format(-1),
+            ScriptEntryProgram(
+                0,
+                -1,
+                -1,
+            ).save,
+            script,
+        )
+
+    def test_script_file_missing_slave(self):
+        slave = SlaveFactory()
+        script = ScriptFactory()
+
+        self.assertRaisesRegex(
+            ValueError,
+            "File with id {} does not exist.".format(-1),
+            ScriptEntryFile(
+                0,
+                -1,
+                int(slave.id),
+            ).save,
+            script,
+        )
+
+        self.assertRaisesRegex(
+            ValueError,
+            "File with name {} does not exist.".format(""),
+            ScriptEntryFile(
+                0,
+                "",
+                int(slave.id),
+            ).save,
+            script,
+        )
+
+        slave.delete()
+
+        self.assertRaisesRegex(
+            ValueError,
+            "Client with name/id {} does not exist.".format(-1),
+            ScriptEntryFile(
+                0,
+                -1,
+                -1,
+            ).save,
+            script,
+        )
