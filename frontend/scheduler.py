@@ -312,8 +312,9 @@ class Scheduler:
         In this state the next index is selected and the programs are started.
         """
         from .models import (
+            Script,
             ScriptGraphPrograms,
-            ScriptGraphFiles,
+            # ScriptGraphFiles,
         )
 
         LOGGER.info(
@@ -357,7 +358,7 @@ class Scheduler:
         """
         from .models import (
             ScriptGraphPrograms,
-            ScriptGraphFiles,
+            # ScriptGraphFiles,
         )
 
         progs = ScriptGraphPrograms.objects.filter(
