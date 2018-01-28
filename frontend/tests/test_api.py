@@ -31,7 +31,6 @@ from .factory import (
 
 
 class ScriptTest(TestCase):
-
     def test_script_delete(self):
         slave = SlaveFactory()
         program = ProgramFactory(slave=slave)
@@ -49,8 +48,7 @@ class ScriptTest(TestCase):
 
         response = self.client.delete("/api/script/" + str(db_script.id))
         self.assertEqual(response.status_code, 200)
-        self.assertFalse(
-            ScriptModel.objects.filter(name=script_name).exists())
+        self.assertFalse(ScriptModel.objects.filter(name=script_name).exists())
 
     def test_add_script_forbidden(self):
         response = self.client.put("/api/scripts")
@@ -332,7 +330,6 @@ class ScriptTest(TestCase):
 
 
 class FileTests(TestCase):
-
     def test_delete_file(self):
         file = FileFactory()
 

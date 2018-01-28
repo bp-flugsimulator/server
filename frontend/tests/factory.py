@@ -1,9 +1,12 @@
+"""
+Database factories for tests
+"""
+import socket
+import struct
+from uuid import uuid4
+from factory import SubFactory, Sequence
 from factory.django import DjangoModelFactory
 from factory.fuzzy import FuzzyText, FuzzyInteger
-from factory import SubFactory, Sequence
-from uuid import uuid4
-
-import socket, struct
 
 from frontend.models import (
     Slave as SlaveModel,
@@ -17,13 +20,31 @@ from frontend.models import (
 )
 
 
+def int_to_mac(integer):
+    """
+    Converts a an integer into a mac address, with `:` notation.
+
+    Arguments
+    ---------
+        integer: int
+
+    Returns
+    -------
+        str
+    """
+    first = "{:012x}".format(integer)[::2]
+    second = "{:012x}".format(integer)[1::2]
+
+    return ':'.join(a + b for a, b in zip(first, second))
+
+
 class SlaveFactory(DjangoModelFactory):
     class Meta:
         model = SlaveModel
 
     name = FuzzyText(length=20, prefix="slave_")
     ip_address = Sequence(lambda n: socket.inet_ntoa(struct.pack('!L', n)))
-    mac_address = Sequence(lambda n: ':'.join(a+b for a,b in zip("{:012x}".format(n)[::2], "{:012x}".format(n)[1::2])))
+    mac_address = Sequence(int_to_mac)
 
 
 class SlaveStatusFactory(DjangoModelFactory):
