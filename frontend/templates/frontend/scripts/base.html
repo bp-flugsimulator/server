@@ -93,23 +93,23 @@
         <div class="script-{{type}}-entry">
             <button class="script-{{type}}-remove" type="button">X</button>
 
-            <div class="form-group row">
+            <div class="input-group row">
                 <label class="col-1">Index</label>
-                <input class="form-control col script-{{type}}-index" type="number" value="{{#if index}}{{index}}{{else}}0{{/if}}" />
+                <input class="form-control col script-{{type}}-index" type="number" value="{{#if index}}{{index}}{{else}}0{{/if}}" required/>
             </div>
 
-            <div class="form-group row slave-choice">
-                <lable class="col-1">Client</lable>
-                <select class="form-control col script-{{type}}-slave" type="text">
+            <div class="input-group row slave-choice">
+                <label class="col-2">Client</label>
+                <select class="form-control col script-{{type}}-slave" type="text" required>
                     {{#each slaves}}
                     <option {{#ifEq slave this}}selected{{/ifEq}}>{{this}}</option>
                     {{/each}}
                 </select>
             </div>
 
-            <div class="form-group row {{type}}-choice" >
-                <lable class="col-1">{{#if type-display}}{{type-display}}{{else}}{{type}}{{/if}}</lable>
-                <select class="form-control col script-{{type}}-{{type}}" type="text" {{#if selects}}{{else}}hidden{{/if}}>
+            <div class="input-group row {{type}}-choice">
+                <label class="col-2">{{#if type-display}}{{type-display}}{{else}}{{type}}{{/if}}</label>
+                <select class="form-control col script-{{type}}-{{type}}" type="text" required {{#if selects}}{{else}}hidden{{/if}}>
                     {{#each selects}}
                     <option>{{this}}</option>
                     {{/each}}
@@ -118,29 +118,36 @@
         </div>
     </script>
 
+    <script id="template_no_element" type="text/x-handlebars-template">
+        <div class="slave-no-elements">
+            No Clients with {{type}}s created.
+        </div>
+    </script>
+
     <script id="template_container" type="text/x-handlebars-template">
-        <div class="form-group row">
-            <lable class="col-2">Script Name</lable>
-            <input class="form-control col script-name" type="text" value="{{#if name}}{{name}}{{/if}}" />
+        <div class="input-group row">
+            <label class="col-2">Script Name</label>
+            <input class="form-control col script-name" type="text" {{#if name}}value="{{name}}"{{/if}} required/>
+            <div class="invalid-feedback">Script name is required.</div>
         </div>
 
         <div class="row">
             <div class="col-2">
-                <lable>Programs</lable>
+                <label>Programs</label>
                 <button type="button" class="script-program-add">+</button>
             </div>
 
-            <div class="script-program-content" class="col">
+            <div class="script-program-content" class="col-4">
             </div>
         </div>
 
         <div class="row">
             <div class="col-2">
-                <lable>Files</lable>
+                <label>Files</label>
                 <button type="button" class="script-file-add">+</button>
             </div>
 
-            <div class="script-file-content" class="col">
+            <div class="script-file-content" class="col-4">
             </div>
         </div>
     </script>

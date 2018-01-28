@@ -7,6 +7,7 @@ Handlebars.registerHelper('ifEq', function (v1, v2, options) {
 
 const template_entry = Handlebars.compile($('#template_entry').html(), { strict: true });
 const template_container = Handlebars.compile($('#template_container').html(), { strict: true });
+const template_no_element = Handlebars.compile($('#template_no_element').html(), { strict: true });
 
 /**
  * Creates a program entry in a container.
@@ -17,51 +18,54 @@ const template_container = Handlebars.compile($('#template_container').html(), {
  */
 const addTypeEntry = function (container, type, query_slaves, query_type, context) {
     query_slaves().then(function (slaves) {
-        console.log(slaves);
-        let template_context = Object.assign({}, { 'slaves': slaves, 'type': type }, context);
-
-        console.log("Pre-Template");
-
-        let html = template_entry(template_context);
-
-        console.log("Post-Template");
-
+        $(container).find('.slave-no-elements').remove();
         let entry_container = $(container).find('.script-' + type + '-content').first();
 
-        entry_container.append(html);
+        if (slaves.length === 0) {
+            let html = template_no_element({ type });
+            entry_container.append(html);
+        } else {
+            let template_context = Object.assign({}, { 'slaves': slaves, 'type': type }, context);
 
-        let box = entry_container.children().last();
+            let html = template_entry(template_context);
 
-        box.find('.script-' + type + '-remove').on('click', function () {
-            box.remove();
-        });
+            entry_container.append(html);
 
-        box.find('.script-' + type + '-slave').on('change', function () {
-            query_type($(this).find('option:selected').first().val()).then(
-                function (query) {
-                    box.find('.script-' + type + '-program').each(function (idx, val) {
-                        let target = $(val);
-                        target.children().remove();
-                        target.removeAttr('hidden');
+            let box = entry_container.children().last();
 
-                        $(query).each(function (idx, val) {
-                            target.append("<option> " + val + " </option>");
+            box.find('.script-' + type + '-remove').on('click', function () {
+                box.remove();
+            });
+
+            box.find('.script-' + type + '-slave').on('change', function () {
+                query_type($(this).find('option:selected').first().val()).then(
+                    function (query) {
+                        box.find('.script-' + type + '-program').each(function (idx, val) {
+                            let target = $(val);
+                            target.children().remove();
+                            target.removeAttr('hidden');
+
+                            $(query).each(function (idx, val) {
+                                target.append("<option> " + val + " </option>");
+                            });
                         });
-                    });
-                }
-            );
-        });
+                    }
+                );
+            });
+
+            box.find('.script-' + type + '-slave').trigger('change');
+        }
     });
 }
 
 var JsonForm = {
     init(container, options) {
         $('.script-program-add').on('click', function () {
-            addProgramEntry(container, options.query_slaves, options.query_programs);
+            addTypeEntry(container, 'program', options.query_slaves_programs, options.query_programs);
         });
 
         $('.script-file-add').on('click', function () {
-
+            addTypeEntry(container, 'file', options.query_slaves_files, options.query_files);
         });
     },
     /**
@@ -70,15 +74,17 @@ var JsonForm = {
      * @param {JSONObject} json
      */
     loads(container, options, json) {
+        console.log(options);
+
         $(container).append(template_container({ 'name': json.name }));
         this.init(container, options);
 
         $(json.programs).each(function (idx, val) {
-            addTypeEntry(container, 'program', options.query_slaves, options.query_programs, { 'choices_current': val.slave, 'selects': [val.program] })
+            addTypeEntry(container, 'program', options.query_slaves_programs, options.query_programs, { 'choices_current': val.slave, 'selects': [val.program] })
         });
 
         $(json.files).each(function (idx, val) {
-            addTypeEntry(container, 'file', options.query_slaves, options.query_files, { 'choices_current': val.slave, 'selects': [val.file] })
+            addTypeEntry(container, 'file', options.query_slaves_files, options.query_files, { 'choices_current': val.slave, 'selects': [val.file] })
         });
     },
     /**
@@ -89,17 +95,21 @@ var JsonForm = {
     dumps(container) {
         json = new Object();
 
-        json['script_name'] = $(container).find('script-name').first().value();
+        json['script_name'] = $(container).find('.script-name').first().val();
+
+        if (json.script_name === null) {
+            return;
+        }
 
         var dumps_array = function (type) {
             let output = [];
 
-            $(container).find('script-program-content').first().find('.script-program-entry').each(function (idx, val) {
+            $(container).find('.script-' + type + '-content').first().find('.script-' + type + '-entry').each(function (idx, val) {
                 let entry = new Object();
 
-                entry['index'] = val.find('.script-program-index').first();
-                entry[type] = val.find('.script-program-program').first();
-                entry['slave'] = val.find('.script-program-slave').first();
+                entry['index'] = val.find('.script-' + type + '-index').first();
+                entry[type] = val.find('.script-' + type + '-program').first();
+                entry['slave'] = val.find('.script-' + type + '-slave').first();
 
                 let error = false;
 
@@ -112,7 +122,7 @@ var JsonForm = {
                 if (entry['index'] === '' || entry['index'] === null) {
                     error = true;
                 }
-                innerHTML
+
                 if (!error) {
                     output.push(entry);
                 }
@@ -121,7 +131,13 @@ var JsonForm = {
             return output;
         };
 
-        json['programs'] = dumps_array('programs');
-        json['files'] = dumps_array('files');
+        json['programs'] = dumps_array('program');
+        json['files'] = dumps_array('file');
+
+        if (json.programs.length === 0 && json.files.length === 0) {
+            return null;
+        } else {
+            return json;
+        }
     }
 };

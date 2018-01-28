@@ -95,12 +95,17 @@ function promise_query(url) {
 }
 
 var options = {
-    query_slaves() {
-        console.log("query for slaves");
-        promise_query('/api/slaves?programs=True');
+    query_slaves_programs() {
+        return promise_query('/api/slaves?programs=True');
     },
     query_programs(slave) {
-        promise_query('/api/programs?slave_str=true&slave=' + slave);
+        return promise_query('/api/programs?slave_str=true&slave=' + slave);
+    },
+    query_slaves_files() {
+        return promise_query('/api/slaves?files=True');
+    },
+    query_files(slave) {
+        return promise_query('/api/files?slave_str=true&slave=' + slave);
     },
 };
 
@@ -168,8 +173,10 @@ $(document).ready(function () {
 
     $('.script-action-add-save').click(function () {
         let id = $(this).attr('data-editor-id');
-        let editor = editors['jsoneditor_' + id];
-        let string = JSON.stringify(editor.get());
+        let editor = JsonForm.dumps($('#jsoneditor_' + id));
+        let string = JSON.stringify(editor);
+
+        console.log(string);
 
         $.ajax({
             method: 'POST',
