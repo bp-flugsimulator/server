@@ -6,7 +6,6 @@ from django.db.utils import IntegrityError
 from frontend.scripts import Script, ScriptEntryFile, ScriptEntryProgram
 
 from frontend.models import (
-    Program as ProgramModel,
     Script as ScriptModel,
     ScriptGraphPrograms as SGP,
     ScriptGraphFiles as SGF,

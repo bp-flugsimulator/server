@@ -18,7 +18,6 @@ from .factory import (
     ProgramFactory,
     ProgramStatusFactory,
     SGPFactory,
-    SGFFactory,
 )
 
 
