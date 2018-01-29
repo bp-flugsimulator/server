@@ -159,6 +159,46 @@ def ws_rpc_connect(message):
         LOGGER.error("Rejecting unknown client with ip %s!", ip_address)
         message.reply_channel.send({"accept": False})
 
+def ws_rpc_receive(message):
+    """
+    Handels websockets.receive requests of '/notifications'. Connections only
+    get accepted if the ip of the sender is the ip of a known slave.
+
+    If the status contains the result of a boottime request a corresponding
+    online will be set in SlaveModel.
+
+    If the status contains the result of an execute request the corresponding
+    ProgramStatus will get updated in the database and the message gets
+    republished to the 'notifications' group.
+
+    Arguments
+    ---------
+    message: channels.message.Message that contains a Status in the 'text' field
+
+    """
+
+    try:
+        status = Status.from_json(message.content['text'])
+        if status.payload['method'] == 'online':
+            handle_online_answer(status)
+
+            # notify the scheduler that the status has changed
+            FSIM_CURRENT_SCHEDULER.notify()
+        elif status.payload['method'] == 'execute':
+            handle_execute_answer(status)
+
+            # notify the scheduler that the status has changed
+            FSIM_CURRENT_SCHEDULER.notify()
+        else:
+            LOGGER.info(
+                'Client send answer from unknown function %s.',
+                status.payload['method'],
+            )
+    except Exception:
+        LOGGER.error(
+            'Exception occurred (incoming-request)\n:%s',
+            traceback.format_exc(),
+        )
 
 @channel_session
 def ws_rpc_disconnect(message):
@@ -208,7 +248,6 @@ def ws_rpc_disconnect(message):
             message.channel_session['ip_address'],
         )
 
-
 def ws_notifications_connect(message):
     """
     Handels websockets.connect requests of '/notifications'. Connections only
@@ -226,48 +265,6 @@ def ws_notifications_connect(message):
 
     # Accept the connection
     message.reply_channel.send({"accept": True})
-
-
-def ws_notifications_receive(message):
-    """
-    Handels websockets.receive requests of '/notifications'. Connections only
-    get accepted if the ip of the sender is the ip of a known slave.
-
-    If the status contains the result of a boottime request a corresponding
-    online will be set in SlaveModel.
-
-    If the status contains the result of an execute request the corresponding
-    ProgramStatus will get updated in the database and the message gets
-    republished to the 'notifications' group.
-
-    Arguments
-    ---------
-    message: channels.message.Message that contains a Status in the 'text' field
-
-    """
-
-    try:
-        status = Status.from_json(message.content['text'])
-        if status.payload['method'] == 'online':
-            handle_online_answer(status)
-
-            # notify the scheduler that the status has changed
-            FSIM_CURRENT_SCHEDULER.notify()
-        elif status.payload['method'] == 'execute':
-            handle_execute_answer(status)
-
-            # notify the scheduler that the status has changed
-            FSIM_CURRENT_SCHEDULER.notify()
-        else:
-            LOGGER.info(
-                'Client send answer from unknown function %s.',
-                status.payload['method'],
-            )
-    except Exception:
-        LOGGER.error(
-            'Exception occurred (incoming-request)\n:%s',
-            traceback.format_exc(),
-        )
 
 
 def ws_notifications_disconnect(message):
