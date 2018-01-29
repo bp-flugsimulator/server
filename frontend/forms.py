@@ -1,11 +1,19 @@
 """
-This module contains all forms based on the models from the frontend application.
+This module contains all forms based on the models from the frontend
+application.
 """
 
-from django.forms import ModelForm, ModelChoiceField, HiddenInput
-from .models import Slave as SlaveModel
-from .models import Program as ProgramModel
-from .models import File as FileModel
+from django.forms import (
+    ModelForm,
+    ModelChoiceField,
+    HiddenInput,
+)
+
+from .models import (
+    Slave as SlaveModel,
+    Program as ProgramModel,
+    File as FileModel,
+)
 
 
 class SlaveForm(ModelForm):

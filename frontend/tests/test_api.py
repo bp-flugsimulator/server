@@ -22,15 +22,27 @@ from frontend.models import (
 
 from .factory import (
     SlaveFactory,
+    SlaveOnlineFactory,
     ProgramFactory,
     ScriptFactory,
     FileFactory,
     ProgramStatusFactory,
-    SlaveStatusFactory,
 )
 
 
 class ScriptTest(TestCase):
+    def test_script_run_forbidden(self):
+        response = self.client.put("/api/script/0/run")
+        self.assertEqual(response.status_code, 403)
+
+    def test_script_run_get_unknown_scriptlave(self):
+        response = self.client.get("/api/script/0/run")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            "The script with the id 0 does not exist",
+        )
+
     def test_script_delete(self):
         slave = SlaveFactory()
         program = ProgramFactory(slave=slave)
@@ -73,9 +85,10 @@ class ScriptTest(TestCase):
                 "programs": {},
                 "files": {}
             })
-        self.assertContains(
-            response,
-            "One or more values does contain not valid types.",
+
+        self.assertEqual(
+            Status.err("Expecting value: line 1 column 1 (char 0)"),
+            Status.from_json(response.content.decode('utf-8')),
         )
 
     def test_add_script_value_error(self):
@@ -84,27 +97,51 @@ class ScriptTest(TestCase):
             data='{"name": "test", "programs": {}, "files": {}}',
             content_type="application/json",
         )
+
         self.assertContains(
             response,
-            "One or more values does contain not valid types.",
+            "Programs has to be a list",
         )
 
     def test_add_script_unique_error(self):
+        program = ProgramFactory()
+        script = ScriptFactory.build()
+
+        data = {
+            "name":
+            script.name,
+            "programs": [
+                {
+                    "slave": int(program.slave.id),
+                    "program": int(program.id),
+                    "index": 0,
+                },
+            ],
+            "files": [],
+        }
+
         response = self.client.post(
             "/api/scripts",
-            data='{"name": "test", "programs":  [], "files": []}',
-            content_type="application/json",
+            data=json.dumps(data),
+            content_type="application/text",
         )
+
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, '"status": "ok"')
+
+        self.assertEqual(
+            Status.ok(""),
+            Status.from_json(response.content.decode('utf-8')),
+        )
+
         response = self.client.post(
             "/api/scripts",
-            data='{"name": "test", "programs":  [], "files": []}',
-            content_type="application/json",
+            data=json.dumps(data),
+            content_type="application/text",
         )
-        self.assertContains(
-            response,
-            "Script with that name already exists.",
+
+        self.assertEqual(
+            Status.err("Script with that name already exists."),
+            Status.from_json(response.content.decode('utf-8')),
         )
 
     def test_add_script_key_error(self):
@@ -119,13 +156,31 @@ class ScriptTest(TestCase):
         )
 
     def test_add_script(self):
+        program = ProgramFactory()
+        script = ScriptFactory.build()
+
+        data = {
+            "name":
+            script.name,
+            "programs": [{
+                "slave": int(program.slave.id),
+                "program": int(program.id),
+                "index": 0,
+            }],
+            "files": [],
+        }
+
         response = self.client.post(
             "/api/scripts",
-            data='{"name": "test", "programs":  [], "files": []}',
-            content_type="application/json",
+            data=json.dumps(data),
+            content_type="application/text",
         )
+
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, '"status": "ok"')
+        self.assertEqual(
+            Status.ok(""),
+            Status.from_json(response.content.decode('utf-8')),
+        )
 
     def test_get_script(self):
         slave = SlaveFactory()
@@ -705,9 +760,8 @@ class ProgramTests(TestCase):
         )
 
     def test_execute_program(self):
-        program = ProgramFactory()
-        slave = program.slave
-        SlaveStatusFactory(slave=slave, online=True)
+        slave = SlaveOnlineFactory()
+        program = ProgramFactory(slave=slave)
 
         #  connect client
         client = WSClient()
@@ -718,6 +772,7 @@ class ProgramTests(TestCase):
         webinterface.join_group('notifications')
 
         api_response = self.client.post("/api/program/" + str(program.id))
+
         self.assertEqual(api_response.status_code, 200)
         self.assertEqual(
             Status.ok(''),
@@ -982,8 +1037,7 @@ class SlaveTests(TestCase):
         )
 
     def test_shutdown_slave(self):
-        slave_status = SlaveStatusFactory(online=True)
-        slave = slave_status.slave
+        slave = SlaveFactory(online=True)
 
         #  connect slave to websocket
         ws_client = WSClient()

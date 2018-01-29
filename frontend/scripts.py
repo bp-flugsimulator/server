@@ -4,9 +4,11 @@ to javascript
 """
 
 import json
+
 from django.db import transaction
-from .models import Script as ScriptModel
+
 from .models import (
+    Script as ScriptModel,
     ScriptGraphFiles as SGFModel,
     ScriptGraphPrograms as SGPModel,
     Program as ProgramModel,
@@ -26,7 +28,8 @@ def get_slave(slave):
 
     Returns
     -------
-        Slave object if it is in the database or None if it is not string or int
+        Slave object if it is in the database or None if it is not string or
+        int
     """
     if isinstance(slave, str):
         return SlaveModel.objects.get(name=slave)
@@ -61,6 +64,9 @@ class Script:
                 raise ValueError(
                     "All list elements has to be ScriptEntryFile.")
         self.files = files
+
+        if len(self.files) + len(self.programs) < 1:
+            raise ValueError("Add a file or a program to the script.")
 
         if not isinstance(name, str):
             raise ValueError("Name has to be a string.")
@@ -139,30 +145,19 @@ class Script:
             [ScriptEntryFile(**file) for file in data['files']],
         )
 
+    @transaction.atomic
     def save(self):
         """
         Saves this object to the database.
         """
 
-        first = transaction.savepoint()
+        script = ScriptModel.objects.create(name=self.name)
 
-        script = ScriptModel(name=self.name)
-        script.save()
+        for obj in self.programs:
+            obj.save(script)
 
-        try:
-            programs = [obj.as_model(script) for obj in self.programs]
-            files = [obj.as_model(script) for obj in self.files]
-
-            for prog in programs:
-                prog.save()
-
-            for fil in files:
-                fil.save()
-
-            transaction.savepoint_commit(first)
-        except Exception as err:
-            transaction.savepoint_rollback(first)
-            raise err
+        for obj in self.files:
+            obj.save(script)
 
     def to_json(self):
         """
@@ -189,6 +184,8 @@ class ScriptEntryFile:
     def __init__(self, index, file, slave):
         if not isinstance(index, int):
             raise ValueError("Index has to be an integer.")
+        if index < 0:
+            raise ValueError("Use positive or null for the index.")
         self.index = index
 
         if not isinstance(file, str) and not isinstance(file, int):
@@ -200,7 +197,8 @@ class ScriptEntryFile:
         self.slave = slave
 
     def __eq__(self, other):
-        return self.index == other.index and self.file == other.file and self.slave == other.slave
+        return (self.index == other.index and self.file == other.file
+                and self.slave == other.slave)
 
     def __iter__(self):
         for key, val in vars(self).items():
@@ -209,7 +207,8 @@ class ScriptEntryFile:
     @classmethod
     def from_query(cls, query, slaves_type, programs_type):
         """
-        Retrieves values from a django query (for ScriptGraphFiles or ScriptGraphPrograms).
+        Retrieves values from a django query (for ScriptGraphFiles or
+        ScriptGraphPrograms).
 
         Arguments
         ----------
@@ -256,9 +255,11 @@ class ScriptEntryFile:
             data['slave'],
         )
 
-    def as_model(self, script):
+    @transaction.atomic
+    def save(self, script):
         """
-        Transforms this object into ScriptGraphFiles.
+        Transforms this object into ScriptGraphFiles and saves it to the
+        database.
 
         Arguments
         ---------
@@ -269,14 +270,35 @@ class ScriptEntryFile:
             Django model
         """
 
-        slave = get_slave(self.slave)
+        try:
+            slave = get_slave(self.slave)
+        except SlaveModel.DoesNotExist:
+            raise ValueError("Client with name/id {} does not exist.".format(
+                self.slave))
 
-        if isinstance(self.file, str):
-            obj = FileModel.objects.get(slave=slave, name=self.file)
-        elif isinstance(self.file, int):
-            obj = FileModel.objects.get(slave=slave, id=self.file)
+        try:
+            if isinstance(self.file, str):
+                obj = FileModel.objects.get(slave=slave, name=self.file)
+                SGFModel.objects.create(
+                    script=script,
+                    index=self.index,
+                    file=obj,
+                )
+        except FileModel.DoesNotExist:
+            raise ValueError("File with name {} does not exist.".format(
+                self.file))
 
-        return SGFModel(script=script, index=self.index, file=obj)
+        try:
+            if isinstance(self.file, int):
+                obj = FileModel.objects.get(slave=slave, id=self.file)
+                SGFModel.objects.create(
+                    script=script,
+                    index=self.index,
+                    file=obj,
+                )
+        except FileModel.DoesNotExist:
+            raise ValueError("File with id {} does not exist.".format(
+                self.file))
 
     def to_json(self):
         """
@@ -303,6 +325,8 @@ class ScriptEntryProgram:
     def __init__(self, index, program, slave):
         if not isinstance(index, int):
             raise ValueError("Index has to be an integer.")
+        if index < 0:
+            raise ValueError("Use positive or null for the index.")
         self.index = index
 
         if not isinstance(program, str) and not isinstance(program, int):
@@ -314,7 +338,8 @@ class ScriptEntryProgram:
         self.slave = slave
 
     def __eq__(self, other):
-        return self.index == other.index and self.program == other.program and self.slave == other.slave
+        return (self.index == other.index and self.program == other.program
+                and self.slave == other.slave)
 
     def __iter__(self):
         for key, val in vars(self).items():
@@ -380,9 +405,11 @@ class ScriptEntryProgram:
             data['slave'],
         )
 
-    def as_model(self, script):
+    @transaction.atomic
+    def save(self, script):
         """
-        Transforms this object into ScriptGraphPrograms.
+        Transforms this object into ScriptGraphPrograms and saves it to the
+        database.
 
         Arguments
         ---------
@@ -392,11 +419,32 @@ class ScriptEntryProgram:
         -------
             Django model
         """
-        slave = get_slave(self.slave)
+        try:
+            slave = get_slave(self.slave)
+        except SlaveModel.DoesNotExist:
+            raise ValueError("Client with name/id {} does not exist.".format(
+                self.slave))
 
-        if isinstance(self.program, str):
-            obj = ProgramModel.objects.get(slave=slave, name=self.program)
-        elif isinstance(self.program, int):
-            obj = ProgramModel.objects.get(slave=slave, id=self.program)
+        try:
+            if isinstance(self.program, str):
+                obj = ProgramModel.objects.get(slave=slave, name=self.program)
+                SGPModel.objects.create(
+                    script=script,
+                    index=self.index,
+                    program=obj,
+                )
+        except ProgramModel.DoesNotExist:
+            raise ValueError("Program with name {} does not exist.".format(
+                self.program))
 
-        return SGPModel(script=script, index=self.index, program=obj)
+        try:
+            if isinstance(self.program, int):
+                obj = ProgramModel.objects.get(slave=slave, id=self.program)
+                SGPModel.objects.create(
+                    script=script,
+                    index=self.index,
+                    program=obj,
+                )
+        except ProgramModel.DoesNotExist:
+            raise ValueError("Program with id {} does not exist.".format(
+                self.program))
