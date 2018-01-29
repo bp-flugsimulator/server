@@ -1,4 +1,5 @@
 /* eslint-env browser */
+/* eslint no-use-before-define: ["error", { "functions": false }] */
 /* global $, jQuery, Status */
 /* exported  getCookie, modalDeleteAction, handleFormStatus, clearErrorMessages,swapText, styleSlaveByStatus, notify */
 
@@ -65,19 +66,19 @@ function modalDeleteAction(form, route) {
             if (status.is_ok()) {
                 window.location.reload();
             } else {
-                $.notify({
-                    message: JSON.stringify(status.payload)
-                }, {
-                        type: 'danger'
-                    });
+                notify(
+                    'Error while deleting',
+                    JSON.stringify(status.payload),
+                    'danger'
+                );
             }
         },
         error(xhr, errorString, errorCode) {
-            $.notify({
-                message: 'Could not deliver delete request to server (' + errorCode + ')'
-            }, {
-                    type: 'danger'
-                });
+            notify(
+                'Transport error',
+                'Could not deliver delete request to server (' + errorCode + ')',
+                'danger'
+            );
         }
     });
 }
@@ -157,26 +158,32 @@ function styleSlaveByStatus(sid) {
     }
 }
 
+/**
+ * Spawns a notification box for the user where the given information are
+ * displayed.
+ *
+ * @param {String} title The title in the message box
+ * @param {String} message The body message in the message box
+ * @param {['danger'|'warning'|'info']} type The type or color of the message
+ * box
+ */
 function notify(title, message, type) {
     $.notify({
-        icon: 'mdi mdi-error',
         title,
         message,
-        type
     }, {
-            type: 'fsim-warning',
-            template: '<div data-notify="container" class="col-xs-11 col-sm-3 alert alert-{0}" role="alert">' +
+            type,
+            template: '<div data-notify="container" class="col-xs-11 col-sm-3 alert" role="alert" data-notify-type="{0}">' +
                 '<button type="button" aria-hidden="true" class="close" data-notify="dismiss">×</button>' +
                 '<div class="col">' +
                 '<span class="row" data-notify="title">' +
                 '<strong>{1}</strong>' +
                 '</span>' +
-                '<span class="row" data-notify="message">{2}</span>' +
+                '<span class="row text-justify" data-notify="message">{2}</span>' +
                 '</div>' +
                 '</div>'
         });
 }
-
 
 $(document).ready(function () {
     $.notifyDefaults({

@@ -6,7 +6,6 @@ from django.db.utils import IntegrityError
 from frontend.scripts import Script, ScriptEntryFile, ScriptEntryProgram
 
 from frontend.models import (
-    Program as ProgramModel,
     Script as ScriptModel,
     ScriptGraphPrograms as SGP,
     ScriptGraphFiles as SGF,
@@ -114,7 +113,10 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
         self.assertEqual(ScriptEntryFile.from_json(script.to_json()), script)
 
     def test_script_name_eq(self):
-        self.assertNotEqual(Script("test", [], []), Script("test2", [], []))
+        self.assertNotEqual(
+            Script("test", [ScriptEntryProgram(0, 0, 0)], []),
+            Script("test2", [ScriptEntryProgram(0, 0, 0)], []),
+        )
 
     def test_model_support_strings(self):
         slave = SlaveFactory()
@@ -181,7 +183,11 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
             [],
         )
 
-        self.assertRaises(ProgramModel.DoesNotExist, script.save)
+        self.assertRaisesRegex(
+            ValueError,
+            "Program with id {} does not exist.".format(program.id + 1),
+            script.save,
+        )
         self.assertFalse(ScriptModel.objects.filter(name=script_name).exists())
         self.assertTrue(len(SGP.objects.all()) == 0)
 
@@ -190,25 +196,25 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
         slave = file.slave
         script = ScriptFactory()
 
-        a = ScriptEntryFile(0, file.id, slave.id).as_model(script)
-        b = ScriptEntryFile(0, file.name, slave.name).as_model(script)
-        a.save()
-        self.assertRaises(IntegrityError, b.save)
+        ScriptEntryFile(0, file.id, slave.id).save(script)
+        b = ScriptEntryFile(0, file.name, slave.name)
+
+        self.assertRaises(IntegrityError, b.save, script)
 
     def test_from_model_program_id_eq_str(self):
         program = ProgramFactory()
         slave = program.slave
         script = ScriptFactory()
 
-        with_int = ScriptEntryProgram(0, program.id, slave.id).as_model(script)
+        ScriptEntryProgram(0, program.id, slave.id).save(script)
+
         with_str = ScriptEntryProgram(
             0,
             program.name,
             slave.name,
-        ).as_model(script)
+        )
 
-        with_int.save()
-        self.assertRaises(IntegrityError, with_str.save)
+        self.assertRaises(IntegrityError, with_str.save, script)
 
     def test_from_query_error(self):
         class Dummy:
@@ -257,3 +263,112 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
     def test_script_get_slave(self):
         from frontend.scripts import get_slave
         self.assertEqual(None, get_slave(None))
+
+    def test_script_name_is_string(self):
+        self.assertRaisesRegex(
+            ValueError,
+            "Name has to be a string",
+            Script,
+            123123,
+            [
+                ScriptEntryProgram(0, 0, 0),
+            ],
+            [],
+        )
+
+    def test_script_positive_index(self):
+        self.assertRaisesRegex(
+            ValueError,
+            "Use positive or null for the index.",
+            ScriptEntryProgram,
+            -1,
+            0,
+            0,
+        )
+
+        self.assertRaisesRegex(
+            ValueError,
+            "Use positive or null for the index.",
+            ScriptEntryFile,
+            -1,
+            0,
+            0,
+        )
+
+    def test_script_programs_missing_slave(self):
+        slave = SlaveFactory()
+        script = ScriptFactory()
+
+        self.assertRaisesRegex(
+            ValueError,
+            "Program with id {} does not exist.".format(-1),
+            ScriptEntryProgram(
+                0,
+                -1,
+                int(slave.id),
+            ).save,
+            script,
+        )
+
+        self.assertRaisesRegex(
+            ValueError,
+            "Program with name {} does not exist.".format(""),
+            ScriptEntryProgram(
+                0,
+                "",
+                int(slave.id),
+            ).save,
+            script,
+        )
+
+        slave.delete()
+
+        self.assertRaisesRegex(
+            ValueError,
+            "Client with name/id {} does not exist.".format(-1),
+            ScriptEntryProgram(
+                0,
+                -1,
+                -1,
+            ).save,
+            script,
+        )
+
+    def test_script_file_missing_slave(self):
+        slave = SlaveFactory()
+        script = ScriptFactory()
+
+        self.assertRaisesRegex(
+            ValueError,
+            "File with id {} does not exist.".format(-1),
+            ScriptEntryFile(
+                0,
+                -1,
+                int(slave.id),
+            ).save,
+            script,
+        )
+
+        self.assertRaisesRegex(
+            ValueError,
+            "File with name {} does not exist.".format(""),
+            ScriptEntryFile(
+                0,
+                "",
+                int(slave.id),
+            ).save,
+            script,
+        )
+
+        slave.delete()
+
+        self.assertRaisesRegex(
+            ValueError,
+            "Client with name/id {} does not exist.".format(-1),
+            ScriptEntryFile(
+                0,
+                -1,
+                -1,
+            ).save,
+            script,
+        )

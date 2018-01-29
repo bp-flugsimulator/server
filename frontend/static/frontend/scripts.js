@@ -1,4 +1,5 @@
 /* eslint-env browser */
+/* eslint no-use-before-define: ["error", { "functions": false }] */
 /* global $, JSONEditor, getCookie, Status, modalDeleteAction, notify */
 /* exported loadScript, newScript */
 
@@ -7,38 +8,40 @@ var schema = {
     'type': 'object',
     'definitions': {
         'program_entry': {
+            'title': 'Program set',
             'type': 'object',
             'properties': {
                 'index': {
+                    'title': 'Index',
                     'type': 'integer',
-                    // 'required': true
                 },
                 'slave': {
+                    'title': 'Client',
                     'type': ['integer', 'string'],
-                    // 'required': true
                 },
                 'program': {
+                    'title': 'Program',
                     'type': ['integer', 'string'],
-                    // 'required': true
                 }
             },
             'required': ['index', 'slave', 'program'],
             'additionalProperties': false
         },
         'file_entry': {
+            'title': 'File set',
             'type': 'object',
             'properties': {
                 'index': {
+                    'title': 'Index',
                     'type': 'integer',
-                    // 'required': true
                 },
                 'slave': {
+                    'title': 'Client',
                     'type': ['integer', 'string'],
-                    // 'required': true
                 },
                 'file': {
+                    'title': 'File',
                     'type': ['integer', 'string'],
-                    // 'required': true
                 }
             },
             'required': ['index', 'slave', 'file'],
@@ -114,7 +117,7 @@ var createEditor = function (json, id) {
     JsonForm.loads(container, options, json);
 };
 
-var loadScript = function (id) {
+function loadScript(id) {
     $.ajax({
         url: '/api/script/' + id + '?programs=str&files=str&slaves=str',
         beforeSend(xhr) {
@@ -134,9 +137,9 @@ var loadScript = function (id) {
             console.log("Failed 2");
         }
     });
-};
+}
 
-var newScript = function (name) {
+function newScript(name) {
     let defaultJson = {
         name,
         programs: [],

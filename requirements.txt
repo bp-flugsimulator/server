@@ -3,7 +3,7 @@ django-widget-tweaks==1.4.1
 wakeonlan==0.2.2
 channels==1.1.8
 git+https://github.com/bp-flugsimulator/utils
-libsass==0.13.5
+libsass==0.13.6
 termcolor==1.1.0
-factory_boy===2.9.2
+factory_boy==2.10.0
 whitenoise==4.0b4

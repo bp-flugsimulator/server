@@ -1,5 +1,6 @@
 /* eslint-env browser*/
-/* global $, getCookie, modalDeleteAction, handleFormStatus, clearErrorMessages, Status*/
+/* eslint no-use-before-define: ["error", { "functions": false }] */
+/* global $, getCookie, modalDeleteAction, handleFormStatus, clearErrorMessages, Status, fsimWebsocket, notify, swapText, styleSlaveByStatus*/
 
 /**
  * Creates a function which handles from submits.
@@ -27,32 +28,134 @@ const onFormSubmit = function (id) {
                 handleFormStatus($('#' + id), status);
             },
             error(xhr, errorString, errorCode) {
-                $.notify({
-                    message: 'Could not deliver ' + $(this).attr('method') + ' request to server (' + errorCode + ')'
-                }, {
-                        type: 'danger'
-                    });
+                notify('Could deliver', 'Could not send data to server.' + errorCode + ')', 'danger');
             }
         });
     };
 };
 
-$(document).ready(function () {
-    // set defaults for notifications
+const restoreSlaveInnerTab = function (slaveId) {
+    let tabStatus = localStorage.getItem('tab-status');
 
-    const restoreSlaveInnerTab = function (slaveId) {
-        let tabStatus = localStorage.getItem('tab-status');
-
-        if (tabStatus !== null) {
-            if (tabStatus === 'program') {
-                $('#slavesObjectsPrograms' + slaveId).click();
-            }
-            else if (tabStatus === 'file') {
-                $('#slavesObjectsFiles' + slaveId).click();
-            }
+    if (tabStatus !== null) {
+        if (tabStatus === 'program') {
+            $('#slavesObjectsPrograms' + slaveId).click();
         }
-    };
+        else if (tabStatus === 'file') {
+            $('#slavesObjectsFiles' + slaveId).click();
+        }
+    }
+};
 
+function changeStartStopText(element, text) {
+    element.children('.button-status-display').each(function (idx, val) {
+        $(val).text(text);
+    });
+}
+
+var socketEventHandler = {
+    slaveConnect(payload) {
+        let statusContainer = $('#slaveStatusContainer_' + payload.sid);
+        let statusTab = $('#slaveTab' + payload.sid);
+        let startstopButton = $('#slaveStartStop_' + payload.sid);
+
+        statusContainer.attr('data-state', 'success');
+        statusTab.attr('data-state', 'success');
+
+        // Use Python notation !!!
+        startstopButton.attr('data-is-running', 'True');
+        changeStartStopText(startstopButton, 'STOP');
+
+        // set tooltip to Stop
+        startstopButton.children('[data-text-swap]').each(function (idx, val) {
+            swapText($(val));
+        });
+    },
+    slaveDisconnect(payload) {
+        let statusContainer = $('#slaveStatusContainer_' + payload.sid);
+        let statusTab = $('#slaveTab' + payload.sid);
+        let startstopButton = $('#slaveStartStop_' + payload.sid);
+
+        statusContainer.attr('data-state', 'unknown');
+        statusTab.attr('data-state', 'unknown');
+
+        $('#slavesObjectsProgramsContent' + payload.sid)
+            .find('.fsim-box[data-state]')
+            .each(function (idx, val) {
+                $(val).attr('data-state', 'unknown');
+            });
+
+        // Use Python notation !!!
+        startstopButton.attr('data-is-running', 'False');
+        changeStartStopText(startstopButton, 'START');
+
+        // set tooltip to Start
+        startstopButton.children('[data-text-swap]').each(function (idx, val) {
+            swapText($(val));
+        });
+    },
+    programStarted(payload) {
+        let statusContainer = $('#programStatusContainer_' + payload.pid);
+        let startstopButton = $('#programStartStop_' + payload.pid);
+        let cardButton = $('#programCardButton_' + payload.pid);
+
+        statusContainer.attr('data-state', 'warning');
+        cardButton.prop('disabled', true);
+
+        // Use Python notation !!!
+        startstopButton.attr('data-is-running', 'True');
+        changeStartStopText(startstopButton, 'STOP');
+
+        let sid = null;
+
+        statusContainer.find('button[data-slave-id]').each(function (idx, val) {
+            sid = $(val).data('slave-id');
+            return false;
+        });
+
+        styleSlaveByStatus(sid);
+
+        startstopButton.children('[data-text-swap]').each(function (idx, val) {
+            swapText($(val));
+        });
+    },
+    programStopped(payload) {
+        let statusContainer = $('#programStatusContainer_' + payload.pid);
+        let startstopButton = $('#programStartStop_' + payload.pid);
+        let cardButton = $('#programCardButton_' + payload.pid);
+        let cardBox = $('#programCard_' + payload.pid);
+
+        if (payload.code !== 0) {
+            statusContainer.attr('data-state', 'error');
+
+            cardButton.prop('disabled', false);
+            cardBox.text(payload.code);
+        } else {
+            statusContainer.attr('data-state', 'success');
+        }
+
+        // Use Python notation !!!
+        startstopButton.attr('data-is-running', 'False');
+        changeStartStopText(startstopButton, 'START');
+
+        let sid = null;
+
+        statusContainer.find('button[data-slave-id]').each(function (idx, val) {
+            sid = $(val).data('slave-id');
+            return false;
+        });
+
+        styleSlaveByStatus(sid);
+
+        startstopButton.children('[data-text-swap]').each(function (idx, val) {
+            swapText($(val));
+        });
+    },
+};
+
+var websocket = fsimWebsocket(socketEventHandler);
+
+$(document).ready(function () {
     // Restores the last clicked slave
     (function () {
         let href = localStorage.getItem('status');
@@ -108,19 +211,11 @@ $(document).ready(function () {
                 },
                 success(status) {
                     if (status.is_err()) {
-                        $.notify({
-                            message: status.payload
-                        }, {
-                                type: 'danger'
-                            });
+                        notify('Error while starting program', 'Could not start program. (' + JSON.stringify(status.payload) + ')', 'danger');
                     }
                 },
                 error(xhr, errorString, errorCode) {
-                    $.notify({
-                        message: 'Could not deliver ' + type + ' request to server (' + errorCode + ')'
-                    }, {
-                            type: 'danger'
-                        });
+                    notify('Could deliver', 'Could not deliver request `' + type + '` to server.' + errorCode + ')', 'danger');
                 }
             });
         };
@@ -188,6 +283,7 @@ $(document).ready(function () {
         let name = $(this).data('program-name');
         let path = $(this).data('program-path');
         let args = $(this).data('program-arguments');
+        let startTime = $(this).data('program-start-time');
 
         //modify the form for the submit button
         programModal.children().find('.modal-title').text('Edit Program');
@@ -199,6 +295,7 @@ $(document).ready(function () {
         programForm.find('[name="name"]').val(name);
         programForm.find('[name="path"]').val(path);
         programForm.find('[name="arguments"]').val(args);
+        programForm.find('[name="start_time"]').val(startTime);
 
         //clear error messages
         clearErrorMessages(programForm);
@@ -283,27 +380,21 @@ $(document).ready(function () {
                 beforeSend(xhr) {
                     xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
                 },
-                success(data) {
-                    let status = Status.from_json(JSON.stringify(data));
+                converters: {
+                    'text json': Status.from_json
+                },
+                success(status) {
                     if (status.is_ok()) {
                         el.addClass('animated pulse');
                         el.one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend', function () {
                             el.removeClass('animated pulse');
                         });
                     } else {
-                        $.notify({
-                            message: 'Error: ' + data.payload
-                        }, {
-                                type: 'danger'
-                            });
+                        notify('Could not stop client', 'The client could not be stopped. (' + JSON.stringify(status.payload) + ')', 'danger');
                     }
                 },
                 error(xhr, errorString, errorCode) {
-                    $.notify({
-                        message: 'Could not deliver shutdown request to server (' + errorCode + ')'
-                    }, {
-                            type: 'danger'
-                        });
+                    notify('Could deliver', 'The stop command could not been send. (' + errorCode + ')', 'danger');
                 }
             });
 
@@ -317,28 +408,22 @@ $(document).ready(function () {
                 beforeSend(xhr) {
                     xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
                 },
-                success(data) {
-                    let status = Status.from_json(JSON.stringify(data));
+                converters: {
+                    'text json': Status.from_json
+                },
+                success(status) {
                     if (status.is_ok()) {
                         el.addClass('animated pulse');
                         el.one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend', function () {
                             el.removeClass('animated pulse');
                         });
                     } else {
-                        $.notify({
-                            message: 'Error: ' + data.payload
-                        }, {
-                                type: 'danger'
-                            });
+                        notify('Error while starting', 'Could not start client. (' + JSON.stringify(status.payload) + ')', 'danger');
                     }
 
                 },
                 error(xhr, errorString, errorCode) {
-                    $.notify({
-                        message: 'Could not deliver Wake-On-Lan request to server (' + errorCode + ')'
-                    }, {
-                            type: 'danger'
-                        });
+                    notify('Could deliver', 'The start command could not been send. (' + errorCode + ')', 'danger');
                 }
             });
 
