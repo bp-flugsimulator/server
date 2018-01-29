@@ -5,3 +5,5 @@ channels==1.1.8
 git+https://github.com/bp-flugsimulator/utils
 libsass==0.13.5
 termcolor==1.1.0
+factory_boy===2.9.2
+whitenoise==4.0b4
