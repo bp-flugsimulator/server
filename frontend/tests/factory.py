@@ -82,8 +82,8 @@ class FileFactory(DjangoModelFactory):
         model = FileModel
 
     name = FuzzyText(length=20, prefix="file_")
-    sourcePath = FuzzyText(length=100)
-    destinationPath = FuzzyText(length=100)
+    source_path = FuzzyText(length=100)
+    destination_path = FuzzyText(length=100)
     slave = SubFactory(SlaveFactory)
 
 

@@ -31,68 +31,6 @@ from .factory import (
 
 
 class ScriptTest(TestCase):
-    def test_manage_file_forbidden(self):
-        api_response = self.client.get("/api/file/0")
-        self.assertEqual(api_response.status_code, 403)
-
-    def test_manage_file_status_error(self):
-        slave = SlaveModel(
-            name="slave_5", ip_address="ip address", mac_address="mac address")
-        slave.save()
-
-        slave_in_database = SlaveModel.objects.get(name=slave.name)
-
-        file = FileModel(
-            name="file_fail_0",
-            source_path="file.source_path",
-            destination_path="file.destination_path",
-            slave=slave_in_database)
-        file.save()
-
-        api_response = self.client.post("/api/file/" + str(file.id))
-        self.assertEqual(api_response.status_code, 200)
-        self.assertJSONEqual(
-            api_response.content.decode('utf-8'),
-            Status.err("Can not move file_fail_0 because slave_5 is offline!")
-            .to_json())
-
-    def test_manage_file_ok(self):
-        slave = SlaveModel(
-            name="slave_5", ip_address="ip address", mac_address="mac address")
-        slave.save()
-
-        slaveStatus = SlaveStatusModel(boottime=datetime.now())
-        slaveStatus.save()
-
-        slave_in_database = SlaveModel.objects.get(name=slave.name)
-
-        file = FileModel(
-            name="file_fail_0",
-            source_path="file.source_path",
-            destination_path="file.destination_path",
-            slave=slave_in_database)
-        file.save()
-
-        # connect slave to websocket
-        ws_client = WSClient()
-        ws_client.join_group('client_' + str(slave.id))
-
-        api_response = self.client.post("/api/file/" + str(file.id))
-        self.assertEqual(api_response.status_code, 200)
-
-        self.assertJSONEqual(
-            api_response.content.decode('utf-8'),
-            Status.ok('').to_json())
-        ws_response = ws_client.receive()
-
-        self.assertJSONEqual(
-            Command(
-                method='move_file',
-                fid=file.id,
-                source_path="file.source_path",
-                destination_path="file.destination_path").to_json(),
-            ws_response)
-
     def test_script_delete(self):
         slave = SlaveFactory()
         program = ProgramFactory(slave=slave)
@@ -392,6 +330,51 @@ class ScriptTest(TestCase):
 
 
 class FileTests(TestCase):
+    def test_manage_file_forbidden(self):
+        api_response = self.client.put("/api/file/0")
+        self.assertEqual(api_response.status_code, 403)
+
+    def test_manage_file_status_error(self):
+        file_ = FileFactory()
+
+        api_response = self.client.post("/api/file/" + str(file_.id))
+        self.assertEqual(api_response.status_code, 200)
+
+        self.assertEqual(
+            Status.from_json(api_response.content.decode('utf-8')),
+            Status.err("Can not move {} because {} is offline!".format(
+                file_.name,
+                file_.slave.name,
+            )),
+        )
+
+    def test_manage_file_ok(self):
+        slave = SlaveFactory()
+        slave_status = SlaveStatusFactory(slave=slave, online=True)
+        file_=FileFactory(slave=slave)
+
+        # connect slave to websocket
+        ws_client = WSClient()
+        ws_client.join_group('client_' + str(slave.id))
+
+        api_response = self.client.post("/api/file/" + str(file_.id))
+        self.assertEqual(api_response.status_code, 200)
+
+        self.assertEqual(
+            Status.from_json(api_response.content.decode('utf-8')),
+            Status.ok(''),
+        )
+
+        self.assertEqual(
+            Command(
+                method='move_file',
+                source_path=file_.source_path,
+                destination_path=file_.destination_path,
+                backup_ending='_BACK',
+            ),
+            Command.from_json(json.dumps(ws_client.receive())),
+        )
+
     def test_delete_file(self):
         file = FileFactory()
 
@@ -420,8 +403,8 @@ class FileTests(TestCase):
         api_response = self.client.post(
             '/api/files', {
                 'name': file.name,
-                'sourcePath': file.sourcePath,
-                'destinationPath': file.destinationPath,
+                'source_path': file.source_path,
+                'destination_path': file.destination_path,
                 'slave': str(slave.id)
             })
 
@@ -434,8 +417,8 @@ class FileTests(TestCase):
         self.assertTrue(
             FileModel.objects.filter(
                 name=file.name,
-                sourcePath=file.sourcePath,
-                destinationPath=file.destinationPath,
+                source_path=file.source_path,
+                destination_path=file.destination_path,
                 slave=slave,
             ))
 
@@ -449,8 +432,8 @@ class FileTests(TestCase):
 
         api_response = self.client.post('/api/files', {
             'name': long_str,
-            'sourcePath': long_str,
-            'destinationPath': long_str,
+            'source_path': long_str,
+            'destination_path': long_str,
             'slave': str(slave.id)
         })
 
@@ -460,12 +443,6 @@ class FileTests(TestCase):
                 "name": [
                     "Ensure this value has at most 200 characters (it has 2000)."
                 ],
-                "sourcePath": [
-                    "Ensure this value has at most 200 characters (it has 2000)."
-                ],
-                "destinationPath": [
-                    "Ensure this value has at most 200 characters (it has 2000)."
-                ]
             }),
             Status.from_json(api_response.content.decode('utf-8')),
         )
@@ -477,8 +454,8 @@ class FileTests(TestCase):
         api_response = self.client.post(
             '/api/files', {
                 'name': file.name,
-                'sourcePath': file.sourcePath,
-                'destinationPath': file.destinationPath,
+                'source_path': file.source_path,
+                'destination_path': file.destination_path,
                 'slave': str(file.slave.id)
             })
 
@@ -502,8 +479,8 @@ class ProgramTests(TestCase):
 
         response = self.client.get("/api/programs?q=")
         self.assertContains(response, program.name)
-        response = self.client.get("/api/programs?q=" + str(
-            program.name[:name_half]))
+        response = self.client.get(
+            "/api/programs?q=" + str(program.name[:name_half]))
         self.assertContains(response, program.name)
         response = self.client.get("/api/programs?q=" + str(program.name))
         self.assertContains(response, program.name)
