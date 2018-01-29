@@ -74,8 +74,6 @@ var JsonForm = {
      * @param {JSONObject} json
      */
     loads(container, options, json) {
-        console.log(options);
-
         $(container).append(template_container({ 'name': json.name }));
 
         this.init(container, options);
@@ -110,7 +108,7 @@ var JsonForm = {
                 let entry = new Object();
                 let val = $(val_raw);
 
-                entry.index = val.find('.script-' + type + '-index').first().val();
+                entry.index = Number(val.find('.script-' + type + '-index').first().val());
                 entry[type] = val.find('.script-' + type + '-program').first().val();
                 entry.slave = val.find('.script-' + type + '-slave').first().val();
 
@@ -122,7 +120,7 @@ var JsonForm = {
                     error = true;
                 }
 
-                if (entry.index === '' || entry.index === null) {
+                if (entry.index === null) {
                     error = true;
                 }
 
