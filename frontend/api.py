@@ -433,11 +433,26 @@ def add_file(request):
                 file.full_clean()
                 form.save()
                 return StatusResponse(Status.ok(''))
-            except ValidationError as _:
-                error_dict = {
-                    'name':
-                    ["File with this Name already exists on this Client."]
-                }
+            except ValidationError as err:
+                if 'Source path' in err.message_dict['__all__'][0] and \
+                        'Destination path' in err.message_dict['__all__'][0] and \
+                        'Slave' in err.message_dict['__all__'][0]:
+                    error_msg = 'File with this source path and ' \
+                         'destination path already exists on this Client.'
+                    error_dict = {
+                        'source_path': [error_msg]
+                    }
+                    print()
+                    print()
+                    print(error_dict)
+                    print()
+                elif 'Name' in err.message_dict['__all__'][0] and \
+                        'Slave' in err.message_dict['__all__'][0]:
+                    error_dict = {
+                        'name':
+                        ["File with this Name already exists on this Client."]
+                    }
+                #raise ValueError(err.message_dict['__all__'][0])
                 return StatusResponse(Status.err(error_dict))
         else:
             return StatusResponse(Status.err(form.errors))
@@ -503,7 +518,11 @@ def manage_file(request, file_id):
         file_ = FileModel.objects.get(id=file_id)
         slave = file_.slave
         if not file_.hash_value:
-            return StatusResponse(Status.err('😡 NO MEANS NO 😡'))
+            return StatusResponse(
+                Status.err(
+                    'Error: File ({}) has not been moved with this Tool,\
+                    reload page or try readding the file to the list'                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      .
+                    format(file_.name)))
 
         if SlaveStatusModel.objects.filter(slave=slave):
             cmd = Command(

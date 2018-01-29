@@ -240,7 +240,7 @@ class File(Model):
         null=True,
     )
     hash_value = CharField(
-        unique=True,
+        unique=False,
         max_length=32,
         blank=True,
         null=True,
@@ -248,7 +248,10 @@ class File(Model):
     slave = ForeignKey(Slave, on_delete=CASCADE)
 
     class Meta:
-        unique_together = (('name', 'slave'), )
+        unique_together = (
+            ('name', 'slave'),
+            ('source_path', 'destination_path', 'slave'),
+        )
 
     @property
     def is_moved(self):
