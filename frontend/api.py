@@ -499,7 +499,7 @@ def manage_file(request, file_id):
     if request.method == 'POST':
         file_ = FileModel.objects.get(id=file_id)
         slave = file_.slave
-        if SlaveStatusModel.objects.filter(slave=slave):
+        if slave.is_online:
             cmd = Command(
                 method="move_file",
                 source_path=file_.source_path,
@@ -528,7 +528,7 @@ def manage_file(request, file_id):
                     reload page or try readding the file to the list'.format(
                         file_.name)))
 
-        if SlaveStatusModel.objects.filter(slave=slave):
+        if slave.is_online:
             cmd = Command(
                 method="restore_file",
                 source_path=file_.source_path,

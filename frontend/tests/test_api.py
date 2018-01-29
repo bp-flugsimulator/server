@@ -404,9 +404,8 @@ class FileTests(TestCase):
         )
 
     def test_manage_file_ok(self):
-        slave = SlaveFactory()
-        slave_status = SlaveStatusFactory(slave=slave, online=True)
-        file_=FileFactory(slave=slave)
+        slave = SlaveFactory(online=True)
+        file_ = FileFactory(slave=slave)
 
         # connect slave to websocket
         ws_client = WSClient()
