@@ -90,64 +90,80 @@
 {% block script %}
     {% verbatim %}
     <script id="template_entry" type="text/x-handlebars-template">
-        <div class="script-{{type}}-entry">
-            <button class="script-{{type}}-remove" type="button">X</button>
+        <div class="list-group-item script-{{type}}-entry ">
 
-            <div class="input-group row">
-                <label class="col-1">Index</label>
-                <input class="form-control col script-{{type}}-index" type="number" value="{{#if index}}{{index}}{{else}}0{{/if}}" required/>
+            <div class="form-group row">
+                <button class="btn script-{{type}}-remove inline-add-button" type="button">
+                        <i class="mdi mdi-delete"></i>
+                </button>
+            </div>
+            <div class="form-group row">
+                <label class="col-2">Index</label>
+                <div class="col">
+                    <input class="form-control script-{{type}}-index" type="number" value="{{#if index}}{{index}}{{else}}0{{/if}}" required/>
+                </div>
             </div>
 
-            <div class="input-group row slave-choice">
+            <div class="form-group row slave-choice">
                 <label class="col-2">Client</label>
-                <select class="form-control col script-{{type}}-slave" type="text" required>
-                    {{#each slaves}}
-                    <option {{#ifEq slave this}}selected{{/ifEq}}>{{this}}</option>
-                    {{/each}}
-                </select>
+                <div class="col">
+                    <select class="form-control script-{{type}}-slave" type="text" required>
+                        {{#each slaves}}
+                        <option {{#ifEq slave this}}selected{{/ifEq}}>{{this}}</option>
+                        {{/each}}
+                    </select>
+                </div>
             </div>
 
-            <div class="input-group row {{type}}-choice">
+            <div class="form-group row {{type}}-choice">
                 <label class="col-2">{{#if type-display}}{{type-display}}{{else}}{{type}}{{/if}}</label>
-                <select class="form-control col script-{{type}}-{{type}}" type="text" required {{#if selects}}{{else}}hidden{{/if}}>
-                    {{#each selects}}
-                    <option>{{this}}</option>
-                    {{/each}}
-                </select>
+                <div class="col">
+                    <select class="form-control script-{{type}}-{{type}}" type="text" required {{#if selects}}{{else}}hidden{{/if}}>
+                        {{#each selects}}
+                        <option>{{this}}</option>
+                        {{/each}}
+                    </select>
+                </div>
             </div>
         </div>
     </script>
 
     <script id="template_no_element" type="text/x-handlebars-template">
-        <div class="slave-no-elements">
+        <div class="list-group-item slave-no-elements">
             No Clients with {{type}}s created.
         </div>
     </script>
 
     <script id="template_container" type="text/x-handlebars-template">
-        <div class="input-group row">
+        <div class="row form-group">
             <label class="col-2">Script Name</label>
-            <input class="form-control col script-name" type="text" {{#if name}}value="{{name}}"{{/if}} required/>
-            <div class="invalid-feedback">Script name is required.</div>
+            <div class="col">
+                <input class="form-control script-name" type="text" {{#if name}}value="{{name}}"{{/if}} required/>
+                <div class="invalid-feedback">Script name is required.</div>
+            </div>
         </div>
 
         <div class="row">
             <div class="col-2">
                 <label>Programs</label>
-                <button type="button" class="script-program-add">+</button>
+                <button type="button" class="btn script-program-add  inline-add-button">
+                    <i class="mdi mdi-add"></i>
+                </button>
             </div>
 
-            <div class="script-program-content" class="col-4">
+            <div class="script-program-content col list-group">
             </div>
         </div>
 
         <div class="row">
             <div class="col-2">
                 <label>Files</label>
-                <button type="button" class="script-file-add">+</button>
+                <button type="button" class="btn script-file-add inline-add-button">
+                    <i class="mdi mdi-add"></i>
+                </button>
             </div>
 
-            <div class="script-file-content" class="col-4">
+            <div class="script-file-content col list-group">
             </div>
         </div>
     </script>

@@ -77,13 +77,14 @@ var JsonForm = {
         console.log(options);
 
         $(container).append(template_container({ 'name': json.name }));
+
         this.init(container, options);
 
-        $(json.programs).each(function (idx, val) {
+        json.programs.forEach(function (idx, val) {
             addTypeEntry(container, 'program', options.query_slaves_programs, options.query_programs, { 'choices_current': val.slave, 'selects': [val.program] })
         });
 
-        $(json.files).each(function (idx, val) {
+        json.files.forEach(function (idx, val) {
             addTypeEntry(container, 'file', options.query_slaves_files, options.query_files, { 'choices_current': val.slave, 'selects': [val.file] })
         });
     },
@@ -95,32 +96,43 @@ var JsonForm = {
     dumps(container) {
         json = new Object();
 
-        json['script_name'] = $(container).find('.script-name').first().val();
+        json.name = $(container).find('.script-name').first().val();
 
-        if (json.script_name === null) {
+        if (json.name === null) {
             return;
         }
 
-        var dumps_array = function (type) {
+        let dumps_array = function (type) {
             let output = [];
 
-            $(container).find('.script-' + type + '-content').first().find('.script-' + type + '-entry').each(function (idx, val) {
-                let entry = new Object();
+            $(container).find('.script-' + type + '-content').first().find('.script-' + type + '-entry').each(function (idx, val_raw) {
 
-                entry['index'] = val.find('.script-' + type + '-index').first();
-                entry[type] = val.find('.script-' + type + '-program').first();
-                entry['slave'] = val.find('.script-' + type + '-slave').first();
+                let entry = new Object();
+                let val = $(val_raw);
+
+                entry.index = val.find('.script-' + type + '-index').first().val();
+                entry[type] = val.find('.script-' + type + '-program').first().val();
+                entry.slave = val.find('.script-' + type + '-slave').first().val();
 
                 let error = false;
 
-                if (entry['slave'] === '' || entry['slave'] === null) {
+                if (entry.slave === '' || entry.slave === null) {
                     error = true;
                 } else if (entry[type] === '' || entry[type] === null) {
                     error = true;
                 }
 
-                if (entry['index'] === '' || entry['index'] === null) {
+                if (entry.index === '' || entry.index === null) {
                     error = true;
+                }
+
+                if (entry) {
+                    output.forEach(function (element) {
+                        if (element[type] == entry[type] && element.slave == entry.slave) {
+                            error = true;
+                            console.log("Double entry");
+                        }
+                    });
                 }
 
                 if (!error) {
@@ -131,8 +143,8 @@ var JsonForm = {
             return output;
         };
 
-        json['programs'] = dumps_array('program');
-        json['files'] = dumps_array('file');
+        json.programs = dumps_array('program');
+        json.files = dumps_array('file');
 
         if (json.programs.length === 0 && json.files.length === 0) {
             return null;
