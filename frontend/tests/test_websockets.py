@@ -173,15 +173,15 @@ class WebsocketTests(TestCase):
         Group('notifications').send({'text': Status.ok('').to_json()})
         self.assertIsNone(ws_client.receive())
 
-    def test_ws_notifications_receive_fail(self):
+    def test_ws_rpc_receive_fail(self):
         ws_client = WSClient()
         ws_client.send_and_consume(
             'websocket.receive',
-            path='/notifications',
+            path='/commands',
         )
         self.assertIsNone(ws_client.receive())
 
-    def test_ws_notifications_receive_online(self):
+    def test_ws_rpc_receive_online(self):
         slave = SlaveOnlineFactory(online=False)
 
         expected_status = Status.ok({'method': 'online'})
@@ -195,7 +195,7 @@ class WebsocketTests(TestCase):
         ws_client = WSClient()
         ws_client.send_and_consume(
             'websocket.receive',
-            path='/notifications',
+            path='/commands',
             content={'text': expected_status.to_json()},
         )
 
@@ -210,7 +210,7 @@ class WebsocketTests(TestCase):
             Status.from_json(json.dumps(webinterface.receive())),
         )
 
-    def test_ws_notifications_receive_online_delted_slave(self):
+    def test_ws_rpc_receive_online_delted_slave(self):
         slave = SlaveOnlineFactory(online=False)
 
         expected_status = Status.ok({'method': 'online'})
@@ -226,7 +226,7 @@ class WebsocketTests(TestCase):
         ws_client = WSClient()
         ws_client.send_and_consume(
             'websocket.receive',
-            path='/notifications',
+            path='/commands',
             content={'text': expected_status.to_json()},
         )
 
@@ -235,7 +235,7 @@ class WebsocketTests(TestCase):
         # test if a connected message was send on /notifications
         self.assertIsNone(webinterface.receive())
 
-    def test_ws_notifications_receive_online_status_err(self):
+    def test_ws_rpc_receive_online_status_err(self):
         slave = SlaveOnlineFactory(online=False)
 
         error_status = Status.err({
@@ -253,7 +253,7 @@ class WebsocketTests(TestCase):
         ws_client = WSClient()
         ws_client.send_and_consume(
             'websocket.receive',
-            path='/notifications',
+            path='/commands',
             content={
                 'text': error_status.to_json()
             })
@@ -268,7 +268,7 @@ class WebsocketTests(TestCase):
             Status.from_json(json.dumps(webinterface.receive())),
         )
 
-    def test_ws_notifications_receive_execute(self):
+    def test_ws_rpc_receive_execute(self):
         program_status = ProgramStatusFactory(running=True)
         program = program_status.program
 
@@ -285,7 +285,7 @@ class WebsocketTests(TestCase):
         ws_client = WSClient()
         ws_client.send_and_consume(
             'websocket.receive',
-            path='/notifications',
+            path='/commands',
             content={'text': expected_status.to_json()},
         )
 
@@ -303,7 +303,7 @@ class WebsocketTests(TestCase):
             Status.from_json(json.dumps(webinterface.receive())),
         )
 
-    def test_ws_notifications_receive_execute_delete_slave(self):
+    def test_ws_rpc_receive_execute_delete_slave(self):
         program_status = ProgramStatusFactory(running=True)
         program = program_status.program
 
@@ -322,7 +322,7 @@ class WebsocketTests(TestCase):
         ws_client = WSClient()
         ws_client.send_and_consume(
             'websocket.receive',
-            path='/notifications',
+            path='/commands',
             content={'text': expected_status.to_json()},
         )
 
@@ -332,7 +332,7 @@ class WebsocketTests(TestCase):
         #  test if the webinterface gets the "finished" message
         self.assertIsNone(webinterface.receive())
 
-    def test_ws_notifications_receive_execute_status_err(self):
+    def test_ws_rpc_receive_execute_status_err(self):
         program_status = ProgramStatusFactory(running=True)
         program = program_status.program
 
@@ -349,7 +349,7 @@ class WebsocketTests(TestCase):
         ws_client = WSClient()
         ws_client.send_and_consume(
             'websocket.receive',
-            path='/notifications',
+            path='/commands',
             content={'text': error_status.to_json()},
         )
 
@@ -367,11 +367,11 @@ class WebsocketTests(TestCase):
             Status.from_json(json.dumps(webinterface.receive())),
         )
 
-    def test_ws_notifications_receive_unknown_method(self):
+    def test_ws_rpc_receive_unknown_method(self):
         ws_client = WSClient()
         ws_client.send_and_consume(
             'websocket.receive',
-            path='/notifications',
+            path='/commands',
             content={'text': Status.ok({
                 'method': ''
             }).to_json()},
