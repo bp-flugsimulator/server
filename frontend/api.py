@@ -473,25 +473,24 @@ def add_file(request):
 
 def manage_file(request, file_id):
     """
-    Manages the file with the file_id.
+    Process DELETE, PUT and POST requests for the FileModel ressource.
 
-    Arguments
+    Parameters
     ----------
-    request: HttpRequest
-        a DELETE #TODO
-        or a PUT  #TODO
-        or a POST request to copy the file with file_id
-            from source_path to destination_path
-    file_id: int
-        the ID of the file
+        request: HttpRequest
+        fileId: Unique identifier of a file
 
     Returns
     -------
-    A HttpResponse with a JSON object which
-    can contain errors.
+        A StatusResponse or HttpResponseForbidden if the request method was
+        other than GET.
     """
-    back='_BACK'
 
+    back = '_BACK'
+
+    if request.method == 'DELETE':
+        FileModel.objects.filter(id=file_id).delete()
+        return StatusResponse(Status.ok(''))
     if request.method == 'POST':
         file_ = FileModel.objects.get(id=file_id)
         slave = file_.slave
