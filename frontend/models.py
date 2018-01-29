@@ -316,6 +316,31 @@ class Program(Model):
         else:
             return False
 
+    def get_log(self):
+        """
+        Requests a log of the program on the slave.
+
+         Returns
+        -------
+            boolean which indicates if the Request was possible.
+        """
+        LOGGER.info(
+                "Requesting log for program %s on slave %s",
+                self.name,
+                self.slave.name,
+        )
+        if not self.slave.is_online:
+            Group('client_' + str(self.slave.id)).send({
+                'text':
+                Command(
+                    method="get_log",
+                    uuid=self.programstatus.command_uuid).to_json()
+            })
+            return True
+        else:
+            return False
+
+
 
 class File(Model):
     """

@@ -3,6 +3,7 @@ This module contains all functions that handle requests on websockets.
 """
 import logging
 import traceback
+import os
 
 from channels import Group
 from channels.sessions import channel_session
@@ -55,8 +56,9 @@ def handle_execute_answer(status):
         )
     else:
         LOGGER.error(
-            'Exception in occurred client while executing %s: \n %s',
+            'Exception in occurred client while executing %s: %s %s',
             program.name,
+            os.linesep,
             status.payload['result'],
         )
 
@@ -108,11 +110,42 @@ def handle_online_answer(status):
             slave.name))
 
         LOGGER.error(
-            'Exception occurred in client %s (online-request): \n %s',
+            'Exception occurred in client %s (online-request): %s %s',
             slave.name,
+            os.linesep,
             status.payload['result'],
         )
 
+def handle_get_log_answer(status):
+    try:
+        program_status = ProgramStatusModel.objects.get(command_uuid=status.uuid)
+        program = program_status.program
+    except ProgramStatusModel.DoesNotExist:
+        LOGGER.warning(
+            "A log from a programm with id %s has arrived, but is not in the database.",
+            status.uuid,
+        )
+        return
+
+    LOGGER.info(
+        "Received answer on get_log request of program %s on %s.",
+        program.name,
+        program.slave.name,
+    )
+
+    if status.is_ok():
+       notify({'log': status.payload['result'], 'pid': str(program.id)})
+       LOGGER.info("Send log of %s to the webinterface", program.name)
+    else:
+        notify_err('An error occured while reading the log file of {} on {}!'.format(program.name, program.slave.name))
+
+        LOGGER.error(
+            'Exception occurred in client %s with program %s (get_log-request): %s %s',
+            program.slave.name,
+            program.name,
+            os.linesep,
+            status.payload['result'],
+        )
 
 @channel_session
 def ws_rpc_connect(message):
@@ -189,6 +222,8 @@ def ws_rpc_receive(message):
 
             # notify the scheduler that the status has changed
             FSIM_CURRENT_SCHEDULER.notify()
+        elif status.payload['method'] == 'get_log':
+            handle_get_log_answer(status)
         else:
             LOGGER.info(
                 'Client send answer from unknown function %s.',
