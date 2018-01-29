@@ -265,7 +265,7 @@ def stop_program(request, program_id):
     Parameters
     ----------
         request: HttpRequest
-        id: Unique identifier of a program
+        program_id: Unique identifier of a program
 
     Returns
     -------
@@ -285,6 +285,37 @@ def stop_program(request, program_id):
 
     else:
         return HttpResponseForbidden()
+
+
+def program_get_log(request, program_id):
+    """
+    Process GET requests which will request a log from a programm on a slave.
+
+    Parameters
+    ----------
+        request: HttpRequest
+        program_id: Unique identifier of a program
+
+    Returns
+    -------
+        A StatusResponse or HttpResponseForbidden if the request method was
+        other than GET.
+    """
+    if request.method == 'GET':
+        if ProgramModel.objects.filter(id=program_id).exists():
+            program = ProgramModel.objects.get(id=program_id)
+            if program.get_log():
+                return StatusResponse(Status.ok(''))
+            else:
+                return StatusResponse(
+                    Status.err('Can not request a log from an offline Client.')
+                )
+        else:
+            return StatusResponse(Status.err('Can not get a log of an unknown program.'))
+
+    else:
+        return HttpResponseForbidden()
+
 
 
 def add_script(request):
