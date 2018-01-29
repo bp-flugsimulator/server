@@ -7,7 +7,6 @@ from frontend.apps import flush
 
 from frontend.models import (
     Slave as SlaveModel,
-    SlaveStatus as SlaveStatusModel,
     ProgramStatus as ProgramStatusModel,
     validate_mac_address,
     validate_argument_list,
@@ -15,9 +14,10 @@ from frontend.models import (
 
 from .factory import (
     SlaveFactory,
-    SlaveStatusFactory,
+    ScriptFactory,
     ProgramFactory,
     ProgramStatusFactory,
+    SGPFactory,
 )
 
 
@@ -33,6 +33,37 @@ class DatabaseTests(TestCase):  # pylint: disable=unused-variable
             'a "abc',
         )
 
+    def test_script_has_error(self):
+        script = ScriptFactory()
+
+        self.assertFalse(script.has_error)
+
+        script.error_code = "oops"
+        script.save()
+
+        self.assertTrue(script.has_error)
+
+    def test_script_indexes(self):
+        script = ScriptFactory()
+        slave = SlaveFactory()
+        prog1 = ProgramFactory(slave=slave)
+        prog2 = ProgramFactory(slave=slave)
+
+        sgp1 = SGPFactory(index=0, program=prog1, script=script)
+        sgp2 = SGPFactory(index=2, program=prog2, script=script)
+
+        self.assertEqual([{
+            'index': sgp1.index,
+            'id__count': 1
+        }, {
+            'index': sgp2.index,
+            'id__count': 1
+        }], list(script.indexes))
+
+    def test_script_name(self):
+        script = ScriptFactory()
+        self.assertEqual(script.name, str(script))
+
     def test_slave_has_err(self):
         slave = SlaveFactory()
 
@@ -43,6 +74,19 @@ class DatabaseTests(TestCase):  # pylint: disable=unused-variable
         slave = SlaveFactory()
         self.assertFalse(slave.is_online)
 
+    def test_program_is_timeouted(self):
+        status = ProgramStatusFactory(running=True, timeouted=True)
+        prog = status.program
+        slave = prog.slave
+
+        self.assertTrue(slave.has_running)
+        self.assertFalse(slave.has_error)
+        self.assertTrue(prog.is_running)
+        self.assertFalse(prog.is_executed)
+        self.assertFalse(prog.is_successful)
+        self.assertFalse(prog.is_error)
+        self.assertTrue(prog.is_timeouted)
+
     def test_program_is_err(self):
         prog = ProgramFactory()
 
@@ -50,6 +94,7 @@ class DatabaseTests(TestCase):  # pylint: disable=unused-variable
         self.assertFalse(prog.is_error)
         self.assertFalse(prog.is_successful)
         self.assertFalse(prog.is_executed)
+        self.assertFalse(prog.is_timeouted)
 
     def test_program_running(self):
         status = ProgramStatusFactory(running=True)
@@ -62,6 +107,7 @@ class DatabaseTests(TestCase):  # pylint: disable=unused-variable
         self.assertFalse(prog.is_executed)
         self.assertFalse(prog.is_successful)
         self.assertFalse(prog.is_error)
+        self.assertFalse(prog.is_timeouted)
 
     def test_program_successful(self):
         status = ProgramStatusFactory(code="0")
@@ -74,6 +120,7 @@ class DatabaseTests(TestCase):  # pylint: disable=unused-variable
         self.assertTrue(prog.is_executed)
         self.assertTrue(prog.is_successful)
         self.assertFalse(prog.is_error)
+        self.assertFalse(prog.is_timeouted)
 
     def test_program_error(self):
         status = ProgramStatusFactory(code="1")
@@ -86,6 +133,7 @@ class DatabaseTests(TestCase):  # pylint: disable=unused-variable
         self.assertTrue(prog.is_executed)
         self.assertFalse(prog.is_successful)
         self.assertTrue(prog.is_error)
+        self.assertFalse(prog.is_timeouted)
 
     def test_flush_error(self):
         slave = SlaveFactory()
@@ -144,13 +192,10 @@ class DatabaseTests(TestCase):  # pylint: disable=unused-variable
         slave = SlaveFactory()
         prog = ProgramFactory(slave=slave)
 
-        SlaveStatusFactory(slave=slave)
         ProgramStatusFactory(program=prog)
 
-        self.assertEqual(SlaveStatusModel.objects.count(), 1)
         self.assertEqual(ProgramStatusModel.objects.count(), 1)
 
-        flush("SlaveStatus", "ProgramStatus")
+        flush("ProgramStatus")
 
-        self.assertEqual(SlaveStatusModel.objects.count(), 0)
         self.assertEqual(ProgramStatusModel.objects.count(), 0)

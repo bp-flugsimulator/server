@@ -1,3 +1,7 @@
+/* eslint-env browser*/
+/* eslint no-use-before-define: ["error", { "functions": false }] */
+/* exported uuid, Status */
+
 function uuid() {
     let uuid = '', i, random;
     for (i = 0; i < 32; i++) {

@@ -1,4 +1,5 @@
 /* eslint-env browser */
+/* eslint no-use-before-define: ["error", { "functions": false }] */
 /* global $, JSONEditor, getCookie, Status, modalDeleteAction, notify */
 /* exported loadScript, newScript */
 
@@ -7,38 +8,40 @@ var schema = {
     'type': 'object',
     'definitions': {
         'program_entry': {
+            'title': 'Program set',
             'type': 'object',
             'properties': {
                 'index': {
+                    'title': 'Index',
                     'type': 'integer',
-                    // 'required': true
                 },
                 'slave': {
+                    'title': 'Client',
                     'type': ['integer', 'string'],
-                    // 'required': true
                 },
                 'program': {
+                    'title': 'Program',
                     'type': ['integer', 'string'],
-                    // 'required': true
                 }
             },
             'required': ['index', 'slave', 'program'],
             'additionalProperties': false
         },
         'file_entry': {
+            'title': 'File set',
             'type': 'object',
             'properties': {
                 'index': {
+                    'title': 'Index',
                     'type': 'integer',
-                    // 'required': true
                 },
                 'slave': {
+                    'title': 'Client',
                     'type': ['integer', 'string'],
-                    // 'required': true
                 },
                 'file': {
+                    'title': 'File',
                     'type': ['integer', 'string'],
-                    // 'required': true
                 }
             },
             'required': ['index', 'slave', 'file'],
@@ -115,20 +118,13 @@ var options = {
                                 if (status.is_ok()) {
                                     resolve(status.payload);
                                 } else {
-                                    $.notify({
-                                        message: 'Could not load autocomplete query from server (' + status.payload + ')'
-                                    }, {
-                                            type: 'danger'
-                                        });
+                                    notify('Autocomplete error', 'Could not load autocomplete query from server (' + JSON.stringify(status.payload) + ')', 'danger');
                                     reject();
                                 }
                             },
                             error(xhr, errorString, errorCode) {
-                                $.notify({
-                                    message: 'Could not load autocomplete query from server (' + errorCode + ')'
-                                }, {
-                                        type: 'danger'
-                                    });
+                                notify('Autocomplete error',
+                                    'Could not load autocomplete query from server (' + errorCode + ')', 'danger');
                             }
                         });
                         break;
@@ -164,14 +160,14 @@ var options = {
 
 var editors = {};
 
-var createEditor = function (json, id) {
+function createEditor(json, id) {
     let container = document.getElementById('jsoneditor_' + id);
     let editor = new JSONEditor(container, options, json);
     editors['jsoneditor_' + id] = editor;
     editor.expandAll();
-};
+}
 
-var loadScript = function (id) {
+function loadScript(id) {
     $.ajax({
         url: '/api/script/' + id + '?programs=str&files=str&slaves=str',
         beforeSend(xhr) {
@@ -184,24 +180,16 @@ var loadScript = function (id) {
             if (status.is_ok()) {
                 createEditor(status.payload, id);
             } else {
-                $.notify({
-                    message: 'Could not load script from server (' + status.payload + ')'
-                }, {
-                        type: 'danger'
-                    });
+                notify('Not found', 'Could not load script from server (' + JSON.stringify(status.payload) + ')', 'danger');
             }
         },
         error(xhr, errorString, errorCode) {
-            $.notify({
-                message: 'Could not load script from server (' + errorCode + ')'
-            }, {
-                    type: 'danger'
-                });
+            notify('Transport error', 'Could not load script from server (' + errorCode + ')', 'danger');
         }
     });
-};
+}
 
-var newScript = function (name) {
+function newScript(name) {
     let defaultJson = {
         name,
         programs: [],
@@ -209,8 +197,7 @@ var newScript = function (name) {
     };
 
     createEditor(defaultJson, name);
-};
-
+}
 
 $(document).ready(function () {
     // Set color of the current selected.

@@ -10,7 +10,6 @@ from factory.fuzzy import FuzzyText, FuzzyInteger
 
 from frontend.models import (
     Slave as SlaveModel,
-    SlaveStatus as SlaveStatusModel,
     ProgramStatus as ProgramStatusModel,
     Program as ProgramModel,
     Script as ScriptModel,
@@ -47,13 +46,15 @@ class SlaveFactory(DjangoModelFactory):
     mac_address = Sequence(int_to_mac)
 
 
-class SlaveStatusFactory(DjangoModelFactory):
+class SlaveOnlineFactory(DjangoModelFactory):
     class Meta:
-        model = SlaveStatusModel
+        model = SlaveModel
 
-    slave = SubFactory(SlaveFactory)
+    name = FuzzyText(length=20, prefix="slave_")
+    ip_address = Sequence(lambda n: socket.inet_ntoa(struct.pack('!L', n)))
+    mac_address = Sequence(int_to_mac)
+    online = True
     command_uuid = uuid4().hex
-    online = False
 
 
 class ProgramFactory(DjangoModelFactory):

@@ -1,28 +1,28 @@
 """
 This module contains all functions that handle requests on the REST api.
 """
-
-from shlex import split
+import logging
 
 from django.http import HttpResponseForbidden
 from django.http.request import QueryDict
 from django.core.exceptions import ValidationError
 from django.db.utils import IntegrityError
 from channels import Group
-from utils.status import Status
-from utils import Command
-from wakeonlan.wol import send_magic_packet
+from utils import Status, Command
 from server.utils import StatusResponse
 
-from .models import Slave as SlaveModel, SlaveStatus as SlaveStatusModel,\
-    Program as ProgramModel, ProgramStatus as ProgramStatusModel,\
-    Script as ScriptModel, File as FileModel
+from .models import (
+    Slave as SlaveModel,
+    Program as ProgramModel,
+    Script as ScriptModel,
+    File as FileModel,
+)
 
 from .scripts import Script
-
 from .forms import SlaveForm, ProgramForm, FileForm
-
 from .consumers import notify
+
+LOGGER = logging.getLogger("fsim.api")
 
 
 def add_slave(request):
@@ -53,7 +53,8 @@ def add_slave(request):
             Status.ok(
                 list(
                     set([
-                        obj['name'] for obj in SlaveModel.objects.filter(
+                        obj['name']
+                        for obj in SlaveModel.objects.filter(
                             name__contains=query).values("name")
                     ]))))
     else:
@@ -112,8 +113,7 @@ def shutdown_slave(request, slave_id):
     if request.method == 'GET':
         if SlaveModel.objects.filter(id=slave_id).exists():
             slave = SlaveModel.objects.get(id=slave_id)
-            if SlaveStatusModel.objects.filter(
-                    slave=slave) and slave.slavestatus.online:
+            if slave.is_online:
                 Group('client_' + str(slave_id)).send({
                     'text':
                     Command(method="shutdown").to_json()
@@ -150,7 +150,7 @@ def wol_slave(request, slave_id):
     """
     if request.method == 'GET':
         try:
-            send_magic_packet(SlaveModel.objects.get(id=slave_id).mac_address)
+            SlaveModel.wake_on_lan(slave_id)
         except Exception as err:  # pylint: disable=W0703
             return StatusResponse(Status.err(repr(err)), status=500)
 
@@ -200,7 +200,8 @@ def add_program(request):
             Status.ok(
                 list(
                     set([
-                        obj['name'] for obj in ProgramModel.objects.filter(
+                        obj['name']
+                        for obj in ProgramModel.objects.filter(
                             name__contains=query).values("name")
                     ]))))
     else:
@@ -227,31 +228,7 @@ def manage_program(request, program_id):
         return StatusResponse(Status.ok(''))
     if request.method == 'POST':
         program = ProgramModel.objects.get(id=program_id)
-        slave = program.slave
-        if SlaveStatusModel.objects.filter(
-                slave=slave) and slave.slavestatus.online:
-            cmd = Command(
-                method="execute",
-                path=program.path,
-                arguments=split(program.arguments))
-
-            # send command to the client
-            Group('client_' + str(program.slave.id)).send({
-                'text': cmd.to_json()
-            })
-
-            # tell webinterface that the program has started
-            Group('notifications').send({
-                'text':
-                Status.ok({
-                    "program_status": "started",
-                    "pid": program.id,
-                }).to_json()
-            })
-
-            # create status entry
-            ProgramStatusModel(program=program, command_uuid=cmd.uuid).save()
-
+        if program.enable():
             return StatusResponse(Status.ok(''))
         else:
             return StatusResponse(
@@ -298,14 +275,7 @@ def stop_program(request, program_id):
     if request.method == 'GET':
         if ProgramModel.objects.filter(id=program_id).exists():
             program = ProgramModel.objects.get(id=program_id)
-            if ProgramStatusModel.objects.filter(
-                    program=program) and program.programstatus.running:
-                Group('client_' + str(program.slave.id)).send({
-                    'text':
-                    Command(
-                        method="execute",
-                        uuid=program.programstatus.command_uuid).to_json()
-                })
+            if program.disable():
                 return StatusResponse(Status.ok(''))
             else:
                 return StatusResponse(
@@ -341,9 +311,8 @@ def add_script(request):
                     err.args[0])))
         except TypeError:
             return StatusResponse(Status.err("Wrong array items."))
-        except ValueError:
-            return StatusResponse(
-                Status.err("One or more values does contain not valid types."))
+        except ValueError as err:
+            return StatusResponse(Status.err(str(err)))
         except IntegrityError:
             return StatusResponse(
                 Status.err("Script with that name already exists."))
@@ -409,6 +378,39 @@ def manage_script(request, script_id):
         return HttpResponseForbidden()
 
 
+def run_script(request, script_id):
+    """
+    Process GET requests for the ScriptModel ressource.
+
+    Parameters
+    ----------
+        request: HttpRequest
+        script_id: Unique identifier of script
+
+    Returns
+    -------
+        A StatusResponse or HttpResponseForbidden if the request method was
+        other than GET.
+    """
+
+    if request.method == 'GET':
+        try:
+            script = ScriptModel.objects.get(id=script_id)
+            # only allow the start of a script if the old one is finished
+            if FSIM_CURRENT_SCHEDULER.start(script.id):
+                FSIM_CURRENT_SCHEDULER.notify()
+                return StatusResponse(
+                    Status.ok("Started script {}".format(script.name)))
+            else:
+                return StatusResponse(Status.err("A script is still running."))
+        except ScriptModel.DoesNotExist:
+            return StatusResponse(
+                Status.err("The script with the id {} does not exist.".format(
+                    script_id)))
+    else:
+        return HttpResponseForbidden()
+
+
 def add_file(request):
     """
     Process POST requests which adds new FileModel and GET requests to query
@@ -450,7 +452,8 @@ def add_file(request):
             Status.ok(
                 list(
                     set([
-                        obj['name'] for obj in FileModel.objects.filter(
+                        obj['name']
+                        for obj in FileModel.objects.filter(
                             name__contains=query).values("name")
                     ]))))
     else:
