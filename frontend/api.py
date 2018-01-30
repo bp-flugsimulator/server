@@ -287,7 +287,7 @@ def stop_program(request, program_id):
         return HttpResponseForbidden()
 
 
-def program_get_log(request, program_id):
+def program_manage_log(request, program_id):
     """
     Process GET requests which will request a log from a programm on a slave.
 

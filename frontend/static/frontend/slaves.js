@@ -153,6 +153,9 @@ var socketEventHandler = {
         let cardBox = $('#programCard_' + payload.pid);
         cardBox.empty();
         cardBox.text(payload.log);
+
+        let cardButton = $('#programCardButton_' + payload.pid);
+        cardButton.removeClass('program-action-get-log');
     },
 };
 
@@ -203,7 +206,6 @@ $(document).ready(function () {
 
     $('.program-action-get-log').click(function () {
         let id = $(this).data('program-id');
-
         $.ajax({
             type: 'GET',
             url: '/api/program/' + id + '/log',

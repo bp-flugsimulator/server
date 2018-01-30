@@ -329,7 +329,7 @@ class Program(Model):
                 self.name,
                 self.slave.name,
         )
-        if not self.slave.is_online:
+        if self.slave.is_online:
             Group('client_' + str(self.slave.id)).send({
                 'text':
                 Command(
