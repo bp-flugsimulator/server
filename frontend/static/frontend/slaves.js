@@ -122,14 +122,12 @@ var socketEventHandler = {
     programStopped(payload) {
         let statusContainer = $('#programStatusContainer_' + payload.pid);
         let startstopButton = $('#programStartStop_' + payload.pid);
+
         let cardButton = $('#programCardButton_' + payload.pid);
-        let cardBox = $('#programCard_' + payload.pid);
+        cardButton.prop('disabled', false);
 
         if (payload.code !== 0) {
             statusContainer.attr('data-state', 'error');
-
-            cardButton.prop('disabled', false);
-            cardBox.text(payload.code);
         } else {
             statusContainer.attr('data-state', 'success');
         }
@@ -150,6 +148,11 @@ var socketEventHandler = {
         startstopButton.children('[data-text-swap]').each(function (idx, val) {
             swapText($(val));
         });
+    },
+    programUpdateLog(payload){
+        let cardBox = $('#programCard_' + payload.pid);
+        cardBox.empty();
+        cardBox.text(payload.log);
     },
 };
 
@@ -198,6 +201,30 @@ $(document).ready(function () {
         localStorage.setItem('tab-status', 'program');
     });
 
+    $('.program-action-get-log').click(function () {
+        let id = $(this).data('program-id');
+
+        $.ajax({
+            type: 'GET',
+            url: '/api/program/' + id + '/log',
+            beforeSend(xhr) {
+                xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
+            },
+            converters: {
+                'text json': Status.from_json
+            },
+            success(status) {
+                if (status.is_err()) {
+                    notify('Error while requesting a log', 'Could not request log. (' + JSON.stringify(status.payload) + ')', 'danger');
+                }
+            },
+            error(xhr, errorString, errorCode) {
+                notify('Could deliver', 'Could not deliver request `GET` to server.' + errorCode + ')', 'danger');
+            }
+        });
+    });
+
+
     $('.program-action-start-stop').click(function () {
         let apiRequest = function (url, type) {
             $.ajax({
@@ -221,6 +248,9 @@ $(document).ready(function () {
         };
 
         let id = $(this).data('program-id');
+
+        let cardButton = $('#programCardButton_' + id);
+        cardButton.prop('disabled', false);
 
         if ($(this).attr('data-is-running') === 'True') {
             apiRequest('/api/program/' + id + '/stop', 'GET');
