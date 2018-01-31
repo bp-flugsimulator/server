@@ -4,6 +4,7 @@ This module contains all databasemodels from the frontend application.
 
 import logging
 from shlex import split
+from uuid import uuid4
 
 from django.db.models import (
     Model,
@@ -257,7 +258,10 @@ class Program(Model):
         """
 
         if self.slave.is_online:
+            uuid = uuid4().hex
             cmd = Command(
+                uuid=uuid,  # for the command
+                own_uuid=uuid,  # for the function that gets executed
                 method="execute",
                 path=self.path,
                 arguments=split(self.arguments),
@@ -325,21 +329,20 @@ class Program(Model):
             boolean which indicates if the Request was possible.
         """
         LOGGER.info(
-                "Requesting log for program %s on slave %s",
-                self.name,
-                self.slave.name,
+            "Requesting log for program %s on slave %s",
+            self.name,
+            self.slave.name,
         )
         if self.slave.is_online:
             Group('client_' + str(self.slave.id)).send({
                 'text':
                 Command(
                     method="get_log",
-                    uuid=self.programstatus.command_uuid).to_json()
+                    target_uuid=self.programstatus.command_uuid).to_json()
             })
             return True
         else:
             return False
-
 
 
 class File(Model):

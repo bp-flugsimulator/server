@@ -367,6 +367,91 @@ class WebsocketTests(TestCase):
             Status.from_json(json.dumps(webinterface.receive())),
         )
 
+    def test_ws_rpc_receive_log(self):
+        program_status = ProgramStatusFactory(running=True)
+        program = program_status.program
+
+        error_status = Status.ok({
+            'method': 'get_log',
+            'result': {
+                'log': 'this is the content of a logfile',
+                'uuid': program_status.command_uuid,
+            },
+        })
+
+        #  connect webinterface
+        webinterface = WSClient()
+        webinterface.join_group('notifications')
+
+        ws_client = WSClient()
+        ws_client.send_and_consume(
+            'websocket.receive',
+            path='/commands',
+            content={'text': error_status.to_json()},
+        )
+
+        #  test if the webinterface gets the error message
+        self.assertEqual(
+            Status.ok({
+                'log': 'this is the content of a logfile',
+                'pid': str(program.id),
+            }),
+            Status.from_json(json.dumps(webinterface.receive())),
+        )
+
+    def test_ws_rpc_receive_log_status_err(self):
+        program_status = ProgramStatusFactory(running=True)
+
+        error_status = Status.err({
+            'method': 'get_log',
+            'result': str(Exception('foobar')),
+        })
+
+        #  connect webinterface
+        webinterface = WSClient()
+        webinterface.join_group('notifications')
+
+        ws_client = WSClient()
+        ws_client.send_and_consume(
+            'websocket.receive',
+            path='/commands',
+            content={'text': error_status.to_json()},
+        )
+
+        #  test if the webinterface gets the error message
+        self.assertEqual(
+            Status.err('An error occured while reading a log file!'),
+            Status.from_json(json.dumps(webinterface.receive())),
+        )
+
+    def test_ws_rpc_receive_log_unknown_program(self):
+        program_status = ProgramStatusFactory(running=True)
+
+        error_status = Status.ok({
+            'method': 'get_log',
+            'result': {
+                'log': '',
+                'uuid': '0'
+            },
+        })
+
+        #  connect webinterface
+        webinterface = WSClient()
+        webinterface.join_group('notifications')
+
+        ws_client = WSClient()
+        ws_client.send_and_consume(
+            'websocket.receive',
+            path='/commands',
+            content={'text': error_status.to_json()},
+        )
+
+        #  test if the webinterface gets the error message
+        self.assertEqual(
+            Status.err('Received log from unknown program!'),
+            Status.from_json(json.dumps(webinterface.receive())),
+        )
+
     def test_ws_rpc_receive_unknown_method(self):
         ws_client = WSClient()
         ws_client.send_and_consume(

@@ -116,36 +116,42 @@ def handle_online_answer(status):
             status.payload['result'],
         )
 
-def handle_get_log_answer(status):
-    try:
-        program_status = ProgramStatusModel.objects.get(command_uuid=status.uuid)
-        program = program_status.program
-    except ProgramStatusModel.DoesNotExist:
-        LOGGER.warning(
-            "A log from a programm with id %s has arrived, but is not in the database.",
-            status.uuid,
-        )
-        return
 
-    LOGGER.info(
-        "Received answer on get_log request of program %s on %s.",
-        program.name,
-        program.slave.name,
-    )
+def handle_get_log_answer(status):
 
     if status.is_ok():
-       notify({'log': status.payload['result'], 'pid': str(program.id)})
-       LOGGER.info("Send log of %s to the webinterface", program.name)
+        try:
+            program_status = ProgramStatusModel.objects.get(
+                command_uuid=status.payload['result']['uuid'])
+            program = program_status.program
+        except ProgramStatusModel.DoesNotExist:
+            notify_err('Received log from unknown program!')
+            LOGGER.warning(
+                "A log from a programm with id %s has arrived, but is not in the database.",
+                status.uuid,
+            )
+            return
+
+        LOGGER.info(
+            "Received answer on get_log request of program %s on %s.",
+            program.name,
+            program.slave.name,
+        )
+
+        notify({
+            'log': status.payload['result']['log'],
+            'pid': str(program.id)
+        })
+        LOGGER.info("Send log of %s to the webinterface", program.name)
     else:
-        notify_err('An error occured while reading the log file of {} on {}!'.format(program.name, program.slave.name))
+        notify_err('An error occured while reading a log file!')
 
         LOGGER.error(
-            'Exception occurred in client %s with program %s (get_log-request): %s %s',
-            program.slave.name,
-            program.name,
+            'Exception occurred (get_log-request): %s %s',
             os.linesep,
             status.payload['result'],
         )
+
 
 @channel_session
 def ws_rpc_connect(message):
@@ -192,6 +198,7 @@ def ws_rpc_connect(message):
         LOGGER.error("Rejecting unknown client with ip %s!", ip_address)
         message.reply_channel.send({"accept": False})
 
+
 def ws_rpc_receive(message):
     """
     Handels websockets.receive requests of '/notifications'. Connections only
@@ -234,6 +241,7 @@ def ws_rpc_receive(message):
             'Exception occurred (incoming-request)\n:%s',
             traceback.format_exc(),
         )
+
 
 @channel_session
 def ws_rpc_disconnect(message):
@@ -282,6 +290,7 @@ def ws_rpc_disconnect(message):
             "Disconnected client is not in database. (with IP %s)",
             message.channel_session['ip_address'],
         )
+
 
 def ws_notifications_connect(message):
     """

@@ -100,7 +100,7 @@ var socketEventHandler = {
         let cardButton = $('#programCardButton_' + payload.pid);
 
         statusContainer.attr('data-state', 'warning');
-        cardButton.prop('disabled', true);
+        cardButton.prop('disabled', false);
 
         // Use Python notation !!!
         startstopButton.attr('data-is-running', 'True');
@@ -150,12 +150,12 @@ var socketEventHandler = {
         });
     },
     programUpdateLog(payload){
-        let cardBox = $('#programCard_' + payload.pid);
-        cardBox.empty();
-        cardBox.text(payload.log);
+        let logBox= $('#programLog_' + payload.pid);
+        logBox.empty();
+        logBox.text(payload.log);
 
         let cardButton = $('#programCardButton_' + payload.pid);
-        cardButton.removeClass('program-action-get-log');
+        cardButton.data('has-log', true);
     },
 };
 
@@ -206,24 +206,26 @@ $(document).ready(function () {
 
     $('.program-action-get-log').click(function () {
         let id = $(this).data('program-id');
-        $.ajax({
-            type: 'GET',
-            url: '/api/program/' + id + '/log',
-            beforeSend(xhr) {
-                xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
-            },
-            converters: {
-                'text json': Status.from_json
-            },
-            success(status) {
-                if (status.is_err()) {
-                    notify('Error while requesting a log', 'Could not request log. (' + JSON.stringify(status.payload) + ')', 'danger');
+        if (!$(this).data('has-log')){
+            $.ajax({
+                type: 'GET',
+                url: '/api/program/' + id + '/log',
+                beforeSend(xhr) {
+                    xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
+                },
+                converters: {
+                    'text json': Status.from_json
+                },
+                success(status) {
+                    if (status.is_err()) {
+                        notify('Error while requesting a log', 'Could not request log. (' + JSON.stringify(status.payload) + ')', 'danger');
+                    }
+                },
+                error(xhr, errorString, errorCode) {
+                    notify('Could deliver', 'Could not deliver request `GET` to server.' + errorCode + ')', 'danger');
                 }
-            },
-            error(xhr, errorString, errorCode) {
-                notify('Could deliver', 'Could not deliver request `GET` to server.' + errorCode + ')', 'danger');
-            }
-        });
+            });
+        }
     });
 
 
@@ -268,9 +270,9 @@ $(document).ready(function () {
         deleteWarning.children().find('#deleteSlaveModalButton').hide();
         deleteWarning.children().find('#deleteFileModalButton').hide();
 
-	deleteWarning.children().find('#delete' + show +'ModalButton').show();
+        deleteWarning.children().find('#delete' + show +'ModalButton').show();
     
-	deleteWarning.children().find('.modal-body').empty(message);
+        deleteWarning.children().find('.modal-body').empty(message);
         deleteWarning.children().find('.modal-body').append(message);
 
 

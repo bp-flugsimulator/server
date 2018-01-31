@@ -53,8 +53,7 @@ def add_slave(request):
             Status.ok(
                 list(
                     set([
-                        obj['name']
-                        for obj in SlaveModel.objects.filter(
+                        obj['name'] for obj in SlaveModel.objects.filter(
                             name__contains=query).values("name")
                     ]))))
     else:
@@ -200,8 +199,7 @@ def add_program(request):
             Status.ok(
                 list(
                     set([
-                        obj['name']
-                        for obj in ProgramModel.objects.filter(
+                        obj['name'] for obj in ProgramModel.objects.filter(
                             name__contains=query).values("name")
                     ]))))
     else:
@@ -308,14 +306,14 @@ def program_manage_log(request, program_id):
                 return StatusResponse(Status.ok(''))
             else:
                 return StatusResponse(
-                    Status.err('Can not request a log from an offline Client.')
-                )
+                    Status.err(
+                        'Can not request a log from an offline Client.'))
         else:
-            return StatusResponse(Status.err('Can not get a log of an unknown program.'))
+            return StatusResponse(
+                Status.err('Can not get a log of an unknown program.'))
 
     else:
         return HttpResponseForbidden()
-
 
 
 def add_script(request):
@@ -483,8 +481,7 @@ def add_file(request):
             Status.ok(
                 list(
                     set([
-                        obj['name']
-                        for obj in FileModel.objects.filter(
+                        obj['name'] for obj in FileModel.objects.filter(
                             name__contains=query).values("name")
                     ]))))
     else:
@@ -508,4 +505,3 @@ def manage_file(request, file_id):
     if request.method == 'DELETE':
         FileModel.objects.filter(id=file_id).delete()
         return StatusResponse(Status.ok(''))
-
