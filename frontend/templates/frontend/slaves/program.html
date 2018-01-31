@@ -35,6 +35,8 @@
         </div>
     </div>
 
-    <div class="collapse pl-4 pr-4 mt-2 row code"  style="white-space:pre-wrap;" id="programCard_{{ program.id }}">
+    <div class="collapse pl-4 pr-4 mt-2 row" id="programCard_{{ program.id }}">
+        <div class="code" style="white-space:pre-wrap; background:lightgrey;width: 100%;" id="programLog_{{ program.id }}"></div>
+        <button class="btn btn-outline-dark font-weight-light program-action-get-log" style="width: 100%;" data-program-id="{{ program.id }}"><i class="mdi mdi-24px mdi-reload"></i></button>
     </div>
 </div>
