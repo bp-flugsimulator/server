@@ -138,9 +138,8 @@ if __name__ == "__main__":
     if system() == 'Windows':
         REQUIREMENTS_FILE = 'win_requirements.txt'
     elif system() == 'Linux':
-        if architecture()[0] == '64bit':
-            REQUIREMENTS_FILE = 'linux_requirements.txt'
-        else:
+        REQUIREMENTS_FILE = 'linux_requirements.txt'
+        if architecture()[0] != '64bit':
             stderr.write(architecture()[0] +
                          ' is not officially supported but may work\n')
     else:
