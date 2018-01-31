@@ -17,10 +17,6 @@ from sys import stderr
 
 from argparse import ArgumentParser
 
-from urllib.request import urlretrieve
-
-from shutil import unpack_archive
-
 import pip
 
 
@@ -145,7 +141,7 @@ if __name__ == "__main__":
     else:
         stderr.write(system() + ' is not officially supported but may work\n')
 
-    
+
     if ARGS.download_packages:
         with open(REQUIREMENTS_FILE) as requirements:
             for library in requirements:
