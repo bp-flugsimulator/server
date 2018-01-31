@@ -400,8 +400,6 @@ class WebsocketTests(TestCase):
         )
 
     def test_ws_rpc_receive_log_status_err(self):
-        program_status = ProgramStatusFactory(running=True)
-
         error_status = Status.err({
             'method': 'get_log',
             'result': str(Exception('foobar')),
@@ -425,8 +423,6 @@ class WebsocketTests(TestCase):
         )
 
     def test_ws_rpc_receive_log_unknown_program(self):
-        program_status = ProgramStatusFactory(running=True)
-
         error_status = Status.ok({
             'method': 'get_log',
             'result': {
