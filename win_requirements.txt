@@ -1,5 +1,5 @@
 pip>=8
-pipiwin32>=219,<=220
+pipiwin32<=220
 wheel==0.30.0
 Django==2.0.1
 django-widget-tweaks==1.4.1
