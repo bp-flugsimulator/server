@@ -76,6 +76,21 @@ function fsimWebsocket(partialSocketEventHandler) {
                     default:
                         notify('Unknown message', 'Unknown script_status received (' + JSON.stringify(status.payload.message) + ')', 'info');
                 }
+            } else if (status.payload.file_status != null) {
+                switch (status.payload.file_status) {
+                    case 'moved':
+                        socketEventHandler.fileMoved(status.payload);
+                        break;
+                    case 'restored':
+                        socketEventHandler.fileRestored(status.payload);
+                        break;
+                    case 'error':
+                        socketEventHandler.fileError(status.payload);
+                        break;
+                    default:
+                        notify('Unknown message', 'Unknown file_status received (' + JSON.stringify(status.payload.message) + ')', 'info');
+                }
+
             } else if (status.payload.message != null) {
                 notify('Info message', JSON.stringify(status.payload.message), 'info');
             } else {
