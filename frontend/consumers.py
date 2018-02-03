@@ -36,16 +36,31 @@ def handle_file_answer(status):
     if status.is_ok():
         file_.hash_value = status.payload['result']
         file_.save()
-        LOGGER.info("Saved file {} with hash value {}.".format(
-            file_.name, file_.hash_value))
-    else:
-        notify_err('An error has occurred while trying to move file {}'.format(
-            file_.name))
 
-    notify({
-        'moved': file_.is_moved,
-        'fid': str(file_.id),
-    })
+        LOGGER.info(
+            "Saved file %s with hash value %s.",
+            file_.name,
+            file_.hash_value,
+        )
+
+        if file_.is_moved:
+            status = 'moved'
+        else:
+            status = 'restored'
+
+        notify({
+            'file_status': status,
+            'fid': str(file_.id),
+        })
+    else:
+        file_.error_code = status.payload['result']
+        file_.save()
+
+        notify({
+            'file_status': 'error',
+            'error_code': status.payload['result'],
+            'fid': str(file_.id),
+        })
 
 
 def handle_execute_answer(status):

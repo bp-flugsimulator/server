@@ -47,7 +47,7 @@ const restoreSlaveInnerTab = function (slaveId) {
     }
 };
 
-function changeStartStopText(element, text) {
+function changeStatusDisplayText(element, text) {
     element.children('.button-status-display').each(function (idx, val) {
         $(val).text(text);
     });
@@ -64,7 +64,7 @@ var socketEventHandler = {
 
         // Use Python notation !!!
         startstopButton.attr('data-is-running', 'True');
-        changeStartStopText(startstopButton, 'STOP');
+        changeStatusDisplayText(startstopButton, 'STOP');
 
         // set tooltip to Stop
         startstopButton.children('[data-text-swap]').each(function (idx, val) {
@@ -87,7 +87,7 @@ var socketEventHandler = {
 
         // Use Python notation !!!
         startstopButton.attr('data-is-running', 'False');
-        changeStartStopText(startstopButton, 'START');
+        changeStatusDisplayText(startstopButton, 'START');
 
         // set tooltip to Start
         startstopButton.children('[data-text-swap]').each(function (idx, val) {
@@ -104,7 +104,7 @@ var socketEventHandler = {
 
         // Use Python notation !!!
         startstopButton.attr('data-is-running', 'True');
-        changeStartStopText(startstopButton, 'STOP');
+        changeStatusDisplayText(startstopButton, 'STOP');
 
         let sid = null;
 
@@ -136,7 +136,7 @@ var socketEventHandler = {
 
         // Use Python notation !!!
         startstopButton.attr('data-is-running', 'False');
-        changeStartStopText(startstopButton, 'START');
+        changeStatusDisplayText(startstopButton, 'START');
 
         let sid = null;
 
@@ -150,6 +150,67 @@ var socketEventHandler = {
         startstopButton.children('[data-text-swap]').each(function (idx, val) {
             swapText($(val));
         });
+    },
+    fileMoved(payload) {
+        let statusContainer = $('#fileStatusContainer_' + payload.fid);
+        let moveRestoreButton = $('#fileRestoreMove_' + payload.fid);
+        let cardButton = $('#fileCardButton_' + payload.fid);
+
+        statusContainer.attr('data-state', 'success');
+        cardButton.prop('disabled', true);
+
+        // Use Python notation !!!
+        moveRestoreButton.attr('data-is-moved', 'True');
+        changeStatusDisplayText(moveRestoreButton, 'RESTORE');
+
+        let sid = null;
+
+        statusContainer.find('button[data-slave-id]').each(function (idx, val) {
+            sid = $(val).data('slave-id');
+            return false;
+        });
+
+        styleSlaveByStatus(sid);
+    },
+    fileRestored(payload) {
+        let statusContainer = $('#fileStatusContainer_' + payload.fid);
+        let moveRestoreButton = $('#fileRestoreMove_' + payload.fid);
+        let cardButton = $('#fileCardButton_' + payload.fid);
+
+        statusContainer.attr('data-state', 'success');
+        cardButton.prop('disabled', true);
+
+        // Use Python notation !!!
+        moveRestoreButton.attr('data-is-moved', 'False');
+        changeStatusDisplayText(moveRestoreButton, 'MOVE');
+
+        let sid = null;
+
+        statusContainer.find('button[data-slave-id]').each(function (idx, val) {
+            sid = $(val).data('slave-id');
+            return false;
+        });
+
+        styleSlaveByStatus(sid);
+    },
+    fileError(payload) {
+        let statusContainer = $('#fileStatusContainer_' + payload.fid);
+        let moveRestoreButton = $('#fileRestoreMove_' + payload.fid);
+        let cardButton = $('#fileCardButton_' + payload.fid);
+        let cardBox = $('#fileCard_' + payload.fid);
+
+        statusContainer.attr('data-state', 'error');
+        cardButton.prop('disabled', false);
+        cardBox.text(payload.error_code);
+
+        let sid = null;
+
+        statusContainer.find('button[data-slave-id]').each(function (idx, val) {
+            sid = $(val).data('slave-id');
+            return false;
+        });
+
+        styleSlaveByStatus(sid);
     },
 };
 
@@ -229,16 +290,16 @@ $(document).ready(function () {
         }
     });
 
-    function prepareDeleteModal(show, id, message){
-         //changing button visibility and message of the delete modal
+    function prepareDeleteModal(show, id, message) {
+        //changing button visibility and message of the delete modal
         let deleteWarning = $('#deleteWarning');
         deleteWarning.children().find('#deleteProgramModalButton').hide();
         deleteWarning.children().find('#deleteSlaveModalButton').hide();
         deleteWarning.children().find('#deleteFileModalButton').hide();
 
-	deleteWarning.children().find('#delete' + show +'ModalButton').show();
-    
-	deleteWarning.children().find('.modal-body').empty(message);
+        deleteWarning.children().find('#delete' + show + 'ModalButton').show();
+
+        deleteWarning.children().find('.modal-body').empty(message);
         deleteWarning.children().find('.modal-body').append(message);
 
 
@@ -358,13 +419,14 @@ $(document).ready(function () {
     });
 
     $('.file-action-delete').click(function () {
-       //get id and name of the program and create deletion message
+        //get id and name of the program and create deletion message
         let id = $(this).data('file-id');
         let name = $(this).data('file-name');
         let message = '<a>Are you sure you want to remove file </a><b>' + name + '</b>?</a>';
 
         prepareDeleteModal('File', id, message);
     });
+
     $('.file-action-move').click(function () {
         let apiRequest = function (url, type) {
             $.ajax({
@@ -378,26 +440,18 @@ $(document).ready(function () {
                 },
                 success(status) {
                     if (status.is_err()) {
-                        $.notify({
-                            message: status.payload
-                        }, {
-                                type: 'danger'
-                            });
+                        notify('Error while moving file', 'Could not move/restore file. (' + JSON.stringify(status.payload) + ')', 'danger');
                     }
                 },
                 error(xhr, errorString, errorCode) {
-                    $.notify({
-                        message: 'Could not deliver ' + type + ' request to server (' + errorCode + ')'
-                    }, {
-                            type: 'danger'
-                        });
+                    notify('Could deliver', 'Could not deliver request `' + type + '` to server.' + errorCode + ')', 'danger');
                 }
             });
         };
 
         let id = $(this).data('file-id');
 
-        if ($(this).attr('data-moved') === 'True') {
+        if ($(this).attr('data-is-moved') === 'True') {
             apiRequest('/api/file/' + id + '/restore', 'GET');
         } else {
             apiRequest('/api/file/' + id, 'POST');
@@ -489,7 +543,6 @@ $(document).ready(function () {
         slaveModal.modal('toggle');
     });
 
-
     //opens the slaveModal to modify an existing slave
     $('.slave-action-modify').click(function () {
         //get info of slave
@@ -538,5 +591,4 @@ $(document).ready(function () {
 
     // slaveForm Handler
     $('#slaveForm').submit(onFormSubmit('slaveForm'));
-
 });

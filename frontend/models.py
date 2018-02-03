@@ -331,6 +331,9 @@ class File(Model):
     destination_path: str
         The path there the file should be used in the file system
 
+    error_code: str
+        The error code which is raised by the slave.
+
     slave: Slave The slave on which the file belongs to
     """
     name = CharField(unique=False, max_length=200)
@@ -348,6 +351,7 @@ class File(Model):
         blank=True,
         null=True,
     )
+    error_code = CharField(blank=True, default="", max_length=1000)
     slave = ForeignKey(Slave, on_delete=CASCADE)
 
     class Meta:
@@ -361,7 +365,11 @@ class File(Model):
         """
         Returns true if file is moved.
         """
-        return self.hash_value != None
+        return self.hash_value is not None
+
+    @property
+    def is_error(self):
+        return self.error_code != ''
 
 
 class Script(Model):
