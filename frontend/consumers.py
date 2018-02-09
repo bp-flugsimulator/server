@@ -35,6 +35,7 @@ def handle_file_answer(status):
 
     if status.is_ok():
         file_.hash_value = status.payload['result']
+        file_.error_code = ""
         file_.save()
 
         LOGGER.info(
