@@ -184,8 +184,6 @@ var socketEventHandler = {
         moveRestoreButton.attr('data-is-moved', 'False');
         changeStatusDisplayText(moveRestoreButton, 'MOVE');
 
-        console.log(moveRestoreButton);
-
         let sid = null;
 
         statusContainer.find('button[data-slave-id]').each(function (idx, val) {
@@ -462,7 +460,7 @@ $(document).ready(function () {
         } else {
             console.log("Invalid data-is-running state.");
         }
-    })
+    });
 
     // fileForm Handler
     $('#fileForm').submit(onFormSubmit('fileForm'));

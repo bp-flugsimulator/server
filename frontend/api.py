@@ -10,7 +10,6 @@ from django.db.utils import IntegrityError
 from channels import Group
 from utils import Status, Command
 from server.utils import StatusResponse
-import os
 
 from .models import (
     Slave as SlaveModel,
@@ -440,7 +439,8 @@ def add_file(request):
                 form.save()
                 return StatusResponse(Status.ok(''))
             except ValidationError as err:
-                if 'Source path' in err.message_dict['__all__'][0] and 'Destination path' in err.message_dict['__all__'][0] and 'Slave' in err.message_dict['__all__'][0]:
+                string = err.message_dict['__all__'][0]
+                if 'Source path' in string and 'Destination path' in string and 'Slave' in string:
 
                     error_msg = 'File with this source path and destination path already exists on this Client.'
                     error_dict = {
