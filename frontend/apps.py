@@ -170,7 +170,7 @@ class FrontendConfig(AppConfig):
 
             File.objects.all().update(
                 error_code="",
-                command_uuid="",
+                command_uuid=None,
             )
         except OperationalError:
             pass

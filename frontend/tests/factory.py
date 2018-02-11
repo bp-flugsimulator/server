@@ -86,6 +86,19 @@ class FileFactory(DjangoModelFactory):
     source_path = FuzzyText(length=100)
     destination_path = FuzzyText(length=100)
     slave = SubFactory(SlaveFactory)
+    command_uuid = uuid4().hex
+
+
+class MovedFileFactory(DjangoModelFactory):
+    class Meta:
+        model = FileModel
+
+    name = FuzzyText(length=20, prefix="file_")
+    source_path = FuzzyText(length=100)
+    destination_path = FuzzyText(length=100)
+    slave = SubFactory(SlaveFactory)
+    command_uuid = uuid4().hex
+    hash_value = FuzzyText(length=20, prefix="file_")
 
 
 class ScriptFactory(DjangoModelFactory):

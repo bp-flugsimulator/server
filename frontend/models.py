@@ -353,7 +353,7 @@ class File(Model):
         unique=False,
         max_length=32,
         blank=True,
-        null=True,
+        default="",
     )
     error_code = CharField(blank=True, default="", max_length=1000)
     slave = ForeignKey(Slave, on_delete=CASCADE)

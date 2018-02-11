@@ -31,7 +31,14 @@ def handle_file_restored(status):
     status: Status
         The statusobject that was send by the slave
     """
-    file_ = FileModel.objects.get(command_uuid=status.uuid)
+    try:
+        file_ = FileModel.objects.get(command_uuid=status.uuid)
+    except FileModel.DoesNotExist:
+        LOGGER.warning(
+            "A file restored with id %s, but is not in the database.",
+            status.uuid,
+        )
+        return
 
     if status.is_ok():
         file_.hash_value = ""
@@ -49,7 +56,6 @@ def handle_file_restored(status):
         })
     else:
         file_.error_code = status.payload['result']
-        # TODO: clear hash value?
         file_.hash_value = ""
         file_.save()
 
@@ -70,7 +76,14 @@ def handle_file_moved(status):
     status: Status
         The statusobject that was send by the slave
     """
-    file_ = FileModel.objects.get(command_uuid=status.uuid)
+    try:
+        file_ = FileModel.objects.get(command_uuid=status.uuid)
+    except FileModel.DoesNotExist:
+        LOGGER.warning(
+            "A file moved with id %s, but is not in the database.",
+            status.uuid,
+        )
+        return
 
     if status.is_ok():
         file_.hash_value = status.payload['result']
@@ -89,7 +102,6 @@ def handle_file_moved(status):
         })
     else:
         file_.error_code = status.payload['result']
-        # TODO: clear hash value?
         file_.hash_value = ""
         file_.save()
 

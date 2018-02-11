@@ -440,23 +440,18 @@ def add_file(request):
                 form.save()
                 return StatusResponse(Status.ok(''))
             except ValidationError as err:
-                if 'Source path' in err.message_dict['__all__'][0] and \
-                        'Destination path' in err.message_dict['__all__'][0] and \
-                        'Slave' in err.message_dict['__all__'][0]:
-                    error_msg = 'File with this source path and ' \
-                         'destination path already exists on this Client.'
-                    error_dict = {'source_path': [error_msg]}
-                    print()
-                    print()
-                    print(error_dict)
-                    print()
-                elif 'Name' in err.message_dict['__all__'][0] and \
-                        'Slave' in err.message_dict['__all__'][0]:
+                if 'Source path' in err.message_dict['__all__'][0] and 'Destination path' in err.message_dict['__all__'][0] and 'Slave' in err.message_dict['__all__'][0]:
+
+                    error_msg = 'File with this source path and destination path already exists on this Client.'
+                    error_dict = {
+                        'source_path': [error_msg],
+                        'destination_path': [error_msg],
+                    }
+                elif 'Name' in err.message_dict['__all__'][0] and 'Slave' in err.message_dict['__all__'][0]:
                     error_dict = {
                         'name':
-                        ["File with this Name already exists on this Client."]
+                        ['File with this Name already exists on this Client.']
                     }
-                #raise ValueError(err.message_dict['__all__'][0])
                 return StatusResponse(Status.err(error_dict))
         else:
             return StatusResponse(Status.err(form.errors))
@@ -493,14 +488,15 @@ def move_file(request, file_id):
     """
     if request.method == 'GET':
         file_ = FileModel.objects.get(id=file_id)
-        # TODO: resolve conflicts
-
         slave = file_.slave
+
         if slave.is_online:
             if file_.is_moved:
                 return StatusResponse(
-                    Status.err('Error: File ({}) is already moved.'.format(
+                    Status.err('Error: File `{}` is already moved.'.format(
                         file_.name)))
+
+            # TODO: resolve conflicts
             cmd = Command(
                 method="move_file",
                 source_path=file_.source_path,
@@ -541,12 +537,12 @@ def restore_file(request, file_id):
         file_ = FileModel.objects.get(id=file_id)
         slave = file_.slave
 
-        if not file_.is_moved:
-            return StatusResponse(
-                Status.err('Error: File ({}) is not moved.'.format(
-                    file_.name)))
-
         if slave.is_online:
+            if not file_.is_moved:
+                return StatusResponse(
+                    Status.err('Error: File `{}` is not moved.'.format(
+                        file_.name)))
+
             cmd = Command(
                 method="restore_file",
                 source_path=file_.source_path,

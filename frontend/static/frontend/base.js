@@ -99,7 +99,7 @@ function handleFormStatus(form, status) {
 
         // insert new feedback
         $.each(status.payload, function (id, msg) {
-            let node = form.find('input[name=' + id + ']');
+            let node = form.find('[name=' + id + ']');
             node.addClass('is-invalid');
             node.parent().append('<div class="invalid-feedback">' + msg + '</div>');
         });

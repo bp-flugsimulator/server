@@ -10,6 +10,7 @@ from utils import Status, Command
 
 from frontend.models import (
     Slave as SlaveModel,
+    File as FileModel,
     ProgramStatus as ProgramStatusModel,
 )
 
@@ -17,6 +18,8 @@ from .factory import (
     SlaveFactory,
     SlaveOnlineFactory,
     ProgramStatusFactory,
+    FileFactory,
+    MovedFileFactory,
 )
 
 
@@ -378,3 +381,178 @@ class WebsocketTests(TestCase):
         )
 
         self.assertIsNone(ws_client.receive())
+
+    def test_ws_notifications_moved_success(self):
+        file_ = FileFactory()
+
+        moved = MovedFileFactory.build()
+
+        error_status = Status.ok({
+            'method': 'move_file',
+            'result': moved.hash_value,
+        })
+        error_status.uuid = file_.command_uuid
+
+        #  connect webinterface
+        webinterface = WSClient()
+        webinterface.join_group('notifications')
+
+        ws_client = WSClient()
+        ws_client.send_and_consume(
+            'websocket.receive',
+            path='/notifications',
+            content={'text': error_status.to_json()},
+        )
+
+        query = FileModel.objects.get(id=file_.id)
+        self.assertEqual(query.hash_value, moved.hash_value)
+        self.assertEqual(query.error_code, "")
+
+        self.assertEqual(
+            Status.ok({
+                'file_status': 'moved',
+                'fid': str(file_.id),
+            }),
+            Status.from_json(json.dumps(webinterface.receive())),
+        )
+
+    def test_ws_notifications_moved_failed(self):
+        file_ = FileFactory()
+
+        error_code = 'any kind of string'
+
+        error_status = Status.err({
+            'method': 'move_file',
+            'result': error_code,
+        })
+
+        error_status.uuid = file_.command_uuid
+
+        #  connect webinterface
+        webinterface = WSClient()
+        webinterface.join_group('notifications')
+
+        ws_client = WSClient()
+        ws_client.send_and_consume(
+            'websocket.receive',
+            path='/notifications',
+            content={'text': error_status.to_json()},
+        )
+
+        query = FileModel.objects.get(id=file_.id)
+        self.assertEqual(query.hash_value, "")
+        self.assertEqual(query.error_code, error_code)
+
+        self.assertEqual(
+            Status.ok({
+                'file_status': 'error',
+                'fid': str(file_.id),
+                'error_code': error_code,
+            }),
+            Status.from_json(json.dumps(webinterface.receive())),
+        )
+
+    def test_ws_notifications_restore_success(self):
+        file_ = MovedFileFactory()
+
+        error_status = Status.ok({
+            'method': 'restore_file',
+            'result': None,
+        })
+
+        error_status.uuid = file_.command_uuid
+
+        #  connect webinterface
+        webinterface = WSClient()
+        webinterface.join_group('notifications')
+
+        ws_client = WSClient()
+        ws_client.send_and_consume(
+            'websocket.receive',
+            path='/notifications',
+            content={'text': error_status.to_json()},
+        )
+
+        query = FileModel.objects.get(id=file_.id)
+        self.assertEqual(query.hash_value, "")
+        self.assertEqual(query.error_code, "")
+
+        self.assertEqual(
+            Status.ok({
+                'file_status': 'restored',
+                'fid': str(file_.id),
+            }),
+            Status.from_json(json.dumps(webinterface.receive())),
+        )
+
+    def test_ws_notifications_restore_failed(self):
+        file_ = MovedFileFactory()
+
+        error_code = 'any kind of string'
+
+        error_status = Status.err({
+            'method': 'restore_file',
+            'result': error_code,
+        })
+
+        error_status.uuid = file_.command_uuid
+
+        #  connect webinterface
+        webinterface = WSClient()
+        webinterface.join_group('notifications')
+
+        ws_client = WSClient()
+        ws_client.send_and_consume(
+            'websocket.receive',
+            path='/notifications',
+            content={'text': error_status.to_json()},
+        )
+
+        query = FileModel.objects.get(id=file_.id)
+        self.assertEqual(query.hash_value, "")
+        self.assertEqual(query.error_code, error_code)
+
+        self.assertEqual(
+            Status.ok({
+                'file_status': 'error',
+                'fid': str(file_.id),
+                'error_code': error_code,
+            }),
+            Status.from_json(json.dumps(webinterface.receive())),
+        )
+
+    def test_ws_notifications_restore_not_found(self):
+        webinterface = WSClient()
+        webinterface.join_group('notifications')
+
+        error_status = Status.ok({
+            'method': 'restore_file',
+            'result': None,
+        })
+
+        ws_client = WSClient()
+        ws_client.send_and_consume(
+            'websocket.receive',
+            path='/notifications',
+            content={'text': error_status.to_json()},
+        )
+
+        self.assertIsNone(webinterface.receive())
+
+    def test_ws_notifications_move_not_found(self):
+        webinterface = WSClient()
+        webinterface.join_group('notifications')
+
+        error_status = Status.ok({
+            'method': 'move_file',
+            'result': None,
+        })
+
+        ws_client = WSClient()
+        ws_client.send_and_consume(
+            'websocket.receive',
+            path='/notifications',
+            content={'text': error_status.to_json()},
+        )
+
+        self.assertIsNone(webinterface.receive())
