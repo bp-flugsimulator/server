@@ -153,10 +153,10 @@ var socketEventHandler = {
     },
     fileMoved(payload) {
         let statusContainer = $('#fileStatusContainer_' + payload.fid);
-        let moveRestoreButton = $('#fileRestoreMove_' + payload.fid);
+        let moveRestoreButton = $('#fileMoveRestore_' + payload.fid);
         let cardButton = $('#fileCardButton_' + payload.fid);
 
-        statusContainer.attr('data-state', 'success');
+        statusContainer.attr('data-state', 'moved');
         cardButton.prop('disabled', true);
 
         // Use Python notation !!!
@@ -174,15 +174,17 @@ var socketEventHandler = {
     },
     fileRestored(payload) {
         let statusContainer = $('#fileStatusContainer_' + payload.fid);
-        let moveRestoreButton = $('#fileRestoreMove_' + payload.fid);
+        let moveRestoreButton = $('#fileMoveRestore_' + payload.fid);
         let cardButton = $('#fileCardButton_' + payload.fid);
 
-        statusContainer.attr('data-state', 'success');
+        statusContainer.attr('data-state', 'restored');
         cardButton.prop('disabled', true);
 
         // Use Python notation !!!
         moveRestoreButton.attr('data-is-moved', 'False');
         changeStatusDisplayText(moveRestoreButton, 'MOVE');
+
+        console.log(moveRestoreButton);
 
         let sid = null;
 
@@ -195,7 +197,7 @@ var socketEventHandler = {
     },
     fileError(payload) {
         let statusContainer = $('#fileStatusContainer_' + payload.fid);
-        let moveRestoreButton = $('#fileRestoreMove_' + payload.fid);
+        let moveRestoreButton = $('#fileMoveRestore_' + payload.fid);
         let cardButton = $('#fileCardButton_' + payload.fid);
         let cardBox = $('#fileCard_' + payload.fid);
 
@@ -283,10 +285,12 @@ $(document).ready(function () {
 
         let id = $(this).data('program-id');
 
-        if ($(this).attr('data-is-running') !== '') {
+        if ($(this).attr('data-is-running') === 'True') {
             apiRequest('/api/program/' + id + '/stop', 'GET');
-        } else {
+        } else if ($(this).attr('data-is-running') === 'False') {
             apiRequest('/api/program/' + id, 'POST');
+        } else {
+            console.log("Invalid data-is-running state.");
         }
     });
 
@@ -453,8 +457,10 @@ $(document).ready(function () {
 
         if ($(this).attr('data-is-moved') === 'True') {
             apiRequest('/api/file/' + id + '/restore', 'GET');
+        } else if ($(this).attr('data-is-moved') === 'False') {
+            apiRequest('/api/file/' + id + '/move', 'GET');
         } else {
-            apiRequest('/api/file/' + id, 'POST');
+            console.log("Invalid data-is-running state.");
         }
     })
 

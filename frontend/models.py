@@ -156,6 +156,10 @@ class Slave(Model):
             if prog.is_error:
                 return True
 
+        for file in self.file_set.all():
+            if file.is_error:
+                return True
+
         return False
 
     @property
@@ -365,7 +369,7 @@ class File(Model):
         """
         Returns true if file is moved.
         """
-        return self.hash_value is not None
+        return self.hash_value is not None and self.hash_value != ""
 
     @property
     def is_error(self):

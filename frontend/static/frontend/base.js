@@ -146,6 +146,18 @@ function styleSlaveByStatus(sid) {
             }
         });
 
+    $('#slavesObjectsFilesContent' + sid)
+        .find('.fsim-box[data-state]')
+        .each(function (idx, val) {
+            switch ($(val).attr('data-state')) {
+                case 'error':
+                    status = 2;
+                    return false;
+                default:
+                    break;
+            }
+        });
+
     if (status === 1) {
         statusContainer.attr('data-state', 'warning');
         statusTab.attr('data-state', 'warning');

@@ -21,7 +21,46 @@ from server.utils import notify_err, notify
 LOGGER = logging.getLogger('fsim.websockets')
 
 
-def handle_file_answer(status):
+def handle_file_restored(status):
+    """
+    Handles an incoming message on '/notification' that
+    is an answer to an 'restore_file' request on a slave
+
+    Parameters
+    ----------
+    status: Status
+        The statusobject that was send by the slave
+    """
+    file_ = FileModel.objects.get(command_uuid=status.uuid)
+
+    if status.is_ok():
+        file_.hash_value = ""
+        file_.error_code = ""
+        file_.save()
+
+        LOGGER.info(
+            "Restored file %s.",
+            file_.name,
+        )
+
+        notify({
+            'file_status': 'restored',
+            'fid': str(file_.id),
+        })
+    else:
+        file_.error_code = status.payload['result']
+        # TODO: clear hash value?
+        file_.hash_value = ""
+        file_.save()
+
+        notify({
+            'file_status': 'error',
+            'error_code': status.payload['result'],
+            'fid': str(file_.id),
+        })
+
+
+def handle_file_moved(status):
     """
     Handles an incoming message on '/notification' that
     is an answer to an 'move_file' request on a slave
@@ -44,17 +83,14 @@ def handle_file_answer(status):
             file_.hash_value,
         )
 
-        if file_.is_moved:
-            status = 'moved'
-        else:
-            status = 'restored'
-
         notify({
-            'file_status': status,
+            'file_status': 'moved',
             'fid': str(file_.id),
         })
     else:
         file_.error_code = status.payload['result']
+        # TODO: clear hash value?
+        file_.hash_value = ""
         file_.save()
 
         notify({
@@ -300,9 +336,9 @@ def ws_notifications_receive(message):
         elif status.payload['method'] == 'execute':
             handle_execute_answer(status)
         elif status.payload['method'] == 'move_file':
-            handle_file_answer(status)
+            handle_file_moved(status)
         elif status.payload['method'] == 'restore_file':
-            handle_file_answer(status)
+            handle_file_restored(status)
 
             # notify the scheduler that the status has changed
             FSIM_CURRENT_SCHEDULER.notify()

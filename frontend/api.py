@@ -26,6 +26,7 @@ from .forms import SlaveForm, ProgramForm, FileForm
 from .consumers import notify
 
 LOGGER = logging.getLogger("fsim.api")
+FILE_BACKUP_ENDING = "_BACK"
 
 
 def add_slave(request):
@@ -476,6 +477,99 @@ def add_file(request):
         return HttpResponseForbidden()
 
 
+def move_file(request, file_id):
+    """
+    Process GET requests for the FileModel(move) ressource.
+
+    Parameters
+    ----------
+        request: HttpRequest
+        fileId: Unique identifier of a file
+
+    Returns
+    -------
+        A StatusResponse or HttpResponseForbidden if the request method was
+        other than GET.
+    """
+    if request.method == 'GET':
+        file_ = FileModel.objects.get(id=file_id)
+        # TODO: resolve conflicts
+
+        slave = file_.slave
+        if slave.is_online:
+            if file_.is_moved:
+                return StatusResponse(
+                    Status.err('Error: File ({}) is already moved.'.format(
+                        file_.name)))
+            cmd = Command(
+                method="move_file",
+                source_path=file_.source_path,
+                destination_path=file_.destination_path,
+                backup_ending=FILE_BACKUP_ENDING,
+            )
+
+            # send command to the client
+            Group('client_' + str(slave.id)).send({'text': cmd.to_json()})
+
+            file_.command_uuid = cmd.uuid
+            file_.save()
+
+            return StatusResponse(Status.ok(''))
+        else:
+            return StatusResponse(
+                Status.err('Can not move {} because {} is offline!'.format(
+                    file_.name, slave.name)))
+    else:
+        return HttpResponseForbidden()
+
+
+def restore_file(request, file_id):
+    """
+    Process GET requests for the FileModel(restore) ressource.
+
+    Parameters
+    ----------
+        request: HttpRequest
+        fileId: Unique identifier of a file
+
+    Returns
+    -------
+        A StatusResponse or HttpResponseForbidden if the request method was
+        other than GET.
+    """
+    if request.method == 'GET':
+        file_ = FileModel.objects.get(id=file_id)
+        slave = file_.slave
+
+        if not file_.is_moved:
+            return StatusResponse(
+                Status.err('Error: File ({}) is not moved.'.format(
+                    file_.name)))
+
+        if slave.is_online:
+            cmd = Command(
+                method="restore_file",
+                source_path=file_.source_path,
+                destination_path=file_.destination_path,
+                backup_ending=FILE_BACKUP_ENDING,
+                hash_value=file_.hash_value,
+            )
+
+            # send command to the client
+            Group('client_' + str(slave.id)).send({'text': cmd.to_json()})
+
+            file_.command_uuid = cmd.uuid
+            file_.save()
+
+            return StatusResponse(Status.ok(''))
+        else:
+            return StatusResponse(
+                Status.err('Can not restore {} because {} is offline!'.format(
+                    file_.name, slave.name)))
+    else:
+        return HttpResponseForbidden()
+
+
 def manage_file(request, file_id):
     """
     Process DELETE, PUT and POST requests for the FileModel ressource.
@@ -491,62 +585,8 @@ def manage_file(request, file_id):
         other than GET.
     """
 
-    back = '_BACK'
-
     if request.method == 'DELETE':
         FileModel.objects.filter(id=file_id).delete()
         return StatusResponse(Status.ok(''))
-    if request.method == 'POST':
-        file_ = FileModel.objects.get(id=file_id)
-        slave = file_.slave
-        if slave.is_online:
-            cmd = Command(
-                method="move_file",
-                source_path=file_.source_path,
-                destination_path=file_.destination_path,
-                backup_ending=back,
-            )
-
-            # send command to the client
-            Group('client_' + str(slave.id)).send({'text': cmd.to_json()})
-
-            file_.command_uuid = cmd.uuid
-            file_.save()
-
-            return StatusResponse(Status.ok(''))
-        else:
-            return StatusResponse(
-                Status.err('Can not move {} because {} is offline!'.format(
-                    file_.name, slave.name)))
-    if request.method == 'GET':
-        file_ = FileModel.objects.get(id=file_id)
-        slave = file_.slave
-        if not file_.hash_value:
-            return StatusResponse(
-                Status.err(
-                    'Error: File ({}) has not been moved with this Tool,\
-                    reload page or try readding the file to the list'.format(
-                        file_.name)))
-
-        if slave.is_online:
-            cmd = Command(
-                method="restore_file",
-                source_path=file_.source_path,
-                destination_path=file_.destination_path,
-                backup_ending=back,
-                hash_value=file_.hash_value,
-            )
-
-            # send command to the client
-            Group('client_' + str(slave.id)).send({'text': cmd.to_json()})
-
-            file_.command_uuid = cmd.uuid
-            file_.save()
-
-            return StatusResponse(Status.ok(''))
-        else:
-            return StatusResponse(
-                Status.err('Can not restore {} because {} is offline!'.format(
-                    file_.name, slave.name)))
     else:
         return HttpResponseForbidden()

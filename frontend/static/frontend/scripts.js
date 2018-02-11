@@ -207,7 +207,7 @@ $(document).ready(function () {
     $('.script-tab-link').click(function () {
         if (!$(this).hasClass('active')) {
             // Remove color from the old tabs
-            $('.script-tab-link').each(function (idx, val) {
+            $('.script-tabbutton-link').each(function (idx, val) {
                 $(val).parent('li').css('background-color', 'transparent');
             });
 
