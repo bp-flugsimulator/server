@@ -23,7 +23,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="ml-4 mr-4">
+<div class="row ml-4 mr-4">
     <div class="col col-xs-12 col-sm-12 col-md-3 col-xl-2 col-lg-3 mb-4">
         <div class="row-2 form-group">
             <label class="client-header font-weight-bold">
@@ -55,13 +55,11 @@
 
     <div class="container-fluid tab-content col col-xs-12 col-sm-12 col-md-8 col-lg-8 col-xl-9">
         <div class="tab-pane fade show" role="tabpanel"  id="scriptTabContentNew">
-            <div class="row mb-4">
-                <div class="btn-toolbar col d-flex justify-content-end" role="toolbar">
-                    <div class="btn-group mr-2" role="group">
-                        <button type="button" class="btn btn-outline-dark program-action-add-save font-weight-light script-action-add-save" data-editor-id="new_script">
-                            <i class="mdi mdi-check"></i> SAVE
-                        </button>
-                    </div>
+            <div class="btn-toolbar justify-content-end" role="toolbar">
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-outline-dark program-action-add-save font-weight-light script-action-add-save" data-editor-id="new_script">
+                        <i class="mdi mdi-check"></i> SAVE
+                    </button>
                 </div>
             </div>
 
@@ -134,36 +132,33 @@
     </script>
 
     <script id="template_container" type="text/x-handlebars-template">
-        <div class="row form-group">
-            <label class="col-2">Script Name</label>
-            <div class="col">
-                <input class="form-control script-name" type="text" {{#if name}}value="{{name}}"{{/if}} required/>
-                <div class="invalid-feedback">Script name is required.</div>
-            </div>
+        <div class="row">
+            <label class="text-uppercase font-weight-bold">Script Name</label>
+        </div>
+
+        <div class="row mb-4">
+            <input class="form-control script-name" type="text" {{#if name}}value="{{name}}"{{/if}} required/>
+            <div class="invalid-feedback">Script name is required.</div>
         </div>
 
         <div class="row">
-            <div class="col-2">
-                <label>Programs</label>
-                <button type="button" class="btn script-program-add  inline-add-button">
-                    <i class="mdi mdi-plus"></i>
-                </button>
-            </div>
+            <label class="text-uppercase font-weight-bold">Programs</label>
+            <button type="button" class="btn script-program-add  inline-add-button">
+                <i class="mdi mdi-plus"></i>
+            </button>
+        </div>
 
-            <div class="script-program-content col list-group">
-            </div>
+        <div class="script-program-content row list-group mb-4">
         </div>
 
         <div class="row">
-            <div class="col-2">
-                <label>Files</label>
-                <button type="button" class="btn script-file-add inline-add-button">
-                    <i class="mdi mdi-plus"></i>
-                </button>
-            </div>
+            <label class="text-uppercase font-weight-bold">Files</label>
+            <button type="button" class="btn script-file-add inline-add-button">
+                <i class="mdi mdi-plus"></i>
+            </button>
+        </div>
 
-            <div class="script-file-content col list-group">
-            </div>
+        <div class="script-file-content row list-group">
         </div>
     </script>
     {% endverbatim %}
