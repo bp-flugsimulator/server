@@ -3,74 +3,6 @@
 /* global $, JSONEditor, getCookie, Status, modalDeleteAction, notify */
 /* exported loadScript, newScript */
 
-var schema = {
-    'title': 'Script',
-    'type': 'object',
-    'definitions': {
-        'program_entry': {
-            'title': 'Program set',
-            'type': 'object',
-            'properties': {
-                'index': {
-                    'title': 'Index',
-                    'type': 'integer',
-                },
-                'slave': {
-                    'title': 'Client',
-                    'type': ['integer', 'string'],
-                },
-                'program': {
-                    'title': 'Program',
-                    'type': ['integer', 'string'],
-                }
-            },
-            'required': ['index', 'slave', 'program'],
-            'additionalProperties': false
-        },
-        'file_entry': {
-            'title': 'File set',
-            'type': 'object',
-            'properties': {
-                'index': {
-                    'title': 'Index',
-                    'type': 'integer',
-                },
-                'slave': {
-                    'title': 'Client',
-                    'type': ['integer', 'string'],
-                },
-                'file': {
-                    'title': 'File',
-                    'type': ['integer', 'string'],
-                }
-            },
-            'required': ['index', 'slave', 'file'],
-            'additionalProperties': false
-        }
-    },
-    'properties': {
-        'name': {
-            'type': 'string',
-        },
-        'programs': {
-            'type': 'array',
-            'items': {
-                '$ref': '#/definitions/program_entry'
-            },
-            'uniqueItems': true
-        },
-        'files': {
-            'type': 'array',
-            'items': {
-                '$ref': '#/definitions/file_entry'
-            },
-            'uniqueItems': true
-        }
-    },
-    'required': ['name', 'programs', 'files'],
-    'additionalProperties': false
-};
-
 function promise_query(url) {
     return new Promise(function (resolve, reject) {
         $.ajax({
@@ -214,12 +146,10 @@ $(document).ready(function () {
         let name = $(this).data('script-name');
         let message = '<a>Are you sure you want to remove script </a><b>' + name + '</b>?</a>';
 
-        //
         //changing button visibility and message of the delete modal
         let deleteWarning = $('#deleteWarning');
         deleteWarning.children().find('.modal-body').empty(message);
         deleteWarning.children().find('.modal-body').append(message);
-
 
         //adding id to modal and set it visible
         deleteWarning.data('sqlId', id);

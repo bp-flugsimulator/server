@@ -40,7 +40,7 @@ const addTypeEntry = function (container, type, query_slaves, query_type, contex
             box.find('.script-' + type + '-slave').on('change', function () {
                 query_type($(this).find('option:selected').first().val()).then(
                     function (query) {
-                        box.find('.script-' + type + '-program').each(function (idx, val) {
+                        box.find('.script-' + type + '-' + type).each(function (idx, val) {
                             let target = $(val);
                             target.children().remove();
                             target.removeAttr('hidden');
