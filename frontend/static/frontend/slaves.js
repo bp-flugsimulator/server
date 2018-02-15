@@ -126,7 +126,7 @@ var socketEventHandler = {
         let cardButton = $('#programCardButton_' + payload.pid);
         cardButton.prop('disabled', false);
 
-        if (payload.code !== 0) {
+        if (payload.code != 0) {
             statusContainer.attr('data-state', 'error');
         } else {
             statusContainer.attr('data-state', 'success');
