@@ -90,19 +90,19 @@
         <div class="list-group-item script-{{type}}-entry ">
 
             <div class="form-group row">
-                <button class="btn script-{{type}}-remove inline-add-button" type="button">
-                        <i class="mdi mdi-delete"></i>
+                <button class="btn btn-lg script-{{type}}-remove inline-add-button" type="button">
+                        <i class="mdi mdi-delete mdi-2x"></i>
                 </button>
             </div>
             <div class="form-group row">
-                <label class="col-2">Index</label>
+                <label class="col-2 text-uppercase">Index</label>
                 <div class="col">
                     <input class="form-control script-{{type}}-index" type="number" value="{{#if index}}{{index}}{{else}}0{{/if}}" required/>
                 </div>
             </div>
 
             <div class="form-group row slave-choice">
-                <label class="col-2">Client</label>
+                <label class="col-2 text-uppercase">Client</label>
                 <div class="col">
                     <select class="form-control script-{{type}}-slave" type="text" required>
                         {{#each slaves}}
@@ -113,7 +113,9 @@
             </div>
 
             <div class="form-group row {{type}}-choice">
-                <label class="col-2">{{#if type-display}}{{type-display}}{{else}}{{type}}{{/if}}</label>
+                <label class="col-2 text-uppercase">
+                    {{#if type-display}}{{type-display}}{{else}}{{type}}{{/if}}
+                </label>
                 <div class="col">
                     <select class="form-control script-{{type}}-{{type}}" type="text" required>
                         {{#each selects}}
@@ -127,7 +129,7 @@
 
     <script id="template_no_element" type="text/x-handlebars-template">
         <div class="list-group-item slave-no-elements">
-            No Clients with {{type}}s created.
+            <i class="text-uppercase font-weight-bold">No Clients with {{type}}s created.</i>
         </div>
     </script>
 
@@ -138,7 +140,7 @@
 
         <div class="row mb-4">
             <input class="form-control script-name" type="text" {{#if name}}value="{{name}}"{{/if}} required/>
-            <div class="invalid-feedback">Script name is required.</div>
+            <div class="invalid-feedback text-uppercase">Script name is required.</div>
         </div>
 
         <div class="row">
