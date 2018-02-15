@@ -21,6 +21,28 @@ from server.utils import notify_err, notify
 LOGGER = logging.getLogger('fsim.websockets')
 
 
+def handle_chain_execution(status):
+    """
+    Handles an incoming message on '/notification' that
+    is an answer to an 'chain_execution' request on a slave
+
+    Parameters
+    ----------
+    status: Status
+        The statusobject that was send by the slave
+    """
+    if status.is_ok():
+        LOGGER.info("CHAIN-EXECUTION: %s" % dict(status))
+
+        for result in status.payload["result"]:
+            select_method(Status(**result))
+    else:
+        LOGGER.error(
+            "Internal Error: Could not execute chain_execution which raises no errors! (%s)",
+            status.payload,
+        )
+
+
 def handle_file_restored(status):
     """
     Handles an incoming message on '/notification' that
@@ -31,6 +53,8 @@ def handle_file_restored(status):
     status: Status
         The statusobject that was send by the slave
     """
+    LOGGER.info("Handle file restored %s" % dict(status))
+
     try:
         file_ = FileModel.objects.get(command_uuid=status.uuid)
     except FileModel.DoesNotExist:
@@ -76,6 +100,7 @@ def handle_file_moved(status):
     status: Status
         The statusobject that was send by the slave
     """
+    LOGGER.info("Handle file moved %s" % dict(status))
     try:
         file_ = FileModel.objects.get(command_uuid=status.uuid)
     except FileModel.DoesNotExist:
@@ -320,6 +345,44 @@ def ws_notifications_connect(message):
     message.reply_channel.send({"accept": True})
 
 
+def select_method(status):
+    """
+    Selects a handler for the incoming message by checking the name with the
+    FUNCTION_HANDLE_TABLE.
+
+    Parameters
+    ----------
+        status: Status object
+
+    """
+    LOGGER.error(dict(status))
+
+    try:
+        FUNCTION_HANDLE_TABLE = {
+            'online': handle_online_answer,
+            'execute': handle_execute_answer,
+            'move_file': handle_file_moved,
+            'restore_file': handle_file_restored,
+            'chain_execution': handle_chain_execution,
+        }
+
+        if status.payload['method'] in FUNCTION_HANDLE_TABLE:
+            FUNCTION_HANDLE_TABLE[status.payload['method']](status)
+
+            # notify the scheduler that the status has changed
+            FSIM_CURRENT_SCHEDULER.notify()
+        else:
+            LOGGER.info(
+                'Client send answer from unknown function %s.',
+                status.payload['method'],
+            )
+    except Exception:
+        LOGGER.error(
+            'Exception occurred (incoming-request)\n:%s',
+            traceback.format_exc(),
+        )
+
+
 def ws_notifications_receive(message):
     """
     Handels websockets.receive requests of '/notifications'. Connections only
@@ -337,33 +400,11 @@ def ws_notifications_receive(message):
     message: channels.message.Message that contains a Status in the 'text' field
 
     """
-
     try:
         status = Status.from_json(message.content['text'])
-        if status.payload['method'] == 'online':
-            handle_online_answer(status)
-
-            # notify the scheduler that the status has changed
-            FSIM_CURRENT_SCHEDULER.notify()
-        elif status.payload['method'] == 'execute':
-            handle_execute_answer(status)
-        elif status.payload['method'] == 'move_file':
-            handle_file_moved(status)
-        elif status.payload['method'] == 'restore_file':
-            handle_file_restored(status)
-
-            # notify the scheduler that the status has changed
-            FSIM_CURRENT_SCHEDULER.notify()
-        else:
-            LOGGER.info(
-                'Client send answer from unknown function %s.',
-                status.payload['method'],
-            )
-    except Exception:
-        LOGGER.error(
-            'Exception occurred (incoming-request)\n:%s',
-            traceback.format_exc(),
-        )
+        select_method(status)
+    except:
+        pass
 
 
 def ws_notifications_disconnect(message):

@@ -496,19 +496,52 @@ def move_file(request, file_id):
                     Status.err('Error: File `{}` is already moved.'.format(
                         file_.name)))
 
-            # TODO: resolve conflicts
-            cmd = Command(
-                method="move_file",
-                source_path=file_.source_path,
-                destination_path=file_.destination_path,
-                backup_ending=FILE_BACKUP_ENDING,
-            )
+            query = FileModel.objects.filter(
+                destination_path=file_.destination_path).exclude(
+                    hash_value__exact='')
+
+            if query:
+                file_replace = query.get()
+
+                first = Command(
+                    method="restore_file",
+                    source_path=file_replace.source_path,
+                    destination_path=file_replace.destination_path,
+                    backup_ending=FILE_BACKUP_ENDING,
+                    hash_value=file_replace.hash_value,
+                )
+
+                second = Command(
+                    method="move_file",
+                    source_path=file_.source_path,
+                    destination_path=file_.destination_path,
+                    backup_ending=FILE_BACKUP_ENDING,
+                )
+
+                cmd = Command(
+                    method="chain_execution",
+                    commands=[dict(first), dict(second)],
+                )
+
+                file_replace.command_uuid = first.uuid
+                file_replace.save()
+
+                file_.command_uuid = second.uuid
+                file_.save()
+
+            else:
+                cmd = Command(
+                    method="move_file",
+                    source_path=file_.source_path,
+                    destination_path=file_.destination_path,
+                    backup_ending=FILE_BACKUP_ENDING,
+                )
+
+                file_.command_uuid = cmd.uuid
+                file_.save()
 
             # send command to the client
             Group('client_' + str(slave.id)).send({'text': cmd.to_json()})
-
-            file_.command_uuid = cmd.uuid
-            file_.save()
 
             return StatusResponse(Status.ok(''))
         else:
