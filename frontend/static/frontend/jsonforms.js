@@ -29,9 +29,9 @@ const addTypeEntry = function (container, type, query_slaves, query_type, contex
 
             let html = template_entry(template_context);
 
-            entry_container.append(html);
+            entry_container.prepend(html);
 
-            let box = entry_container.children().last();
+            let box = entry_container.children().first();
 
             box.find('.script-' + type + '-remove').on('click', function () {
                 box.remove();
@@ -109,7 +109,7 @@ var JsonForm = {
                 let val = $(val_raw);
 
                 entry.index = Number(val.find('.script-' + type + '-index').first().val());
-                entry[type] = val.find('.script-' + type + '-program').first().val();
+                entry[type] = val.find('.script-' + type + '-' + type).first().val();
                 entry.slave = val.find('.script-' + type + '-slave').first().val();
 
                 let error = false;

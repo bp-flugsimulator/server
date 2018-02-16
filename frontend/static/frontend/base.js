@@ -173,7 +173,7 @@ function notify(title, message, type) {
         message,
     }, {
             type,
-            template: '<div data-notify="container" class="col-xs-11 col-sm-3 alert" role="alert" data-notify-type="{0}">' +
+            template: '<div data-notify="container" class="col-11 col-sm-3 alert" role="alert" data-notify-type="{0}">' +
                 '<button type="button" aria-hidden="true" class="close" data-notify="dismiss">×</button>' +
                 '<div class="col">' +
                 '<span class="row" data-notify="title">' +
