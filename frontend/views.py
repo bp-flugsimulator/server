@@ -8,7 +8,7 @@ from .models import Slave as SlaveModel
 from .models import Script as ScriptModel
 from .forms import SlaveForm
 from .forms import ProgramForm
-from .forms import FileForm
+from .forms import FilesystemForm
 
 from os import listdir, getcwd, mkdir
 from os.path import getsize, join, isdir
@@ -61,7 +61,7 @@ class SlavesView(ListView):
         context = super(SlavesView, self).get_context_data(**kwargs)
         context['slave_form'] = SlaveForm()
         context['program_form'] = ProgramForm()
-        context['file_form'] = FileForm()
+        context['file_form'] = FilesystemForm()
         context['navbar_link'] = "slaves"
         return context
 

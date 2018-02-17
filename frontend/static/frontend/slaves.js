@@ -376,7 +376,7 @@ $(document).ready(function () {
     });
 
     $('#deleteFileModalButton').click(function () {
-        modalDeleteAction($('#fileForm'), 'file');
+        modalDeleteAction($('#FilesystemForm'), 'file');
     });
 
     $('.program-action-delete').click(function () {
@@ -397,22 +397,22 @@ $(document).ready(function () {
         fileModal.children().find('.modal-title').text('Add File');
 
         //modify the form for the submit button
-        let fileForm = fileModal.children().find('#fileForm');
-        fileForm.attr('action', '/api/files');
-        fileForm.attr('method', 'POST');
-        fileForm.children().find('.submit-btn').text('Add');
+        let FilesystemForm = fileModal.children().find('#FilesystemForm');
+        FilesystemForm.attr('action', '/api/files');
+        FilesystemForm.attr('method', 'POST');
+        FilesystemForm.children().find('.submit-btn').text('Add');
 
         //clear input fields
-        fileForm.find('[name="name"]').val('');
-        fileForm.find('[name="source_path"]').val('');
-        fileForm.find('[name="destination_path"]').val('');
+        FilesystemForm.find('[name="name"]').val('');
+        FilesystemForm.find('[name="source_path"]').val('');
+        FilesystemForm.find('[name="destination_path"]').val('');
 
         //clear error messages
-        clearErrorMessages(fileForm);
+        clearErrorMessages(FilesystemForm);
 
         //find slave id and store it in the form
         let slaveId = $(this).data('slave-id');
-        fileForm.find('[name="slave"]').val(slaveId);
+        FilesystemForm.find('[name="slave"]').val(slaveId);
         fileModal.modal('toggle');
     });
 
@@ -462,8 +462,8 @@ $(document).ready(function () {
         }
     });
 
-    // fileForm Handler
-    $('#fileForm').submit(onFormSubmit('fileForm'));
+    // FilesystemForm Handler
+    $('#FilesystemForm').submit(onFormSubmit('FilesystemForm'));
 
     $('.slave-action-start-stop').click(function () {
         if ($(this).attr('data-is-running') === 'True') {

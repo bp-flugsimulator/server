@@ -57,7 +57,7 @@
     <div class="container-fluid tab-content col col-xs-12 col-sm-12 col-md-9 col-lg-9 col-xl-10">
         {% for slave in slaves %}
             <div class="tab-pane fade show {% if forloop.first %}active{% endif %}" id="slaveTabContent{{ slave.id }}" role="tabpanel">
-                {% slave_entry slave slave.program_set.all slave.file_set.all %}
+                {% slave_entry slave slave.program_set.all slave.filesystem_set.all %}
             </div>
         {% empty %}
             <div>

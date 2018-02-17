@@ -159,7 +159,7 @@ class FrontendConfig(AppConfig):
             pass
 
         try:
-            from .models import Script, File
+            from .models import Script, Filesystem
 
             Script.objects.all().update(
                 error_code="",
@@ -168,7 +168,7 @@ class FrontendConfig(AppConfig):
                 current_index=-1,
             )
 
-            File.objects.all().update(
+            Filesystem.objects.all().update(
                 error_code="",
                 command_uuid=None,
             )

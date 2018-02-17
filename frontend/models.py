@@ -156,7 +156,7 @@ class Slave(Model):
             if prog.is_error:
                 return True
 
-        for file in self.file_set.all():
+        for file in self.filesystem_set.all():
             if file.is_error:
                 return True
 
@@ -321,7 +321,7 @@ class Program(Model):
             return False
 
 
-class File(Model):
+class Filesystem(Model):
     """
     Represents a file on a slave This is stored in a database.
 
@@ -340,6 +340,9 @@ class File(Model):
 
     slave: Slave The slave on which the file belongs to
     """
+
+    CHOICES_SET = [('file', 'File'), ('dir', 'Directory')]
+
     name = CharField(unique=False, max_length=200)
     source_path = TextField(unique=False)
     destination_path = TextField(unique=False)
@@ -357,11 +360,23 @@ class File(Model):
     )
     error_code = CharField(blank=True, default="", max_length=1000)
     slave = ForeignKey(Slave, on_delete=CASCADE)
+    source_type = CharField(max_length=4, choices=CHOICES_SET, default='file')
+    destination_type = CharField(
+        max_length=4,
+        choices=CHOICES_SET,
+        default='file',
+    )
 
     class Meta:
         unique_together = (
             ('name', 'slave'),
-            ('source_path', 'destination_path', 'slave'),
+            (
+                'source_path',
+                'destination_path',
+                'slave',
+                'source_type',
+                'destination_type',
+            ),
         )
 
     @property
@@ -496,7 +511,7 @@ class ScriptGraphFiles(Model):
     """
     script = ForeignKey(Script, on_delete=CASCADE)
     index = IntegerField(null=False)
-    file = ForeignKey(File, on_delete=CASCADE)
+    file = ForeignKey(Filesystem, on_delete=CASCADE)
 
     class Meta:
         unique_together = (('script', 'index', 'file'), )

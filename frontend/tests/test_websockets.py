@@ -10,7 +10,7 @@ from utils import Status, Command
 
 from frontend.models import (
     Slave as SlaveModel,
-    File as FileModel,
+    Filesystem as FileModel,
     ProgramStatus as ProgramStatusModel,
 )
 

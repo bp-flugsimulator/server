@@ -12,7 +12,7 @@ from .models import (
     ScriptGraphFiles as SGFModel,
     ScriptGraphPrograms as SGPModel,
     Program as ProgramModel,
-    File as FileModel,
+    Filesystem as FileModel,
     Slave as SlaveModel,
 )
 

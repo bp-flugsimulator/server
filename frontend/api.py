@@ -15,13 +15,13 @@ from .models import (
     Slave as SlaveModel,
     Program as ProgramModel,
     Script as ScriptModel,
-    File as FileModel,
+    Filesystem as FileModel,
     ScriptGraphFiles as SGFModel,
     ScriptGraphPrograms as SGPModel,
 )
 
 from .scripts import Script
-from .forms import SlaveForm, ProgramForm, FileForm
+from .forms import SlaveForm, ProgramForm, FilesystemForm
 from .consumers import notify
 
 LOGGER = logging.getLogger("fsim.api")
@@ -429,16 +429,21 @@ def add_file(request):
         other than GET.
     """
     if request.method == 'POST':
-        form = FileForm(request.POST or None)
+        form = FilesystemForm(request.POST or None)
 
         if form.is_valid():
             file = form.save(commit=False)
             file.slave = form.cleaned_data['slave']
+            LOGGER.info("File: %s", file)
+
             try:
                 file.full_clean()
                 form.save()
+
                 return StatusResponse(Status.ok(''))
             except ValidationError as err:
+                LOGGER.error("Error while adding file: %s", err)
+
                 string = err.message_dict['__all__'][0]
                 if 'Source path' in string and 'Destination path' in string and 'Slave' in string:
 
@@ -455,6 +460,7 @@ def add_file(request):
                 return StatusResponse(Status.err(error_dict))
         else:
             return StatusResponse(Status.err(form.errors))
+
     elif request.method == 'GET':
         # the URL takes an argument with ?q=<string>
         # e.g. /files?q=test
@@ -499,6 +505,8 @@ def move_file(request, file_id):
             query = FileModel.objects.filter(
                 destination_path=file_.destination_path).exclude(
                     hash_value__exact='')
+
+            print(query)
 
             if query:
                 file_replace = query.get()

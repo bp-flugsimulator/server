@@ -12,7 +12,7 @@ from .models import (
     Slave as SlaveModel,
     Program as ProgramModel,
     ProgramStatus as ProgramStatusModel,
-    File as FileModel,
+    Filesystem as FileModel,
 )
 
 from server.utils import notify_err, notify
@@ -32,13 +32,13 @@ def handle_chain_execution(status):
         The statusobject that was send by the slave
     """
     if status.is_ok():
-        LOGGER.info("CHAIN-EXECUTION: %s" % dict(status))
+        LOGGER.info("chain_execution results: %s", dict(status))
 
         for result in status.payload["result"]:
             select_method(Status(**result))
     else:
         LOGGER.error(
-            "Internal Error: Could not execute chain_execution which raises no errors! (%s)",
+            "Received Status.err for chain_execution, but this function can not raise errors.",
             status.payload,
         )
 
@@ -125,10 +125,16 @@ def handle_file_moved(status):
             'file_status': 'moved',
             'fid': str(file_.id),
         })
+
     else:
         file_.error_code = status.payload['result']
         file_.hash_value = ""
         file_.save()
+
+        LOGGER.error(
+            "Error while moving file: %s",
+            status.payload['result'],
+        )
 
         notify({
             'file_status': 'error',

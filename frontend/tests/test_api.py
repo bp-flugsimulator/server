@@ -15,7 +15,7 @@ from frontend.scripts import Script, ScriptEntryFile, ScriptEntryProgram
 from frontend.models import (
     Script as ScriptModel,
     Slave as SlaveModel,
-    File as FileModel,
+    Filesystem as FileModel,
     Program as ProgramModel,
     ProgramStatus as ProgramStatusModel,
 )
