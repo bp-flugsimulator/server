@@ -509,8 +509,19 @@ $enable-print-styles: true;
 $mdi-font-path: "../../node/mdi/fonts";
 @import "node_modules/mdi/scss/materialdesignicons";
 
-html, body, main, .max-height {
+html, body {
     height: 100%;
+}
+
+main {
+    min-height: 100%;
+}
+
+footer {
+    @extend .fixed-bottom;
+    position: relative;
+    margin-top: 20px;
+    bottom: 0;
 }
 
 [data-notify="container"] {
@@ -544,13 +555,6 @@ html, body, main, .max-height {
 
 [data-notify="container"] > [data-notify="message"] {
 	font-weight: 400;
-}
-
-footer {
-    @extend .fixed-bottom;
-    position: relative;
-    margin-top: 20px;
-    bottom: 0;
 }
 
 .program-name,
