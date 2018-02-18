@@ -291,6 +291,16 @@ def ws_rpc_disconnect(message):
             message.channel_session['ip_address'],
         )
 
+def ws_logs_connect(message):
+    # Accept the connection
+    message.reply_channel.send({"accept": True})
+
+def ws_logs_receive(message):
+        Group('notifications').send({'text': message.content['text']})
+
+def ws_notifications_disconnect(message):
+    pass
+
 
 def ws_notifications_connect(message):
     """
@@ -324,3 +334,4 @@ def ws_notifications_disconnect(message):
     """
 
     Group('notifications').discard(message.reply_channel)
+

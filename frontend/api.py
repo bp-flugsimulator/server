@@ -316,6 +316,41 @@ def program_manage_log(request, program_id):
         return HttpResponseForbidden()
 
 
+def program_enable_logging(request, program_id):
+    if request.method == 'GET':
+        if ProgramModel.objects.filter(id=program_id).exists():
+            program = ProgramModel.objects.get(id=program_id)
+            if program.enable_logging():
+                return StatusResponse(Status.ok(''))
+            else:
+                return StatusResponse(
+                    Status.err(
+                        'Can not enable logging on an offline Client.'))
+        else:
+            return StatusResponse(
+                Status.err('Can enable logging on an unknown program.'))
+
+    else:
+        return HttpResponseForbidden()
+
+
+def program_disable_logging(request, program_id):
+    if request.method == 'GET':
+        if ProgramModel.objects.filter(id=program_id).exists():
+            program = ProgramModel.objects.get(id=program_id)
+            if program.disable_logging():
+                return StatusResponse(Status.ok(''))
+            else:
+                return StatusResponse(
+                    Status.err(
+                        'Can not disable logging on an offline Client.'))
+        else:
+            return StatusResponse(
+                Status.err('Can disabel logging on an unknown program.'))
+    else:
+        return HttpResponseForbidden()
+
+
 def add_script(request):
     """
     Process POST requests which adds new SlaveModel.

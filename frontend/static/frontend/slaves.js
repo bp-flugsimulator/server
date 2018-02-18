@@ -151,11 +151,8 @@ var socketEventHandler = {
     },
     programUpdateLog(payload){
         let logBox= $('#programLog_' + payload.pid);
-        logBox.empty();
-        logBox.text(payload.log);
-
-        let cardButton = $('#programCardButton_' + payload.pid);
-        cardButton.data('has-log', true);
+        logBox.append(payload.log);
+        logBox.data('has-log', true);
     },
 };
 
@@ -204,27 +201,42 @@ $(document).ready(function () {
         localStorage.setItem('tab-status', 'program');
     });
 
-    $('.program-action-get-log').click(function () {
-        let id = $(this).data('program-id');
-        if (!$(this).data('has-log')){
-            $.ajax({
-                type: 'GET',
-                url: '/api/program/' + id + '/log',
-                beforeSend(xhr) {
-                    xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
-                },
-                converters: {
-                    'text json': Status.from_json
-                },
-                success(status) {
-                    if (status.is_err()) {
-                        notify('Error while requesting a log', 'Could not request log. (' + JSON.stringify(status.payload) + ')', 'danger');
-                    }
-                },
-                error(xhr, errorString, errorCode) {
-                    notify('Could deliver', 'Could not deliver request `GET` to server.' + errorCode + ')', 'danger');
+    function handle_logging(id ,method){
+        $.ajax({
+            type: 'GET',
+            url: '/api/program/' + id + '/log/' + method,
+            beforeSend(xhr) {
+                xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
+            },
+            converters: {
+                'text json': Status.from_json
+            },
+            success(status) {
+                if (status.is_err()) {
+                    notify('Error while handeling a log', 'Could not handle log. (' + JSON.stringify(status.payload) + ')', 'danger');
                 }
-            });
+            },
+            error(xhr, errorString, errorCode) {
+                notify('Could deliver', 'Could not deliver request `GET` to server.' + errorCode + ')', 'danger');
+            }
+        });
+    }
+
+    $('.program-action-handle-logging').click(function () {
+        let id = $(this).data('program-id');
+        let logBox= $('#programLog_' + id);
+
+        if (!$(this).data('enabled')){
+            console.log('enabling logging');
+            if (logBox.data('has-log')) {
+                logBox.empty();
+            }
+            handle_logging(id, 'enable');
+            $(this).data('enabled', true)
+        } else {
+            console.log('disabling logging');
+            handle_logging(id, 'disable');
+            $(this).data('enabled', false)
         }
     });
 

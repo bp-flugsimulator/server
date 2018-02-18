@@ -27,7 +27,7 @@
                     <i>DELETE</i>
                 </button>
 
-                <button class="btn btn-outline-dark font-weight-light program-action-get-log" data-program-id="{{ program.id }}" id="programCardButton_{{ program.id }}" type="button" data-toggle="collapse" data-target="#programCard_{{ program.id }}" {% if not program.is_running and not program.is_executed %} disabled {% endif %}>
+                <button class="btn btn-outline-dark font-weight-light program-action-handle-logging" data-program-id="{{ program.id }}" id="programCardButton_{{ program.id }}" type="button" data-toggle="collapse" data-target="#programCard_{{ program.id }}" {% if not program.is_running and not program.is_executed %} disabled {% endif %}>
                     <i class="mdi mdi-dots-vertical"></i>
                     <i>LOG</i>
                 </button>
@@ -36,7 +36,6 @@
     </div>
 
     <div class="collapse pl-4 pr-4 mt-2 row" id="programCard_{{ program.id }}">
-        <pre><div class="code" style="white-space:pre-wrap; background:lightgrey;width: 100%;" id="programLog_{{ program.id }}"></div></pre>
-        <button class="btn btn-outline-dark font-weight-light program-action-get-log" style="width: 100%;" data-program-id="{{ program.id }}"><i class="mdi mdi-24px mdi-reload"></i></button>
+        <pre><div class="code" style="overflow:auto;white-space:pre-wrap; background:lightgrey;width: 100%;max-height:400pt;" id="programLog_{{ program.id }}"></div></pre>
     </div>
 </div>
