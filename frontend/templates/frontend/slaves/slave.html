@@ -56,9 +56,9 @@
         </li>
 
         <li class="nav-item" >
-            <a class="nav-link font-weight-bold slave-file-tab" id="slavesObjectsFiles{{ slave.id }}" data-toggle="tab" href="#slavesObjectsFilesContent{{ slave.id }}" role="tab" data-slave-id="{{ slave.id }}">
-                <i class="mdi mdi-folder"></i> FILES
-                <button type="button" class="btn file-action-add inline-add-button" data-slave-id="{{ slave.id }}">
+            <a class="nav-link font-weight-bold slave-filesystem-tab" id="slavesObjectsFilesystems{{ slave.id }}" data-toggle="tab" href="#slavesObjectsFilesystemsContent{{ slave.id }}" role="tab" data-slave-id="{{ slave.id }}">
+                <i class="mdi mdi-file-tree"></i> FILESYSTEM
+                <button type="button" class="btn filesystem-action-add inline-add-button" data-slave-id="{{ slave.id }}">
                     <i class="mdi mdi-plus"></i>
                 </button>
             </a>
@@ -76,12 +76,12 @@
             {% endfor %}
         </div>
 
-        <div class="tab-pane fade show container-fluid mt-4 " id="slavesObjectsFilesContent{{ slave.id }}" role="tabpanel">
-            {% for file in files %}
-                {% file_entry file %}
+        <div class="tab-pane fade show container-fluid mt-4 " id="slavesObjectsFilesystemsContent{{ slave.id }}" role="tabpanel">
+            {% for filesystem in filesystems %}
+                {% filesystem_entry filesystem %}
             {% empty %}
                 <div>
-                    <span class="background-text-normal">No files registered</span>
+                    <span class="background-text-normal">No filesystems registered</span>
                 </div>
             {% endfor %}
         </div>

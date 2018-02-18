@@ -146,7 +146,7 @@ function styleSlaveByStatus(sid) {
             }
         });
 
-    $('#slavesObjectsFilesContent' + sid)
+    $('#slavesObjectsFilesystemContent' + sid)
         .find('.fsim-box[data-state]')
         .each(function (idx, val) {
             switch ($(val).attr('data-state')) {

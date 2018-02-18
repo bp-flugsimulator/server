@@ -2,20 +2,22 @@
 This module contains all functions that handle requests on the REST api.
 """
 import logging
+import os
 
-from django.http import HttpResponseForbidden
+from django.http import HttpResponseForbidden, HttpResponseNotAllowed
 from django.http.request import QueryDict
 from django.core.exceptions import ValidationError
 from django.db.utils import IntegrityError
 from channels import Group
 from utils import Status, Command
 from server.utils import StatusResponse
+from django.db.models import Q
 
 from .models import (
     Slave as SlaveModel,
     Program as ProgramModel,
     Script as ScriptModel,
-    Filesystem as FileModel,
+    Filesystem as FilesystemModel,
     ScriptGraphFiles as SGFModel,
     ScriptGraphPrograms as SGPModel,
 )
@@ -339,11 +341,11 @@ def manage_script(request, script_id):
     """
     if request.method == 'GET':
         try:
-            # adds ?slaves=int&program_key=int&file_key=int to the URL
+            # adds ?slaves=int&program_key=int&filesystem_key=int to the URL
             # to allow a dynamic format for the json string
             slave_key = request.GET.get('slaves', 'int')
             program_key = request.GET.get('programs', 'int')
-            file_key = request.GET.get('files', 'int')
+            filesystem_key = request.GET.get('filesystems', 'int')
 
             if slave_key != 'str' and slave_key != 'int':
                 return StatusResponse(
@@ -357,17 +359,17 @@ def manage_script(request, script_id):
                         "programs only allow str or int. (given {})".format(
                             program_key)))
 
-            if file_key != 'str' and file_key != 'int':
+            if filesystem_key != 'str' and filesystem_key != 'int':
                 return StatusResponse(
                     Status.err(
-                        "files only allow str or int. (given {})".format(
-                            file_key)))
+                        "filesystems only allow str or int. (given {})".format(
+                            filesystem_key)))
 
             script = Script.from_model(
                 script_id,
                 slave_key,
                 program_key,
-                file_key,
+                filesystem_key,
             )
             return StatusResponse(Status.ok(dict(script)))
         except ScriptModel.DoesNotExist:
@@ -414,10 +416,10 @@ def run_script(request, script_id):
         return HttpResponseForbidden()
 
 
-def add_file(request):
+def filesystem_set(request):
     """
-    Process POST requests which adds new FileModel and GET requests to query
-    for FileModel which contains the query string.
+    Process POST requests which adds new FilesystemModel and GET requests to query
+    for FilesystemModel which contains the query string.
 
     Parameters
     ----------
@@ -432,30 +434,31 @@ def add_file(request):
         form = FilesystemForm(request.POST or None)
 
         if form.is_valid():
-            file = form.save(commit=False)
-            file.slave = form.cleaned_data['slave']
-            LOGGER.info("File: %s", file)
+            filesystem = form.save(commit=False)
+            filesystem.slave = form.cleaned_data['slave']
+            LOGGER.info("filesystem: %s", filesystem)
 
             try:
-                file.full_clean()
+                filesystem.full_clean()
                 form.save()
 
                 return StatusResponse(Status.ok(''))
             except ValidationError as err:
-                LOGGER.error("Error while adding file: %s", err)
+                LOGGER.error("Error while adding filesystem: %s", err)
 
                 string = err.message_dict['__all__'][0]
                 if 'Source path' in string and 'Destination path' in string and 'Slave' in string:
 
-                    error_msg = 'File with this source path and destination path already exists on this Client.'
+                    error_msg = 'Filesystem with this source path and destination path already exists on this Client.'
                     error_dict = {
                         'source_path': [error_msg],
                         'destination_path': [error_msg],
                     }
                 elif 'Name' in err.message_dict['__all__'][0] and 'Slave' in err.message_dict['__all__'][0]:
                     error_dict = {
-                        'name':
-                        ['File with this Name already exists on this Client.']
+                        'name': [
+                            'Filesystem with this Name already exists on this Client.'
+                        ]
                     }
                 return StatusResponse(Status.err(error_dict))
         else:
@@ -463,7 +466,7 @@ def add_file(request):
 
     elif request.method == 'GET':
         # the URL takes an argument with ?q=<string>
-        # e.g. /files?q=test
+        # e.g. /filesystems?q=test
         query = request.GET.get('q', '')
 
         return StatusResponse(
@@ -471,21 +474,21 @@ def add_file(request):
                 list(
                     set([
                         obj['name']
-                        for obj in FileModel.objects.filter(
+                        for obj in FilesystemModel.objects.filter(
                             name__contains=query).values("name")
                     ]))))
     else:
-        return HttpResponseForbidden()
+        return HttpResponseNotAllowed(['GET', 'POST'])
 
 
-def move_file(request, file_id):
+def filesystem_move(request, filesystem_id):
     """
-    Process GET requests for the FileModel(move) ressource.
+    Process GET requests for the FilesystemModel(move) ressource.
 
     Parameters
     ----------
         request: HttpRequest
-        fileId: Unique identifier of a file
+        fileId: Unique identifier of a filesystem
 
     Returns
     -------
@@ -493,36 +496,53 @@ def move_file(request, file_id):
         other than GET.
     """
     if request.method == 'GET':
-        file_ = FileModel.objects.get(id=file_id)
-        slave = file_.slave
+        filesystem = FilesystemModel.objects.get(id=filesystem_id)
+        slave = filesystem.slave
 
         if slave.is_online:
-            if file_.is_moved:
+            if filesystem.is_moved:
                 return StatusResponse(
-                    Status.err('Error: File `{}` is already moved.'.format(
-                        file_.name)))
+                    Status.err(
+                        'Error: Filesystem `{}` is already moved.'.format(
+                            filesystem.name)))
 
-            query = FileModel.objects.filter(
-                destination_path=file_.destination_path).exclude(
-                    hash_value__exact='')
+            if filesystem.destination_type == 'file':
+                lookup_file_name = os.path.basename(filesystem.source_path)
+                lookup_file = filesystem.destination_path
+                (lookup_dir, _) = os.path.split(filesystem.destination_path)
+
+            elif filesystem.destination_type == 'dir':
+                lookup_file_name = os.path.basename(filesystem.source_path)
+                lookup_file = os.path.join(filesystem.destination_path,
+                                           lookup_file_name)
+                lookup_dir = filesystem.destination_path
+
+            regex = '^.*(\/|\\){}$'.format(lookup_file_name)
+
+            query = FilesystemModel.objects.filter(
+                Q(destination_path=lookup_file, destination_type='file') | Q(
+                    destination_path=lookup_dir,
+                    destination_type='dir',
+                    source_path__regex=regex,
+                )).exclude(hash_value__exact='')
 
             print(query)
 
             if query:
-                file_replace = query.get()
+                filesystem_replace = query.get()
 
                 first = Command(
-                    method="restore_file",
-                    source_path=file_replace.source_path,
-                    destination_path=file_replace.destination_path,
+                    method="filesystem_restore",
+                    source_path=filesystem_replace.source_path,
+                    destination_path=filesystem_replace.destination_path,
                     backup_ending=FILE_BACKUP_ENDING,
-                    hash_value=file_replace.hash_value,
+                    hash_value=filesystem_replace.hash_value,
                 )
 
                 second = Command(
-                    method="move_file",
-                    source_path=file_.source_path,
-                    destination_path=file_.destination_path,
+                    method="filesystem_move",
+                    source_path=filesystem.source_path,
+                    destination_path=filesystem.destination_path,
                     backup_ending=FILE_BACKUP_ENDING,
                 )
 
@@ -531,22 +551,24 @@ def move_file(request, file_id):
                     commands=[dict(first), dict(second)],
                 )
 
-                file_replace.command_uuid = first.uuid
-                file_replace.save()
+                filesystem_replace.command_uuid = first.uuid
+                filesystem_replace.save()
 
-                file_.command_uuid = second.uuid
-                file_.save()
+                filesystem.command_uuid = second.uuid
+                filesystem.save()
 
             else:
                 cmd = Command(
-                    method="move_file",
-                    source_path=file_.source_path,
-                    destination_path=file_.destination_path,
+                    method="filesystem_move",
+                    source_path=filesystem.source_path,
+                    source_type=filesystem.source_type,
+                    destination_path=filesystem.destination_path,
+                    destination_type=filesystem.destination_type,
                     backup_ending=FILE_BACKUP_ENDING,
                 )
 
-                file_.command_uuid = cmd.uuid
-                file_.save()
+                filesystem.command_uuid = cmd.uuid
+                filesystem.save()
 
             # send command to the client
             Group('client_' + str(slave.id)).send({'text': cmd.to_json()})
@@ -555,19 +577,19 @@ def move_file(request, file_id):
         else:
             return StatusResponse(
                 Status.err('Can not move {} because {} is offline!'.format(
-                    file_.name, slave.name)))
+                    filesystem.name, slave.name)))
     else:
-        return HttpResponseForbidden()
+        return HttpResponseNotAllowed(['GET'])
 
 
-def restore_file(request, file_id):
+def filesystem_restore(request, filesystem_id):
     """
-    Process GET requests for the FileModel(restore) ressource.
+    Process GET requests for the FilesystemModel(restore) ressource.
 
     Parameters
     ----------
         request: HttpRequest
-        fileId: Unique identifier of a file
+        fileId: Unique identifier of a filesystem
 
     Returns
     -------
@@ -575,46 +597,48 @@ def restore_file(request, file_id):
         other than GET.
     """
     if request.method == 'GET':
-        file_ = FileModel.objects.get(id=file_id)
-        slave = file_.slave
+        filesystem = FilesystemModel.objects.get(id=filesystem_id)
+        slave = filesystem.slave
 
         if slave.is_online:
-            if not file_.is_moved:
+            if not filesystem.is_moved:
                 return StatusResponse(
-                    Status.err('Error: File `{}` is not moved.'.format(
-                        file_.name)))
+                    Status.err('Error: filesystem `{}` is not moved.'.format(
+                        filesystem.name)))
 
             cmd = Command(
-                method="restore_file",
-                source_path=file_.source_path,
-                destination_path=file_.destination_path,
+                method="filesystem_restore",
+                source_path=filesystem.source_path,
+                source_type=filesystem.source_type,
+                destination_path=filesystem.destination_path,
+                destination_type=filesystem.destination_type,
                 backup_ending=FILE_BACKUP_ENDING,
-                hash_value=file_.hash_value,
+                hash_value=filesystem.hash_value,
             )
 
             # send command to the client
             Group('client_' + str(slave.id)).send({'text': cmd.to_json()})
 
-            file_.command_uuid = cmd.uuid
-            file_.save()
+            filesystem.command_uuid = cmd.uuid
+            filesystem.save()
 
             return StatusResponse(Status.ok(''))
         else:
             return StatusResponse(
                 Status.err('Can not restore {} because {} is offline!'.format(
-                    file_.name, slave.name)))
+                    filesystem.name, slave.name)))
     else:
-        return HttpResponseForbidden()
+        return HttpResponseNotAllowed(['GET'])
 
 
-def manage_file(request, file_id):
+def filesystem_entry(request, filesystem_id):
     """
-    Process DELETE, PUT and POST requests for the FileModel ressource.
+    Process DELETE, PUT and POST requests for the FilesystemModel ressource.
 
     Parameters
     ----------
         request: HttpRequest
-        fileId: Unique identifier of a file
+        fileId: Unique identifier of a filesystem
 
     Returns
     -------
@@ -623,7 +647,9 @@ def manage_file(request, file_id):
     """
 
     if request.method == 'DELETE':
-        FileModel.objects.filter(id=file_id).delete()
+        FilesystemModel.objects.filter(id=filesystem_id).delete()
         return StatusResponse(Status.ok(''))
+    elif request.method == 'PUT':
+        return HttpResponseNotAllowed(['DELETE'])
     else:
         return HttpResponseForbidden()

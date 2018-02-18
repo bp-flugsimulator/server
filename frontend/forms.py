@@ -12,7 +12,7 @@ from django.forms import (
 from .models import (
     Slave as SlaveModel,
     Program as ProgramModel,
-    Filesystem as FileModel,
+    Filesystem as FilesystemModel,
 )
 
 
@@ -59,7 +59,7 @@ class FilesystemForm(ModelForm):
         """
         configures the form
         """
-        model = FileModel
+        model = FilesystemModel
         fields = [
             'name',
             'source_path',

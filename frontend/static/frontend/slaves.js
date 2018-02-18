@@ -41,7 +41,7 @@ const restoreSlaveInnerTab = function (slaveId) {
         if (tabStatus === 'program') {
             $('#slavesObjectsPrograms' + slaveId).click();
         }
-        else if (tabStatus === 'file') {
+        else if (tabStatus === 'filesystem') {
             $('#slavesObjectsFiles' + slaveId).click();
         }
     }
@@ -151,10 +151,10 @@ var socketEventHandler = {
             swapText($(val));
         });
     },
-    fileMoved(payload) {
-        let statusContainer = $('#fileStatusContainer_' + payload.fid);
-        let moveRestoreButton = $('#fileMoveRestore_' + payload.fid);
-        let cardButton = $('#fileCardButton_' + payload.fid);
+    filesystemMoved(payload) {
+        let statusContainer = $('#filesystemStatusContainer_' + payload.fid);
+        let moveRestoreButton = $('#filesystemMoveRestore_' + payload.fid);
+        let cardButton = $('#filesystemCardButton_' + payload.fid);
 
         statusContainer.attr('data-state', 'moved');
         cardButton.prop('disabled', true);
@@ -172,10 +172,10 @@ var socketEventHandler = {
 
         styleSlaveByStatus(sid);
     },
-    fileRestored(payload) {
-        let statusContainer = $('#fileStatusContainer_' + payload.fid);
-        let moveRestoreButton = $('#fileMoveRestore_' + payload.fid);
-        let cardButton = $('#fileCardButton_' + payload.fid);
+    filesystemRestored(payload) {
+        let statusContainer = $('#filesystemStatusContainer_' + payload.fid);
+        let moveRestoreButton = $('#filesystemMoveRestore_' + payload.fid);
+        let cardButton = $('#filesystemCardButton_' + payload.fid);
 
         statusContainer.attr('data-state', 'restored');
         cardButton.prop('disabled', true);
@@ -193,11 +193,11 @@ var socketEventHandler = {
 
         styleSlaveByStatus(sid);
     },
-    fileError(payload) {
-        let statusContainer = $('#fileStatusContainer_' + payload.fid);
-        let moveRestoreButton = $('#fileMoveRestore_' + payload.fid);
-        let cardButton = $('#fileCardButton_' + payload.fid);
-        let cardBox = $('#fileCard_' + payload.fid);
+    filesystemError(payload) {
+        let statusContainer = $('#filesystemStatusContainer_' + payload.fid);
+        let moveRestoreButton = $('#filesystemMoveRestore_' + payload.fid);
+        let cardButton = $('#filesystemCardButton_' + payload.fid);
+        let cardBox = $('#filesystemCard_' + payload.fid);
 
         statusContainer.attr('data-state', 'error');
         cardButton.prop('disabled', false);
@@ -251,8 +251,8 @@ $(document).ready(function () {
         }
     });
 
-    $('.slave-file-tab').click(function () {
-        localStorage.setItem('tab-status', 'file');
+    $('.slave-filesystem-tab').click(function () {
+        localStorage.setItem('tab-status', 'filesystem');
     });
 
     $('.slave-program-tab').click(function () {
@@ -297,7 +297,7 @@ $(document).ready(function () {
         let deleteWarning = $('#deleteWarning');
         deleteWarning.children().find('#deleteProgramModalButton').hide();
         deleteWarning.children().find('#deleteSlaveModalButton').hide();
-        deleteWarning.children().find('#deleteFileModalButton').hide();
+        deleteWarning.children().find('#deleteFilesystemModalButton').hide();
 
         deleteWarning.children().find('#delete' + show + 'ModalButton').show();
 
@@ -375,8 +375,8 @@ $(document).ready(function () {
         modalDeleteAction($('#programForm'), 'program');
     });
 
-    $('#deleteFileModalButton').click(function () {
-        modalDeleteAction($('#FilesystemForm'), 'file');
+    $('#deleteFilesystemModalButton').click(function () {
+        modalDeleteAction($('#filesystemForm'), 'filesystem');
     });
 
     $('.program-action-delete').click(function () {
@@ -392,44 +392,44 @@ $(document).ready(function () {
     $('#programForm').submit(onFormSubmit('programForm'));
 
     //opens the fileModal to add a new program
-    $('.file-action-add').click(function () {
-        let fileModal = $('#fileModal');
-        fileModal.children().find('.modal-title').text('Add File');
+    $('.filesystem-action-add').click(function () {
+        let filesystemModal = $('#filesystemModal');
+        filesystemModal.children().find('.modal-title').text('Add filesystem');
 
         //modify the form for the submit button
-        let FilesystemForm = fileModal.children().find('#FilesystemForm');
-        FilesystemForm.attr('action', '/api/files');
-        FilesystemForm.attr('method', 'POST');
-        FilesystemForm.children().find('.submit-btn').text('Add');
+        let filesystemForm = filesystemModal.children().find('#filesystemForm');
+        filesystemForm.attr('action', '/api/filesystems');
+        filesystemForm.attr('method', 'POST');
+        filesystemForm.children().find('.submit-btn').text('Add');
 
         //clear input fields
-        FilesystemForm.find('[name="name"]').val('');
-        FilesystemForm.find('[name="source_path"]').val('');
-        FilesystemForm.find('[name="destination_path"]').val('');
+        filesystemForm.find('[name="name"]').val('');
+        filesystemForm.find('[name="source_path"]').val('');
+        filesystemForm.find('[name="destination_path"]').val('');
 
         //clear error messages
-        clearErrorMessages(FilesystemForm);
+        clearErrorMessages(filesystemForm);
 
         //find slave id and store it in the form
         let slaveId = $(this).data('slave-id');
-        FilesystemForm.find('[name="slave"]').val(slaveId);
-        fileModal.modal('toggle');
+        filesystemForm.find('[name="slave"]').val(slaveId);
+        filesystemModal.modal('toggle');
     });
 
-    $('.file-action-modify').click(function () {
+    $('.filesystem-action-modify').click(function () {
         alert('Unimplemented');
     });
 
-    $('.file-action-delete').click(function () {
+    $('.filesystem-action-delete').click(function () {
         //get id and name of the program and create deletion message
-        let id = $(this).data('file-id');
-        let name = $(this).data('file-name');
-        let message = '<a>Are you sure you want to remove file </a><b>' + name + '</b>?</a>';
+        let id = $(this).data('filesystem-id');
+        let name = $(this).data('filesystem-name');
+        let message = '<a>Are you sure you want to remove filesystem </a><b>' + name + '</b>?</a>';
 
-        prepareDeleteModal('File', id, message);
+        prepareDeleteModal('filesystem', id, message);
     });
 
-    $('.file-action-move').click(function () {
+    $('.filesystem-action-move').click(function () {
         let apiRequest = function (url, type) {
             $.ajax({
                 type,
@@ -442,7 +442,7 @@ $(document).ready(function () {
                 },
                 success(status) {
                     if (status.is_err()) {
-                        notify('Error while moving file', 'Could not move/restore file. (' + JSON.stringify(status.payload) + ')', 'danger');
+                        notify('Error while moving filesystem', 'Could not move/restore filesystem. (' + JSON.stringify(status.payload) + ')', 'danger');
                     }
                 },
                 error(xhr, errorString, errorCode) {
@@ -451,19 +451,19 @@ $(document).ready(function () {
             });
         };
 
-        let id = $(this).data('file-id');
+        let id = $(this).data('filesystem-id');
 
         if ($(this).attr('data-is-moved') === 'True') {
-            apiRequest('/api/file/' + id + '/restore', 'GET');
+            apiRequest('/api/filesystem/' + id + '/restore', 'GET');
         } else if ($(this).attr('data-is-moved') === 'False') {
-            apiRequest('/api/file/' + id + '/move', 'GET');
+            apiRequest('/api/filesystem/' + id + '/move', 'GET');
         } else {
             console.log("Invalid data-is-running state.");
         }
     });
 
-    // FilesystemForm Handler
-    $('#FilesystemForm').submit(onFormSubmit('FilesystemForm'));
+    // filesystemForm Handler
+    $('#filesystemForm').submit(onFormSubmit('filesystemForm'));
 
     $('.slave-action-start-stop').click(function () {
         if ($(this).attr('data-is-running') === 'True') {

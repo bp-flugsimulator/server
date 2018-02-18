@@ -39,12 +39,12 @@ var schema = {
                     'title': 'Client',
                     'type': ['integer', 'string'],
                 },
-                'file': {
+                'filesystem': {
                     'title': 'File',
                     'type': ['integer', 'string'],
                 }
             },
-            'required': ['index', 'slave', 'file'],
+            'required': ['index', 'slave', 'filesystem'],
             'additionalProperties': false
         }
     },
@@ -59,7 +59,7 @@ var schema = {
             },
             'uniqueItems': true
         },
-        'files': {
+        'filesystems': {
             'type': 'array',
             'items': {
                 '$ref': '#/definitions/file_entry'
@@ -67,7 +67,7 @@ var schema = {
             'uniqueItems': true
         }
     },
-    'required': ['name', 'programs', 'files'],
+    'required': ['name', 'programs', 'filesystems'],
     'additionalProperties': false
 };
 
@@ -83,7 +83,7 @@ var options = {
         value: {
             'index': 0,
             'slave': '',
-            'file': ''
+            'filesystem': ''
         }
     }, {
         text: 'Program',
@@ -105,7 +105,7 @@ var options = {
                 switch (path[path.length - 1]) {
                     case 'slave':
                     case 'program':
-                    case 'file':
+                    case 'filesystem':
                         $.ajax({
                             url: '/api/' + path[path.length - 1] + 's?q=' + text,
                             beforeSend(xhr) {
@@ -147,7 +147,7 @@ var options = {
                     field: false,
                     value: true
                 };
-            case 'files':
+            case 'filesystems':
                 return {
                     field: false,
                     value: true
@@ -169,7 +169,7 @@ function createEditor(json, id) {
 
 function loadScript(id) {
     $.ajax({
-        url: '/api/script/' + id + '?programs=str&files=str&slaves=str',
+        url: '/api/script/' + id + '?programs=str&filesystems=str&slaves=str',
         beforeSend(xhr) {
             xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
         },
@@ -193,7 +193,7 @@ function newScript(name) {
     let defaultJson = {
         name,
         programs: [],
-        files: [],
+        filesystems: [],
     };
 
     createEditor(defaultJson, name);

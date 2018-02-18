@@ -41,10 +41,10 @@ class FrontendTests(TestCase):
     def test_slave_get(self):
         slave = SlaveFactory()
         program = ProgramFactory(slave=slave)
-        file = FileFactory(slave=slave)
+        filesystem = FileFactory(slave=slave)
 
         response = self.client.get(reverse('frontend:slaves'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, slave.name)
         self.assertContains(response, program.name)
-        self.assertContains(response, file.name)
+        self.assertContains(response, filesystem.name)

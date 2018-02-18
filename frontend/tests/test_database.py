@@ -72,9 +72,9 @@ class DatabaseTests(TestCase):  # pylint: disable=unused-variable
         self.assertFalse(slave.has_running)
 
     def test_slave_has_error_true(self):
-        file = FileFactory(error_code="Hey")
+        filesystem = FileFactory(error_code="Hey")
 
-        self.assertTrue(file.slave.has_error)
+        self.assertTrue(filesystem.slave.has_error)
 
     def test_slave_is_online_err(self):
         slave = SlaveFactory()

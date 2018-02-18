@@ -1,0 +1,39 @@
+<div class="row-1 mb-2 pt-2 pb-2 pl-4 pr-4 fsim-box" data-state="{% if filesystem.is_error %}error{% elif filesystem.is_moved %}moved{% else %}restored{% endif %}" id="fileStatusContainer_{{ filesystem.id }}">
+    <div class="row">
+        <div class="filesystem-name col mt-1 font-weight-bold">
+            <i class="fsim-filesystem-status-icon align-middle" id="fileStatusIcon_{{ filesystem.id }}"></i>
+            <span class="align-middle">{{ filesystem.name }}</span>
+        </div>
+
+        <div class="btn-toolbar col d-flex justify-content-end" role="toolbar">
+            <div class="btn-group mr-2" role="group">
+                <button type="button" id="fileMoveRestore_{{ filesystem.id }}" class="btn btn-outline-dark font-weight-light filesystem-action-move"
+                    data-filesystem-id="{{ filesystem.id }}" data-is-moved="{{ filesystem.is_moved }}">
+                    <i class="mdi mdi-swap-horizontal"></i>
+                    <i class="button-status-display">
+                        {% if filesystem.is_moved %}RESTORE{% else %}MOVE{% endif %}
+                    </i>
+                </button>
+
+                <button type="button" class="btn btn-outline-dark filesystem-action-modify font-weight-light" data-slave-id ="{{ filesystem.slave.id }}" data-filesystem-id="{{ filesystem.id }}">
+                    <i class="mdi mdi-pencil"></i> EDIT
+                </button>
+
+                <button type="button" class="btn btn-outline-dark filesystem-action-delete font-weight-light" data-filesystem-id="{{ filesystem.id }}">
+                    <i class="mdi mdi-delete"></i> DELETE
+                </button>
+
+                <button class="btn btn-outline-dark font-weight-light" id="fileCardButton_{{ filesystem.id }}" type="button" data-toggle="collapse" data-target="#fileCard_{{ filesystem.id }}" {% if not filesystem.is_error %} disabled {% endif %}>
+                    <i class="mdi mdi-dots-vertical"></i>
+                    <i>MORE</i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="collapse pl-4 pr-4 mt-2 row" id="filesystemCard_{{ filesystem.id }}">
+        {% if filesystem.is_error %}
+            {{ filesystem.error_code }}
+        {% endif %}
+    </div>
+</div>

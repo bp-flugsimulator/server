@@ -15,7 +15,7 @@ from frontend.models import (
     Script as ScriptModel,
     ScriptGraphPrograms as SGP,
     ScriptGraphFiles as SGF,
-    Filesystem as FileModel,
+    Filesystem as FilesystemModel,
 )
 
 
@@ -80,18 +80,20 @@ class ProgramStatusFactory(DjangoModelFactory):
 
 class FileFactory(DjangoModelFactory):
     class Meta:
-        model = FileModel
+        model = FilesystemModel
 
     name = FuzzyText(length=20, prefix="file_")
     source_path = FuzzyText(length=100)
+    source_type = 'file'
     destination_path = FuzzyText(length=100)
+    destination_type = 'file'
     slave = SubFactory(SlaveFactory)
     command_uuid = uuid4().hex
 
 
 class MovedFileFactory(DjangoModelFactory):
     class Meta:
-        model = FileModel
+        model = FilesystemModel
 
     name = FuzzyText(length=20, prefix="file_")
     source_path = FuzzyText(length=100)

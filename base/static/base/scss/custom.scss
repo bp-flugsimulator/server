@@ -558,7 +558,7 @@ footer {
 }
 
 .program-name,
-.file-name {
+.filesystem-name {
     @extend .font-weight-bold;
     font-size: 16px;
 }
@@ -624,17 +624,17 @@ footer {
     @extend .mdi-clock;
 }
 
-.fsim-box[data-state=error] .fsim-file-status-icon {
+.fsim-box[data-state=error] .fsim-filesystem-status-icon {
     @extend .mdi;
     @extend .mdi-alert-circle-outline;
 }
 
-.fsim-box[data-state=moved] .fsim-file-status-icon {
+.fsim-box[data-state=moved] .fsim-filesystem-status-icon {
     @extend .mdi;
     @extend .mdi-undo;
 }
 
-.fsim-box[data-state=restored] .fsim-file-status-icon {
+.fsim-box[data-state=restored] .fsim-filesystem-status-icon {
     @extend .mdi;
     @extend .mdi-redo;
 }

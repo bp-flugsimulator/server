@@ -12,7 +12,7 @@ from .models import (
     Slave as SlaveModel,
     Program as ProgramModel,
     ProgramStatus as ProgramStatusModel,
-    Filesystem as FileModel,
+    Filesystem as FilesystemModel,
 )
 
 from server.utils import notify_err, notify
@@ -43,23 +43,23 @@ def handle_chain_execution(status):
         )
 
 
-def handle_file_restored(status):
+def handle_filesystem_restored(status):
     """
     Handles an incoming message on '/notification' that
-    is an answer to an 'restore_file' request on a slave
+    is an answer to an 'filesystem_restore' request on a slave
 
     Parameters
     ----------
     status: Status
         The statusobject that was send by the slave
     """
-    LOGGER.info("Handle file restored %s" % dict(status))
+    LOGGER.info("Handle filesystem restored %s" % dict(status))
 
     try:
-        file_ = FileModel.objects.get(command_uuid=status.uuid)
-    except FileModel.DoesNotExist:
+        file_ = FilesystemModel.objects.get(command_uuid=status.uuid)
+    except FilesystemModel.DoesNotExist:
         LOGGER.warning(
-            "A file restored with id %s, but is not in the database.",
+            "A filesystem restored with id %s, but is not in the database.",
             status.uuid,
         )
         return
@@ -70,12 +70,12 @@ def handle_file_restored(status):
         file_.save()
 
         LOGGER.info(
-            "Restored file %s.",
+            "Restored filesystemsystem %s.",
             file_.name,
         )
 
         notify({
-            'file_status': 'restored',
+            'filesystem_status': 'restored',
             'fid': str(file_.id),
         })
     else:
@@ -84,28 +84,28 @@ def handle_file_restored(status):
         file_.save()
 
         notify({
-            'file_status': 'error',
+            'filesystem_status': 'error',
             'error_code': status.payload['result'],
             'fid': str(file_.id),
         })
 
 
-def handle_file_moved(status):
+def handle_filesystem_moved(status):
     """
     Handles an incoming message on '/notification' that
-    is an answer to an 'move_file' request on a slave
+    is an answer to an 'filesystem_move' request on a slave
 
     Parameters
     ----------
     status: Status
         The statusobject that was send by the slave
     """
-    LOGGER.info("Handle file moved %s" % dict(status))
+    LOGGER.info("Handle filesystem moved %s" % dict(status))
     try:
-        file_ = FileModel.objects.get(command_uuid=status.uuid)
-    except FileModel.DoesNotExist:
+        file_ = FilesystemModel.objects.get(command_uuid=status.uuid)
+    except FilesystemModel.DoesNotExist:
         LOGGER.warning(
-            "A file moved with id %s, but is not in the database.",
+            "A filesystem moved with id %s, but is not in the database.",
             status.uuid,
         )
         return
@@ -116,13 +116,13 @@ def handle_file_moved(status):
         file_.save()
 
         LOGGER.info(
-            "Saved file %s with hash value %s.",
+            "Saved filesystem %s with hash value %s.",
             file_.name,
             file_.hash_value,
         )
 
         notify({
-            'file_status': 'moved',
+            'filesystem_status': 'moved',
             'fid': str(file_.id),
         })
 
@@ -132,12 +132,12 @@ def handle_file_moved(status):
         file_.save()
 
         LOGGER.error(
-            "Error while moving file: %s",
+            "Error while moving filesystem: %s",
             status.payload['result'],
         )
 
         notify({
-            'file_status': 'error',
+            'filesystem_status': 'error',
             'error_code': status.payload['result'],
             'fid': str(file_.id),
         })
@@ -367,8 +367,8 @@ def select_method(status):
         FUNCTION_HANDLE_TABLE = {
             'online': handle_online_answer,
             'execute': handle_execute_answer,
-            'move_file': handle_file_moved,
-            'restore_file': handle_file_restored,
+            'filesystem_move': handle_filesystem_moved,
+            'filesystem_restore': handle_filesystem_restored,
             'chain_execution': handle_chain_execution,
         }
 
