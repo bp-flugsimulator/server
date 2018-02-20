@@ -401,16 +401,16 @@ class FileTests(TestCase):
     maxDiff = None
 
     def test_manage_file_forbidden(self):
-        api_response = self.client.put("/api/filesystem/0")
-        self.assertEqual(api_response.status_code, 405)
+        api_response = self.client.post("/api/filesystem/0")
+        self.assertEqual(api_response.status_code, 403)
 
     def test_move_file_forbidden(self):
         api_response = self.client.post("/api/filesystem/0/restore")
-        self.assertEqual(api_response.status_code, 405)
+        self.assertEqual(api_response.status_code, 403)
 
     def test_restore_file_forbidden(self):
         api_response = self.client.post("/api/filesystem/0/move")
-        self.assertEqual(api_response.status_code, 405)
+        self.assertEqual(api_response.status_code, 403)
 
     def test_move_file_status_error(self):
         filesystem = FileFactory()
@@ -682,7 +682,7 @@ class FileTests(TestCase):
 
     def test_add_file_unsupported_function(self):
         api_response = self.client.delete('/api/filesystems')
-        self.assertEqual(api_response.status_code, 405)
+        self.assertEqual(api_response.status_code, 403)
 
     def test_move_moved_file(self):
         slave = SlaveFactory(online=True)

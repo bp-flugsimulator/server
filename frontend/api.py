@@ -4,7 +4,7 @@ This module contains all functions that handle requests on the REST api.
 import logging
 import os
 
-from django.http import HttpResponseForbidden, HttpResponseNotAllowed
+from django.http import HttpResponseForbidden
 from django.http.request import QueryDict
 from django.core.exceptions import ValidationError
 from django.db.utils import IntegrityError
@@ -502,7 +502,7 @@ def filesystem_set(request):
                             name__contains=query).values("name")
                     ]))))
     else:
-        return HttpResponseNotAllowed(['GET', 'POST'])
+        return HttpResponseForbidden()
 
 
 def filesystem_move(request, filesystem_id):
@@ -608,7 +608,7 @@ def filesystem_move(request, filesystem_id):
                 Status.err('Can not move {} because {} is offline!'.format(
                     filesystem.name, slave.name)))
     else:
-        return HttpResponseNotAllowed(['GET'])
+        return HttpResponseForbidden()
 
 
 def filesystem_restore(request, filesystem_id):
@@ -657,7 +657,7 @@ def filesystem_restore(request, filesystem_id):
                 Status.err('Can not restore {} because {} is offline!'.format(
                     filesystem.name, slave.name)))
     else:
-        return HttpResponseNotAllowed(['GET'])
+        return HttpResponseForbidden()
 
 
 def filesystem_entry(request, filesystem_id):
@@ -684,6 +684,6 @@ def filesystem_entry(request, filesystem_id):
             return StatusResponse(
                 Status.err('The file is still moved. Restore the file first.'))
     elif request.method == 'PUT':
-        return HttpResponseNotAllowed(['DELETE'])
+        raise ValueError("Not implemented!")
     else:
         return HttpResponseForbidden()
