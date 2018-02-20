@@ -25,7 +25,6 @@ from .factory import (
 
 class WebsocketTests(TestCase):
     def test_rpc_commands_fails_unknown_slave(self):
-
         slave = SlaveFactory.build()
 
         ws_client = WSClient()
@@ -553,6 +552,82 @@ class WebsocketTests(TestCase):
             'websocket.receive',
             path='/notifications',
             content={'text': error_status.to_json()},
+        )
+
+        self.assertIsNone(webinterface.receive())
+
+    def test_ws_notifications_chain_commands_err(self):
+        error_chain = Status.err({
+            'method': 'chain_execution',
+            'result': None,
+        })
+
+        #  connect webinterface
+        webinterface = WSClient()
+        webinterface.join_group('notifications')
+
+        ws_client = WSClient()
+        ws_client.send_and_consume(
+            'websocket.receive',
+            path='/notifications',
+            content={'text': error_chain.to_json()},
+        )
+
+        self.assertIsNone(webinterface.receive())
+
+    def test_ws_notifications_chain_commands(self):
+        filesystem = FileFactory()
+
+        moved = MovedFileFactory.build()
+
+        error_status1 = Status.ok({
+            'method': 'filesystem_move',
+            'result': moved.hash_value,
+        })
+        error_status1.uuid = filesystem.command_uuid
+
+        error_status2 = Status.ok({
+            'method': 'filesystem_move',
+            'result': moved.hash_value,
+        })
+        error_status2.uuid = filesystem.command_uuid
+
+        error_chain = Status.ok({
+            'method':
+            'chain_execution',
+            'result': [dict(error_status1),
+                       dict(error_status2)],
+        })
+
+        #  connect webinterface
+        webinterface = WSClient()
+        webinterface.join_group('notifications')
+
+        ws_client = WSClient()
+        ws_client.send_and_consume(
+            'websocket.receive',
+            path='/notifications',
+            content={'text': error_chain.to_json()},
+        )
+
+        query = FilesystemModel.objects.get(id=filesystem.id)
+        self.assertEqual(query.hash_value, moved.hash_value)
+        self.assertEqual(query.error_code, "")
+
+        self.assertEqual(
+            Status.ok({
+                'filesystem_status': 'moved',
+                'fid': str(filesystem.id),
+            }),
+            Status.from_json(json.dumps(webinterface.receive())),
+        )
+
+        self.assertEqual(
+            Status.ok({
+                'filesystem_status': 'moved',
+                'fid': str(filesystem.id),
+            }),
+            Status.from_json(json.dumps(webinterface.receive())),
         )
 
         self.assertIsNone(webinterface.receive())

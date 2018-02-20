@@ -1,6 +1,8 @@
 #  pylint: disable=C0111,C0103
 
 import json
+import os
+
 from urllib.parse import urlencode
 from shlex import split
 
@@ -29,6 +31,15 @@ from .factory import (
     MovedFileFactory,
     ProgramStatusFactory,
 )
+
+class EtcTest(TestCase):
+
+    def test_trailing(self):
+        from frontend.api import remove_trailing_path_seperator
+
+        self.assertEqual("a", remove_trailing_path_seperator("a"))
+        self.assertEqual("a", remove_trailing_path_seperator("a/"))
+        self.assertEqual("a/", remove_trailing_path_seperator("a//"))
 
 
 class ScriptTest(TestCase):
@@ -387,6 +398,8 @@ class ScriptTest(TestCase):
 
 
 class FileTests(TestCase):
+    maxDiff = None
+
     def test_manage_file_forbidden(self):
         api_response = self.client.put("/api/filesystem/0")
         self.assertEqual(api_response.status_code, 405)
@@ -441,6 +454,98 @@ class FileTests(TestCase):
                 backup_ending='_BACK',
             ),
             Command.from_json(json.dumps(ws_client.receive())),
+        )
+
+    def test_move_dir_ok(self):
+        slave = SlaveFactory(online=True)
+        filesystem = FileFactory(slave=slave, source_type="dir", destination_type="dir")
+
+        # connect slave to websocket
+        ws_client = WSClient()
+        ws_client.join_group('client_' + str(slave.id))
+
+        api_response = self.client.get("/api/filesystem/" + str(filesystem.id)
+                                       + "/move")
+        self.assertEqual(api_response.status_code, 200)
+
+        self.assertEqual(
+            Status.from_json(api_response.content.decode('utf-8')),
+            Status.ok(''),
+        )
+
+        self.assertEqual(
+            Command(
+                method='filesystem_move',
+                source_path=filesystem.source_path,
+                source_type=filesystem.source_type,
+                destination_path=filesystem.destination_path,
+                destination_type=filesystem.destination_type,
+                backup_ending='_BACK',
+            ),
+            Command.from_json(json.dumps(ws_client.receive())),
+        )
+
+    def test_move_file_conflicting(self):
+        self.assertTrue(FilesystemModel.objects.all().count() == 0)
+        slave = SlaveFactory(online=True)
+        filesystem = FileFactory(slave=slave)
+        filesystem.source_path = "/" + filesystem.source_path
+        filesystem.destination_path = "/test/" + filesystem.destination_path
+        filesystem.save()
+
+        (path, _) = os.path.split(filesystem.destination_path)
+
+        conflict = FileFactory(
+            slave=slave,
+            source_path=filesystem.source_path,
+            source_type=filesystem.source_type,
+            destination_type="dir",
+            destination_path=path,
+            hash_value="some",
+        )
+
+        # connect slave to websocket
+        ws_client = WSClient()
+        ws_client.join_group('client_' + str(slave.id))
+
+        api_response = self.client.get("/api/filesystem/" + str(filesystem.id)
+                                       + "/move")
+        self.assertEqual(api_response.status_code, 200)
+
+        self.assertEqual(
+            Status.from_json(api_response.content.decode('utf-8')),
+            Status.ok(''),
+        )
+
+        cmd = Command.from_json(json.dumps(ws_client.receive()))
+
+        first = Command(
+            method='filesystem_restore',
+            source_path=conflict.source_path,
+            source_type=conflict.source_type,
+            destination_path=conflict.destination_path,
+            destination_type=conflict.destination_type,
+            backup_ending='_BACK',
+            hash_value=conflict.hash_value,
+            uuid=cmd.arguments['commands'][0]['uuid'],
+        )
+
+        second = Command(
+            method='filesystem_move',
+            source_path=filesystem.source_path,
+            source_type=filesystem.source_type,
+            destination_path=filesystem.destination_path,
+            destination_type=filesystem.destination_type,
+            backup_ending='_BACK',
+            uuid=cmd.arguments['commands'][1]['uuid'],
+        )
+
+        self.assertEqual(
+            Command(
+                method="chain_execution",
+                commands=[dict(first), dict(second)],
+            ),
+            cmd,
         )
 
     def test_delete_file(self):

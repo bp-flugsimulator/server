@@ -4,7 +4,7 @@ Database factories for tests
 import socket
 import struct
 from uuid import uuid4
-from factory import SubFactory, Sequence
+from factory import SubFactory, Sequence, LazyAttribute
 from factory.django import DjangoModelFactory
 from factory.fuzzy import FuzzyText, FuzzyInteger
 
@@ -54,7 +54,7 @@ class SlaveOnlineFactory(DjangoModelFactory):
     ip_address = Sequence(lambda n: socket.inet_ntoa(struct.pack('!L', n)))
     mac_address = Sequence(int_to_mac)
     online = True
-    command_uuid = uuid4().hex
+    command_uuid = LazyAttribute(lambda a: uuid4().hex)
 
 
 class ProgramFactory(DjangoModelFactory):
@@ -73,7 +73,7 @@ class ProgramStatusFactory(DjangoModelFactory):
         model = ProgramStatusModel
 
     program = SubFactory(ProgramFactory)
-    command_uuid = uuid4().hex
+    command_uuid = LazyAttribute(lambda a: uuid4().hex)
     running = False
     code = ""
 
@@ -88,7 +88,7 @@ class FileFactory(DjangoModelFactory):
     destination_path = FuzzyText(length=100)
     destination_type = 'file'
     slave = SubFactory(SlaveFactory)
-    command_uuid = uuid4().hex
+    command_uuid = LazyAttribute(lambda a: uuid4().hex)
 
 
 class MovedFileFactory(DjangoModelFactory):
@@ -99,7 +99,7 @@ class MovedFileFactory(DjangoModelFactory):
     source_path = FuzzyText(length=100)
     destination_path = FuzzyText(length=100)
     slave = SubFactory(SlaveFactory)
-    command_uuid = uuid4().hex
+    command_uuid = LazyAttribute(lambda a: uuid4().hex)
     hash_value = FuzzyText(length=20, prefix="file_")
 
 

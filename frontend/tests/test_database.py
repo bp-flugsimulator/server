@@ -149,6 +149,15 @@ class DatabaseTests(TestCase):  # pylint: disable=unused-variable
 
         self.assertFalse(SlaveModel.objects.filter(name=slave.name).exists())
 
+    def test_filesystem_state(self):
+        moved = FileFactory(hash_value="Some")
+        errored = FileFactory(error_code="Some")
+        restored = FileFactory()
+
+        self.assertEqual(moved.data_state, "moved")
+        self.assertEqual(errored.data_state, "error")
+        self.assertEqual(restored.data_state, "restored")
+
     def test_slave_insert_invalid_ip(self):
         self.assertRaises(
             ValidationError, SlaveModel(ip_address='my_cool_ip').full_clean)
