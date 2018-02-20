@@ -379,6 +379,9 @@ class Filesystem(Model):
             ),
         )
 
+    def __str__(self):
+        return self.name
+
     @property
     def is_moved(self):
         """
@@ -389,6 +392,19 @@ class Filesystem(Model):
     @property
     def is_error(self):
         return self.error_code != ''
+
+    @property
+    def data_state(self):
+        """
+        Returns a string which represents the data-state attribute in the html template.
+        """
+        # {% if filesystem.is_error %}error{% elif filesystem.is_moved %}moved{% else %}restored{% endif %}
+        if self.is_error:
+            return "error"
+        elif self.is_moved:
+            return "moved"
+        else:
+            return "restored"
 
 
 class Script(Model):

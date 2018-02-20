@@ -1,7 +1,7 @@
 /* eslint-env browser */
 /* eslint no-use-before-define: ["error", { "functions": false }] */
 /* global $, jQuery, Status */
-/* exported  getCookie, modalDeleteAction, handleFormStatus, clearErrorMessages,swapText, styleSlaveByStatus, notify */
+/* exported  getCookie, modalDeleteAction, handleFormStatus, clearErrorMessages,swapText, styleSlaveByStatus, notify, basic_request */
 
 /**
  * Clears the error fields of a given form
@@ -66,6 +66,8 @@ function modalDeleteAction(form, route) {
             if (status.is_ok()) {
                 window.location.reload();
             } else {
+                $('#deleteWarning').modal('toggle');
+
                 notify(
                     'Error while deleting',
                     JSON.stringify(status.payload),
@@ -195,6 +197,35 @@ function notify(title, message, type) {
                 '</div>' +
                 '</div>'
         });
+}
+
+/**
+ * Performs a basic request which does not need a direct response.
+ * @param {*} url URL path to the server
+ * @param {*} type  HTTP request type
+ * @param {*} action Determines the kind of action which this request performs
+ * @param {*} data HTTP data (e.g. POST request)
+ */
+function basic_request(url, type, action, data = {}) {
+    $.ajax({
+        type,
+        url,
+        data,
+        beforeSend(xhr) {
+            xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
+        },
+        converters: {
+            'text json': Status.from_json
+        },
+        success(status) {
+            if (status.is_err()) {
+                notify('Error while' + action, 'Could not ' + action + '.\nReason:\n' + JSON.stringify(status.payload), 'danger');
+            }
+        },
+        error(xhr, errorString, errorCode) {
+            notify('HTTP request error', 'Could not deliver request `' + action + '` to the server.\nReason:\n' + errorCode + ')', 'danger');
+        }
+    });
 }
 
 $(document).ready(function () {

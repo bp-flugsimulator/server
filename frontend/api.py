@@ -30,6 +30,24 @@ LOGGER = logging.getLogger("fsim.api")
 FILE_BACKUP_ENDING = "_BACK"
 
 
+def remove_trailing_path_seperator(path):
+    """
+    If the last character is a path seperator, then it will be removed.
+
+    Arguments
+    ----------
+        path: string
+
+    Returns
+    -------
+        string
+    """
+    if path and path[-1] == os.path.sep:
+        return path[:-1]
+    else:
+        return path
+
+
 def add_slave(request):
     """
     Process POST requests which adds new SlaveModel and GET requests to query
@@ -440,6 +458,12 @@ def filesystem_set(request):
 
             try:
                 filesystem.full_clean()
+                # IMPORTANT: remove trailing path seperator (if not the query will not
+                # work [the query in filesystem_move])
+                filesystem.destination_path = remove_trailing_path_seperator(
+                    filesystem.destination_path)
+                filesystem.source_path = remove_trailing_path_seperator(
+                    filesystem.source_path)
                 form.save()
 
                 return StatusResponse(Status.ok(''))
@@ -517,16 +541,12 @@ def filesystem_move(request, filesystem_id):
                                            lookup_file_name)
                 lookup_dir = filesystem.destination_path
 
-            regex = '^.*(\/|\\){}$'.format(lookup_file_name)
-
             query = FilesystemModel.objects.filter(
-                Q(destination_path=lookup_file, destination_type='file') | Q(
-                    destination_path=lookup_dir,
-                    destination_type='dir',
-                    source_path__regex=regex,
-                )).exclude(hash_value__exact='')
-
-            print(query)
+                ~Q(hash_value__exact='') & ~Q(id=filesystem.id) &
+                ((Q(destination_path=lookup_file) & Q(destination_type='file'))
+                 | (Q(destination_path=lookup_dir) & Q(destination_type='dir')
+                    & (Q(source_path__endswith='/' + lookup_file_name)
+                       | Q(source_path__endswith='\\' + lookup_file_name)))))
 
             if query:
                 filesystem_replace = query.get()
@@ -534,7 +554,9 @@ def filesystem_move(request, filesystem_id):
                 first = Command(
                     method="filesystem_restore",
                     source_path=filesystem_replace.source_path,
+                    source_type=filesystem_replace.source_type,
                     destination_path=filesystem_replace.destination_path,
+                    destination_type=filesystem_replace.destination_type,
                     backup_ending=FILE_BACKUP_ENDING,
                     hash_value=filesystem_replace.hash_value,
                 )
@@ -542,7 +564,9 @@ def filesystem_move(request, filesystem_id):
                 second = Command(
                     method="filesystem_move",
                     source_path=filesystem.source_path,
+                    source_type=filesystem.source_type,
                     destination_path=filesystem.destination_path,
+                    destination_type=filesystem.destination_type,
                     backup_ending=FILE_BACKUP_ENDING,
                 )
 
@@ -556,6 +580,11 @@ def filesystem_move(request, filesystem_id):
 
                 filesystem.command_uuid = second.uuid
                 filesystem.save()
+
+                print("HERE FIRST: " + filesystem_replace.command_uuid)
+                print("HERE FIRST2: " + FilesystemModel.objects.get(
+                    id=filesystem_replace.id).command_uuid)
+                print("HERE SECOND: " + filesystem.command_uuid)
 
             else:
                 cmd = Command(
@@ -647,8 +676,13 @@ def filesystem_entry(request, filesystem_id):
     """
 
     if request.method == 'DELETE':
-        FilesystemModel.objects.filter(id=filesystem_id).delete()
-        return StatusResponse(Status.ok(''))
+        filesystem = FilesystemModel.objects.get(id=filesystem_id)
+        if not filesystem.is_moved:
+            filesystem.delete()
+            return StatusResponse(Status.ok(''))
+        else:
+            return StatusResponse(
+                Status.err('The file is still moved. Restore the file first.'))
     elif request.method == 'PUT':
         return HttpResponseNotAllowed(['DELETE'])
     else:

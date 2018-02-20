@@ -375,10 +375,6 @@ $(document).ready(function () {
         modalDeleteAction($('#programForm'), 'program');
     });
 
-    $('#deleteFilesystemModalButton').click(function () {
-        modalDeleteAction($('#filesystemForm'), 'filesystem');
-    });
-
     $('.program-action-delete').click(function () {
         //get id and name of the program and create deletion message
         let id = $(this).data('program-id');
@@ -426,40 +422,23 @@ $(document).ready(function () {
         let name = $(this).data('filesystem-name');
         let message = '<a>Are you sure you want to remove filesystem </a><b>' + name + '</b>?</a>';
 
-        prepareDeleteModal('filesystem', id, message);
+        prepareDeleteModal('Filesystem', id, message);
     });
 
     $('.filesystem-action-move').click(function () {
-        let apiRequest = function (url, type) {
-            $.ajax({
-                type,
-                url,
-                beforeSend(xhr) {
-                    xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
-                },
-                converters: {
-                    'text json': Status.from_json
-                },
-                success(status) {
-                    if (status.is_err()) {
-                        notify('Error while moving filesystem', 'Could not move/restore filesystem. (' + JSON.stringify(status.payload) + ')', 'danger');
-                    }
-                },
-                error(xhr, errorString, errorCode) {
-                    notify('Could deliver', 'Could not deliver request `' + type + '` to server.' + errorCode + ')', 'danger');
-                }
-            });
-        };
-
         let id = $(this).data('filesystem-id');
 
         if ($(this).attr('data-is-moved') === 'True') {
-            apiRequest('/api/filesystem/' + id + '/restore', 'GET');
+            basic_request('/api/filesystem/' + id + '/restore', 'GET', 'restore entry in filesystem');
         } else if ($(this).attr('data-is-moved') === 'False') {
-            apiRequest('/api/filesystem/' + id + '/move', 'GET');
+            basic_request('/api/filesystem/' + id + '/move', 'GET', 'move entry in filesystem');
         } else {
             console.log("Invalid data-is-running state.");
         }
+    });
+
+    $('#deleteFilesystemModalButton').click(function () {
+        modalDeleteAction($('#filesystemForm'), 'filesystem');
     });
 
     // filesystemForm Handler
