@@ -5,6 +5,8 @@ to javascript
 
 import json
 
+from utils.typecheck import ensure_type, ensure_type_array
+
 from django.db import transaction
 
 from .models import (
@@ -19,8 +21,7 @@ from .models import (
 
 def get_slave(slave):
     """
-    Checks if the given object is string or integer and queries the slave from
-    that.
+    Checks if the given object is string or integer and queries the slave from that.
 
     Arguments
     ---------
@@ -28,15 +29,29 @@ def get_slave(slave):
 
     Returns
     -------
-        Slave object if it is in the database or None if it is not string or
-        int
+        A Slave objects
     """
     if isinstance(slave, str):
-        return SlaveModel.objects.get(name=slave)
+        try:
+            return SlaveModel.objects.get(name=slave)
+        except SlaveModel.DoesNotExist:
+            raise ValueError(
+                "The client with the name `{}` does not exist.".format(slave))
     elif isinstance(slave, int):
-        return SlaveModel.objects.get(id=slave)
-    else:
-        return None
+        try:
+            return SlaveModel.objects.get(id=slave)
+        except SlaveModel.DoesNotExist:
+            raise ValueError(
+                "The client with the id `{}` does not exist.".format(slave))
+
+
+def typecheck_index(index):
+    """
+    Checks if the types are correct for an index variable.
+    """
+    ensure_type("index", index, int)
+    if index < 0:
+        raise ValueError("Only positive integers are allowed for index.")
 
 
 class Script:
@@ -49,27 +64,19 @@ class Script:
     """
 
     def __init__(self, name, programs, files):
-        if not isinstance(programs, list):
-            raise ValueError("Program has to be a list.")
-        for prog in programs:
-            if not isinstance(prog, ScriptEntryProgram):
-                raise ValueError(
-                    "All list elements has to be ScriptEntryProgram.")
+        ensure_type("programs", programs, list)
+        ensure_type_array("programs", programs, ScriptEntryProgram)
         self.programs = programs
 
-        if not isinstance(files, list):
-            raise ValueError("Files has to be a list.")
-        for file in files:
-            if not isinstance(file, ScriptEntryFile):
-                raise ValueError(
-                    "All list elements has to be ScriptEntryFile.")
+        ensure_type("files", files, list)
+        ensure_type_array("files", files, ScriptEntryFile)
         self.files = files
 
         if len(self.files) + len(self.programs) < 1:
-            raise ValueError("Add a file or a program to the script.")
+            raise ValueError(
+                "A script needs at least one program or one file.")
 
-        if not isinstance(name, str):
-            raise ValueError("Name has to be a string.")
+        ensure_type("name", name, str)
         self.name = name
 
     def __eq__(self, other):
@@ -133,11 +140,8 @@ class Script:
         """
         data = json.loads(string)
 
-        if not isinstance(data['programs'], list):
-            raise ValueError('Programs has to be a list')
-
-        if not isinstance(data['files'], list):
-            raise ValueError('Files has to be a list')
+        ensure_type("programs", data['programs'], list)
+        ensure_type("files", data['files'], list)
 
         return cls(
             data['name'],
@@ -182,18 +186,13 @@ class ScriptEntryFile:
     """
 
     def __init__(self, index, file, slave):
-        if not isinstance(index, int):
-            raise ValueError("Index has to be an integer.")
-        if index < 0:
-            raise ValueError("Use positive or null for the index.")
+        typecheck_index(index)
         self.index = index
 
-        if not isinstance(file, str) and not isinstance(file, int):
-            raise ValueError("Name has to be a string or int.")
+        ensure_type("file", file, str, int)
         self.file = file
 
-        if not isinstance(slave, str) and not isinstance(slave, int):
-            raise ValueError("Slave has to be a string or integer")
+        ensure_type("slave", slave, str, int)
         self.slave = slave
 
     def __eq__(self, other):
@@ -231,7 +230,7 @@ class ScriptEntryFile:
         elif programs_type == 'str':
             program = query.file.name
         else:
-            raise ValueError("Program_type has to be int or str.")
+            raise ValueError("File_type has to be int or str.")
 
         return cls(
             query.index,
@@ -270,11 +269,7 @@ class ScriptEntryFile:
             Django model
         """
 
-        try:
-            slave = get_slave(self.slave)
-        except SlaveModel.DoesNotExist:
-            raise ValueError("Client with name/id {} does not exist.".format(
-                self.slave))
+        slave = get_slave(self.slave)
 
         try:
             if isinstance(self.file, str):
@@ -285,7 +280,7 @@ class ScriptEntryFile:
                     file=obj,
                 )
         except FileModel.DoesNotExist:
-            raise ValueError("File with name {} does not exist.".format(
+            raise ValueError("The file with name `{}` does not exist.".format(
                 self.file))
 
         try:
@@ -297,7 +292,7 @@ class ScriptEntryFile:
                     file=obj,
                 )
         except FileModel.DoesNotExist:
-            raise ValueError("File with id {} does not exist.".format(
+            raise ValueError("The file with id `{}` does not exist.".format(
                 self.file))
 
     def to_json(self):
@@ -323,18 +318,13 @@ class ScriptEntryProgram:
     """
 
     def __init__(self, index, program, slave):
-        if not isinstance(index, int):
-            raise ValueError("Index has to be an integer.")
-        if index < 0:
-            raise ValueError("Use positive or null for the index.")
+        typecheck_index(index)
         self.index = index
 
-        if not isinstance(program, str) and not isinstance(program, int):
-            raise ValueError("Name has to be a string or int.")
+        ensure_type("program", program, str, int)
         self.program = program
 
-        if not isinstance(slave, str) and not isinstance(slave, int):
-            raise ValueError("Slave has to be a string or integer")
+        ensure_type("slave", slave, str, int)
         self.slave = slave
 
     def __eq__(self, other):
@@ -419,11 +409,7 @@ class ScriptEntryProgram:
         -------
             Django model
         """
-        try:
-            slave = get_slave(self.slave)
-        except SlaveModel.DoesNotExist:
-            raise ValueError("Client with name/id {} does not exist.".format(
-                self.slave))
+        slave = get_slave(self.slave)
 
         try:
             if isinstance(self.program, str):
@@ -434,7 +420,7 @@ class ScriptEntryProgram:
                     program=obj,
                 )
         except ProgramModel.DoesNotExist:
-            raise ValueError("Program with name {} does not exist.".format(
+            raise ValueError("The program with name {} does not exist.".format(
                 self.program))
 
         try:
@@ -446,5 +432,5 @@ class ScriptEntryProgram:
                     program=obj,
                 )
         except ProgramModel.DoesNotExist:
-            raise ValueError("Program with id {} does not exist.".format(
+            raise ValueError("The program with id {} does not exist.".format(
                 self.program))

@@ -251,14 +251,15 @@ def add_program(request):
                         slave = SlaveModel.objects.get(id=int(slave))
                     except ValueError:
                         return StatusResponse(
-                            Status.err(
-                                "Slaves has to be an integer identifier."))
+                            Status.err("Slave has to be an integer."))
             except SlaveModel.DoesNotExist:
                 ret_err = "Could not find slave with"
                 if slave_str:
-                    ret_err += "name `{}`".format(slave)
+                    ret_err += " name `{}`".format(slave)
                 else:
-                    ret_err += "id `{}`".format(slave)
+                    ret_err += " id `{}`".format(slave)
+
+                ret_err += "."
 
                 return StatusResponse(Status.err(ret_err))
 
@@ -537,14 +538,15 @@ def add_file(request):
                         slave = SlaveModel.objects.get(id=int(slave))
                     except ValueError:
                         return StatusResponse(
-                            Status.err(
-                                "Slaves has to be an integer identifier."))
+                            Status.err("Slave has to be an integer."))
             except SlaveModel.DoesNotExist:
                 ret_err = "Could not find slave with"
                 if slave_str:
-                    ret_err += "name `{}`".format(slave)
+                    ret_err += " name `{}`".format(slave)
                 else:
-                    ret_err += "id `{}`".format(slave)
+                    ret_err += " id `{}`".format(slave)
+
+                ret_err += "."
 
                 return StatusResponse(Status.err(ret_err))
 

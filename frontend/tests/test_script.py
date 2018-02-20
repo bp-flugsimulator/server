@@ -3,7 +3,7 @@
 from django.test import TestCase
 from django.db.utils import IntegrityError
 
-from frontend.scripts import Script, ScriptEntryFile, ScriptEntryProgram
+from frontend.scripts import Script, ScriptEntryFile, ScriptEntryProgram, get_slave
 
 from frontend.models import (
     Script as ScriptModel,
@@ -20,65 +20,41 @@ from .factory import (
 
 
 class ScriptTests(TestCase):  # pylint: disable=unused-variable
-    def test_from_json_no_list(self):
+    def test_not_empty(self):
         self.assertRaisesRegex(
             ValueError,
-            "Files has to be a list",
-            Script.from_json,
-            '{"name": "test", "files": {}, "programs": []}',
+            "at least one program or one file",
+            Script,
+            "test",
+            [],
+            [],
         )
 
+    def test_get_slave_int(self):
+        slave = SlaveFactory()
+
+        self.assertEqual(get_slave(slave.id), slave)
+
+    def test_get_slave_str(self):
+        slave = SlaveFactory()
+
+        self.assertEqual(get_slave(slave.name), slave)
+
+    def test_get_slave_str_not_found(self):
         self.assertRaisesRegex(
             ValueError,
-            "Programs has to be a list",
-            Script.from_json,
-            '{"name": "test", "files": [], "programs": {}}',
+            "client.*name.*not.*exist",
+            get_slave,
+            "empty",
         )
 
-    def test_script_wrong_type_name(self):
-        self.assertRaises(ValueError, Script, [], [], [])
-
-    def test_script_wrong_type_program_not_a_list(self):
-        self.assertRaises(ValueError, Script, "name", "not a list", [])
-
-    def test_script_wrong_type_program_wrong_element(self):
-        self.assertRaises(ValueError, Script, "name", ["String"], [])
-
-    def test_script_wrong_type_file_not_a_list(self):
-        self.assertRaises(ValueError, Script, "name", [], "not a list")
-
-    def test_script_wrong_type_file_wrong_element(self):
-        self.assertRaises(ValueError, Script, "name", [], ["String"])
-
-    def test_script_entry_program_wrong_type_program(self):
-        self.assertRaises(
+    def test_get_slave_int_not_found(self):
+        self.assertRaisesRegex(
             ValueError,
-            ScriptEntryProgram,
-            "a name",
-            "whoops",
-            0,
+            "client.*id.*not.*exist",
+            get_slave,
+            -1,
         )
-
-    def test_script_entry_program_wrong_type_index(self):
-        self.assertRaises(ValueError, ScriptEntryProgram, [], "whoops", 0)
-
-    def test_script_entry_program_wrong_type_name(self):
-        self.assertRaises(ValueError, ScriptEntryProgram, 0, [], 0)
-
-    def test_script_entry_program_wrong_type_slave(self):
-        self.assertRaises(ValueError, ScriptEntryProgram, 0, "", [])
-
-    def test_script_wrong_file_type_program(self):
-        self.assertRaises(ValueError, ScriptEntryFile, "a name", "whoops", 0)
-
-    def test_script_entry_file_wrong_type_index(self):
-        self.assertRaises(ValueError, ScriptEntryFile, [], "whoops", 0)
-
-    def test_script_entry_file_wrong_type_name(self):
-        self.assertRaises(ValueError, ScriptEntryFile, 0, [], 0)
-
-    def test_script_entry_file_wrong_type_slave(self):
-        self.assertRaises(ValueError, ScriptEntryFile, 0, "", [])
 
     def test_script_json(self):
         string = '{"name": "test", "files": [{"index": 0, "slave": 0, "file": "no name"}],\
@@ -185,7 +161,7 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
 
         self.assertRaisesRegex(
             ValueError,
-            "Program with id {} does not exist.".format(program.id + 1),
+            "program.*id.*{}.*not exist".format(program.id + 1),
             script.save,
         )
         self.assertFalse(ScriptModel.objects.filter(name=script_name).exists())
@@ -230,30 +206,34 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
                 self.program = Dummy()
                 self.file = Dummy()
 
-        self.assertRaises(
+        self.assertRaisesRegex(
             ValueError,
+            "Slave_type.*int or str",
             ScriptEntryProgram.from_query,
             Dummy(),
             "not int",
             "not str",
         )
-        self.assertRaises(
+        self.assertRaisesRegex(
             ValueError,
+            "Program_type.*int or str",
             ScriptEntryProgram.from_query,
             Dummy(),
             "int",
             "not str",
         )
 
-        self.assertRaises(
+        self.assertRaisesRegex(
             ValueError,
+            "Slave_type.*int or str",
             ScriptEntryFile.from_query,
             Dummy(),
             "not int",
             "not str",
         )
-        self.assertRaises(
+        self.assertRaisesRegex(
             ValueError,
+            "File_type.*int or str",
             ScriptEntryFile.from_query,
             Dummy(),
             "int",
@@ -264,22 +244,10 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
         from frontend.scripts import get_slave
         self.assertEqual(None, get_slave(None))
 
-    def test_script_name_is_string(self):
-        self.assertRaisesRegex(
-            ValueError,
-            "Name has to be a string",
-            Script,
-            123123,
-            [
-                ScriptEntryProgram(0, 0, 0),
-            ],
-            [],
-        )
-
     def test_script_positive_index(self):
         self.assertRaisesRegex(
             ValueError,
-            "Use positive or null for the index.",
+            "positive integer",
             ScriptEntryProgram,
             -1,
             0,
@@ -288,7 +256,7 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
 
         self.assertRaisesRegex(
             ValueError,
-            "Use positive or null for the index.",
+            "positive integer",
             ScriptEntryFile,
             -1,
             0,
@@ -301,7 +269,7 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
 
         self.assertRaisesRegex(
             ValueError,
-            "Program with id {} does not exist.".format(-1),
+            "program.*id.*{}.*not exist".format(-1),
             ScriptEntryProgram(
                 0,
                 -1,
@@ -312,7 +280,7 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
 
         self.assertRaisesRegex(
             ValueError,
-            "Program with name {} does not exist.".format(""),
+            "program.*name.*{}.*not exist".format(""),
             ScriptEntryProgram(
                 0,
                 "",
@@ -325,7 +293,7 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
 
         self.assertRaisesRegex(
             ValueError,
-            "Client with name/id {} does not exist.".format(-1),
+            "client.*id.*{}.*not exist".format(-1),
             ScriptEntryProgram(
                 0,
                 -1,
@@ -340,7 +308,7 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
 
         self.assertRaisesRegex(
             ValueError,
-            "File with id {} does not exist.".format(-1),
+            "file.*id.*{}.*not exist".format(-1),
             ScriptEntryFile(
                 0,
                 -1,
@@ -351,7 +319,7 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
 
         self.assertRaisesRegex(
             ValueError,
-            "File with name {} does not exist.".format(""),
+            "file.*name.*{}.*not exist".format(""),
             ScriptEntryFile(
                 0,
                 "",
@@ -364,7 +332,7 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
 
         self.assertRaisesRegex(
             ValueError,
-            "Client with name/id {} does not exist.".format(-1),
+            "client.*id.*{}.*not exist.".format(-1),
             ScriptEntryFile(
                 0,
                 -1,
