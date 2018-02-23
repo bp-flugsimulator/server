@@ -796,6 +796,7 @@ class ProgramTests(TestCase):
         cmd = Command.from_json(json.dumps(client.receive()))
         self.assertEqual(
             Command(
+                pid=program.id,
                 own_uuid=cmd.uuid,
                 method='execute',
                 path=program.path,

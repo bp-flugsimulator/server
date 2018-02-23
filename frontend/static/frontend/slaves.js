@@ -53,7 +53,31 @@ function changeStartStopText(element, text) {
     });
 }
 
-var socketEventHandler = {
+function handle_logging(id, method, async = true) {
+    $.ajax({
+        type: 'GET',
+        url: '/api/program/' + id + '/log/' + method,
+        async,
+        beforeSend(xhr) {
+            xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
+        },
+        converters: {
+            'text json': Status.from_json
+        },
+        success(status) {
+            if (status.is_err()) {
+                notify('Error while handeling a log', 'Could not handle log. (' + JSON.stringify(status.payload) + ')', 'danger');
+            }
+        },
+        error(xhr, errorString, errorCode) {
+            notify('Could deliver', 'Could not deliver request `GET` to server.' + errorCode + ')', 'danger');
+        }
+    });
+}
+
+let terminals = {};
+
+const socketEventHandler = {
     slaveConnect(payload) {
         let statusContainer = $('#slaveStatusContainer_' + payload.sid);
         let statusTab = $('#slaveTab' + payload.sid);
@@ -149,14 +173,19 @@ var socketEventHandler = {
             swapText($(val));
         });
     },
-    programUpdateLog(payload){
-        let logBox= $('#programLog_' + payload.pid);
-        logBox.append(payload.log);
+    programUpdateLog(payload) {
+        let logBox = $('#programLog_' + payload.pid);
+        let pid = logBox.data('pid');
+        console.log(payload.log);
+        if (terminals[pid] == null) {
+            terminals[pid] = new AnsiTerm(pid, 80);
+        }
+        terminals[pid].feed(payload.log);
         logBox.data('has-log', true);
     },
 };
 
-var websocket = fsimWebsocket(socketEventHandler);
+const websocket = fsimWebsocket(socketEventHandler);
 
 $(document).ready(function () {
     // Restores the last clicked slave
@@ -201,42 +230,20 @@ $(document).ready(function () {
         localStorage.setItem('tab-status', 'program');
     });
 
-    function handle_logging(id ,method){
-        $.ajax({
-            type: 'GET',
-            url: '/api/program/' + id + '/log/' + method,
-            beforeSend(xhr) {
-                xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
-            },
-            converters: {
-                'text json': Status.from_json
-            },
-            success(status) {
-                if (status.is_err()) {
-                    notify('Error while handeling a log', 'Could not handle log. (' + JSON.stringify(status.payload) + ')', 'danger');
-                }
-            },
-            error(xhr, errorString, errorCode) {
-                notify('Could deliver', 'Could not deliver request `GET` to server.' + errorCode + ')', 'danger');
-            }
-        });
-    }
 
     $('.program-action-handle-logging').click(function () {
-        let id = $(this).data('program-id');
-        let logBox= $('#programLog_' + id);
+        let pid = $(this).data('program-id');
+        let logBox = $('#programLog_' + pid);
 
-        if (!$(this).data('enabled')){
+        if (!$(this).data('enabled')) {
             console.log('enabling logging');
-            if (logBox.data('has-log')) {
-                logBox.empty();
-            }
-            handle_logging(id, 'enable');
+            handle_logging(pid, 'enable');
             $(this).data('enabled', true)
         } else {
             console.log('disabling logging');
-            handle_logging(id, 'disable');
-            $(this).data('enabled', false)
+            handle_logging(pid, 'disable');
+            $(this).data('enabled', false);
+            terminals[pid].clear();
         }
     });
 
@@ -275,15 +282,15 @@ $(document).ready(function () {
         }
     });
 
-    function prepareDeleteModal(show, id, message){
-         //changing button visibility and message of the delete modal
+    function prepareDeleteModal(show, id, message) {
+        //changing button visibility and message of the delete modal
         let deleteWarning = $('#deleteWarning');
         deleteWarning.children().find('#deleteProgramModalButton').hide();
         deleteWarning.children().find('#deleteSlaveModalButton').hide();
         deleteWarning.children().find('#deleteFileModalButton').hide();
 
-        deleteWarning.children().find('#delete' + show +'ModalButton').show();
-    
+        deleteWarning.children().find('#delete' + show + 'ModalButton').show();
+
         deleteWarning.children().find('.modal-body').empty(message);
         deleteWarning.children().find('.modal-body').append(message);
 
@@ -404,7 +411,7 @@ $(document).ready(function () {
     });
 
     $('.file-action-delete').click(function () {
-       //get id and name of the program and create deletion message
+        //get id and name of the program and create deletion message
         let id = $(this).data('file-id');
         let name = $(this).data('file-name');
         let message = '<a>Are you sure you want to remove file </a><b>' + name + '</b>?</a>';
@@ -548,3 +555,16 @@ $(document).ready(function () {
     $('#slaveForm').submit(onFormSubmit('slaveForm'));
 
 });
+
+// if the site gets reloaded/closed alle logging activity gets stopped
+$(window).on('unload', function (e) {
+    $('.program-action-handle-logging').each(function () {
+        if ($(this).data('enabled')) {
+            let id = $(this).data('program-id')
+            console.log('disabling logging for ' + id);
+            handle_logging(id, 'disable', false);
+            $(this).data('enabled', false)
+        }
+    });
+});
+
