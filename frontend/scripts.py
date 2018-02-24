@@ -72,10 +72,6 @@ class Script:
         ensure_type_array("files", files, ScriptEntryFile)
         self.files = files
 
-        if len(self.files) + len(self.programs) < 1:
-            raise ValueError(
-                "A script needs at least one program or one file.")
-
         ensure_type("name", name, str)
         self.name = name
 
@@ -142,6 +138,9 @@ class Script:
 
         ensure_type("programs", data['programs'], list)
         ensure_type("files", data['files'], list)
+
+        ensure_type_array("programs", data['programs'], dict)
+        ensure_type_array("files", data['files'], dict)
 
         return cls(
             data['name'],

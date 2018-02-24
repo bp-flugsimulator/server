@@ -118,7 +118,7 @@
                     {{#if type-display}}{{type-display}}{{else}}{{type}}{{/if}}
                 </label>
                 <div class="col">
-                    <select class="form-control script-{{type}}-{{type}}" type="text" required>
+                    <select class="form-control script-{{type}}-{{type}}" type="text" name="script-{{type}}" required>
                         {{#each selects}}
                         <option>{{this}}</option>
                         {{/each}}

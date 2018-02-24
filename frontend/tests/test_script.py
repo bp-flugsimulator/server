@@ -20,16 +20,6 @@ from .factory import (
 
 
 class ScriptTests(TestCase):  # pylint: disable=unused-variable
-    def test_not_empty(self):
-        self.assertRaisesRegex(
-            ValueError,
-            "at least one program or one file",
-            Script,
-            "test",
-            [],
-            [],
-        )
-
     def test_get_slave_int(self):
         slave = SlaveFactory()
 

@@ -75,7 +75,12 @@ class ScriptTest(TestCase):
 
         self.assertContains(
             response,
-            "Wrong array items.",
+            "All elements in files has to be dict.",
+        )
+
+        self.assertContains(
+            response,
+            "0 has type NoneType",
         )
 
     def test_add_script_json_error(self):

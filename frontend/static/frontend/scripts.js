@@ -1,6 +1,6 @@
 /* eslint-env browser */
 /* eslint no-use-before-define: ["error", { "functions": false }] */
-/* global $, JSONEditor, getCookie, Status, modalDeleteAction, notify */
+/* global $, JsonForm, getCookie, Status, modalDeleteAction, notify */
 /* exported loadScript, newScript */
 
 function promise_query(url) {
@@ -17,19 +17,19 @@ function promise_query(url) {
                 if (status.is_ok()) {
                     resolve(status.payload);
                 } else {
-                    console.log("Failed 4");
+                    notify('Autocomplete query', 'Error while querying for autocomplete: ' + JSON.stringify(status.payload));
                     reject();
                 }
             },
             error(xhr, errorString, errorCode) {
-                console.log("Failed 3");
+                notify('Autocomplete query', 'Error while querying for autocomplete: ' + errorCode + '(' + errorString + ')');
                 reject();
             }
         });
     });
 }
 
-var options = {
+const options = {
     query_slaves_programs() {
         return promise_query('/api/slaves?programs=True');
     },
@@ -62,11 +62,11 @@ function loadScript(id) {
             if (status.is_ok()) {
                 createEditor(status.payload, id);
             } else {
-                console.log("Failed 1");
+                notify('Loading script', 'Error while loading script: ' + JSON.stringify(status.payload));
             }
         },
         error(xhr, errorString, errorCode) {
-            console.log("Failed 2");
+            notify('Loading script', 'Error while loading script: ' + errorCode + '(' + errorString + ')');
         }
     });
 }
@@ -79,7 +79,7 @@ function newScript(name) {
     };
 
     createEditor(defaultJson, name);
-};
+}
 
 $(document).ready(function () {
     // Set color of the current selected.
@@ -110,8 +110,6 @@ $(document).ready(function () {
         let id = $(this).attr('data-editor-id');
         let editor = JsonForm.dumps($('#jsoneditor_' + id));
         let string = JSON.stringify(editor);
-
-        console.log(string);
 
         $.ajax({
             method: 'POST',

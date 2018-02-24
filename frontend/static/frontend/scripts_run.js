@@ -1,6 +1,7 @@
 /* eslint-env browser*/
 /* eslint no-use-before-define: ["error", { "functions": false }] */
 /* global $, getCookie, Status, fsimWebsocket, notify*/
+/* exported socket */
 
 var socketEventHandler = {
     scriptWaitForSlaves(payload) {

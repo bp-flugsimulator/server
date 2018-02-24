@@ -380,8 +380,8 @@ def add_script(request):
             return StatusResponse(
                 Status.err("Could not find required key {}".format(
                     err.args[0])))
-        except TypeError:
-            return StatusResponse(Status.err("Wrong array items."))
+        except TypeError as err:
+            return StatusResponse(Status.err(str(err)))
         except ValueError as err:
             return StatusResponse(Status.err(str(err)))
         except IntegrityError:
