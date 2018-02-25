@@ -1,6 +1,9 @@
 #  pylint: disable=C0111,C0103
 
 import json
+import string
+
+from random import choice
 
 from django.test import TestCase
 from channels import Group
@@ -73,9 +76,7 @@ class WebsocketTests(TestCase):
         ws_client.send_and_consume(
             'websocket.connect',
             path='/commands',
-            content={
-                'client': [slave.ip_address, slave.mac_address]
-            })
+            content={'client': [slave.ip_address, slave.mac_address]})
 
         # connect webinterface on /notifications
         webinterface = WSClient()
@@ -125,9 +126,7 @@ class WebsocketTests(TestCase):
         ws_client.send_and_consume(
             'websocket.connect',
             path='/commands',
-            content={
-                'client': [slave.ip_address, slave.mac_address]
-            })
+            content={'client': [slave.ip_address, slave.mac_address]})
 
         # connect webinterface on /notifications
         webinterface = WSClient()
@@ -254,9 +253,7 @@ class WebsocketTests(TestCase):
         ws_client.send_and_consume(
             'websocket.receive',
             path='/commands',
-            content={
-                'text': error_status.to_json()
-            })
+            content={'text': error_status.to_json()})
 
         self.assertFalse(SlaveModel.objects.get(id=slave.id).is_online)
 
@@ -459,3 +456,26 @@ class WebsocketTests(TestCase):
         )
 
         self.assertIsNone(ws_client.receive())
+
+    def test_ws_logs(self):
+        webinterface = WSClient()
+        webinterface.join_group('notifications')
+
+        ws_client = WSClient()
+        ws_client.send_and_consume('websocket.connect', path='/logs')
+        self.assertIsNone(ws_client.receive())
+
+        msg = Status.ok({
+            'log':
+            ''.join([
+                choice(string.ascii_letters + string.digits)
+                for _ in range(500)
+            ]),
+            'pid':
+            choice(string.digits)
+        })
+
+        ws_client.send_and_consume(
+            'websocket.receive', path='/logs', content={'text': msg.to_json()})
+        self.assertEqual(msg,
+                         Status.from_json(json.dumps(webinterface.receive())))

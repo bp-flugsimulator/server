@@ -363,7 +363,6 @@ class Program(Model):
         else:
             return False
 
-
     def disable_logging(self):
         LOGGER.info(
             "Disabling logging for program %s on slave %s",
@@ -381,8 +380,6 @@ class Program(Model):
             return True
         else:
             return False
-
-
 
 
 class File(Model):

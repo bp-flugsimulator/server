@@ -317,6 +317,19 @@ def program_manage_log(request, program_id):
 
 
 def program_enable_logging(request, program_id):
+    """
+    Process GET requests which will enable remote logging on a slave.
+
+    Parameters
+    ----------
+        request: HttpRequest
+        program_id: Unique identifier of a program
+
+    Returns
+    -------
+        A StatusResponse or HttpResponseForbidden if the request method was
+        other than GET.
+    """
     if request.method == 'GET':
         if ProgramModel.objects.filter(id=program_id).exists():
             program = ProgramModel.objects.get(id=program_id)
@@ -324,17 +337,29 @@ def program_enable_logging(request, program_id):
                 return StatusResponse(Status.ok(''))
             else:
                 return StatusResponse(
-                    Status.err(
-                        'Can not enable logging on an offline Client.'))
+                    Status.err('Can not enable logging on an offline Client.'))
         else:
             return StatusResponse(
-                Status.err('Can enable logging on an unknown program.'))
+                Status.err('Can not enable logging on an unknown program.'))
 
     else:
         return HttpResponseForbidden()
 
 
 def program_disable_logging(request, program_id):
+    """
+    Process GET requests which will disable remote logging on a slave.
+
+    Parameters
+    ----------
+        request: HttpRequest
+        program_id: Unique identifier of a program
+
+    Returns
+    -------
+        A StatusResponse or HttpResponseForbidden if the request method was
+        other than GET.
+    """
     if request.method == 'GET':
         if ProgramModel.objects.filter(id=program_id).exists():
             program = ProgramModel.objects.get(id=program_id)
@@ -346,7 +371,7 @@ def program_disable_logging(request, program_id):
                         'Can not disable logging on an offline Client.'))
         else:
             return StatusResponse(
-                Status.err('Can disabel logging on an unknown program.'))
+                Status.err('Can not disable logging on an unknown program.'))
     else:
         return HttpResponseForbidden()
 

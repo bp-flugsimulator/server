@@ -293,37 +293,44 @@ def ws_rpc_disconnect(message):
 
 
 def ws_logs_connect(message):
+    """
+    Handels websockets.connect requests of '/notifications'.
+    Adds the reply_channel to the group 'notifications'
+
+    Arguments
+    ---------
+    message: channels.message.Message that contains the connection request  on
+    '/notifications'.
+    """
+
     # Accept the connection
     message.reply_channel.send({"accept": True})
 
 
 def ws_logs_receive(message):
+    """
+    Handels websockets.receive requests of '/logs'. And forwards the content to
+    the 'notifications' group. Every request gets acknowledged.
+
+    Arguments
+    ---------
+    message: channels.message.Message that contains a logfile
+    """
     Group('notifications').send({'text': message.content['text']})
-    # acknowledge package
-    message.reply_channel.send({'text': 'abcdefg'})
-    LOGGER.info('send ack on log websocket')
-
-
-def ws_notifications_disconnect(message):
-    pass
+    message.reply_channel.send({'text': 'ack'})
 
 
 def ws_notifications_connect(message):
     """
-    Handels websockets.connect requests of '/notifications'. Connections only
-    get accepted if the ip of the sender is the ip of a known slave. Adds the
-    reply_channel to the group 'notifications'
+    Handels websockets.connect requests of '/notifications'.
+    Adds the reply_channel to the group 'notifications'
 
     Arguments
     ---------
     message: channels.message.Message that contains the connection request  on
-    '/'.
-
+    '/notifications'.
     """
-    # Add to the notification group
     Group('notifications').add(message.reply_channel)
-
-    # Accept the connection
     message.reply_channel.send({"accept": True})
 
 
@@ -335,8 +342,6 @@ def ws_notifications_disconnect(message):
     Arguments
     ---------
     message: channels.message.Message that contains the disconnect request  on
-    '/'
-
+    '/notifications'.
     """
-
     Group('notifications').discard(message.reply_channel)
