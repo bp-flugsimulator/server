@@ -9,10 +9,10 @@ class AnsiTerm {
     }
 
     clear() {
-        $("#programLog_" + this.pid).empty();
+        $('#programLog_' + this.pid).empty();
         this.row = 0;
         this.col = 0;
-        this.saved_cursor = [0, 0];
+        this.savedCursor = [0, 0];
         this.grid = [[new Array(this.width)]];
         this.moveCursor(this.row, this.col);
     }
@@ -29,11 +29,11 @@ class AnsiTerm {
     updateHtml() {
         // TODO could be speed up on updates by only updating changed lines
         for (let row = 0; row < this.grid.length; row++) {
-            let complete_row = [];
+            let completedRow = [];
 
             // gather text of a whole row
             for (let wrap = 0; wrap < this.grid[row].length; wrap++) {
-                let text = "";
+                let text = '';
                 for (let col = 0; col < this.grid[row][wrap].length; col++) {
                     if (this.grid[row][wrap][col] != null) {
                         text += this.grid[row][wrap][col];
@@ -41,46 +41,46 @@ class AnsiTerm {
                         text += ' ';
                     }
                 }
-                complete_row.push(text);
+                completedRow.push(text);
             }
 
             // remove empty trailing line wraps
-            for (let wrap = complete_row.length - 1; wrap > 0; wrap--) {
-                if (complete_row[wrap].match(/^\s+$/)) {
-                    complete_row.pop();
+            for (let wrap = completedRow.length - 1; wrap > 0; wrap--) {
+                if (completedRow[wrap].match(/^\s+$/)) {
+                    completedRow.pop();
                     this.grid[row].pop();
-                    $("#" + this.pid + "_term_" + row + "_" + wrap).remove();
+                    $('#' + this.pid + '_term_' + row + '_' + wrap).remove();
                 } else {
                     break;
                 }
-            };
+            }
             for (let wrap = 0; wrap < this.grid[row].length; wrap++) {
-                $("#" + this.pid + "_term_" + row + "_" + wrap).text(complete_row[wrap] + '\n');
+                $('#' + this.pid + '_term_' + row + '_' + wrap).text(completedRow[wrap] + '\n');
             }
         }
     }
 
     moveCursor(row, col) {
         for (let i = this.grid.length - 1; i <= row; i++) {
-            let next_row = $('<span/>', {
-                class: "term-row-" + i,
-                id: this.pid + "_term_" + i + "_0",
-                text: "",
+            let nextRow = $('<span/>', {
+                class: 'term-row-' + i,
+                id: this.pid + '_term_' + i + '_0',
+                text: '',
             });
-            next_row.data('wrap-id', 0);
-            $("#programLog_" + this.pid).append(next_row);
+            nextRow.data('wrap-id', 0);
+            $('#programLog_' + this.pid).append(nextRow);
 
             this.grid.push([new Array(this.width)]);
         }
 
         for (let i = this.grid[row].length; i <= Math.floor(col / this.width); i++) {
-            let wrapping_row = $('<span/>', {
-                class: "term-row-" + row,
-                id: this.pid + "_term_" + row + "_" + i,
-                text: "",
+            let wrappingRow = $('<span/>', {
+                class: 'term-row-' + row,
+                id: this.pid + '_term_' + row + '_' + i,
+                text: '',
             });
-            wrapping_row.data("wrap-id", i);
-            wrapping_row.insertAfter($("#" + this.pid + "_term_" + row + "_" + (i - 1)));
+            wrappingRow.data('wrap-id', i);
+            wrappingRow.insertAfter($('#' + this.pid + '_term_' + row + '_' + (i - 1)));
 
             this.grid[row].push(new Array(this.width));
         }
@@ -94,7 +94,7 @@ class AnsiTerm {
             let c = text.charAt(i);
             switch (c) {
                 // TODO missing escape codes
-                case "\u001B":
+                case '\u001B':
                     let rest = text.substring(i, i + 20);
                     let matches = null;
 
@@ -104,53 +104,53 @@ class AnsiTerm {
                      * of the screen, this has no effect.
                      **/
                     if ((matches = rest.match(/^\u001B\[(\d*)[A-G]/))) {
-                        //console.log("Cursor Movement");
-                        i = i + matches[0].length - "\x1b".length;
-                        if (matches[1] == "") {
-                            matches[1] = "1";
+                        //console.log('Cursor Movement');
+                        i = i + matches[0].length - '\x1b'.length;
+                        if (matches[1] == '') {
+                            matches[1] = '1';
                         }
 
-                        //console.log("mode " + matches[0].slice(-1) + " " + matches[1]);
+                        //console.log('mode ' + matches[0].slice(-1) + ' ' + matches[1]);
                         switch (matches[0].slice(-1)) {
                             // Up
-                            case "a":
-                            case "A":
+                            case 'a':
+                            case 'A':
                                 if (this.row - parseInt(matches[1]) > 0) {
                                     this.moveCursor(this.row - parseInt(matches[1]), this.col);
                                 }
                                 break;
                             // Down
-                            case "b":
-                            case "B":
+                            case 'b':
+                            case 'B':
                                 this.moveCursor(this.row + parseInt(matches[1]), this.col);
                                 break;
                             // Forward
-                            case "c":
-                            case "C":
+                            case 'c':
+                            case 'C':
                                 this.moveCursor(this.row, this.col + parseInt(matches[1]));
                                 break;
                             // Backward
-                            case "d":
-                            case "D":
+                            case 'd':
+                            case 'D':
                                 if (this.col - parseInt(matches[1]) > 0) {
                                     this.moveCursor(this.row, this.col - parseInt(matches[1]));
                                 }
                                 break;
                             // Beginning of next line
-                            case "e":
-                            case "E":
+                            case 'e':
+                            case 'E':
                                 this.moveCursor(this.row + parseInt(matches[1]), 0);
                                 break;
                             // Beginning of previous Line
-                            case "f":
-                            case "E":
+                            case 'f':
+                            case 'E':
                                 if (this.row - parseInt(matches[1]) > 0) {
                                     this.moveCursor(this.row - parseInt(matches[1]), 0);
                                 }
                                 break;
                             // Horizontal Absolute
-                            case "g":
-                            case "G":
+                            case 'g':
+                            case 'G':
                                 this.moveCursor(this.row, parseInt(matches[1]) - 1);
                                 break;
                         }
@@ -166,27 +166,27 @@ class AnsiTerm {
                      **/
                     if ((matches = rest.match(/^\u001B\[(\d*)K/))) {
                         //console.log('EL – Erase in Line');
-                        i = i + matches[0].length - "\x1b".length;
+                        i = i + matches[0].length - '\x1b'.length;
 
                         let mode = matches[1];
                         if (mode === '') {
                             mode = 0;
                         }
-                        //console.log("mode " + mode);
+                        //console.log('mode ' + mode);
                         switch (mode) {
                             case 0:
                                 for (let i = this.col; i < this.width * this.grid[this.row].length; i++) {
-                                    this.insertText(" ", this.row, i);
+                                    this.insertText(' ', this.row, i);
                                 }
                                 break;
                             case 1:
                                 for (let i = 0; i <= this.col; i++) {
-                                    this.insertText(" ", this.row, i);
+                                    this.insertText(' ', this.row, i);
                                 }
                                 break;
                             case 2:
                                 for (let i = 0; i < this.width * this.grid[this.row].length; i++) {
-                                    this.insertText(" ", this.row, i);
+                                    this.insertText(' ', this.row, i);
                                 }
                                 break;
                             default:
@@ -204,7 +204,7 @@ class AnsiTerm {
                      **/
                     if ((matches = rest.match(/^\u001B\[(\d*)J/))) {
                         //console.log('ED – Erase in Display');
-                        i = i + matches[0].length - "\x1b".length;
+                        i = i + matches[0].length - '\x1b'.length;
 
                         let mode = matches[1];
                         if (mode === '') {
@@ -214,31 +214,31 @@ class AnsiTerm {
 
                         switch (mode) {
                             case 0:
-                                //console.log(this.row + " " + this.col);
+                                //console.log(this.row + ' ' + this.col);
                                 for (let i = this.col; i < this.width * this.grid[this.row].length; i++) {
-                                    this.insertText(" ", this.row, i);
+                                    this.insertText(' ', this.row, i);
                                 }
                                 for (let i = this.row; i < this.grid.length; i++) {
                                     for (let j = 0; j < this.width * this.grid[i].length; j++) {
-                                        this.insertText(" ", i, j);
+                                        this.insertText(' ', i, j);
                                     }
                                 }
                                 break;
                             case 1:
                                 for (let i = 0; i < this.row; i++) {
                                     for (let j = 0; j < this.width * this.grid[i].length; j++) {
-                                        this.insertText(" ", i, j);
+                                        this.insertText(' ', i, j);
                                     }
                                 }
                                 for (let i = 0; i <= this.col; i++) {
-                                    this.insertText(" ", this.row, i);
+                                    this.insertText(' ', this.row, i);
                                 }
                                 break;
                             case 2:
                             case 3:
                                 for (let i = 0; i < this.grid.length; i++) {
                                     for (let j = 0; j < this.width * this.grid[i].length; j++) {
-                                        this.insertText(" ", i, j);
+                                        this.insertText(' ', i, j);
                                     }
                                 }
                                 break;
@@ -254,8 +254,8 @@ class AnsiTerm {
                      * the same as CSI 17H and CSI 17;1H
                      **/
                     if ((matches = rest.match(/^\u001B\[(((\d*);(\d*))?)[Hf]/))) {
-                        //console.log("CUP – Cursor Position");
-                        i = i + matches[0].length - "\x1b".length;
+                        //console.log('CUP – Cursor Position');
+                        i = i + matches[0].length - '\x1b'.length;
 
                         let row = parseInt(matches[3]) - 1;
                         if (isNaN(row)) {
@@ -267,7 +267,7 @@ class AnsiTerm {
                             col = 0;
                         }
 
-                        //console.log("to " + row + " " + col);
+                        //console.log('to ' + row + ' ' + col);
                         this.moveCursor(row, col);
                         break;
                     }
@@ -276,8 +276,8 @@ class AnsiTerm {
                      * Saves the cursor position/state.
                      */
                     if ((matches = rest.match(/^\u001B\[s/))) {
-                        i = i + matches[0].length - "\x1b".length;
-                        this.saved_cursor = [this.row, this.col];
+                        i = i + matches[0].length - '\x1b'.length;
+                        this.savedCursor = [this.row, this.col];
                         break;
                     }
 
@@ -285,38 +285,37 @@ class AnsiTerm {
                      * Restores the cursor position/state.
                      */
                     if ((matches = rest.match(/^\u001B\[u/))) {
-                        i = i + matches[0].length - "\x1b".length;
-                        this.row = this.saved_cursor[0];
-                        this.col = this.saved_cursor[1];
+                        i = i + matches[0].length - '\x1b'.length;
+                        this.row = this.savedCursor[0];
+                        this.col = this.savedCursor[1];
                         break;
                     }
 
                     // Set Graphics Mode (gets currently ignored)
                     if ((matches = rest.match(/^\u001B\[((\d*)(((;+)(\d*))*))m/))) {
-                        //console.log("ignored Set Graphics Mode");
-                        i = i + matches[0].length - "\x1b".length;
+                        //console.log('ignored Set Graphics Mode');
+                        i = i + matches[0].length - '\x1b'.length;
                         break;
                     }
 
                     // popular private sequences (gets currently ignored)
                     if (matches = rest.match(/^\u001B\[\?((\d*)(((;+)(\d*))*))[hl]/)) {
-                        //console.log("ignored Escaped Symbol");
-                        i = i + matches[0].length - "\x1b".length;
+                        //console.log('ignored Escaped Symbol');
+                        i = i + matches[0].length - '\x1b'.length;
                         break;
                     }
 
                     // i have no clue what this escape code does
                     if (matches = rest.match(/^\u001B\(B/)) {
-                        //console.log("ignored (B");
-                        i = i + matches[0].length - "\x1b".length;
-                        //this.insertTextAtCursor("")//TODO insert tab here
+                        //console.log('ignored (B');
+                        i = i + matches[0].length - '\x1b'.length;
+                        //this.insertTextAtCursor('')//TODO insert tab here
                         //this.moveCursor(this.row, this.col+1);
                         break;
                     }
-                    console.log("unknown escape code\n" + rest);
+                    console.log('unknown escape code\n' + rest);
                     break;
-                case "\n":
-                    //this.insertTextAtCursor(c);
+                case '\n':
                     this.moveCursor(this.row + 1, 0);
                     break;
                 default:

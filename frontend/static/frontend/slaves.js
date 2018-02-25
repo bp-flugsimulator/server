@@ -53,7 +53,7 @@ function changeStartStopText(element, text) {
     });
 }
 
-function handle_logging(id, method, async = true) {
+function handleLogging(id, method, async = true) {
     $.ajax({
         type: 'GET',
         url: '/api/program/' + id + '/log/' + method,
@@ -237,11 +237,11 @@ $(document).ready(function () {
 
         if (!$(this).data('enabled')) {
             console.log('enabling logging');
-            handle_logging(pid, 'enable');
+            handleLogging(pid, 'enable');
             $(this).data('enabled', true)
         } else {
             console.log('disabling logging');
-            handle_logging(pid, 'disable');
+            handleLogging(pid, 'disable');
             $(this).data('enabled', false);
             terminals[pid].clear();
         }
@@ -556,13 +556,13 @@ $(document).ready(function () {
 
 });
 
-// if the site gets reloaded/closed alle logging activity gets stopped
+// if the site gets reloaded/closed all logging activity gets stopped
 $(window).on('unload', function (e) {
     $('.program-action-handle-logging').each(function () {
         if ($(this).data('enabled')) {
             let id = $(this).data('program-id')
             console.log('disabling logging for ' + id);
-            handle_logging(id, 'disable', false);
+            handleLogging(id, 'disable', false);
             $(this).data('enabled', false)
         }
     });
