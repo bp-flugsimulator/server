@@ -384,11 +384,8 @@ def add_script(request):
             return StatusResponse(Status.err(str(err)))
         except ValueError as err:
             return StatusResponse(Status.err(str(err)))
-        except IntegrityError:
-            return StatusResponse(
-                Status.err("Script with that name already exists."))
         except ValidationError as err:
-            return StatusResponse(Status.err("Script name can not be blank"))
+            return StatusResponse(Status.err('; '.join(err.messages)))
 
     else:
         return HttpResponseForbidden()

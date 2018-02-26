@@ -3,6 +3,8 @@
 from django.test import TestCase
 from django.db.utils import IntegrityError
 
+from django.core.exceptions import ValidationError
+
 from frontend.scripts import Script, ScriptEntryFile, ScriptEntryProgram, get_slave
 
 from frontend.models import (
@@ -165,7 +167,7 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
         ScriptEntryFile(0, file.id, slave.id).save(script)
         b = ScriptEntryFile(0, file.name, slave.name)
 
-        self.assertRaises(IntegrityError, b.save, script)
+        self.assertRaises(ValidationError, b.save, script)
 
     def test_from_model_program_id_eq_str(self):
         program = ProgramFactory()
@@ -180,7 +182,11 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
             slave.name,
         )
 
-        self.assertRaises(IntegrityError, with_str.save, script)
+        self.assertRaises(
+            ValidationError,
+            with_str.save,
+            script,
+        )
 
     def test_from_query_error(self):
         class Dummy:

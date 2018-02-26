@@ -133,7 +133,7 @@ class ScriptTest(TestCase):
         )
 
         self.assertEqual(
-            Status.err("Script with that name already exists."),
+            Status.err("Script with this Name already exists."),
             Status.from_json(response.content.decode('utf-8')),
         )
 
@@ -1194,8 +1194,6 @@ class SlaveTests(TestCase):
             Status.ok([]),
             Status.from_json(resp.content.decode('utf-8')),
         )
-
-        slave = SlaveFactory()
 
         resp = self.client.get("/api/slaves?files=1")
 

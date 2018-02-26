@@ -3,7 +3,7 @@
 /* global $, JsonForm, getCookie, Status, modalDeleteAction, notify */
 /* exported loadScript, newScript */
 
-function promise_query(url) {
+function promiseQuery(url) {
     return new Promise(function (resolve, reject) {
         $.ajax({
             url,
@@ -30,17 +30,17 @@ function promise_query(url) {
 }
 
 const options = {
-    query_slaves_programs() {
-        return promise_query('/api/slaves?programs=True');
+    querySlavesPrograms() {
+        return promiseQuery('/api/slaves?programs=True');
     },
-    query_programs(slave) {
-        return promise_query('/api/programs?slave_str=true&slave=' + slave);
+    queryPrograms(slave) {
+        return promiseQuery('/api/programs?slave_str=true&slave=' + slave);
     },
-    query_slaves_files() {
-        return promise_query('/api/slaves?files=True');
+    querySlavesFiles() {
+        return promiseQuery('/api/slaves?files=True');
     },
-    query_files(slave) {
-        return promise_query('/api/files?slave_str=true&slave=' + slave);
+    queryFiles(slave) {
+        return promiseQuery('/api/files?slave_str=true&slave=' + slave);
     },
 };
 

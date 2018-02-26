@@ -136,16 +136,16 @@ class Script:
         """
         data = json.loads(string)
 
-        ensure_type("programs", data['programs'], list)
-        ensure_type("files", data['files'], list)
+        ensure_type("programs", data["programs"], list)
+        ensure_type("files", data["files"], list)
 
-        ensure_type_array("programs", data['programs'], dict)
-        ensure_type_array("files", data['files'], dict)
+        ensure_type_array("programs", data["programs"], dict)
+        ensure_type_array("files", data["files"], dict)
 
         return cls(
-            data['name'],
-            [ScriptEntryProgram(**program) for program in data['programs']],
-            [ScriptEntryFile(**file) for file in data['files']],
+            data["name"],
+            [ScriptEntryProgram(**program) for program in data["programs"]],
+            [ScriptEntryFile(**file) for file in data["files"]],
         )
 
     @transaction.atomic
@@ -218,16 +218,16 @@ class ScriptEntryFile:
              ScriptEntryFile object
         """
 
-        if slaves_type == 'int':
+        if slaves_type == "int":
             slave = query.file.slave.id
-        elif slaves_type == 'str':
+        elif slaves_type == "str":
             slave = query.file.slave.name
         else:
             raise ValueError("Slave_type has to be int or str.")
 
-        if programs_type == 'int':
+        if programs_type == "int":
             program = query.file.id
-        elif programs_type == 'str':
+        elif programs_type == "str":
             program = query.file.name
         else:
             raise ValueError("File_type has to be int or str.")
@@ -249,9 +249,9 @@ class ScriptEntryFile:
         """
         data = json.loads(string)
         return cls(
-            data['index'],
-            data['file'],
-            data['slave'],
+            data["index"],
+            data["file"],
+            data["slave"],
         )
 
     @transaction.atomic
@@ -353,16 +353,16 @@ class ScriptEntryProgram:
              ScriptEntry object
         """
 
-        if slaves_type == 'int':
+        if slaves_type == "int":
             slave = query.program.slave.id
-        elif slaves_type == 'str':
+        elif slaves_type == "str":
             slave = query.program.slave.name
         else:
             raise ValueError("Slave_type has to be int or str.")
 
-        if programs_type == 'int':
+        if programs_type == "int":
             program = query.program.id
-        elif programs_type == 'str':
+        elif programs_type == "str":
             program = query.program.name
         else:
             raise ValueError("Program_type has to be int or str.")
@@ -394,9 +394,9 @@ class ScriptEntryProgram:
         """
         data = json.loads(string)
         return cls(
-            data['index'],
-            data['program'],
-            data['slave'],
+            data["index"],
+            data["program"],
+            data["slave"],
         )
 
     @transaction.atomic
