@@ -120,3 +120,15 @@ def download_entry(file):
         A context which maps the file object to file.
     """
     return {'file': file}
+
+
+@register.inclusion_tag('frontend/scripts/js_templates.html')
+def script_js_templates():
+    """
+    Returns the javascript templates which are used by the scripts.
+
+    Returns
+    -------
+        An empty context
+    """
+    return {}

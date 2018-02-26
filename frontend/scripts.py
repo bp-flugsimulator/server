@@ -153,8 +153,9 @@ class Script:
         """
         Saves this object to the database.
         """
-
-        script = ScriptModel.objects.create(name=self.name)
+        script = ScriptModel(name=self.name)
+        script.full_clean()
+        script.save()
 
         for obj in self.programs:
             obj.save(script)
@@ -273,11 +274,13 @@ class ScriptEntryFile:
         try:
             if isinstance(self.file, str):
                 obj = FileModel.objects.get(slave=slave, name=self.file)
-                SGFModel.objects.create(
+                model = SGFModel(
                     script=script,
                     index=self.index,
                     file=obj,
                 )
+                model.full_clean()
+                model.save()
         except FileModel.DoesNotExist:
             raise ValueError("The file with name `{}` does not exist.".format(
                 self.file))
@@ -285,11 +288,13 @@ class ScriptEntryFile:
         try:
             if isinstance(self.file, int):
                 obj = FileModel.objects.get(slave=slave, id=self.file)
-                SGFModel.objects.create(
+                model = SGFModel(
                     script=script,
                     index=self.index,
                     file=obj,
                 )
+                model.full_clean()
+                model.save()
         except FileModel.DoesNotExist:
             raise ValueError("The file with id `{}` does not exist.".format(
                 self.file))
@@ -413,11 +418,13 @@ class ScriptEntryProgram:
         try:
             if isinstance(self.program, str):
                 obj = ProgramModel.objects.get(slave=slave, name=self.program)
-                SGPModel.objects.create(
+                model = SGPModel(
                     script=script,
                     index=self.index,
                     program=obj,
                 )
+                model.full_clean()
+                model.save()
         except ProgramModel.DoesNotExist:
             raise ValueError("The program with name {} does not exist.".format(
                 self.program))
@@ -425,11 +432,13 @@ class ScriptEntryProgram:
         try:
             if isinstance(self.program, int):
                 obj = ProgramModel.objects.get(slave=slave, id=self.program)
-                SGPModel.objects.create(
+                model = SGPModel(
                     script=script,
                     index=self.index,
                     program=obj,
                 )
+                model.full_clean()
+                model.save()
         except ProgramModel.DoesNotExist:
             raise ValueError("The program with id {} does not exist.".format(
                 self.program))
