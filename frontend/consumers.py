@@ -403,13 +403,28 @@ def ws_notifications_receive(message):
     """
 
     try:
-        status = Status.from_json(message.content['text'])
+        try:
+            from json.decoder import JSONDecodeError
+            try:
+                status = Status.from_json(message.content['text'])
+            except JSONDecodeError as err:
+                LOGGER.error(
+                    "Error while parsing json. (cause: %s)",
+                    str(err),
+                )
+                return
+
+        except ImportError:
+            try:
+                status = Status.from_json(message.content['text'])
+            except ValueError as err:
+                LOGGER.error(
+                    "Error while parsing json. (cause: %s)",
+                    str(err),
+                )
+                return
+
         select_method(status)
-    except json.decoder.JSONDecodeError as err:
-        LOGGER.error(
-            "Error while parsing json. (cause: %s)",
-            str(err),
-        )
     except FormatError as err:
         LOGGER.error(
             "Could not parse Status from incoming request. (cause: %s)",
