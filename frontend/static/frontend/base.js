@@ -1,7 +1,7 @@
 /* eslint-env browser */
 /* eslint no-use-before-define: ["error", { "functions": false }] */
 /* global $, jQuery, Status */
-/* exported  getCookie, modalDeleteAction, handleFormStatus, clearErrorMessages,swapText, styleSlaveByStatus, notify, basic_request */
+/* exported  getCookie, modalDeleteAction, handleFormStatus, clearErrorMessages,swapText, styleSlaveByStatus, notify, basicRequest */
 
 /**
  * Clears the error fields of a given form
@@ -206,7 +206,7 @@ function notify(title, message, type) {
  * @param {*} action Determines the kind of action which this request performs
  * @param {*} data HTTP data (e.g. POST request)
  */
-function basic_request(url, type, action, data = {}) {
+function basicRequest(url, type, action, data = {}) {
     $.ajax({
         type,
         url,

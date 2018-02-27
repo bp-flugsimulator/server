@@ -1,13 +1,26 @@
 /* eslint-env browser*/
 /* eslint no-use-before-define: ["error", { "functions": false }] */
-/* global $, getCookie, modalDeleteAction, handleFormStatus, clearErrorMessages, Status, fsimWebsocket, notify, swapText, styleSlaveByStatus*/
+/* global $, getCookie, modalDeleteAction, handleFormStatus, clearErrorMessages, Status,
+ fsimWebsocket, notify, swapText, styleSlaveByStatus, basicRequest */
+
+/**
+ * Sets the given text for all '.button-status-display' in a container.
+ *
+ * @param {HTMlElement} element A container which holds a element with '.button-status-display'
+ * @param {String} text A text which will be set for all '.button-status-display'
+ */
+function changeStatusDisplayText(element, text) {
+    element.children('.button-status-display').each(function (idx, val) {
+        $(val).text(text);
+    });
+}
 
 /**
  * Creates a function which handles from submits.
  *
  * @param {String} id Form identifier without '#'
  */
-const onFormSubmit = function (id) {
+function onFormSubmit(id) {
     return function (event) {
         //Stop form from submitting normally
         event.preventDefault();
@@ -32,9 +45,14 @@ const onFormSubmit = function (id) {
             }
         });
     };
-};
+}
 
-const restoreSlaveInnerTab = function (slaveId) {
+/**
+ * Restores the active tab for a slave container by clicking on the tab.
+ *
+ * @param {Integer} slaveId
+ */
+function restoreSlaveInnerTab(slaveId) {
     let tabStatus = localStorage.getItem('tab-status');
 
     if (tabStatus !== null) {
@@ -45,15 +63,9 @@ const restoreSlaveInnerTab = function (slaveId) {
             $('#slavesObjectsFiles' + slaveId).click();
         }
     }
-};
-
-function changeStatusDisplayText(element, text) {
-    element.children('.button-status-display').each(function (idx, val) {
-        $(val).text(text);
-    });
 }
 
-var socketEventHandler = {
+const socketEventHandler = {
     slaveConnect(payload) {
         let statusContainer = $('#slaveStatusContainer_' + payload.sid);
         let statusTab = $('#slaveTab' + payload.sid);
@@ -195,7 +207,6 @@ var socketEventHandler = {
     },
     filesystemError(payload) {
         let statusContainer = $('#filesystemStatusContainer_' + payload.fid);
-        let moveRestoreButton = $('#filesystemMoveRestore_' + payload.fid);
         let cardButton = $('#filesystemCardButton_' + payload.fid);
         let cardBox = $('#filesystemCard_' + payload.fid);
 
@@ -214,7 +225,10 @@ var socketEventHandler = {
     },
 };
 
-var websocket = fsimWebsocket(socketEventHandler);
+/**
+ * Init Websocket
+ */
+fsimWebsocket(socketEventHandler);
 
 $(document).ready(function () {
     // Restores the last clicked slave
@@ -287,8 +301,6 @@ $(document).ready(function () {
             apiRequest('/api/program/' + id + '/stop', 'GET');
         } else if ($(this).attr('data-is-running') === 'False') {
             apiRequest('/api/program/' + id, 'POST');
-        } else {
-            console.log("Invalid data-is-running state.");
         }
     });
 
@@ -429,11 +441,9 @@ $(document).ready(function () {
         let id = $(this).data('filesystem-id');
 
         if ($(this).attr('data-is-moved') === 'True') {
-            basic_request('/api/filesystem/' + id + '/restore', 'GET', 'restore entry in filesystem');
+            basicRequest('/api/filesystem/' + id + '/restore', 'GET', 'restore entry in filesystem');
         } else if ($(this).attr('data-is-moved') === 'False') {
-            basic_request('/api/filesystem/' + id + '/move', 'GET', 'move entry in filesystem');
-        } else {
-            console.log("Invalid data-is-running state.");
+            basicRequest('/api/filesystem/' + id + '/move', 'GET', 'move entry in filesystem');
         }
     });
 

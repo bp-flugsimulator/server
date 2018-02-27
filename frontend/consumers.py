@@ -6,7 +6,7 @@ import traceback
 
 from channels import Group
 from channels.sessions import channel_session
-from utils import Command, Status
+from utils import Command, Status, FormatError
 
 from .models import (
     Slave as SlaveModel,
@@ -38,7 +38,7 @@ def handle_chain_execution(status):
             select_method(Status(**result))
     else:
         LOGGER.error(
-            "Received Status.err for chain_execution, but this function can not raise errors.",
+            "Received Status.err for chain_execution, but this function can not raise errors. (payload: %s)",
             status.payload,
         )
 
@@ -53,7 +53,7 @@ def handle_filesystem_restored(status):
     status: Status
         The statusobject that was send by the slave
     """
-    LOGGER.info("Handle filesystem restored %s" % dict(status))
+    LOGGER.info("Handle filesystem restored %s", dict(status))
 
     try:
         file_ = FilesystemModel.objects.get(command_uuid=status.uuid)
@@ -100,7 +100,7 @@ def handle_filesystem_moved(status):
     status: Status
         The statusobject that was send by the slave
     """
-    LOGGER.info("Handle filesystem moved %s" % dict(status))
+    LOGGER.info("Handle filesystem moved %s", dict(status))
     try:
         file_ = FilesystemModel.objects.get(command_uuid=status.uuid)
     except FilesystemModel.DoesNotExist:
@@ -354,7 +354,7 @@ def ws_notifications_connect(message):
 def select_method(status):
     """
     Selects a handler for the incoming message by checking the name with the
-    FUNCTION_HANDLE_TABLE.
+    function_handle_table.
 
     Parameters
     ----------
@@ -363,29 +363,23 @@ def select_method(status):
     """
     LOGGER.error(dict(status))
 
-    try:
-        FUNCTION_HANDLE_TABLE = {
-            'online': handle_online_answer,
-            'execute': handle_execute_answer,
-            'filesystem_move': handle_filesystem_moved,
-            'filesystem_restore': handle_filesystem_restored,
-            'chain_execution': handle_chain_execution,
-        }
+    function_handle_table = {
+        'online': handle_online_answer,
+        'execute': handle_execute_answer,
+        'filesystem_move': handle_filesystem_moved,
+        'filesystem_restore': handle_filesystem_restored,
+        'chain_execution': handle_chain_execution,
+    }
 
-        if status.payload['method'] in FUNCTION_HANDLE_TABLE:
-            FUNCTION_HANDLE_TABLE[status.payload['method']](status)
+    if status.payload['method'] in function_handle_table:
+        function_handle_table[status.payload['method']](status)
 
-            # notify the scheduler that the status has changed
-            FSIM_CURRENT_SCHEDULER.notify()
-        else:
-            LOGGER.info(
-                'Client send answer from unknown function %s.',
-                status.payload['method'],
-            )
-    except Exception:
-        LOGGER.error(
-            'Exception occurred (incoming-request)\n:%s',
-            traceback.format_exc(),
+        # notify the scheduler that the status has changed
+        FSIM_CURRENT_SCHEDULER.notify()
+    else:
+        LOGGER.warning(
+            'Client send answer from unknown function %s.',
+            status.payload['method'],
         )
 
 
@@ -408,9 +402,13 @@ def ws_notifications_receive(message):
     """
     try:
         status = Status.from_json(message.content['text'])
-        select_method(status)
-    except:
-        pass
+    except FormatError as err:
+        LOGGER.error(
+            "Could not parse Status from incoming request. (cause: %s)",
+            str(err),
+        )
+
+    select_method(status)
 
 
 def ws_notifications_disconnect(message):
