@@ -1243,8 +1243,6 @@ class SlaveTests(TestCase):
             Status.from_json(resp.content.decode('utf-8')),
         )
 
-        slave = SlaveFactory()
-
         resp = self.client.get("/api/slaves?programs=1")
 
         self.assertEqual(
