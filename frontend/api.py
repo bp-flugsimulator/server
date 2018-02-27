@@ -662,7 +662,7 @@ def filesystem_restore(request, filesystem_id):
 
 def filesystem_entry(request, filesystem_id):
     """
-    Process DELETE, PUT and POST requests for the FilesystemModel ressource.
+    Process DELETE requests for the FilesystemModel ressource.
 
     Parameters
     ----------
@@ -672,7 +672,7 @@ def filesystem_entry(request, filesystem_id):
     Returns
     -------
         A StatusResponse or HttpResponseForbidden if the request method was
-        other than GET.
+        other than DELETE.
     """
 
     if request.method == 'DELETE':
@@ -683,7 +683,5 @@ def filesystem_entry(request, filesystem_id):
         else:
             return StatusResponse(
                 Status.err('The file is still moved. Restore the file first.'))
-    elif request.method == 'PUT':
-        raise ValueError("Not implemented!")
     else:
         return HttpResponseForbidden()

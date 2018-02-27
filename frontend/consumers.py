@@ -3,6 +3,7 @@ This module contains all functions that handle requests on websockets.
 """
 import logging
 import traceback
+import json
 
 from channels import Group
 from channels.sessions import channel_session
@@ -400,15 +401,22 @@ def ws_notifications_receive(message):
     message: channels.message.Message that contains a Status in the 'text' field
 
     """
+
     try:
         status = Status.from_json(message.content['text'])
+        select_method(status)
+    except json.decoder.JSONDecodeError as err:
+        LOGGER.error(
+            "Error while parsing json. (cause: %s)",
+            str(err),
+        )
     except FormatError as err:
         LOGGER.error(
             "Could not parse Status from incoming request. (cause: %s)",
             str(err),
         )
-
-    select_method(status)
+    except KeyError:
+        LOGGER.error("No content['text'] in received message.")
 
 
 def ws_notifications_disconnect(message):

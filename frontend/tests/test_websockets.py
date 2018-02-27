@@ -64,6 +64,27 @@ class WebsocketTests(TestCase):
         )
         self.assertEqual(ws_client.receive(json=False), 'ok')
 
+    def test_ws_notifications_wrong_json(self):
+        ws_client = WSClient()
+
+        ws_client.send_and_consume(
+            'websocket.receive',
+            path='/notifications',
+            content={'text': "str"},
+        )
+
+        self.assertIsNone(ws_client.receive())
+
+        ws_client.send_and_consume(
+            'websocket.receive',
+            path='/notifications',
+            content={'text': {
+                "test": "test"
+            }},
+        )
+
+        self.assertIsNone(ws_client.receive())
+
     def test_ws_rpc_disconnect(self):
         slave = SlaveOnlineFactory()
 
