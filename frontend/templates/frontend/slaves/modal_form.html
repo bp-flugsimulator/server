@@ -1,6 +1,6 @@
 {% load widget_tweaks %}
 
-<div class="modal fade" id="{{ prefix }}Modal" role="dialog">
+<div class="modal fade" id="{{ prefix }}Modal" role="dialog" data-keyboard="false" data-backdrop="static">
     <div class="modal-dialog">
         <form id="{{ prefix }}Form">
             <div class="modal-content">
@@ -28,6 +28,7 @@
                     </div>
                     {% endfor %}
                 </div>
+
                 <div class="modal-footer">
                     <button type="submit" class="btn btn-info submit-btn"></button>
                     <button type="reset" class="btn btn-danger" data-dismiss="modal">Cancel</button>

@@ -51,7 +51,7 @@ var createEditor = function (json, id) {
 
 function loadScript(id) {
     $.ajax({
-        url: '/api/script/' + id + '?programs=str&files=str&slaves=str',
+        url: '/api/script/' + id + '?programs=str&filesystems=str&slaves=str',
         beforeSend(xhr) {
             xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
         },
@@ -75,7 +75,7 @@ function newScript(name) {
     let defaultJson = {
         name,
         programs: [],
-        files: [],
+        filesystems: [],
     };
 
     createEditor(defaultJson, name);
@@ -89,7 +89,7 @@ $(document).ready(function () {
     $('.script-tab-link').click(function () {
         if (!$(this).hasClass('active')) {
             // Remove color from the old tabs
-            $('.script-tab-link').each(function (idx, val) {
+            $('.script-tabbutton-link').each(function (idx, val) {
                 $(val).parent('li').css('background-color', 'transparent');
             });
 

@@ -28,6 +28,8 @@ urlpatterns = [  # pylint: disable=C0103
     url(r'^api/programs$', api.add_program, name='add_program'),
     url(r'^api/program/([0-9]+)$', api.manage_program, name='manage_program'),
     url(r'^api/program/([0-9]+)/stop$', api.stop_program, name='stop_program'),
-    url(r'^api/files$', api.add_file, name='add_file'),
-    url(r'^api/file/([0-9]+)$', api.manage_file, name='manage_file'),
+    url(r'^api/filesystems$', api.filesystem_set, name='filesystem_set'),
+    url(r'^api/filesystem/([0-9]+)$', api.filesystem_entry, name='filesystem_entry'),
+    url(r'^api/filesystem/([0-9]+)/move$', api.filesystem_move, name='filesystem_move'),
+    url(r'^api/filesystem/([0-9]+)/restore$', api.filesystem_restore, name='filesystem_restore'),
 ]

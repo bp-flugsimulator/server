@@ -150,10 +150,14 @@ class Slave(Model):
     @property
     def has_error(self):
         """
-        Returns true if any program or file is in an error state.
+        Returns true if any program or filesystem is in an error state.
         """
         for prog in self.program_set.all():
             if prog.is_error:
+                return True
+
+        for filesystem in self.filesystem_set.all():
+            if filesystem.is_error:
                 return True
 
         return False
@@ -161,7 +165,7 @@ class Slave(Model):
     @property
     def has_running(self):
         """
-        Returns true if any program or file is in an error state.
+        Returns true if any program or filesystem is in an error state.
         """
         return self.program_set.filter(programstatus__running=True).exists()
 
@@ -174,7 +178,7 @@ class Program(Model):
     -------
     name: str The name of the program (has to be unique for every slave)
 
-    path: str The path to the binary file that will be executed
+    path: str The path to the binary filesystem that will be executed
 
     arguments: str The arguments which will be passed to the executable on
         execution
@@ -317,28 +321,90 @@ class Program(Model):
             return False
 
 
-class File(Model):
+class Filesystem(Model):
     """
-    Represents a file on a slave This is stored in a database.
+    Represents a filesystem on a slave This is stored in a database.
 
     Members
     -------
-    name: str The name of the file (has to be unique for every slave)
+    name: str The name of the filesystem (has to be unique for every slave)
 
-    sourcePath: str The path to the source of the file
+    source_path: str
+        The path to the source of the filesystem
 
-    destinationPath: str The path there the file should be used in the file
-        system
+    destination_path: str
+        The path there the filesystem should be used in the filesystem system
 
-    slave: Slave The slave on which the file belongs to
+    error_code: str
+        The error code which is raised by the slave.
+
+    slave: Slave The slave on which the filesystem belongs to
     """
+
+    CHOICES_SET = [('file', 'Replace with'), ('dir', 'Insert into')]
+
     name = CharField(unique=False, max_length=200)
-    sourcePath = CharField(unique=False, max_length=200)
-    destinationPath = CharField(unique=False, max_length=200)
+    source_path = TextField(unique=False)
+    destination_path = TextField(unique=False)
+    command_uuid = CharField(
+        max_length=32,
+        unique=True,
+        blank=True,
+        null=True,
+    )
+    hash_value = CharField(
+        unique=False,
+        max_length=32,
+        blank=True,
+        default="",
+    )
+    error_code = CharField(blank=True, default="", max_length=1000)
     slave = ForeignKey(Slave, on_delete=CASCADE)
+    source_type = CharField(max_length=4, choices=CHOICES_SET, default='file')
+    destination_type = CharField(
+        max_length=4,
+        choices=CHOICES_SET,
+        default='file',
+    )
 
     class Meta:
-        unique_together = (('name', 'slave'), )
+        unique_together = (
+            ('name', 'slave'),
+            (
+                'source_path',
+                'destination_path',
+                'slave',
+                'source_type',
+                'destination_type',
+            ),
+        )
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def is_moved(self):
+        """
+        Returns true if filesystem is moved.
+        """
+        return self.hash_value is not None and self.hash_value != ""
+
+    @property
+    def is_error(self):
+        return self.error_code != ''
+
+    @property
+    def data_state(self):
+        """
+        Returns a string which represents the data-state attribute in the html template.
+        """
+        # {% if filesystem.is_error %}error{% elif filesystem.is_moved %}moved{% else %}restored{% endif %}
+        if self.is_error:
+            return "error"
+        elif self.is_moved:
+            return "moved"
+        else:
+            return "restored"
 
 
 class Script(Model):
@@ -451,20 +517,20 @@ class ScriptGraphPrograms(Model):
 
 class ScriptGraphFiles(Model):
     """
-    Represents a dependency graph for files in a script file.
+    Represents a dependency graph for filesystems in a script file.
 
     Members
     -------
         script: Script id
         index: Order in which the script starts
-        file: Which file will be move/delete/created
+        filesystem: Which file will be move/delete/created
     """
     script = ForeignKey(Script, on_delete=CASCADE)
     index = IntegerField(null=False)
-    file = ForeignKey(File, on_delete=CASCADE)
+    filesystem = ForeignKey(Filesystem, on_delete=CASCADE)
 
     class Meta:
-        unique_together = (('script', 'index', 'file'), )
+        unique_together = (('script', 'index', 'filesystem'), )
 
 
 class ProgramStatus(Model):

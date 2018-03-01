@@ -14,7 +14,7 @@ from .models import (
     ScriptGraphFiles as SGFModel,
     ScriptGraphPrograms as SGPModel,
     Program as ProgramModel,
-    File as FileModel,
+    Filesystem as FilesystemModel,
     Slave as SlaveModel,
 )
 
@@ -60,7 +60,7 @@ class Script:
     ------
         name: Name of the script.
         programs: List of ScriptEntryProgram
-        files: List of ScriptGraphFiles
+        filesystems: List of ScriptGraphFiles
     """
 
     def __init__(self, name, programs, files):
@@ -73,6 +73,7 @@ class Script:
         self.files = files
 
         ensure_type("name", name, str)
+
         self.name = name
 
     def __eq__(self, other):
@@ -85,21 +86,22 @@ class Script:
             if item in c_other_prog:
                 c_other_prog.remove(item)
 
-        c_other_file = list(other.files)
+        c_other_filesystem = list(other.filesystems)
 
-        for item in self.files:
-            if item in c_other_file:
-                c_other_file.remove(item)
+        for item in self.filesystems:
+            if item in c_other_filesystem:
+                c_other_filesystem.remove(item)
 
-        return len(c_other_prog) == 0 and len(c_other_file) == 0
+        return len(c_other_prog) == 0 and len(c_other_filesystem) == 0
 
     def __iter__(self):
         yield ("name", self.name)
         yield ("programs", [dict(entry) for entry in self.programs])
-        yield ("files", [dict(entry) for entry in self.files])
+        yield ("filesystems", [dict(entry) for entry in self.filesystems])
 
     @classmethod
-    def from_model(cls, script_id, slaves_type, programs_type, file_type):
+    def from_model(cls, script_id, slaves_type, programs_type,
+                   filesystem_type):
         """
         Creates a object from a script id.
 
@@ -118,12 +120,12 @@ class Script:
             ScriptEntryProgram.from_query(model, slaves_type, programs_type)
             for model in SGPModel.objects.filter(script=script)
         ]
-        files = [
-            ScriptEntryFile.from_query(model, slaves_type, file_type)
+        filesystems = [
+            ScriptEntryFile.from_query(model, slaves_type, filesystem_type)
             for model in SGFModel.objects.filter(script=script)
         ]
 
-        return cls(script.name, programs, files)
+        return cls(script.name, programs, filesystems)
 
     @classmethod
     def from_json(cls, string):
@@ -146,6 +148,7 @@ class Script:
             data["name"],
             [ScriptEntryProgram(**program) for program in data["programs"]],
             [ScriptEntryFile(**file) for file in data["files"]],
+
         )
 
     @transaction.atomic
@@ -160,7 +163,7 @@ class Script:
         for obj in self.programs:
             obj.save(script)
 
-        for obj in self.files:
+        for obj in self.filesystems:
             obj.save(script)
 
     def to_json(self):
@@ -181,10 +184,9 @@ class ScriptEntryFile:
     Fields
     ------
         index: When will this script be started.
-        file: The name of the file
-        slave: Location of the file
+        filesystem: The name of the filesystem
+        slave: Location of the filesystem
     """
-
     def __init__(self, index, file, slave):
         typecheck_index(index)
         self.index = index
@@ -192,11 +194,13 @@ class ScriptEntryFile:
         ensure_type("file", file, str, int)
         self.file = file
 
+
         ensure_type("slave", slave, str, int)
         self.slave = slave
 
     def __eq__(self, other):
-        return (self.index == other.index and self.file == other.file
+        return (self.index == other.index
+                and self.filesystem == other.filesystem
                 and self.slave == other.slave)
 
     def __iter__(self):
@@ -277,7 +281,7 @@ class ScriptEntryFile:
                 model = SGFModel(
                     script=script,
                     index=self.index,
-                    file=obj,
+                    filesystem=obj,
                 )
                 model.full_clean()
                 model.save()
@@ -291,7 +295,7 @@ class ScriptEntryFile:
                 model = SGFModel(
                     script=script,
                     index=self.index,
-                    file=obj,
+                    filesystem=obj,
                 )
                 model.full_clean()
                 model.save()

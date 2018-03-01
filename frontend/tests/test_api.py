@@ -1,6 +1,8 @@
 #  pylint: disable=C0111,C0103
 
 import json
+import os
+
 from urllib.parse import urlencode
 from shlex import split
 
@@ -15,7 +17,7 @@ from frontend.scripts import Script, ScriptEntryFile, ScriptEntryProgram
 from frontend.models import (
     Script as ScriptModel,
     Slave as SlaveModel,
-    File as FileModel,
+    Filesystem as FilesystemModel,
     Program as ProgramModel,
     ProgramStatus as ProgramStatusModel,
 )
@@ -26,9 +28,9 @@ from .factory import (
     ProgramFactory,
     ScriptFactory,
     FileFactory,
+    MovedFileFactory,
     ProgramStatusFactory,
 )
-
 
 class ScriptTest(TestCase):
     def test_script_run_forbidden(self):
@@ -46,13 +48,13 @@ class ScriptTest(TestCase):
     def test_script_delete(self):
         slave = SlaveFactory()
         program = ProgramFactory(slave=slave)
-        file = FileFactory(slave=slave)
+        filesystem = FileFactory(slave=slave)
         script_name = ScriptFactory.build().name
 
         script = Script(
             script_name,
             [ScriptEntryProgram(0, program.name, slave.name)],
-            [ScriptEntryFile(0, file.name, slave.name)],
+            [ScriptEntryFile(0, filesystem.name, slave.name)],
         )
         script.save()
 
@@ -69,7 +71,7 @@ class ScriptTest(TestCase):
     def test_add_script_type_error(self):
         response = self.client.post(
             "/api/scripts",
-            data='{"name": "test", "programs": [], "files": [null]}',
+            data='{"name": "test", "programs": [], "filesystems": [null]}',
             content_type="application/json",
         )
 
@@ -85,15 +87,28 @@ class ScriptTest(TestCase):
 
     def test_add_script_json_error(self):
         response = self.client.post(
-            "/api/scripts", data={
+            "/api/scripts",
+            data={
                 "name": "test",
                 "programs": {},
-                "files": {}
+                "filesystems": {}
             })
 
         self.assertEqual(
             Status.err("Expecting value: line 1 column 1 (char 0)"),
             Status.from_json(response.content.decode('utf-8')),
+        )
+
+    def test_add_script_value_error(self):
+        response = self.client.post(
+            "/api/scripts",
+            data='{"name": "test", "programs": {}, "filesystems": {}}',
+            content_type="application/json",
+        )
+
+        self.assertContains(
+            response,
+            "Programs has to be a list",
         )
 
     def test_add_script_unique_error(self):
@@ -110,7 +125,7 @@ class ScriptTest(TestCase):
                     "index": 0,
                 },
             ],
-            "files": [],
+            "filesystems": [],
         }
 
         response = self.client.post(
@@ -140,7 +155,7 @@ class ScriptTest(TestCase):
     def test_add_script_key_error(self):
         response = self.client.post(
             "/api/scripts",
-            data='{"name": "test", "program":  [], "files": []}',
+            data='{"name": "test", "program":  [], "filesystems": []}',
             content_type="application/json",
         )
         self.assertContains(
@@ -160,7 +175,7 @@ class ScriptTest(TestCase):
                 "program": int(program.id),
                 "index": 0,
             }],
-            "files": [],
+            "filesystems": [],
         }
 
         response = self.client.post(
@@ -178,13 +193,13 @@ class ScriptTest(TestCase):
     def test_get_script(self):
         slave = SlaveFactory()
         program = ProgramFactory(slave=slave)
-        file = FileFactory(slave=slave)
+        filesystem = FileFactory(slave=slave)
         script_name = ScriptFactory.build().name
 
         script = Script(
             script_name,
             [ScriptEntryProgram(0, program.id, slave.id)],
-            [ScriptEntryFile(0, file.id, slave.id)],
+            [ScriptEntryFile(0, filesystem.id, slave.id)],
         )
         script.save()
 
@@ -214,11 +229,11 @@ class ScriptTest(TestCase):
         )
 
     def test_script_wrong_type_files(self):
-        response = self.client.get("/api/script/0?files=float")
+        response = self.client.get("/api/script/0?filesystems=float")
         self.assertContains(response, "err")
         self.assertContains(
             response,
-            "files only allow str or int. (given float)",
+            "filesystems only allow str or int. (given float)",
         )
 
     def test_script_not_exist(self):
@@ -233,13 +248,13 @@ class ScriptTest(TestCase):
     def test_get_script_slave_type_int(self):
         slave = SlaveFactory()
         program = ProgramFactory(slave=slave)
-        file = FileFactory(slave=slave)
+        filesystem = FileFactory(slave=slave)
         script_name = ScriptFactory.build().name
 
         script = Script(
             script_name,
             [ScriptEntryProgram(0, program.id, slave.id)],
-            [ScriptEntryFile(0, file.id, slave.id)],
+            [ScriptEntryFile(0, filesystem.id, slave.id)],
         )
         script.save()
 
@@ -256,13 +271,13 @@ class ScriptTest(TestCase):
     def test_get_script_program_type_int(self):
         slave = SlaveFactory()
         program = ProgramFactory(slave=slave)
-        file = FileFactory(slave=slave)
+        filesystem = FileFactory(slave=slave)
         script_name = ScriptFactory.build().name
 
         script = Script(
             script_name,
             [ScriptEntryProgram(0, program.id, slave.id)],
-            [ScriptEntryFile(0, file.id, slave.id)],
+            [ScriptEntryFile(0, filesystem.id, slave.id)],
         )
         script.save()
 
@@ -278,13 +293,13 @@ class ScriptTest(TestCase):
     def test_get_script_slave_program_type_int(self):
         slave = SlaveFactory()
         program = ProgramFactory(slave=slave)
-        file = FileFactory(slave=slave)
+        filesystem = FileFactory(slave=slave)
         script_name = ScriptFactory.build().name
 
         script = Script(
             script_name,
             [ScriptEntryProgram(0, program.id, slave.id)],
-            [ScriptEntryFile(0, file.id, slave.id)],
+            [ScriptEntryFile(0, filesystem.id, slave.id)],
         )
         script.save()
 
@@ -300,27 +315,27 @@ class ScriptTest(TestCase):
     def test_get_script_slave_program_type_str(self):
         slave = SlaveFactory()
         program = ProgramFactory(slave=slave)
-        file = FileFactory(slave=slave)
+        filesystem = FileFactory(slave=slave)
         script_name = ScriptFactory.build().name
 
         script = Script(
             script_name,
             [ScriptEntryProgram(0, program.id, slave.id)],
-            [ScriptEntryFile(0, file.id, slave.id)],
+            [ScriptEntryFile(0, filesystem.id, slave.id)],
         )
         script.save()
 
         db_script = ScriptModel.objects.get(name=script_name)
 
         response = self.client.get(
-            "/api/script/{}?programs=str&slaves=str&files=str".format(
+            "/api/script/{}?programs=str&slaves=str&filesystems=str".format(
                 db_script.id))
 
         expected_json = dict(script)
         expected_json['programs'][0]['slave'] = slave.name
         expected_json['programs'][0]['program'] = program.name
-        expected_json['files'][0]['file'] = file.name
-        expected_json['files'][0]['slave'] = slave.name
+        expected_json['filesystems'][0]['filesystem'] = filesystem.name
+        expected_json['filesystems'][0]['slave'] = slave.name
 
         self.assertEqual(
             Status.ok(expected_json),
@@ -378,67 +393,227 @@ class ScriptTest(TestCase):
 
 
 class FileTests(TestCase):
-    def test_delete_file(self):
-        file = FileFactory()
+    maxDiff = None
 
-        api_response = self.client.delete('/api/file/' + str(file.id))
+    def test_manage_file_forbidden(self):
+        api_response = self.client.post("/api/filesystem/0")
+        self.assertEqual(api_response.status_code, 403)
+
+    def test_move_file_forbidden(self):
+        api_response = self.client.post("/api/filesystem/0/restore")
+        self.assertEqual(api_response.status_code, 403)
+
+    def test_restore_file_forbidden(self):
+        api_response = self.client.post("/api/filesystem/0/move")
+        self.assertEqual(api_response.status_code, 403)
+
+    def test_move_file_status_error(self):
+        filesystem = FileFactory()
+
+        api_response = self.client.get("/api/filesystem/" + str(filesystem.id)
+                                       + "/move")
+        self.assertEqual(api_response.status_code, 200)
+
+        self.assertEqual(
+            Status.from_json(api_response.content.decode('utf-8')),
+            Status.err("Can not move {} because {} is offline!".format(
+                filesystem.name,
+                filesystem.slave.name,
+            )),
+        )
+
+    def test_move_file_ok(self):
+        slave = SlaveFactory(online=True)
+        filesystem = FileFactory(slave=slave)
+
+        # connect slave to websocket
+        ws_client = WSClient()
+        ws_client.join_group('client_' + str(slave.id))
+
+        api_response = self.client.get("/api/filesystem/" + str(filesystem.id)
+                                       + "/move")
+        self.assertEqual(api_response.status_code, 200)
+
+        self.assertEqual(
+            Status.from_json(api_response.content.decode('utf-8')),
+            Status.ok(''),
+        )
+
+        self.assertEqual(
+            Command(
+                method='filesystem_move',
+                source_path=filesystem.source_path,
+                source_type=filesystem.source_type,
+                destination_path=filesystem.destination_path,
+                destination_type=filesystem.destination_type,
+                backup_ending='_BACK',
+            ),
+            Command.from_json(json.dumps(ws_client.receive())),
+        )
+
+    def test_move_dir_ok(self):
+        slave = SlaveFactory(online=True)
+        filesystem = FileFactory(slave=slave, source_type="dir", destination_type="dir")
+
+        # connect slave to websocket
+        ws_client = WSClient()
+        ws_client.join_group('client_' + str(slave.id))
+
+        api_response = self.client.get("/api/filesystem/" + str(filesystem.id)
+                                       + "/move")
+        self.assertEqual(api_response.status_code, 200)
+
+        self.assertEqual(
+            Status.from_json(api_response.content.decode('utf-8')),
+            Status.ok(''),
+        )
+
+        self.assertEqual(
+            Command(
+                method='filesystem_move',
+                source_path=filesystem.source_path,
+                source_type=filesystem.source_type,
+                destination_path=filesystem.destination_path,
+                destination_type=filesystem.destination_type,
+                backup_ending='_BACK',
+            ),
+            Command.from_json(json.dumps(ws_client.receive())),
+        )
+
+    def test_move_file_conflicting(self):
+        self.assertTrue(FilesystemModel.objects.all().count() == 0)
+        slave = SlaveFactory(online=True)
+        filesystem = FileFactory(slave=slave)
+        filesystem.source_path = "/" + filesystem.source_path
+        filesystem.destination_path = "/test/" + filesystem.destination_path
+        filesystem.save()
+
+        (path, _) = os.path.split(filesystem.destination_path)
+
+        conflict = FileFactory(
+            slave=slave,
+            source_path=filesystem.source_path,
+            source_type=filesystem.source_type,
+            destination_type="dir",
+            destination_path=path,
+            hash_value="some",
+        )
+
+        # connect slave to websocket
+        ws_client = WSClient()
+        ws_client.join_group('client_' + str(slave.id))
+
+        api_response = self.client.get("/api/filesystem/" + str(filesystem.id)
+                                       + "/move")
+        self.assertEqual(api_response.status_code, 200)
+
+        self.assertEqual(
+            Status.from_json(api_response.content.decode('utf-8')),
+            Status.ok(''),
+        )
+
+        cmd = Command.from_json(json.dumps(ws_client.receive()))
+
+        first = Command(
+            method='filesystem_restore',
+            source_path=conflict.source_path,
+            source_type=conflict.source_type,
+            destination_path=conflict.destination_path,
+            destination_type=conflict.destination_type,
+            backup_ending='_BACK',
+            hash_value=conflict.hash_value,
+            uuid=cmd.arguments['commands'][0]['uuid'],
+        )
+
+        second = Command(
+            method='filesystem_move',
+            source_path=filesystem.source_path,
+            source_type=filesystem.source_type,
+            destination_path=filesystem.destination_path,
+            destination_type=filesystem.destination_type,
+            backup_ending='_BACK',
+            uuid=cmd.arguments['commands'][1]['uuid'],
+        )
+
+        self.assertEqual(
+            Command(
+                method="chain_execution",
+                commands=[dict(first), dict(second)],
+            ),
+            cmd,
+        )
+
+    def test_delete_file(self):
+        filesystem = FileFactory()
+
+        api_response = self.client.delete('/api/filesystem/' + str(
+            filesystem.id))
         self.assertEqual(api_response.status_code, 200)
         self.assertEquals(api_response.json()['status'], 'ok')
-        self.assertFalse(FileModel.objects.filter(id=file.id).exists())
+        self.assertFalse(
+            FilesystemModel.objects.filter(id=filesystem.id).exists())
 
     def test_file_autocomplete(self):
-        file = FileFactory()
-        name_half = int(len(file.name) / 2)
+        filesystem = FileFactory()
+        name_half = int(len(filesystem.name) / 2)
 
-        response = self.client.get("/api/files?q=")
-        self.assertContains(response, file.name)
-        response = self.client.get("/api/files?q=" + str(
-            file.name[:name_half]))
-        self.assertContains(response, file.name)
-        response = self.client.get("/api/files?q=" + str(file.name))
-        self.assertContains(response, file.name)
+        response = self.client.get("/api/filesystems?q=")
+        self.assertContains(response, filesystem.name)
+        response = self.client.get("/api/filesystems?q=" + str(
+            filesystem.name[:name_half]))
+        self.assertContains(response, filesystem.name)
+        response = self.client.get("/api/filesystems?q=" + str(
+            filesystem.name))
+        self.assertContains(response, filesystem.name)
 
     def test_add_file(self):
         slave = SlaveFactory()
-        file = FileFactory.build()
+        filesystem = FileFactory.build()
 
         # add all programs
         api_response = self.client.post(
-            '/api/files', {
-                'name': file.name,
-                'sourcePath': file.sourcePath,
-                'destinationPath': file.destinationPath,
+            '/api/filesystems', {
+                'name': filesystem.name,
+                'source_path': filesystem.source_path,
+                'source_type': filesystem.source_type,
+                'destination_path': filesystem.destination_path,
+                'destination_type': filesystem.destination_type,
                 'slave': str(slave.id)
             })
 
         self.assertEqual(api_response.status_code, 200)
+
         self.assertEqual(
             Status.ok(''),
             Status.from_json(api_response.content.decode('utf-8')),
         )
 
         self.assertTrue(
-            FileModel.objects.filter(
-                name=file.name,
-                sourcePath=file.sourcePath,
-                destinationPath=file.destinationPath,
+            FilesystemModel.objects.filter(
+                name=filesystem.name,
+                source_path=filesystem.source_path,
+                destination_path=filesystem.destination_path,
                 slave=slave,
             ))
 
     def test_add_file_fail_length(self):
         slave = SlaveFactory()
+        filesystem = FileFactory.build()
 
         long_str = ''
 
         for _ in range(2000):
             long_str += 'a'
 
-        api_response = self.client.post('/api/files', {
-            'name': long_str,
-            'sourcePath': long_str,
-            'destinationPath': long_str,
-            'slave': str(slave.id)
-        })
+        api_response = self.client.post(
+            '/api/filesystems', {
+                'name': long_str,
+                'source_path': filesystem.source_path,
+                'source_type': filesystem.source_type,
+                'destination_path': filesystem.destination_path,
+                'destination_type': filesystem.destination_type,
+                'slave': str(slave.id)
+            })
 
         self.assertEqual(200, api_response.status_code)
         self.assertEqual(
@@ -446,32 +621,56 @@ class FileTests(TestCase):
                 "name": [
                     "Ensure this value has at most 200 characters (it has 2000)."
                 ],
-                "sourcePath": [
-                    "Ensure this value has at most 200 characters (it has 2000)."
-                ],
-                "destinationPath": [
-                    "Ensure this value has at most 200 characters (it has 2000)."
-                ]
             }),
             Status.from_json(api_response.content.decode('utf-8')),
         )
 
-    def test_add_file_fail_not_unique(self):
-        file = FileFactory()
+    def test_add_filesystemfail_not_unique_nam(self):
+        filesystem = FileFactory()
 
         # add all programs
         api_response = self.client.post(
-            '/api/files', {
-                'name': file.name,
-                'sourcePath': file.sourcePath,
-                'destinationPath': file.destinationPath,
-                'slave': str(file.slave.id)
+            '/api/filesystems', {
+                'name': filesystem.name,
+                'source_path': filesystem.source_path,
+                'source_type': filesystem.source_type,
+                'destination_path': filesystem.destination_path,
+                'destination_type': filesystem.destination_type,
+                'slave': str(filesystem.slave.id)
             })
 
         self.assertEqual(api_response.status_code, 200)
         self.assertEqual(
             Status.err({
-                'name': ['File with this Name already exists on this Client.']
+                'name':
+                ['Filesystem with this Name already exists on this Client.']
+            }),
+            Status.from_json(api_response.content.decode('utf-8')),
+        )
+
+    def test_add_file_fail_not_unique_paths(self):
+        filesystem = FileFactory()
+
+        # add all programs
+        api_response = self.client.post(
+            '/api/filesystems', {
+                'name': filesystem.name + "new",
+                'source_path': filesystem.source_path,
+                'source_type': filesystem.source_type,
+                'destination_path': filesystem.destination_path,
+                'destination_type': filesystem.destination_type,
+                'slave': str(filesystem.slave.id)
+            })
+
+        self.assertEqual(api_response.status_code, 200)
+        self.assertEqual(
+            Status.err({
+                'source_path': [
+                    'Filesystem with this source path and destination path already exists on this Client.'
+                ],
+                'destination_path': [
+                    'Filesystem with this source path and destination path already exists on this Client.'
+                ],
             }),
             Status.from_json(api_response.content.decode('utf-8')),
         )
@@ -550,6 +749,109 @@ class FileTests(TestCase):
     def test_allowed_methods(self):
         resp = self.client.put("/api/files")
         self.assertEqual(resp.status_code, 403)
+
+    def test_add_file_unsupported_function(self):
+        api_response = self.client.delete('/api/filesystems')
+        self.assertEqual(api_response.status_code, 403)
+
+    def test_move_moved_file(self):
+        slave = SlaveFactory(online=True)
+        filesystem = MovedFileFactory(slave=slave)
+
+        # connect slave to websocket
+        ws_client = WSClient()
+        ws_client.join_group('client_' + str(slave.id))
+
+        api_response = self.client.get("/api/filesystem/" + str(filesystem.id)
+                                       + "/move")
+        self.assertEqual(api_response.status_code, 200)
+
+        self.assertEqual(
+            Status.from_json(api_response.content.decode('utf-8')),
+            Status.err('Error: Filesystem `{}` is already moved.'.format(
+                filesystem.name)),
+        )
+
+        self.assertIsNone(ws_client.receive())
+
+    def test_move_offline(self):
+        slave = SlaveFactory(online=False)
+        filesystem = FileFactory(slave=slave)
+
+        ws_client = WSClient()
+        ws_client.join_group('client_' + str(slave.id))
+
+        restore_response = self.client.get("/api/filesystem/" + str(
+            filesystem.id) + "/restore")
+        self.assertEqual(restore_response.status_code, 200)
+        self.assertIsNone(ws_client.receive())
+
+        move_response = self.client.get("/api/filesystem/" + str(
+            filesystem.id) + "/move")
+        self.assertEqual(move_response.status_code, 200)
+        self.assertIsNone(ws_client.receive())
+
+        self.assertEqual(
+            Status.from_json(restore_response.content.decode('utf-8')),
+            Status.err('Can not restore {} because {} is offline!'.format(
+                filesystem.name, slave.name)),
+        )
+
+        self.assertEqual(
+            Status.from_json(move_response.content.decode('utf-8')),
+            Status.err('Can not move {} because {} is offline!'.format(
+                filesystem.name, slave.name)),
+        )
+
+    def test_restore_restored_file(self):
+        slave = SlaveFactory(online=True)
+        filesystem = FileFactory(slave=slave)
+
+        # connect slave to websocket
+        ws_client = WSClient()
+        ws_client.join_group('client_' + str(slave.id))
+
+        api_response = self.client.get("/api/filesystem/" + str(filesystem.id)
+                                       + "/restore")
+        self.assertEqual(api_response.status_code, 200)
+
+        self.assertEqual(
+            Status.from_json(api_response.content.decode('utf-8')),
+            Status.err('Error: filesystem `{}` is not moved.'.format(
+                filesystem.name)),
+        )
+
+        self.assertIsNone(ws_client.receive())
+
+    def test_restore_file_ok(self):
+        slave = SlaveFactory(online=True)
+        filesystem = MovedFileFactory(slave=slave)
+
+        # connect slave to websocket
+        ws_client = WSClient()
+        ws_client.join_group('client_' + str(slave.id))
+
+        api_response = self.client.get("/api/filesystem/" + str(filesystem.id)
+                                       + "/restore")
+        self.assertEqual(api_response.status_code, 200)
+
+        self.assertEqual(
+            Status.from_json(api_response.content.decode('utf-8')),
+            Status.ok(''),
+        )
+
+        self.assertEqual(
+            Command(
+                method='filesystem_restore',
+                source_path=filesystem.source_path,
+                source_type=filesystem.source_type,
+                destination_path=filesystem.destination_path,
+                destination_type=filesystem.destination_type,
+                backup_ending='_BACK',
+                hash_value=filesystem.hash_value,
+            ),
+            Command.from_json(json.dumps(ws_client.receive())),
+        )
 
 
 class ProgramTests(TestCase):
