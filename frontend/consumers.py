@@ -404,34 +404,6 @@ def ws_rpc_receive(message):
         LOGGER.error("No content['text'] in received message.")
 
 
-"""
-    try:
-        status = Status.from_json(message.content['text'])
-        if status.payload['method'] == 'online':
-            handle_online_answer(status)
-
-            # notify the scheduler that the status has changed
-            FSIM_CURRENT_SCHEDULER.notify()
-        elif status.payload['method'] == 'execute':
-            handle_execute_answer(status)
-
-            # notify the scheduler that the status has changed
-            FSIM_CURRENT_SCHEDULER.notify()
-        elif status.payload['method'] == 'get_log':
-            handle_get_log_answer(status)
-        else:
-            LOGGER.info(
-                'Client send answer from unknown function %s.',
-                status.payload['method'],
-            )
-    except Exception:
-        LOGGER.error(
-            'Exception occurred (incoming-request)\n:%s',
-            traceback.format_exc(),
-        )
-"""
-
-
 @channel_session
 def ws_rpc_disconnect(message):
     """
