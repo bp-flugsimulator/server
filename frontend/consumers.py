@@ -3,7 +3,6 @@ This module contains all functions that handle requests on websockets.
 """
 import logging
 import traceback
-import json
 
 from channels import Group
 from channels.sessions import channel_session
