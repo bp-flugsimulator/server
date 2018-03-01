@@ -341,7 +341,7 @@ class Filesystem(Model):
     slave: Slave The slave on which the filesystem belongs to
     """
 
-    CHOICES_SET = [('file', 'File'), ('dir', 'Directory')]
+    CHOICES_SET = [('file', 'Replace with'), ('dir', 'Insert into')]
 
     name = CharField(unique=False, max_length=200)
     source_path = TextField(unique=False)
