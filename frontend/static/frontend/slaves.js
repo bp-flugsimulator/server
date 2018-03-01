@@ -150,7 +150,7 @@ const socketEventHandler = {
         let cardButton = $('#programCardButton_' + payload.pid);
         cardButton.prop('disabled', false);
 
-        if (payload.code != 0) {
+        if (payload.code !== 0 && payload.code !== '0') {
             statusContainer.attr('data-state', 'error');
         } else {
             statusContainer.attr('data-state', 'success');
@@ -176,7 +176,6 @@ const socketEventHandler = {
     programUpdateLog(payload) {
         let logBox = $('#programLog_' + payload.pid);
         let pid = logBox.data('pid');
-        console.log(payload.log);
         if (terminals[pid] == null) {
             terminals[pid] = new AnsiTerm(pid, 80);
         }
@@ -236,11 +235,9 @@ $(document).ready(function () {
         let logBox = $('#programLog_' + pid);
 
         if (!$(this).data('enabled')) {
-            console.log('enabling logging');
             handleLogging(pid, 'enable');
-            $(this).data('enabled', true)
+            $(this).data('enabled', true);
         } else {
-            console.log('disabling logging');
             handleLogging(pid, 'disable');
             $(this).data('enabled', false);
             terminals[pid].clear();
@@ -560,10 +557,9 @@ $(document).ready(function () {
 $(window).on('unload', function (e) {
     $('.program-action-handle-logging').each(function () {
         if ($(this).data('enabled')) {
-            let id = $(this).data('program-id')
-            console.log('disabling logging for ' + id);
+            let id = $(this).data('program-id');
             handleLogging(id, 'disable', false);
-            $(this).data('enabled', false)
+            $(this).data('enabled', false);
         }
     });
 });

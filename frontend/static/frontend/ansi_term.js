@@ -107,52 +107,43 @@ class AnsiTerm {
                      * of the screen, this has no effect.
                      **/
                     if ((matches = rest.match(/^\u001B\[(\d*)[A-G]/))) {
-                        //console.log('Cursor Movement');
                         i = i + matches[0].length - '\x1b'.length;
                         if (matches[1] == '') {
                             matches[1] = '1';
                         }
 
-                        //console.log('mode ' + matches[0].slice(-1) + ' ' + matches[1]);
                         switch (matches[0].slice(-1)) {
                             // Up
-                            case 'a':
                             case 'A':
                                 if (this.row - parseInt(matches[1]) > 0) {
                                     this.moveCursor(this.row - parseInt(matches[1]), this.col);
                                 }
                                 break;
                             // Down
-                            case 'b':
                             case 'B':
                                 this.moveCursor(this.row + parseInt(matches[1]), this.col);
                                 break;
                             // Forward
-                            case 'c':
                             case 'C':
                                 this.moveCursor(this.row, this.col + parseInt(matches[1]));
                                 break;
                             // Backward
-                            case 'd':
                             case 'D':
                                 if (this.col - parseInt(matches[1]) > 0) {
                                     this.moveCursor(this.row, this.col - parseInt(matches[1]));
                                 }
                                 break;
                             // Beginning of next line
-                            case 'e':
                             case 'E':
                                 this.moveCursor(this.row + parseInt(matches[1]), 0);
                                 break;
                             // Beginning of previous Line
-                            case 'f':
                             case 'F':
                                 if (this.row - parseInt(matches[1]) > 0) {
                                     this.moveCursor(this.row - parseInt(matches[1]), 0);
                                 }
                                 break;
                             // Horizontal Absolute
-                            case 'g':
                             case 'G':
                                 this.moveCursor(this.row, parseInt(matches[1]) - 1);
                                 break;
@@ -168,14 +159,12 @@ class AnsiTerm {
                      * clear entire line. Cursor position does not change.
                      **/
                     if ((matches = rest.match(/^\u001B\[(\d*)K/))) {
-                        //console.log('EL – Erase in Line');
                         i = i + matches[0].length - '\x1b'.length;
 
                         let mode = matches[1];
                         if (mode === '') {
                             mode = 0;
                         }
-                        //console.log('mode ' + mode);
                         switch (mode) {
                             case 0:
                                 for (let i = this.col; i < this.width * this.grid[this.row].length; i++) {
@@ -206,18 +195,15 @@ class AnsiTerm {
                      * buffer (this feature was added for xterm and is supported by other terminal applications).
                      **/
                     if ((matches = rest.match(/^\u001B\[(\d*)J/))) {
-                        //console.log('ED – Erase in Display');
                         i = i + matches[0].length - '\x1b'.length;
 
                         let mode = matches[1];
                         if (mode === '') {
                             mode = 0;
                         }
-                        //console.log('mode ' + mode);
 
                         switch (mode) {
                             case 0:
-                                //console.log(this.row + ' ' + this.col);
                                 for (let i = this.col; i < this.width * this.grid[this.row].length; i++) {
                                     this.insertText(' ', this.row, i);
                                 }
@@ -257,7 +243,6 @@ class AnsiTerm {
                      * the same as CSI 17H and CSI 17;1H
                      **/
                     if ((matches = rest.match(/^\u001B\[(((\d*);(\d*))?)[Hf]/))) {
-                        //console.log('CUP – Cursor Position');
                         i = i + matches[0].length - '\x1b'.length;
 
                         let row = parseInt(matches[3]) - 1;
@@ -270,7 +255,6 @@ class AnsiTerm {
                             col = 0;
                         }
 
-                        //console.log('to ' + row + ' ' + col);
                         this.moveCursor(row, col);
                         break;
                     }
@@ -294,39 +278,21 @@ class AnsiTerm {
                         break;
                     }
 
-                    // Set Graphics Mode (gets currently ignored)
-                    if ((matches = rest.match(/^\u001B\[((\d*)(((;+)(\d*))*))m/))) {
-                        //console.log('ignored Set Graphics Mode');
+                    // currently ignored Codes
+                    if ((matches = rest.match(/^\u001B\[((\d*)(((;+)(\d*))*))m/)) ||
+                        (matches = rest.match(/^\u001B\[\?((\d*)(((;+)(\d*))*))[hl]/)) || 
+                        (matches = rest.match(/^\u001B\(B/)) ||
+                        (matches = rest.match(/^\u001B\[((\d*)(((;+)(\d*))*))[trl]/)) ||
+                        (matches = rest.match(/^\u001B\[(\d*)[Xd]/)) ||
+                        (matches = rest.match(/^\u001B=/)) ||
+                        (matches = rest.match(/^\u001B>/))
+                    ){
                         i = i + matches[0].length - '\x1b'.length;
                         break;
                     }
 
-                    // popular private sequences (gets currently ignored)
-                    if (matches = rest.match(/^\u001B\[\?((\d*)(((;+)(\d*))*))[hl]/)) {
-                        //console.log('ignored Escaped Symbol');
-                        i = i + matches[0].length - '\x1b'.length;
-                        break;
-                    }
-
-                    // i have no clue what these escape code does
-                    if (matches = rest.match(/^\u001B\(B/)) {
-                        //console.log('ignored (B');
-                        i = i + matches[0].length - '\x1b'.length;
-                        break;
-                    }
-                    if ((matches = rest.match(/^\u001B\[((\d*)(((;+)(\d*))*))[trl]/))) {
-                        i = i + matches[0].length - '\x1b'.length;
-                        break;
-                    }
-
-                    if ((matches = rest.match(/^\u001B\[(\d*)[Xd]/))) {
-                        i = i + matches[0].length - '\x1b'.length;
-                        break;
-                    }
-
-                    console.log('unknown escape code\n' + rest);
-                    if(i - text.length < 10 && (!rest.substring(1).search('\u001B'))){
-                        this.rest =  rest;
+                    if((i - text.length) < 10 && (rest.substring(1).search('\u001B') == -1)){
+                        this.rest = rest;
                         i = text.length;
                     }
 
