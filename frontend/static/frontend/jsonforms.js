@@ -87,7 +87,7 @@ const JsonForm = {
             addTypeEntry(container, 'program', options.querySlavesPrograms, options.queryPrograms, { 'choicesCurrent': val.slave, 'selects': [val.program] });
         });
 
-        json.files.forEach(function (idx, val) {
+        json.filesystems.forEach(function (idx, val) {
             addTypeEntry(container, 'file', options.querySlavesFiles, options.queryFiles, { 'choicesCurrent': val.slave, 'selects': [val.file] });
         });
     },
@@ -146,7 +146,7 @@ const JsonForm = {
         };
 
         json.programs = dumpsArray('program');
-        json.files = dumpsArray('file');
+        json.filesystems = dumpsArray('file');
 
         return json;
     }
