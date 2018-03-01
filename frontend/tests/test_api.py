@@ -32,16 +32,6 @@ from .factory import (
     ProgramStatusFactory,
 )
 
-class EtcTest(TestCase):
-
-    def test_trailing(self):
-        from frontend.api import remove_trailing_path_seperator
-
-        self.assertEqual("a", remove_trailing_path_seperator("a"))
-        self.assertEqual("a", remove_trailing_path_seperator("a/"))
-        self.assertEqual("a/", remove_trailing_path_seperator("a//"))
-
-
 class ScriptTest(TestCase):
     def test_script_run_forbidden(self):
         response = self.client.put("/api/script/0/run")

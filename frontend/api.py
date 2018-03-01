@@ -8,8 +8,11 @@ from django.http import HttpResponseForbidden
 from django.http.request import QueryDict
 from django.core.exceptions import ValidationError
 from django.db.utils import IntegrityError
+
 from channels import Group
 from utils import Status, Command
+import utils.path as up
+
 from server.utils import StatusResponse
 from django.db.models import Q
 
@@ -28,24 +31,6 @@ from .consumers import notify
 
 LOGGER = logging.getLogger("fsim.api")
 FILE_BACKUP_ENDING = "_BACK"
-
-
-def remove_trailing_path_seperator(path):
-    """
-    If the last character is a path seperator, then it will be removed.
-
-    Arguments
-    ----------
-        path: string
-
-    Returns
-    -------
-        string
-    """
-    if path and (path[-1] == '\\' or path[-1] == '/'):
-        return path[:-1]
-    else:
-        return path
 
 
 def add_slave(request):
@@ -460,9 +445,9 @@ def filesystem_set(request):
                 filesystem.full_clean()
                 # IMPORTANT: remove trailing path seperator (if not the query will not
                 # work [the query in filesystem_move])
-                filesystem.destination_path = remove_trailing_path_seperator(
+                filesystem.destination_path = up.remove_trailing_path_seperator(
                     filesystem.destination_path)
-                filesystem.source_path = remove_trailing_path_seperator(
+                filesystem.source_path = up.remove_trailing_path_seperator(
                     filesystem.source_path)
                 form.save()
 
