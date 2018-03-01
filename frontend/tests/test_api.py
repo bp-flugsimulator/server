@@ -12,7 +12,7 @@ from channels.test import WSClient
 
 from utils import Status, Command
 
-from frontend.scripts import Script, ScriptEntryFile, ScriptEntryProgram
+from frontend.scripts import Script, ScriptEntryFilesystem, ScriptEntryProgram
 
 from frontend.models import (
     Script as ScriptModel,
@@ -31,6 +31,7 @@ from .factory import (
     MovedFileFactory,
     ProgramStatusFactory,
 )
+
 
 class ScriptTest(TestCase):
     def test_script_run_forbidden(self):
@@ -54,7 +55,7 @@ class ScriptTest(TestCase):
         script = Script(
             script_name,
             [ScriptEntryProgram(0, program.name, slave.name)],
-            [ScriptEntryFile(0, filesystem.name, slave.name)],
+            [ScriptEntryFilesystem(0, filesystem.name, slave.name)],
         )
         script.save()
 
@@ -75,9 +76,11 @@ class ScriptTest(TestCase):
             content_type="application/json",
         )
 
+        self.assertEqual(response.status_code, 200)
+
         self.assertContains(
             response,
-            "All elements in files has to be dict.",
+            "All elements in filesystems has to be dict.",
         )
 
         self.assertContains(
@@ -106,9 +109,11 @@ class ScriptTest(TestCase):
             content_type="application/json",
         )
 
+        self.assertEqual(response.status_code, 200)
+
         self.assertContains(
             response,
-            "Programs has to be a list",
+            "programs has to be list",
         )
 
     def test_add_script_unique_error(self):
@@ -199,7 +204,7 @@ class ScriptTest(TestCase):
         script = Script(
             script_name,
             [ScriptEntryProgram(0, program.id, slave.id)],
-            [ScriptEntryFile(0, filesystem.id, slave.id)],
+            [ScriptEntryFilesystem(0, filesystem.id, slave.id)],
         )
         script.save()
 
@@ -254,7 +259,7 @@ class ScriptTest(TestCase):
         script = Script(
             script_name,
             [ScriptEntryProgram(0, program.id, slave.id)],
-            [ScriptEntryFile(0, filesystem.id, slave.id)],
+            [ScriptEntryFilesystem(0, filesystem.id, slave.id)],
         )
         script.save()
 
@@ -277,7 +282,7 @@ class ScriptTest(TestCase):
         script = Script(
             script_name,
             [ScriptEntryProgram(0, program.id, slave.id)],
-            [ScriptEntryFile(0, filesystem.id, slave.id)],
+            [ScriptEntryFilesystem(0, filesystem.id, slave.id)],
         )
         script.save()
 
@@ -299,7 +304,7 @@ class ScriptTest(TestCase):
         script = Script(
             script_name,
             [ScriptEntryProgram(0, program.id, slave.id)],
-            [ScriptEntryFile(0, filesystem.id, slave.id)],
+            [ScriptEntryFilesystem(0, filesystem.id, slave.id)],
         )
         script.save()
 
@@ -321,7 +326,7 @@ class ScriptTest(TestCase):
         script = Script(
             script_name,
             [ScriptEntryProgram(0, program.id, slave.id)],
-            [ScriptEntryFile(0, filesystem.id, slave.id)],
+            [ScriptEntryFilesystem(0, filesystem.id, slave.id)],
         )
         script.save()
 
@@ -453,7 +458,8 @@ class FileTests(TestCase):
 
     def test_move_dir_ok(self):
         slave = SlaveFactory(online=True)
-        filesystem = FileFactory(slave=slave, source_type="dir", destination_type="dir")
+        filesystem = FileFactory(
+            slave=slave, source_type="dir", destination_type="dir")
 
         # connect slave to websocket
         ws_client = WSClient()
@@ -678,12 +684,20 @@ class FileTests(TestCase):
     def test_query_get_all_by_slave(self):
         filesystem = FileFactory()
 
-        with_str = self.client.get('/api/files?slave={}&slave_str=True'.format(
-            filesystem.slave.name))
+        with_str = self.client.get(
+            '/api/filesystems?slave={}&slave_str=True'.format(
+                filesystem.slave.name))
+
         whithout_str = self.client.get(
-            '/api/files?slave={}&slave_str=False'.format(filesystem.slave.id))
-        ints = self.client.get('/api/files?slave={}'.format(
+            '/api/filesystems?slave={}&slave_str=False'.format(
+                filesystem.slave.id))
+
+        ints = self.client.get('/api/filesystems?slave={}'.format(
             filesystem.slave.id))
+
+        self.assertEqual(with_str.status_code, 200)
+        self.assertEqual(whithout_str.status_code, 200)
+        self.assertEqual(ints.status_code, 200)
 
         with_str = Status.from_json(with_str.content.decode('utf-8'))
         ints = Status.from_json(ints.content.decode('utf-8'))
@@ -694,7 +708,7 @@ class FileTests(TestCase):
             without_str,
         )
 
-        slaves = FileModel.objects.filter(id=filesystem.id).values_list(
+        slaves = FilesystemModel.objects.filter(id=filesystem.id).values_list(
             "name",
             flat=True,
         )
@@ -710,7 +724,9 @@ class FileTests(TestCase):
         )
 
     def test_query_get_all_wrong_type(self):
-        resp = self.client.get('/api/files?slave=not_an_int')
+        resp = self.client.get('/api/filesystems?slave=not_an_int')
+
+        self.assertEqual(resp.status_code, 200)
 
         self.assertEqual(
             Status.err("Slave has to be an integer."),
@@ -718,8 +734,12 @@ class FileTests(TestCase):
         )
 
     def test_query_get_does_not_exist(self):
-        resp_int = self.client.get('/api/files?slave=-1')
-        resp_str = self.client.get('/api/files?slave=none&slave_str=True')
+        resp_int = self.client.get('/api/filesystems?slave=-1')
+        resp_str = self.client.get(
+            '/api/filesystems?slave=none&slave_str=True')
+
+        self.assertEqual(resp_int.status_code, 200)
+        self.assertEqual(resp_str.status_code, 200)
 
         self.assertEqual(
             Status.err("Could not find slave with id `-1`."),
@@ -732,7 +752,10 @@ class FileTests(TestCase):
         )
 
     def test_query_get_all(self):
-        resp = self.client.get('/api/files')
+        resp = self.client.get('/api/filesystems')
+
+        self.assertEqual(resp.status_code, 200)
+
         self.assertEqual(
             Status.ok([]),
             Status.from_json(resp.content.decode('utf-8')),
@@ -740,15 +763,14 @@ class FileTests(TestCase):
 
         filesystem = FileFactory()
 
-        resp = self.client.get('/api/files')
+        resp = self.client.get('/api/filesystems')
         self.assertEqual(
             Status.ok([filesystem.name]),
             Status.from_json(resp.content.decode('utf-8')),
         )
 
     def test_allowed_methods(self):
-        resp = self.client.put("/api/files")
-        self.assertEqual(resp.status_code, 403)
+        resp = self.client.put("/api/filesystem")
 
     def test_add_file_unsupported_function(self):
         api_response = self.client.delete('/api/filesystems')

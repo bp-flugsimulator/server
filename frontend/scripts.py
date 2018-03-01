@@ -63,14 +63,14 @@ class Script:
         filesystems: List of ScriptGraphFiles
     """
 
-    def __init__(self, name, programs, files):
+    def __init__(self, name, programs, filesystems):
         ensure_type("programs", programs, list)
         ensure_type_array("programs", programs, ScriptEntryProgram)
         self.programs = programs
 
-        ensure_type("files", files, list)
-        ensure_type_array("files", files, ScriptEntryFile)
-        self.files = files
+        ensure_type("filesystems", filesystems, list)
+        ensure_type_array("filesystem", filesystems, ScriptEntryFilesystem)
+        self.filesystems = filesystems
 
         ensure_type("name", name, str)
 
@@ -121,7 +121,8 @@ class Script:
             for model in SGPModel.objects.filter(script=script)
         ]
         filesystems = [
-            ScriptEntryFile.from_query(model, slaves_type, filesystem_type)
+            ScriptEntryFilesystem.from_query(model, slaves_type,
+                                             filesystem_type)
             for model in SGFModel.objects.filter(script=script)
         ]
 
@@ -139,16 +140,15 @@ class Script:
         data = json.loads(string)
 
         ensure_type("programs", data["programs"], list)
-        ensure_type("files", data["files"], list)
+        ensure_type("filesystems", data["filesystems"], list)
 
         ensure_type_array("programs", data["programs"], dict)
-        ensure_type_array("files", data["files"], dict)
+        ensure_type_array("filesystems", data["filesystems"], dict)
 
         return cls(
             data["name"],
             [ScriptEntryProgram(**program) for program in data["programs"]],
-            [ScriptEntryFile(**file) for file in data["files"]],
-
+            [ScriptEntryFilesystem(**file) for file in data["filesystems"]],
         )
 
     @transaction.atomic
@@ -177,7 +177,7 @@ class Script:
         return json.dumps(dict(self))
 
 
-class ScriptEntryFile:
+class ScriptEntryFilesystem:
     """
     Consists of the following fields
 
@@ -187,15 +187,15 @@ class ScriptEntryFile:
         filesystem: The name of the filesystem
         slave: Location of the filesystem
     """
-    def __init__(self, index, file, slave):
+
+    def __init__(self, index, filesystem, slave):
         typecheck_index(index)
         self.index = index
 
-        ensure_type("file", file, str, int)
-        self.file = file
+        ensure_type("filesystem", filesystem, str, int)
+        self.filesystem = filesystem
 
-
-        ensure_type("slave", slave, str, int)
+        ensure_type("slavesystem", slave, str, int)
         self.slave = slave
 
     def __eq__(self, other):
@@ -219,20 +219,20 @@ class ScriptEntryFile:
 
         Returns
         -------
-             ScriptEntryFile object
+             ScriptEntryFilesystem object
         """
 
         if slaves_type == "int":
-            slave = query.file.slave.id
+            slave = query.filesystem.slave.id
         elif slaves_type == "str":
-            slave = query.file.slave.name
+            slave = query.filesystem.slave.name
         else:
             raise ValueError("Slave_type has to be int or str.")
 
         if programs_type == "int":
-            program = query.file.id
+            program = query.filesystem.id
         elif programs_type == "str":
-            program = query.file.name
+            program = query.filesystem.name
         else:
             raise ValueError("File_type has to be int or str.")
 
@@ -254,7 +254,7 @@ class ScriptEntryFile:
         data = json.loads(string)
         return cls(
             data["index"],
-            data["file"],
+            data["filesystem"],
             data["slave"],
         )
 
@@ -276,8 +276,9 @@ class ScriptEntryFile:
         slave = get_slave(self.slave)
 
         try:
-            if isinstance(self.file, str):
-                obj = FileModel.objects.get(slave=slave, name=self.file)
+            if isinstance(self.filesystem, str):
+                obj = FilesystemModel.objects.get(
+                    slave=slave, name=self.filesystem)
                 model = SGFModel(
                     script=script,
                     index=self.index,
@@ -285,13 +286,14 @@ class ScriptEntryFile:
                 )
                 model.full_clean()
                 model.save()
-        except FileModel.DoesNotExist:
+        except FilesystemModel.DoesNotExist:
             raise ValueError("The file with name `{}` does not exist.".format(
-                self.file))
+                self.filesystem))
 
         try:
-            if isinstance(self.file, int):
-                obj = FileModel.objects.get(slave=slave, id=self.file)
+            if isinstance(self.filesystem, int):
+                obj = FilesystemModel.objects.get(
+                    slave=slave, id=self.filesystem)
                 model = SGFModel(
                     script=script,
                     index=self.index,
@@ -299,9 +301,9 @@ class ScriptEntryFile:
                 )
                 model.full_clean()
                 model.save()
-        except FileModel.DoesNotExist:
+        except FilesystemModel.DoesNotExist:
             raise ValueError("The file with id `{}` does not exist.".format(
-                self.file))
+                self.filesystem))
 
     def to_json(self):
         """

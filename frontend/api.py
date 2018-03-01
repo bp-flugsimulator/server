@@ -86,7 +86,7 @@ def add_slave(request):
                         )
             elif files:
                 slaves = SlaveModel.objects.all().annotate(
-                    file_count=Count('file__pk')).filter(
+                    file_count=Count('filesystem__pk')).filter(
                         file_count__gt=0).values_list(
                             'name',
                             flat=True,
@@ -555,10 +555,11 @@ def filesystem_set(request):
             slave_str = slave_str.lower() in ('true', 't', 'y', 'yes', '1')
 
         if query is not None:
-            files = FileModel.objects.filter(name__contains=query).values_list(
-                "name",
-                flat=True,
-            )
+            files = FilesystemModel.objects.filter(
+                name__contains=query).values_list(
+                    "name",
+                    flat=True,
+                )
         elif slave is not None:
             try:
                 if slave_str:
@@ -580,12 +581,12 @@ def filesystem_set(request):
 
                 return StatusResponse(Status.err(ret_err))
 
-            files = FileModel.objects.filter(slave=slave).values_list(
+            files = FilesystemModel.objects.filter(slave=slave).values_list(
                 "name",
                 flat=True,
             )
         else:
-            files = FileModel.objects.all().values_list(
+            files = FilesystemModel.objects.all().values_list(
                 "name",
                 flat=True,
             )
@@ -670,12 +671,6 @@ def filesystem_move(request, filesystem_id):
 
                 filesystem.command_uuid = second.uuid
                 filesystem.save()
-
-                print("HERE FIRST: " + filesystem_replace.command_uuid)
-                print("HERE FIRST2: " + FilesystemModel.objects.get(
-                    id=filesystem_replace.id).command_uuid)
-                print("HERE SECOND: " + filesystem.command_uuid)
-
             else:
                 cmd = Command(
                     method="filesystem_move",

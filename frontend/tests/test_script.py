@@ -5,7 +5,12 @@ from django.db.utils import IntegrityError
 
 from django.core.exceptions import ValidationError
 
-from frontend.scripts import Script, ScriptEntryFile, ScriptEntryProgram, get_slave
+from frontend.scripts import (
+    Script,
+    ScriptEntryFilesystem,
+    ScriptEntryProgram,
+    get_slave,
+)
 
 from frontend.models import (
     Script as ScriptModel,
@@ -24,30 +29,6 @@ from .factory import (
 class ScriptTests(TestCase):  # pylint: disable=unused-variable
     def test_get_slave_int(self):
         slave = SlaveFactory()
-
-    def test_from_json_no_list(self):
-        self.assertRaisesRegex(
-            ValueError,
-            "filesystems has to be a list",
-            Script.from_json,
-            '{"name": "test", "filesystems": {}, "programs": []}',
-        )
-
-        self.assertRaisesRegex(
-            ValueError,
-            "Programs has to be a list",
-            Script.from_json,
-            '{"name": "test", "filesystems": [], "programs": {}}',
-        )
-
-    def test_script_wrong_type_name(self):
-        self.assertRaises(ValueError, Script, [], [], [])
-
-    def test_script_wrong_type_program_not_a_list(self):
-        self.assertRaises(ValueError, Script, "name", "not a list", [])
-
-
-        self.assertEqual(get_slave(slave.id), slave)
 
     def test_get_slave_str(self):
         slave = SlaveFactory()
@@ -77,7 +58,7 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
         script = Script(
             "test",
             [ScriptEntryProgram(0, "no name", 0)],
-            [ScriptEntryFile(0, "no name", 0)],
+            [ScriptEntryFilesystem(0, "no name", 0)],
         )
 
         self.assertEqual(Script.from_json(string), script)
@@ -97,10 +78,11 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
     def test_script_entry_file_json(self):
         string = '{"index": 0, "slave": 0, "filesystem": "no name"}'
 
-        script = ScriptEntryFile(0, "no name", 0)
+        script = ScriptEntryFilesystem(0, "no name", 0)
 
-        self.assertEqual(ScriptEntryFile.from_json(string), script)
-        self.assertEqual(ScriptEntryFile.from_json(script.to_json()), script)
+        self.assertEqual(ScriptEntryFilesystem.from_json(string), script)
+        self.assertEqual(
+            ScriptEntryFilesystem.from_json(script.to_json()), script)
 
     def test_script_name_eq(self):
         self.assertNotEqual(
@@ -117,7 +99,7 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
         Script(
             script_name,
             [ScriptEntryProgram(0, program.name, slave.name)],
-            [ScriptEntryFile(0, filesystem.name, slave.name)],
+            [ScriptEntryFilesystem(0, filesystem.name, slave.name)],
         ).save()
 
         script = ScriptModel.objects.get(name=script_name)
@@ -146,7 +128,7 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
         Script(
             script_name,
             [ScriptEntryProgram(0, int(program.id), int(slave.id))],
-            [ScriptEntryFile(0, int(filesystem.id), int(slave.id))],
+            [ScriptEntryFilesystem(0, int(filesystem.id), int(slave.id))],
         ).save()
 
         script = ScriptModel.objects.get(name=script_name)
@@ -186,8 +168,8 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
         slave = filesystem.slave
         script = ScriptFactory()
 
-        ScriptEntryFile(0, filesystem.id, slave.id).save(script)
-        b = ScriptEntryFile(0, filesystem.name, slave.name)
+        ScriptEntryFilesystem(0, filesystem.id, slave.id).save(script)
+        b = ScriptEntryFilesystem(0, filesystem.name, slave.name)
 
         self.assertRaises(ValidationError, b.save, script)
 
@@ -244,7 +226,7 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
         self.assertRaisesRegex(
             ValueError,
             "Slave_type.*int or str",
-            ScriptEntryFile.from_query,
+            ScriptEntryFilesystem.from_query,
             Dummy(),
             "not int",
             "not str",
@@ -252,7 +234,7 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
         self.assertRaisesRegex(
             ValueError,
             "File_type.*int or str",
-            ScriptEntryFile.from_query,
+            ScriptEntryFilesystem.from_query,
             Dummy(),
             "int",
             "not str",
@@ -275,7 +257,7 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
         self.assertRaisesRegex(
             ValueError,
             "positive integer",
-            ScriptEntryFile,
+            ScriptEntryFilesystem,
             -1,
             0,
             0,
@@ -327,7 +309,7 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
         self.assertRaisesRegex(
             ValueError,
             "file.*id.*{}.*not exist".format(-1),
-            ScriptEntryFile(
+            ScriptEntryFilesystem(
                 0,
                 -1,
                 int(slave.id),
@@ -338,7 +320,7 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
         self.assertRaisesRegex(
             ValueError,
             "file.*name.*{}.*not exist".format(""),
-            ScriptEntryFile(
+            ScriptEntryFilesystem(
                 0,
                 "",
                 int(slave.id),
@@ -351,7 +333,7 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
         self.assertRaisesRegex(
             ValueError,
             "client.*id.*{}.*not exist.".format(-1),
-            ScriptEntryFile(
+            ScriptEntryFilesystem(
                 0,
                 -1,
                 -1,
