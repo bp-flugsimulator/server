@@ -15,6 +15,7 @@ from frontend.models import (
 from .factory import (
     SlaveFactory,
     ScriptFactory,
+    FileFactory,
     ProgramFactory,
     ProgramStatusFactory,
     SGPFactory,
@@ -69,6 +70,11 @@ class DatabaseTests(TestCase):  # pylint: disable=unused-variable
 
         self.assertFalse(slave.has_error)
         self.assertFalse(slave.has_running)
+
+    def test_slave_has_error_true(self):
+        filesystem = FileFactory(error_code="Hey")
+
+        self.assertTrue(filesystem.slave.has_error)
 
     def test_slave_is_online_err(self):
         slave = SlaveFactory()
@@ -142,6 +148,15 @@ class DatabaseTests(TestCase):  # pylint: disable=unused-variable
         flush('UnknownModel')
 
         self.assertFalse(SlaveModel.objects.filter(name=slave.name).exists())
+
+    def test_filesystem_state(self):
+        moved = FileFactory(hash_value="Some")
+        errored = FileFactory(error_code="Some")
+        restored = FileFactory()
+
+        self.assertEqual(moved.data_state, "moved")
+        self.assertEqual(errored.data_state, "error")
+        self.assertEqual(restored.data_state, "restored")
 
     def test_slave_insert_invalid_ip(self):
         self.assertRaises(

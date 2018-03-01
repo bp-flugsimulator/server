@@ -12,7 +12,7 @@ from django.forms import (
 from .models import (
     Slave as SlaveModel,
     Program as ProgramModel,
-    File as FileModel,
+    Filesystem as FilesystemModel,
 )
 
 
@@ -46,7 +46,7 @@ class ProgramForm(ModelForm):
         fields = ['name', 'path', 'arguments', 'start_time']
 
 
-class FileForm(ModelForm):
+class FilesystemForm(ModelForm):
     """
     Form based on the program model
     """
@@ -59,5 +59,11 @@ class FileForm(ModelForm):
         """
         configures the form
         """
-        model = FileModel
-        fields = ['name', 'sourcePath', 'destinationPath']
+        model = FilesystemModel
+        fields = [
+            'name',
+            'source_path',
+            'source_type',
+            'destination_path',
+            'destination_type',
+        ]

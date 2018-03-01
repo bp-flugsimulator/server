@@ -17,7 +17,7 @@
             <div class="modal-footer">
                 <button type='button' class='btn btn-info' id='deleteSlaveModalButton'>OK</button>
                 <button type='button' class='btn btn-info' id='deleteProgramModalButton'>OK</button>
-                <button type='button' class='btn btn-info' id='deleteFileModalButton'>OK</button>
+                <button type='button' class='btn btn-info' id='deleteFilesystemModalButton'>OK</button>
                 <button type='reset' class='btn btn-danger' data-dismiss='modal'>Cancel</button>
             </div>
         </div>
@@ -26,7 +26,7 @@
 
 {% modal_form program_form "program" %}
 {% modal_form slave_form "slave" %}
-{% modal_form file_form "file" %}
+{% modal_form file_form "filesystem" %}
 {% endblock %}
 
 {% block content %}
@@ -57,7 +57,7 @@
     <div class="container-fluid tab-content col col-xs-12 col-sm-12 col-md-9 col-lg-9 col-xl-10">
         {% for slave in slaves %}
             <div class="tab-pane fade show {% if forloop.first %}active{% endif %}" id="slaveTabContent{{ slave.id }}" role="tabpanel">
-                {% slave_entry slave slave.program_set.all slave.file_set.all %}
+                {% slave_entry slave slave.program_set.all slave.filesystem_set.all %}
             </div>
         {% empty %}
             <div>
