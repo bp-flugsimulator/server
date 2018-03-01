@@ -13,6 +13,7 @@ from utils import Status, Command
 
 from frontend.models import (
     Slave as SlaveModel,
+    Filesystem as FilesystemModel,
     ProgramStatus as ProgramStatusModel,
 )
 
@@ -20,12 +21,13 @@ from .factory import (
     SlaveFactory,
     SlaveOnlineFactory,
     ProgramStatusFactory,
+    FileFactory,
+    MovedFileFactory,
 )
 
 
 class WebsocketTests(TestCase):
     def test_rpc_commands_fails_unknown_slave(self):
-
         slave = SlaveFactory.build()
 
         ws_client = WSClient()
@@ -64,6 +66,27 @@ class WebsocketTests(TestCase):
             immediately=True,
         )
         self.assertEqual(ws_client.receive(json=False), 'ok')
+
+    def test_ws_rpc_wrong_json(self):
+        ws_client = WSClient()
+
+        ws_client.send_and_consume(
+            'websocket.receive',
+            path='/commands',
+            content={'text': "str"},
+        )
+
+        self.assertIsNone(ws_client.receive())
+
+        ws_client.send_and_consume(
+            'websocket.receive',
+            path='/commands',
+            content={'text': {
+                "test": "test"
+            }},
+        )
+
+        self.assertIsNone(ws_client.receive())
 
     def test_ws_rpc_disconnect(self):
         slave = SlaveOnlineFactory()
@@ -479,3 +502,254 @@ class WebsocketTests(TestCase):
             'websocket.receive', path='/logs', content={'text': msg.to_json()})
         self.assertEqual(msg,
                          Status.from_json(json.dumps(webinterface.receive())))
+
+    def test_ws_rpc_moved_success(self):
+        filesystem = FileFactory()
+
+        moved = MovedFileFactory.build()
+
+        error_status = Status.ok({
+            'method': 'filesystem_move',
+            'result': moved.hash_value,
+        })
+        error_status.uuid = filesystem.command_uuid
+
+        #  connect webinterface
+        webinterface = WSClient()
+        webinterface.join_group('notifications')
+
+        ws_client = WSClient()
+        ws_client.send_and_consume(
+            'websocket.receive',
+            path='/commands',
+            content={'text': error_status.to_json()},
+        )
+
+        query = FilesystemModel.objects.get(id=filesystem.id)
+        self.assertEqual(query.hash_value, moved.hash_value)
+        self.assertEqual(query.error_code, "")
+
+        self.assertEqual(
+            Status.ok({
+                'filesystem_status': 'moved',
+                'fid': str(filesystem.id),
+            }),
+            Status.from_json(json.dumps(webinterface.receive())),
+        )
+
+    def test_ws_rpc_moved_failed(self):
+        filesystem = FileFactory()
+
+        error_code = 'any kind of string'
+
+        error_status = Status.err({
+            'method': 'filesystem_move',
+            'result': error_code,
+        })
+
+        error_status.uuid = filesystem.command_uuid
+
+        #  connect webinterface
+        webinterface = WSClient()
+        webinterface.join_group('notifications')
+
+        ws_client = WSClient()
+        ws_client.send_and_consume(
+            'websocket.receive',
+            path='/commands',
+            content={'text': error_status.to_json()},
+        )
+
+        query = FilesystemModel.objects.get(id=filesystem.id)
+        self.assertEqual(query.hash_value, "")
+        self.assertEqual(query.error_code, error_code)
+
+        self.assertEqual(
+            Status.ok({
+                'filesystem_status': 'error',
+                'fid': str(filesystem.id),
+                'error_code': error_code,
+            }),
+            Status.from_json(json.dumps(webinterface.receive())),
+        )
+
+    def test_ws_rpc_restore_success(self):
+        filesystem = MovedFileFactory()
+
+        error_status = Status.ok({
+            'method': 'filesystem_restore',
+            'result': None,
+        })
+
+        error_status.uuid = filesystem.command_uuid
+
+        #  connect webinterface
+        webinterface = WSClient()
+        webinterface.join_group('notifications')
+
+        ws_client = WSClient()
+        ws_client.send_and_consume(
+            'websocket.receive',
+            path='/commands',
+            content={'text': error_status.to_json()},
+        )
+
+        query = FilesystemModel.objects.get(id=filesystem.id)
+        self.assertEqual(query.hash_value, "")
+        self.assertEqual(query.error_code, "")
+
+        self.assertEqual(
+            Status.ok({
+                'filesystem_status': 'restored',
+                'fid': str(filesystem.id),
+            }),
+            Status.from_json(json.dumps(webinterface.receive())),
+        )
+
+    def test_ws_rpc_restore_failed(self):
+        filesystem = MovedFileFactory()
+
+        error_code = 'any kind of string'
+
+        error_status = Status.err({
+            'method': 'filesystem_restore',
+            'result': error_code,
+        })
+
+        error_status.uuid = filesystem.command_uuid
+
+        #  connect webinterface
+        webinterface = WSClient()
+        webinterface.join_group('notifications')
+
+        ws_client = WSClient()
+        ws_client.send_and_consume(
+            'websocket.receive',
+            path='/commands',
+            content={'text': error_status.to_json()},
+        )
+
+        query = FilesystemModel.objects.get(id=filesystem.id)
+        self.assertEqual(query.hash_value, "")
+        self.assertEqual(query.error_code, error_code)
+
+        self.assertEqual(
+            Status.ok({
+                'filesystem_status': 'error',
+                'fid': str(filesystem.id),
+                'error_code': error_code,
+            }),
+            Status.from_json(json.dumps(webinterface.receive())),
+        )
+
+    def test_ws_rpc_restore_not_found(self):
+        webinterface = WSClient()
+        webinterface.join_group('notifications')
+
+        error_status = Status.ok({
+            'method': 'filesystem_restore',
+            'result': None,
+        })
+
+        ws_client = WSClient()
+        ws_client.send_and_consume(
+            'websocket.receive',
+            path='/commands',
+            content={'text': error_status.to_json()},
+        )
+
+        self.assertIsNone(webinterface.receive())
+
+    def test_ws_rpc_move_not_found(self):
+        webinterface = WSClient()
+        webinterface.join_group('notifications')
+
+        error_status = Status.ok({
+            'method': 'filesystem_move',
+            'result': None,
+        })
+
+        ws_client = WSClient()
+        ws_client.send_and_consume(
+            'websocket.receive',
+            path='/commands',
+            content={'text': error_status.to_json()},
+        )
+
+        self.assertIsNone(webinterface.receive())
+
+    def test_ws_rpc_chain_commands_err(self):
+        error_chain = Status.err({
+            'method': 'chain_execution',
+            'result': None,
+        })
+
+        #  connect webinterface
+        webinterface = WSClient()
+        webinterface.join_group('notifications')
+
+        ws_client = WSClient()
+        ws_client.send_and_consume(
+            'websocket.receive',
+            path='/commands',
+            content={'text': error_chain.to_json()},
+        )
+
+        self.assertIsNone(webinterface.receive())
+
+    def test_ws_rpc_chain_commands(self):
+        filesystem = FileFactory()
+
+        moved = MovedFileFactory.build()
+
+        error_status1 = Status.ok({
+            'method': 'filesystem_move',
+            'result': moved.hash_value,
+        })
+        error_status1.uuid = filesystem.command_uuid
+
+        error_status2 = Status.ok({
+            'method': 'filesystem_move',
+            'result': moved.hash_value,
+        })
+        error_status2.uuid = filesystem.command_uuid
+
+        error_chain = Status.ok({
+            'method':
+            'chain_execution',
+            'result': [dict(error_status1),
+                       dict(error_status2)],
+        })
+
+        #  connect webinterface
+        webinterface = WSClient()
+        webinterface.join_group('notifications')
+
+        ws_client = WSClient()
+        ws_client.send_and_consume(
+            'websocket.receive',
+            path='/commands',
+            content={'text': error_chain.to_json()},
+        )
+
+        query = FilesystemModel.objects.get(id=filesystem.id)
+        self.assertEqual(query.hash_value, moved.hash_value)
+        self.assertEqual(query.error_code, "")
+
+        self.assertEqual(
+            Status.ok({
+                'filesystem_status': 'moved',
+                'fid': str(filesystem.id),
+            }),
+            Status.from_json(json.dumps(webinterface.receive())),
+        )
+
+        self.assertEqual(
+            Status.ok({
+                'filesystem_status': 'moved',
+                'fid': str(filesystem.id),
+            }),
+            Status.from_json(json.dumps(webinterface.receive())),
+        )
+
+        self.assertIsNone(webinterface.receive())

@@ -1,13 +1,26 @@
 /* eslint-env browser*/
 /* eslint no-use-before-define: ["error", { "functions": false }] */
-/* global $, getCookie, modalDeleteAction, handleFormStatus, clearErrorMessages, Status, fsimWebsocket, notify, swapText, styleSlaveByStatus*/
+/* global $, getCookie, modalDeleteAction, handleFormStatus, clearErrorMessages, Status,
+ fsimWebsocket, notify, swapText, styleSlaveByStatus, basicRequest */
+
+/**
+ * Sets the given text for all '.button-status-display' in a container.
+ *
+ * @param {HTMlElement} element A container which holds a element with '.button-status-display'
+ * @param {String} text A text which will be set for all '.button-status-display'
+ */
+function changeStatusDisplayText(element, text) {
+    element.children('.button-status-display').each(function (idx, val) {
+        $(val).text(text);
+    });
+}
 
 /**
  * Creates a function which handles from submits.
  *
  * @param {String} id Form identifier without '#'
  */
-const onFormSubmit = function (id) {
+function onFormSubmit(id) {
     return function (event) {
         //Stop form from submitting normally
         event.preventDefault();
@@ -32,25 +45,24 @@ const onFormSubmit = function (id) {
             }
         });
     };
-};
+}
 
-const restoreSlaveInnerTab = function (slaveId) {
+/**
+ * Restores the active tab for a slave container by clicking on the tab.
+ *
+ * @param {Integer} slaveId
+ */
+function restoreSlaveInnerTab(slaveId) {
     let tabStatus = localStorage.getItem('tab-status');
 
     if (tabStatus !== null) {
         if (tabStatus === 'program') {
             $('#slavesObjectsPrograms' + slaveId).click();
         }
-        else if (tabStatus === 'file') {
+        else if (tabStatus === 'filesystem') {
             $('#slavesObjectsFiles' + slaveId).click();
         }
     }
-};
-
-function changeStartStopText(element, text) {
-    element.children('.button-status-display').each(function (idx, val) {
-        $(val).text(text);
-    });
 }
 
 function handleLogging(id, method, async = true) {
@@ -88,7 +100,7 @@ const socketEventHandler = {
 
         // Use Python notation !!!
         startstopButton.attr('data-is-running', 'True');
-        changeStartStopText(startstopButton, 'STOP');
+        changeStatusDisplayText(startstopButton, 'STOP');
 
         // set tooltip to Stop
         startstopButton.children('[data-text-swap]').each(function (idx, val) {
@@ -111,7 +123,7 @@ const socketEventHandler = {
 
         // Use Python notation !!!
         startstopButton.attr('data-is-running', 'False');
-        changeStartStopText(startstopButton, 'START');
+        changeStatusDisplayText(startstopButton, 'START');
 
         // set tooltip to Start
         startstopButton.children('[data-text-swap]').each(function (idx, val) {
@@ -128,7 +140,7 @@ const socketEventHandler = {
 
         // Use Python notation !!!
         startstopButton.attr('data-is-running', 'True');
-        changeStartStopText(startstopButton, 'STOP');
+        changeStatusDisplayText(startstopButton, 'STOP');
 
         let sid = null;
 
@@ -158,7 +170,7 @@ const socketEventHandler = {
 
         // Use Python notation !!!
         startstopButton.attr('data-is-running', 'False');
-        changeStartStopText(startstopButton, 'START');
+        changeStatusDisplayText(startstopButton, 'START');
 
         let sid = null;
 
@@ -182,9 +194,72 @@ const socketEventHandler = {
         terminals[pid].feed(payload.log);
         logBox.data('has-log', true);
     },
+    filesystemMoved(payload) {
+        let statusContainer = $('#filesystemStatusContainer_' + payload.fid);
+        let moveRestoreButton = $('#filesystemMoveRestore_' + payload.fid);
+        let cardButton = $('#filesystemCardButton_' + payload.fid);
+
+        statusContainer.attr('data-state', 'moved');
+        cardButton.prop('disabled', true);
+
+        // Use Python notation !!!
+        moveRestoreButton.attr('data-is-moved', 'True');
+        changeStatusDisplayText(moveRestoreButton, 'RESTORE');
+
+        let sid = null;
+
+        statusContainer.find('button[data-slave-id]').each(function (idx, val) {
+            sid = $(val).data('slave-id');
+            return false;
+        });
+
+        styleSlaveByStatus(sid);
+    },
+    filesystemRestored(payload) {
+        let statusContainer = $('#filesystemStatusContainer_' + payload.fid);
+        let moveRestoreButton = $('#filesystemMoveRestore_' + payload.fid);
+        let cardButton = $('#filesystemCardButton_' + payload.fid);
+
+        statusContainer.attr('data-state', 'restored');
+        cardButton.prop('disabled', true);
+
+        // Use Python notation !!!
+        moveRestoreButton.attr('data-is-moved', 'False');
+        changeStatusDisplayText(moveRestoreButton, 'MOVE');
+
+        let sid = null;
+
+        statusContainer.find('button[data-slave-id]').each(function (idx, val) {
+            sid = $(val).data('slave-id');
+            return false;
+        });
+
+        styleSlaveByStatus(sid);
+    },
+    filesystemError(payload) {
+        let statusContainer = $('#filesystemStatusContainer_' + payload.fid);
+        let cardButton = $('#filesystemCardButton_' + payload.fid);
+        let cardBox = $('#filesystemCard_' + payload.fid);
+
+        statusContainer.attr('data-state', 'error');
+        cardButton.prop('disabled', false);
+        cardBox.text(payload.error_code);
+
+        let sid = null;
+
+        statusContainer.find('button[data-slave-id]').each(function (idx, val) {
+            sid = $(val).data('slave-id');
+            return false;
+        });
+
+        styleSlaveByStatus(sid);
+    },
 };
 
-const websocket = fsimWebsocket(socketEventHandler);
+/**
+ * Init Websocket
+ */
+fsimWebsocket(socketEventHandler);
 
 $(document).ready(function () {
     // Restores the last clicked slave
@@ -221,8 +296,8 @@ $(document).ready(function () {
         }
     });
 
-    $('.slave-file-tab').click(function () {
-        localStorage.setItem('tab-status', 'file');
+    $('.slave-filesystem-tab').click(function () {
+        localStorage.setItem('tab-status', 'filesystem');
     });
 
     $('.slave-program-tab').click(function () {
@@ -274,7 +349,7 @@ $(document).ready(function () {
 
         if ($(this).attr('data-is-running') === 'True') {
             apiRequest('/api/program/' + id + '/stop', 'GET');
-        } else {
+        } else if ($(this).attr('data-is-running') === 'False') {
             apiRequest('/api/program/' + id, 'POST');
         }
     });
@@ -284,7 +359,7 @@ $(document).ready(function () {
         let deleteWarning = $('#deleteWarning');
         deleteWarning.children().find('#deleteProgramModalButton').hide();
         deleteWarning.children().find('#deleteSlaveModalButton').hide();
-        deleteWarning.children().find('#deleteFileModalButton').hide();
+        deleteWarning.children().find('#deleteFilesystemModalButton').hide();
 
         deleteWarning.children().find('#delete' + show + 'ModalButton').show();
 
@@ -362,10 +437,6 @@ $(document).ready(function () {
         modalDeleteAction($('#programForm'), 'program');
     });
 
-    $('#deleteFileModalButton').click(function () {
-        modalDeleteAction($('#fileForm'), 'file');
-    });
-
     $('.program-action-delete').click(function () {
         //get id and name of the program and create deletion message
         let id = $(this).data('program-id');
@@ -379,45 +450,59 @@ $(document).ready(function () {
     $('#programForm').submit(onFormSubmit('programForm'));
 
     //opens the fileModal to add a new program
-    $('.file-action-add').click(function () {
-        let fileModal = $('#fileModal');
-        fileModal.children().find('.modal-title').text('Add File');
+    $('.filesystem-action-add').click(function () {
+        let filesystemModal = $('#filesystemModal');
+        filesystemModal.children().find('.modal-title').text('Add filesystem');
 
         //modify the form for the submit button
-        let fileForm = fileModal.children().find('#fileForm');
-        fileForm.attr('action', '/api/files');
-        fileForm.attr('method', 'POST');
-        fileForm.children().find('.submit-btn').text('Add');
+        let filesystemForm = filesystemModal.children().find('#filesystemForm');
+        filesystemForm.attr('action', '/api/filesystems');
+        filesystemForm.attr('method', 'POST');
+        filesystemForm.children().find('.submit-btn').text('Add');
 
         //clear input fields
-        fileForm.find('[name="name"]').val('');
-        fileForm.find('[name="sourcePath"]').val('');
-        fileForm.find('[name="destinationPath"]').val('');
+        filesystemForm.find('[name="name"]').val('');
+        filesystemForm.find('[name="source_path"]').val('');
+        filesystemForm.find('[name="destination_path"]').val('');
 
         //clear error messages
-        clearErrorMessages(fileForm);
+        clearErrorMessages(filesystemForm);
 
         //find slave id and store it in the form
         let slaveId = $(this).data('slave-id');
-        fileForm.find('[name="slave"]').val(slaveId);
-        fileModal.modal('toggle');
+        filesystemForm.find('[name="slave"]').val(slaveId);
+        filesystemModal.modal('toggle');
     });
 
-    $('.file-action-modify').click(function () {
+    $('.filesystem-action-modify').click(function () {
         alert('Unimplemented');
     });
 
-    $('.file-action-delete').click(function () {
+    $('.filesystem-action-delete').click(function () {
         //get id and name of the program and create deletion message
-        let id = $(this).data('file-id');
-        let name = $(this).data('file-name');
-        let message = '<a>Are you sure you want to remove file </a><b>' + name + '</b>?</a>';
+        let id = $(this).data('filesystem-id');
+        let name = $(this).data('filesystem-name');
+        let message = '<a>Are you sure you want to remove filesystem </a><b>' + name + '</b>?</a>';
 
-        prepareDeleteModal('File', id, message);
+        prepareDeleteModal('Filesystem', id, message);
     });
 
-    // fileForm Handler
-    $('#fileForm').submit(onFormSubmit('fileForm'));
+    $('.filesystem-action-move').click(function () {
+        let id = $(this).data('filesystem-id');
+
+        if ($(this).attr('data-is-moved') === 'True') {
+            basicRequest('/api/filesystem/' + id + '/restore', 'GET', 'restore entry in filesystem');
+        } else if ($(this).attr('data-is-moved') === 'False') {
+            basicRequest('/api/filesystem/' + id + '/move', 'GET', 'move entry in filesystem');
+        }
+    });
+
+    $('#deleteFilesystemModalButton').click(function () {
+        modalDeleteAction($('#filesystemForm'), 'filesystem');
+    });
+
+    // filesystemForm Handler
+    $('#filesystemForm').submit(onFormSubmit('filesystemForm'));
 
     $('.slave-action-start-stop').click(function () {
         if ($(this).attr('data-is-running') === 'True') {
@@ -501,7 +586,6 @@ $(document).ready(function () {
         slaveModal.modal('toggle');
     });
 
-
     //opens the slaveModal to modify an existing slave
     $('.slave-action-modify').click(function () {
         //get info of slave
@@ -550,7 +634,6 @@ $(document).ready(function () {
 
     // slaveForm Handler
     $('#slaveForm').submit(onFormSubmit('slaveForm'));
-
 });
 
 // if the site gets reloaded/closed all logging activity gets stopped

@@ -12,7 +12,7 @@ from .models import (
     ScriptGraphFiles as SGFModel,
     ScriptGraphPrograms as SGPModel,
     Program as ProgramModel,
-    File as FileModel,
+    Filesystem as FilesystemModel,
     Slave as SlaveModel,
 )
 
@@ -45,10 +45,10 @@ class Script:
     ------
         name: Name of the script.
         programs: List of ScriptEntryProgram
-        files: List of ScriptGraphFiles
+        filesystems: List of ScriptGraphFiles
     """
 
-    def __init__(self, name, programs, files):
+    def __init__(self, name, programs, filesystems):
         if not isinstance(programs, list):
             raise ValueError("Program has to be a list.")
         for prog in programs:
@@ -57,16 +57,16 @@ class Script:
                     "All list elements has to be ScriptEntryProgram.")
         self.programs = programs
 
-        if not isinstance(files, list):
-            raise ValueError("Files has to be a list.")
-        for file in files:
-            if not isinstance(file, ScriptEntryFile):
+        if not isinstance(filesystems, list):
+            raise ValueError("filesystems has to be a list.")
+        for filesystem in filesystems:
+            if not isinstance(filesystem, ScriptEntryFile):
                 raise ValueError(
                     "All list elements has to be ScriptEntryFile.")
-        self.files = files
+        self.filesystems = filesystems
 
-        if len(self.files) + len(self.programs) < 1:
-            raise ValueError("Add a file or a program to the script.")
+        if len(self.filesystems) + len(self.programs) < 1:
+            raise ValueError("Add a filesystem or a program to the script.")
 
         if not isinstance(name, str):
             raise ValueError("Name has to be a string.")
@@ -82,21 +82,22 @@ class Script:
             if item in c_other_prog:
                 c_other_prog.remove(item)
 
-        c_other_file = list(other.files)
+        c_other_filesystem = list(other.filesystems)
 
-        for item in self.files:
-            if item in c_other_file:
-                c_other_file.remove(item)
+        for item in self.filesystems:
+            if item in c_other_filesystem:
+                c_other_filesystem.remove(item)
 
-        return len(c_other_prog) == 0 and len(c_other_file) == 0
+        return len(c_other_prog) == 0 and len(c_other_filesystem) == 0
 
     def __iter__(self):
         yield ("name", self.name)
         yield ("programs", [dict(entry) for entry in self.programs])
-        yield ("files", [dict(entry) for entry in self.files])
+        yield ("filesystems", [dict(entry) for entry in self.filesystems])
 
     @classmethod
-    def from_model(cls, script_id, slaves_type, programs_type, file_type):
+    def from_model(cls, script_id, slaves_type, programs_type,
+                   filesystem_type):
         """
         Creates a object from a script id.
 
@@ -115,12 +116,12 @@ class Script:
             ScriptEntryProgram.from_query(model, slaves_type, programs_type)
             for model in SGPModel.objects.filter(script=script)
         ]
-        files = [
-            ScriptEntryFile.from_query(model, slaves_type, file_type)
+        filesystems = [
+            ScriptEntryFile.from_query(model, slaves_type, filesystem_type)
             for model in SGFModel.objects.filter(script=script)
         ]
 
-        return cls(script.name, programs, files)
+        return cls(script.name, programs, filesystems)
 
     @classmethod
     def from_json(cls, string):
@@ -136,13 +137,16 @@ class Script:
         if not isinstance(data['programs'], list):
             raise ValueError('Programs has to be a list')
 
-        if not isinstance(data['files'], list):
-            raise ValueError('Files has to be a list')
+        if not isinstance(data['filesystems'], list):
+            raise ValueError('filesystems has to be a list')
 
         return cls(
             data['name'],
             [ScriptEntryProgram(**program) for program in data['programs']],
-            [ScriptEntryFile(**file) for file in data['files']],
+            [
+                ScriptEntryFile(**filesystem)
+                for filesystem in data['filesystems']
+            ],
         )
 
     @transaction.atomic
@@ -156,7 +160,7 @@ class Script:
         for obj in self.programs:
             obj.save(script)
 
-        for obj in self.files:
+        for obj in self.filesystems:
             obj.save(script)
 
     def to_json(self):
@@ -177,27 +181,28 @@ class ScriptEntryFile:
     Fields
     ------
         index: When will this script be started.
-        file: The name of the file
-        slave: Location of the file
+        filesystem: The name of the filesystem
+        slave: Location of the filesystem
     """
 
-    def __init__(self, index, file, slave):
+    def __init__(self, index, filesystem, slave):
         if not isinstance(index, int):
             raise ValueError("Index has to be an integer.")
         if index < 0:
             raise ValueError("Use positive or null for the index.")
         self.index = index
 
-        if not isinstance(file, str) and not isinstance(file, int):
+        if not isinstance(filesystem, str) and not isinstance(filesystem, int):
             raise ValueError("Name has to be a string or int.")
-        self.file = file
+        self.filesystem = filesystem
 
         if not isinstance(slave, str) and not isinstance(slave, int):
             raise ValueError("Slave has to be a string or integer")
         self.slave = slave
 
     def __eq__(self, other):
-        return (self.index == other.index and self.file == other.file
+        return (self.index == other.index
+                and self.filesystem == other.filesystem
                 and self.slave == other.slave)
 
     def __iter__(self):
@@ -220,16 +225,16 @@ class ScriptEntryFile:
         """
 
         if slaves_type == 'int':
-            slave = query.file.slave.id
+            slave = query.filesystem.slave.id
         elif slaves_type == 'str':
-            slave = query.file.slave.name
+            slave = query.filesystem.slave.name
         else:
             raise ValueError("Slave_type has to be int or str.")
 
         if programs_type == 'int':
-            program = query.file.id
+            program = query.filesystem.id
         elif programs_type == 'str':
-            program = query.file.name
+            program = query.filesystem.name
         else:
             raise ValueError("Program_type has to be int or str.")
 
@@ -251,7 +256,7 @@ class ScriptEntryFile:
         data = json.loads(string)
         return cls(
             data['index'],
-            data['file'],
+            data['filesystem'],
             data['slave'],
         )
 
@@ -277,28 +282,30 @@ class ScriptEntryFile:
                 self.slave))
 
         try:
-            if isinstance(self.file, str):
-                obj = FileModel.objects.get(slave=slave, name=self.file)
+            if isinstance(self.filesystem, str):
+                obj = FilesystemModel.objects.get(
+                    slave=slave, name=self.filesystem)
                 SGFModel.objects.create(
                     script=script,
                     index=self.index,
-                    file=obj,
+                    filesystem=obj,
                 )
-        except FileModel.DoesNotExist:
-            raise ValueError("File with name {} does not exist.".format(
-                self.file))
+        except FilesystemModel.DoesNotExist:
+            raise ValueError("filesystem with name {} does not exist.".format(
+                self.filesystem))
 
         try:
-            if isinstance(self.file, int):
-                obj = FileModel.objects.get(slave=slave, id=self.file)
+            if isinstance(self.filesystem, int):
+                obj = FilesystemModel.objects.get(
+                    slave=slave, id=self.filesystem)
                 SGFModel.objects.create(
                     script=script,
                     index=self.index,
-                    file=obj,
+                    filesystem=obj,
                 )
-        except FileModel.DoesNotExist:
-            raise ValueError("File with id {} does not exist.".format(
-                self.file))
+        except FilesystemModel.DoesNotExist:
+            raise ValueError("filesystem with id {} does not exist.".format(
+                self.filesystem))
 
     def to_json(self):
         """

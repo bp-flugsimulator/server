@@ -23,16 +23,16 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
     def test_from_json_no_list(self):
         self.assertRaisesRegex(
             ValueError,
-            "Files has to be a list",
+            "filesystems has to be a list",
             Script.from_json,
-            '{"name": "test", "files": {}, "programs": []}',
+            '{"name": "test", "filesystems": {}, "programs": []}',
         )
 
         self.assertRaisesRegex(
             ValueError,
             "Programs has to be a list",
             Script.from_json,
-            '{"name": "test", "files": [], "programs": {}}',
+            '{"name": "test", "filesystems": [], "programs": {}}',
         )
 
     def test_script_wrong_type_name(self):
@@ -81,7 +81,7 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
         self.assertRaises(ValueError, ScriptEntryFile, 0, "", [])
 
     def test_script_json(self):
-        string = '{"name": "test", "files": [{"index": 0, "slave": 0, "file": "no name"}],\
+        string = '{"name": "test", "filesystems": [{"index": 0, "slave": 0, "filesystem": "no name"}],\
             "programs": [{"index": 0, "slave": 0, "program": "no name"}]}'
 
         script = Script(
@@ -105,7 +105,7 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
         )
 
     def test_script_entry_file_json(self):
-        string = '{"index": 0, "slave": 0, "file": "no name"}'
+        string = '{"index": 0, "slave": 0, "filesystem": "no name"}'
 
         script = ScriptEntryFile(0, "no name", 0)
 
@@ -121,13 +121,13 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
     def test_model_support_strings(self):
         slave = SlaveFactory()
         program = ProgramFactory(slave=slave)
-        file = FileFactory(slave=slave)
+        filesystem = FileFactory(slave=slave)
         script_name = ScriptFactory.build().name
 
         Script(
             script_name,
             [ScriptEntryProgram(0, program.name, slave.name)],
-            [ScriptEntryFile(0, file.name, slave.name)],
+            [ScriptEntryFile(0, filesystem.name, slave.name)],
         ).save()
 
         script = ScriptModel.objects.get(name=script_name)
@@ -144,19 +144,19 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
             SGF.objects.filter(
                 script=script,
                 index=0,
-                file=file,
+                filesystem=filesystem,
             ).exists())
 
     def test_model_support_ids(self):
         slave = SlaveFactory()
         program = ProgramFactory(slave=slave)
-        file = FileFactory(slave=slave)
+        filesystem = FileFactory(slave=slave)
         script_name = ScriptFactory.build().name
 
         Script(
             script_name,
             [ScriptEntryProgram(0, int(program.id), int(slave.id))],
-            [ScriptEntryFile(0, int(file.id), int(slave.id))],
+            [ScriptEntryFile(0, int(filesystem.id), int(slave.id))],
         ).save()
 
         script = ScriptModel.objects.get(name=script_name)
@@ -192,12 +192,12 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
         self.assertTrue(len(SGP.objects.all()) == 0)
 
     def test_from_model_file_id_eq_str(self):
-        file = FileFactory()
-        slave = file.slave
+        filesystem = FileFactory()
+        slave = filesystem.slave
         script = ScriptFactory()
 
-        ScriptEntryFile(0, file.id, slave.id).save(script)
-        b = ScriptEntryFile(0, file.name, slave.name)
+        ScriptEntryFile(0, filesystem.id, slave.id).save(script)
+        b = ScriptEntryFile(0, filesystem.name, slave.name)
 
         self.assertRaises(IntegrityError, b.save, script)
 
@@ -228,7 +228,7 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
                         self.slave = Dummy()
 
                 self.program = Dummy()
-                self.file = Dummy()
+                self.filesystem = Dummy()
 
         self.assertRaises(
             ValueError,
@@ -340,7 +340,7 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
 
         self.assertRaisesRegex(
             ValueError,
-            "File with id {} does not exist.".format(-1),
+            "filesystem with id {} does not exist.".format(-1),
             ScriptEntryFile(
                 0,
                 -1,
@@ -351,7 +351,7 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
 
         self.assertRaisesRegex(
             ValueError,
-            "File with name {} does not exist.".format(""),
+            "filesystem with name {} does not exist.".format(""),
             ScriptEntryFile(
                 0,
                 "",

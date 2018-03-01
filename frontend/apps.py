@@ -159,12 +159,18 @@ class FrontendConfig(AppConfig):
             pass
 
         try:
-            from .models import Script
+            from .models import Script, Filesystem
+
             Script.objects.all().update(
                 error_code="",
                 is_running=False,
                 is_initialized=False,
                 current_index=-1,
+            )
+
+            Filesystem.objects.all().update(
+                error_code="",
+                command_uuid=None,
             )
         except OperationalError:
             pass
