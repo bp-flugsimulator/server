@@ -12,6 +12,7 @@ class AnsiTerm {
         $('#programLog_' + this.pid).empty();
         this.row = 0;
         this.col = 0;
+        this.rest = '';
         this.savedCursor = [0, 0];
         this.grid = [[new Array(this.width)]];
         this.moveCursor(this.row, this.col);
@@ -90,10 +91,12 @@ class AnsiTerm {
     }
 
     feed(text) {
+        text = this.rest + text;
+        this.rest = '';
         for (let i = 0; i < text.length; i++) {
             let c = text.charAt(i);
             switch (c) {
-                // TODO missing escape codes
+                // TODO missing escape codes && save uncomplete commands on the end of the text
                 case '\u001B':
                     let rest = text.substring(i, i + 20);
                     let matches = null;
@@ -143,7 +146,7 @@ class AnsiTerm {
                                 break;
                             // Beginning of previous Line
                             case 'f':
-                            case 'E':
+                            case 'F':
                                 if (this.row - parseInt(matches[1]) > 0) {
                                     this.moveCursor(this.row - parseInt(matches[1]), 0);
                                 }
@@ -305,15 +308,28 @@ class AnsiTerm {
                         break;
                     }
 
-                    // i have no clue what this escape code does
+                    // i have no clue what these escape code does
                     if (matches = rest.match(/^\u001B\(B/)) {
                         //console.log('ignored (B');
                         i = i + matches[0].length - '\x1b'.length;
-                        //this.insertTextAtCursor('')//TODO insert tab here
-                        //this.moveCursor(this.row, this.col+1);
                         break;
                     }
+                    if ((matches = rest.match(/^\u001B\[((\d*)(((;+)(\d*))*))[trl]/))) {
+                        i = i + matches[0].length - '\x1b'.length;
+                        break;
+                    }
+
+                    if ((matches = rest.match(/^\u001B\[(\d*)[Xd]/))) {
+                        i = i + matches[0].length - '\x1b'.length;
+                        break;
+                    }
+
                     console.log('unknown escape code\n' + rest);
+                    if(i - text.length < 10 && (!rest.substring(1).search('\u001B'))){
+                        this.rest =  rest;
+                        i = text.length;
+                    }
+
                     break;
                 case '\n':
                     this.moveCursor(this.row + 1, 0);
