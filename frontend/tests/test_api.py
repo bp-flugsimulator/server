@@ -11,7 +11,8 @@ from django.urls import reverse
 from channels.test import WSClient
 
 from utils import Status, Command
-from frontend.scripts import Script, ScriptEntryFile, ScriptEntryProgram
+
+from frontend.scripts import Script, ScriptEntryFilesystem, ScriptEntryProgram
 
 from frontend.models import (
     Script as ScriptModel,
@@ -66,7 +67,7 @@ class ScriptTest(TestCase):
         script = Script(
             script_name,
             [ScriptEntryProgram(0, program.name, slave.name)],
-            [ScriptEntryFile(0, filesystem.name, slave.name)],
+            [ScriptEntryFilesystem(0, filesystem.name, slave.name)],
         )
         script.save()
 
@@ -87,9 +88,16 @@ class ScriptTest(TestCase):
             content_type="application/json",
         )
 
+        self.assertEqual(response.status_code, 200)
+
         self.assertContains(
             response,
-            "Wrong array items.",
+            "All elements in filesystems has to be dict.",
+        )
+
+        self.assertContains(
+            response,
+            "0 has type NoneType",
         )
 
     def test_add_script_json_error(self):
@@ -113,9 +121,11 @@ class ScriptTest(TestCase):
             content_type="application/json",
         )
 
+        self.assertEqual(response.status_code, 200)
+
         self.assertContains(
             response,
-            "Programs has to be a list",
+            "programs has to be list",
         )
 
     def test_add_script_unique_error(self):
@@ -155,7 +165,7 @@ class ScriptTest(TestCase):
         )
 
         self.assertEqual(
-            Status.err("Script with that name already exists."),
+            Status.err("Script with this Name already exists."),
             Status.from_json(response.content.decode('utf-8')),
         )
 
@@ -206,7 +216,7 @@ class ScriptTest(TestCase):
         script = Script(
             script_name,
             [ScriptEntryProgram(0, program.id, slave.id)],
-            [ScriptEntryFile(0, filesystem.id, slave.id)],
+            [ScriptEntryFilesystem(0, filesystem.id, slave.id)],
         )
         script.save()
 
@@ -261,7 +271,7 @@ class ScriptTest(TestCase):
         script = Script(
             script_name,
             [ScriptEntryProgram(0, program.id, slave.id)],
-            [ScriptEntryFile(0, filesystem.id, slave.id)],
+            [ScriptEntryFilesystem(0, filesystem.id, slave.id)],
         )
         script.save()
 
@@ -284,7 +294,7 @@ class ScriptTest(TestCase):
         script = Script(
             script_name,
             [ScriptEntryProgram(0, program.id, slave.id)],
-            [ScriptEntryFile(0, filesystem.id, slave.id)],
+            [ScriptEntryFilesystem(0, filesystem.id, slave.id)],
         )
         script.save()
 
@@ -306,7 +316,7 @@ class ScriptTest(TestCase):
         script = Script(
             script_name,
             [ScriptEntryProgram(0, program.id, slave.id)],
-            [ScriptEntryFile(0, filesystem.id, slave.id)],
+            [ScriptEntryFilesystem(0, filesystem.id, slave.id)],
         )
         script.save()
 
@@ -328,7 +338,7 @@ class ScriptTest(TestCase):
         script = Script(
             script_name,
             [ScriptEntryProgram(0, program.id, slave.id)],
-            [ScriptEntryFile(0, filesystem.id, slave.id)],
+            [ScriptEntryFilesystem(0, filesystem.id, slave.id)],
         )
         script.save()
 
@@ -680,6 +690,97 @@ class FileTests(StatusTestCase):
             Status.from_json(api_response.content.decode('utf-8')),
         )
 
+    def test_query_get_all_by_slave(self):
+        filesystem = FileFactory()
+
+        with_str = self.client.get(
+            '/api/filesystems?slave={}&slave_str=True'.format(
+                filesystem.slave.name))
+
+        whithout_str = self.client.get(
+            '/api/filesystems?slave={}&slave_str=False'.format(
+                filesystem.slave.id))
+
+        ints = self.client.get('/api/filesystems?slave={}'.format(
+            filesystem.slave.id))
+
+        self.assertEqual(with_str.status_code, 200)
+        self.assertEqual(whithout_str.status_code, 200)
+        self.assertEqual(ints.status_code, 200)
+
+        with_str = Status.from_json(with_str.content.decode('utf-8'))
+        ints = Status.from_json(ints.content.decode('utf-8'))
+        without_str = Status.from_json(whithout_str.content.decode('utf-8'))
+
+        self.assertEqual(
+            ints,
+            without_str,
+        )
+
+        slaves = FilesystemModel.objects.filter(id=filesystem.id).values_list(
+            "name",
+            flat=True,
+        )
+        slaves = list(slaves)
+
+        self.assertEqual(
+            with_str,
+            Status.ok(slaves),
+        )
+        self.assertEqual(
+            ints,
+            Status.ok(slaves),
+        )
+
+    def test_query_get_all_wrong_type(self):
+        resp = self.client.get('/api/filesystems?slave=not_an_int')
+
+        self.assertEqual(resp.status_code, 200)
+
+        self.assertEqual(
+            Status.err("Slave has to be an integer."),
+            Status.from_json(resp.content.decode('utf-8')),
+        )
+
+    def test_query_get_does_not_exist(self):
+        resp_int = self.client.get('/api/filesystems?slave=-1')
+        resp_str = self.client.get(
+            '/api/filesystems?slave=none&slave_str=True')
+
+        self.assertEqual(resp_int.status_code, 200)
+        self.assertEqual(resp_str.status_code, 200)
+
+        self.assertEqual(
+            Status.err("Could not find slave with id `-1`."),
+            Status.from_json(resp_int.content.decode('utf-8')),
+        )
+
+        self.assertEqual(
+            Status.err("Could not find slave with name `none`."),
+            Status.from_json(resp_str.content.decode('utf-8')),
+        )
+
+    def test_query_get_all(self):
+        resp = self.client.get('/api/filesystems')
+
+        self.assertEqual(resp.status_code, 200)
+
+        self.assertEqual(
+            Status.ok([]),
+            Status.from_json(resp.content.decode('utf-8')),
+        )
+
+        filesystem = FileFactory()
+
+        resp = self.client.get('/api/filesystems')
+        self.assertEqual(
+            Status.ok([filesystem.name]),
+            Status.from_json(resp.content.decode('utf-8')),
+        )
+
+    def test_allowed_methods(self):
+        self.client.put("/api/filesystem")
+
     def test_add_file_unsupported_function(self):
         api_response = self.client.delete('/api/filesystems')
         self.assertEqual(api_response.status_code, 403)
@@ -778,6 +879,83 @@ class FileTests(StatusTestCase):
                 hash_value=filesystem.hash_value,
             ),
             Command.from_json(json.dumps(ws_client.receive())),
+        )
+    def test_edit_filesystem_wrong_http_method(self):
+        api_response = self.client.get("/api/filesystem/0")
+        self.assertEqual(api_response.status_code, 403)
+
+    def test_modify_filesystem(self):
+        filesystem = FileFactory()
+        slave = filesystem.slave
+
+        api_response = self.client.put(
+            "/api/filesystem/" + str(filesystem.id),
+            data=urlencode({
+                'name': "edit_filesystem_" + str(slave.id),
+                'source_path': str(slave.id),
+                'destination_path': str(slave.id),
+                'slave': str(slave.id),
+                'source_type': filesystem.source_type,
+                'destination_type': filesystem.destination_type,
+            }))
+
+        self.assertEqual(200, api_response.status_code)
+        self.assertEqual(
+            Status.ok(''),
+            Status.from_json(api_response.content.decode('utf-8')),
+        )
+
+    def test_modify_filesystem_fail(self):
+        filesystem = FileFactory(name="", source_path="", destination_path="")
+        slave = filesystem.slave
+
+        long_str = ''
+        for _ in range(2000):
+            long_str += 'a'
+
+        api_response = self.client.put(
+            "/api/filesystem/" + str(filesystem.id),
+            data=urlencode({
+                'name': long_str,
+                'source_path': long_str,
+                'destination_path': long_str,
+                'slave': str(slave.id),
+                'source_type': filesystem.source_type,
+                'destination_type': filesystem.destination_type,
+            }))
+
+        self.assertEqual(api_response.status_code, 200)
+        self.assertEqual(
+            Status.err({
+                "name": [
+                    "Ensure this value has at most 200 characters (it has 2000)."
+                ],
+            }),
+            Status.from_json(api_response.content.decode('utf-8')),
+        )
+
+    def test_edit_filesystem_unique_fail(self):
+        filesystem_exists = FileFactory()
+        filesystem_edit = FileFactory(slave=filesystem_exists.slave)
+
+        api_response = self.client.put(
+            "/api/filesystem/" + str(filesystem_edit.id),
+            data=urlencode({
+                'name': filesystem_exists.name,
+                'source_path': filesystem_exists.source_path,
+                'destination_path': filesystem_exists.destination_path,
+                'slave': str(filesystem_exists.slave.id),
+				'source_type': filesystem_exists.source_type,
+                'destination_type': filesystem_exists.destination_type,
+            }))
+
+        self.assertEqual(api_response.status_code, 200)
+        self.assertEqual(
+            Status.err({
+                "name":
+                ["Filesystem with this Name already exists on this Client."]
+            }),
+            Status.from_json(api_response.content.decode('utf-8')),
         )
 
 
@@ -1112,6 +1290,77 @@ class ProgramTests(StatusTestCase):
             Status.from_json(api_response.content.decode('utf-8')),
         )
 
+    def test_query_get_all_by_slave(self):
+        program = ProgramFactory()
+
+        with_str = self.client.get(
+            '/api/programs?slave={}&slave_str=True'.format(program.slave.name))
+        whithout_str = self.client.get(
+            '/api/programs?slave={}&slave_str=False'.format(program.slave.id))
+        ints = self.client.get('/api/programs?slave={}'.format(
+            program.slave.id))
+
+        with_str = Status.from_json(with_str.content.decode('utf-8'))
+        ints = Status.from_json(ints.content.decode('utf-8'))
+        without_str = Status.from_json(whithout_str.content.decode('utf-8'))
+
+        self.assertEqual(
+            ints,
+            without_str,
+        )
+
+        slaves = ProgramModel.objects.filter(id=program.id).values_list(
+            "name",
+            flat=True,
+        )
+        slaves = list(slaves)
+
+        self.assertEqual(
+            with_str,
+            Status.ok(slaves),
+        )
+        self.assertEqual(
+            ints,
+            Status.ok(slaves),
+        )
+
+    def test_query_get_all_wrong_type(self):
+        resp = self.client.get('/api/programs?slave=not_an_int')
+
+        self.assertEqual(
+            Status.err("Slave has to be an integer."),
+            Status.from_json(resp.content.decode('utf-8')),
+        )
+
+    def test_query_get_does_not_exist(self):
+        resp_int = self.client.get('/api/programs?slave=-1')
+        resp_str = self.client.get('/api/programs?slave=none&slave_str=True')
+
+        self.assertEqual(
+            Status.err("Could not find slave with id `-1`."),
+            Status.from_json(resp_int.content.decode('utf-8')),
+        )
+
+        self.assertEqual(
+            Status.err("Could not find slave with name `none`."),
+            Status.from_json(resp_str.content.decode('utf-8')),
+        )
+
+    def test_query_get_all(self):
+        resp = self.client.get('/api/programs')
+        self.assertEqual(
+            Status.ok([]),
+            Status.from_json(resp.content.decode('utf-8')),
+        )
+
+        program = ProgramFactory()
+
+        resp = self.client.get('/api/programs')
+        self.assertEqual(
+            Status.ok([program.name]),
+            Status.from_json(resp.content.decode('utf-8')),
+        )
+
 
 class SlaveTests(StatusTestCase):
     def test_wol_no_slave(self):
@@ -1357,3 +1606,76 @@ class SlaveTests(StatusTestCase):
     def test_shutdown_slave_forbidden_function(self):
         api_response = self.client.delete('/api/slave/1/shutdown')
         self.assertEqual(403, api_response.status_code)
+
+    def test_query_get_all_files(self):
+        resp = self.client.get("/api/slaves?filesystems=1")
+
+        self.assertEqual(
+            Status.ok([]),
+            Status.from_json(resp.content.decode('utf-8')),
+        )
+
+        resp = self.client.get("/api/slaves?filesystems=1")
+
+        self.assertEqual(
+            Status.ok([]),
+            Status.from_json(resp.content.decode('utf-8')),
+        )
+
+        filesystem = FileFactory()
+
+        resp = self.client.get("/api/slaves?filesystems=1")
+
+        self.assertEqual(
+            Status.ok([filesystem.slave.name]),
+            Status.from_json(resp.content.decode('utf-8')),
+        )
+
+    def test_query_get_all_same(self):
+        resp = self.client.get("/api/slaves?programs=1&filesystems=1")
+
+        self.assertEqual(
+            Status.err(
+                "Can not query for filesystems and programs at the same time."
+            ),
+            Status.from_json(resp.content.decode('utf-8')),
+        )
+
+    def test_query_get_all_slaves(self):
+        resp = self.client.get("/api/slaves")
+        self.assertEqual(
+            Status.ok([]),
+            Status.from_json(resp.content.decode('utf-8')),
+        )
+
+        slave = SlaveFactory()
+
+        resp = self.client.get("/api/slaves")
+        self.assertEqual(
+            Status.ok([slave.name]),
+            Status.from_json(resp.content.decode('utf-8')),
+        )
+
+    def test_query_get_all_programs(self):
+        resp = self.client.get("/api/slaves?programs=1")
+
+        self.assertEqual(
+            Status.ok([]),
+            Status.from_json(resp.content.decode('utf-8')),
+        )
+
+        resp = self.client.get("/api/slaves?programs=1")
+
+        self.assertEqual(
+            Status.ok([]),
+            Status.from_json(resp.content.decode('utf-8')),
+        )
+
+        program = ProgramFactory()
+
+        resp = self.client.get("/api/slaves?programs=1")
+
+        self.assertEqual(
+            Status.ok([program.slave.name]),
+            Status.from_json(resp.content.decode('utf-8')),
+        )
