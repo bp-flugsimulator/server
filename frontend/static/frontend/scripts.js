@@ -42,6 +42,10 @@ const options = {
     queryFilesystems(slave) {
         return promiseQuery('/api/filesystems?slave_str=true&slave=' + slave);
     },
+    onChange: function() {
+        window.unloadWarning = true;
+    }
+
 };
 
 var createEditor = function (json, id) {
@@ -153,4 +157,16 @@ $(document).ready(function () {
         deleteWarning.data('sqlId', id);
         deleteWarning.modal('toggle');
     });
+});
+
+// global variable, which indicates whether
+// an unload warning should be triggered
+var unloadWarning = false;
+
+$(window).on('beforeunload', function (e) {
+	if (this.unloadWarning) {
+	    returnText = 'Are you sure you want to leave?'
+	    e.returnValue = returnText;
+	    return returnText;
+	}
 });
