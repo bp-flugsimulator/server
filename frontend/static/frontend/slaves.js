@@ -675,15 +675,14 @@ $(document).ready(function () {
 
     //register load and unload hooks for modals
     let hookModals = ['programModal', 'slaveModal', 'fileModal'];
-    for (modal of hookModals){
-	console.log('#'+modal)
+    for (let modal of hookModals){
         $('#'+modal).on('show.bs.modal', function(e) {
-	    window.unloadPrompt = true;
-	});
+			window.unloadPrompt = true;
+        });
         $('#'+modal).on('hide.bs.modal', function(e) {
-	    window.unloadPrompt = false;
-	});
-    }
+            window.unloadPrompt = false;
+		});
+	}
 
 });
 
@@ -703,12 +702,12 @@ function logUnloadHandler() {
 }
 
 $(window).on('beforeunload', function (e) {
-	logUnloadHandler();
-	if (this.unloadPrompt) {
-	    returnText = 'Are you sure you want to leave?'
-	    e.returnValue = returnText;
-	    return returnText;
-	}
+    logUnloadHandler();
+    if (this.unloadPrompt) {
+        let returnText = 'Are you sure you want to leave?';
+        e.returnValue = returnText;
+        return returnText;
+    }
 });
 
 // if the site gets reloaded/closed all logging activity gets stopped
