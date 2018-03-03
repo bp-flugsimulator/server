@@ -38,7 +38,11 @@ def git_to_filename(git_url):
     lib_file = lib_file.replace('/', '-')
     lib_file = lib_file.replace('\n', '')
     for file in listdir('libs'):
+        # tar.gz
         if lib_file in file:
+            yield file
+        # wheel
+        if lib_file.replace('-', '_') in file:
             yield file
 
 
@@ -129,7 +133,6 @@ if __name__ == "__main__":
 
     ARGS = PARSER.parse_args()
 
-
     # select requirements file
     if system() == 'Windows':
         REQUIREMENTS_FILE = 'win_requirements.txt'
@@ -140,7 +143,6 @@ if __name__ == "__main__":
                          ' is not officially supported but may work\n')
     else:
         stderr.write(system() + ' is not officially supported but may work\n')
-
 
     if ARGS.download_packages:
         with open(REQUIREMENTS_FILE) as requirements:
