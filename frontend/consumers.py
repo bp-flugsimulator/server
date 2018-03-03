@@ -6,18 +6,141 @@ import traceback
 
 from channels import Group
 from channels.sessions import channel_session
-from utils import Command, Status
+from utils import Command, Status, FormatError
 
 from .models import (
     Slave as SlaveModel,
     Program as ProgramModel,
     ProgramStatus as ProgramStatusModel,
+    Filesystem as FilesystemModel,
 )
 
 from server.utils import notify_err, notify
 
 # Get an instance of a logger
 LOGGER = logging.getLogger('fsim.websockets')
+
+
+def handle_chain_execution(status):
+    """
+    Handles an incoming message on '/notification' that
+    is an answer to an 'chain_execution' request on a slave
+
+    Parameters
+    ----------
+    status: Status
+        The statusobject that was send by the slave
+    """
+    if status.is_ok():
+        LOGGER.info("chain_execution results: %s", dict(status))
+
+        for result in status.payload["result"]:
+            select_method(Status(**result))
+    else:
+        LOGGER.error(
+            "Received Status.err for chain_execution, but this function can not raise errors. (payload: %s)",
+            status.payload,
+        )
+
+
+def handle_filesystem_restored(status):
+    """
+    Handles an incoming message on '/notification' that
+    is an answer to an 'filesystem_restore' request on a slave
+
+    Parameters
+    ----------
+    status: Status
+        The statusobject that was send by the slave
+    """
+    LOGGER.info("Handle filesystem restored %s", dict(status))
+
+    try:
+        file_ = FilesystemModel.objects.get(command_uuid=status.uuid)
+    except FilesystemModel.DoesNotExist:
+        LOGGER.warning(
+            "A filesystem restored with id %s, but is not in the database.",
+            status.uuid,
+        )
+        return
+
+    if status.is_ok():
+        file_.hash_value = ""
+        file_.error_code = ""
+        file_.save()
+
+        LOGGER.info(
+            "Restored filesystemsystem %s.",
+            file_.name,
+        )
+
+        notify({
+            'filesystem_status': 'restored',
+            'fid': str(file_.id),
+        })
+    else:
+        file_.error_code = status.payload['result']
+        file_.hash_value = ""
+        file_.save()
+
+        notify({
+            'filesystem_status': 'error',
+            'error_code': status.payload['result'],
+            'fid': str(file_.id),
+        })
+
+
+def handle_filesystem_moved(status):
+    """
+    Handles an incoming message on '/notification' that
+    is an answer to an 'filesystem_move' request on a slave
+
+    Parameters
+    ----------
+    status: Status
+        The statusobject that was send by the slave
+    """
+    LOGGER.info("Handle filesystem moved %s", dict(status))
+    try:
+        file_ = FilesystemModel.objects.get(command_uuid=status.uuid)
+    except FilesystemModel.DoesNotExist:
+        LOGGER.warning(
+            "A filesystem moved with id %s, but is not in the database.",
+            status.uuid,
+        )
+        return
+
+    if status.is_ok():
+        file_.hash_value = status.payload['result']
+        file_.error_code = ""
+        file_.save()
+
+        LOGGER.info(
+            "Saved filesystem %s with hash value %s.",
+            file_.name,
+            file_.hash_value,
+        )
+
+        notify({
+            'filesystem_status': 'moved',
+            'fid': str(file_.id),
+        })
+
+    else:
+        file_.error_code = status.payload['result']
+        file_.hash_value = ""
+        file_.save()
+
+        LOGGER.error(
+            "Error while moving filesystem: %s",
+            status.payload['result'],
+        )
+
+        notify({
+            'filesystem_status': 'error',
+            'error_code': status.payload['result'],
+            'fid': str(file_.id),
+        })
 
 
 def handle_execute_answer(status):
@@ -228,6 +351,38 @@ def ws_notifications_connect(message):
     message.reply_channel.send({"accept": True})
 
 
+def select_method(status):
+    """
+    Selects a handler for the incoming message by checking the name with the
+    function_handle_table.
+
+    Parameters
+    ----------
+        status: Status object
+
+    """
+    LOGGER.error(dict(status))
+
+    function_handle_table = {
+        'online': handle_online_answer,
+        'execute': handle_execute_answer,
+        'filesystem_move': handle_filesystem_moved,
+        'filesystem_restore': handle_filesystem_restored,
+        'chain_execution': handle_chain_execution,
+    }
+
+    if status.payload['method'] in function_handle_table:
+        function_handle_table[status.payload['method']](status)
+
+        # notify the scheduler that the status has changed
+        FSIM_CURRENT_SCHEDULER.notify()
+    else:
+        LOGGER.warning(
+            'Client send answer from unknown function %s.',
+            status.payload['method'],
+        )
+
+
 def ws_notifications_receive(message):
     """
     Handels websockets.receive requests of '/notifications'. Connections only
@@ -247,27 +402,35 @@ def ws_notifications_receive(message):
     """
 
     try:
-        status = Status.from_json(message.content['text'])
-        if status.payload['method'] == 'online':
-            handle_online_answer(status)
+        try:
+            from json.decoder import JSONDecodeError
+            try:
+                status = Status.from_json(message.content['text'])
+            except JSONDecodeError as err:
+                LOGGER.error(
+                    "Error while parsing json. (cause: %s)",
+                    str(err),
+                )
+                return
 
-            # notify the scheduler that the status has changed
-            FSIM_CURRENT_SCHEDULER.notify()
-        elif status.payload['method'] == 'execute':
-            handle_execute_answer(status)
+        except ImportError:
+            try:
+                status = Status.from_json(message.content['text'])
+            except ValueError as err:
+                LOGGER.error(
+                    "Error while parsing json. (cause: %s)",
+                    str(err),
+                )
+                return
 
-            # notify the scheduler that the status has changed
-            FSIM_CURRENT_SCHEDULER.notify()
-        else:
-            LOGGER.info(
-                'Client send answer from unknown function %s.',
-                status.payload['method'],
-            )
-    except Exception:
+        select_method(status)
+    except FormatError as err:
         LOGGER.error(
-            'Exception occurred (incoming-request)\n:%s',
-            traceback.format_exc(),
+            "Could not parse Status from incoming request. (cause: %s)",
+            str(err),
         )
+    except KeyError:
+        LOGGER.error("No content['text'] in received message.")
 
 
 def ws_notifications_disconnect(message):

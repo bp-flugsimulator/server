@@ -558,22 +558,24 @@ footer {
 }
 
 .program-name,
-.file-name {
+.filesystem-name {
     @extend .font-weight-bold;
     font-size: 16px;
 }
 
-.fsim-box {
+.fsim-box, .fsim-box[data-state=restored]  {
     border-bottom: 1px solid $gray-400;
     border-right: 1px solid $gray-400;
     border-top: 1px solid $gray-400;
+
+    background: linear-gradient(to right, $gray-100 0, $gray-100 5px, transparent 5px, transparent 100%) no-repeat;
 }
 
 .fsim-box[data-state=error] {
     background: linear-gradient(to right, $red 0, $red 5px, transparent 5px, transparent 100%) no-repeat;
 }
 
-.fsim-box[data-state=success] {
+.fsim-box[data-state=success], .fsim-box[data-state=moved] {
     background: linear-gradient(to right, $green 0, $green 5px, transparent 5px, transparent 100%) no-repeat;
 }
 
@@ -586,29 +588,25 @@ footer {
     background: linear-gradient(to right, $teal 0, $teal 5px, transparent 5px, transparent 100%) no-repeat;
 }
 
-.fsim-box[data-state=unknown] {
-    background: linear-gradient(to right, $gray-100 0, $gray-100 5px, transparent 5px, transparent 100%) no-repeat;
-}
 
-.fsim-script-status-icon[data-state="none"] {
+.fsim-script-status-icon[data-state=none] {
     @extend .mdi;
     @extend .mdi-circle-outline;
 }
 
-.fsim-script-status-icon[data-state="done"] {
+.fsim-script-status-icon[data-state=done] {
     @extend .mdi;
     @extend .mdi-check;
 }
 
-.fsim-script-status-icon[data-state="error"] {
+.fsim-script-status-icon[data-state=error] {
     @extend .mdi;
     @extend .mdi-alert-outline;
 }
 
-.fsim-script-status-icon[data-state="waiting"] {
+.fsim-script-status-icon[data-state=waiting] {
     @extend .mdi;
-    @extend .mdi-loading;
-    @extend .mdi-spin;
+    @extend .mdi-clock;
 }
 
 .fsim-box .fsim-slave-status-icon {
@@ -623,34 +621,48 @@ footer {
 
 .fsim-box[data-state=warning] .fsim-slave-status-icon {
     @extend .mdi;
-    @extend .mdi-loading;
-    @extend .mdi-spin;
+    @extend .mdi-clock;
+}
+
+.fsim-box[data-state=error] .fsim-filesystem-status-icon {
+    @extend .mdi;
+    @extend .mdi-alert-circle-outline;
+}
+
+.fsim-box[data-state=moved] .fsim-filesystem-status-icon {
+    @extend .mdi;
+    @extend .mdi-undo;
+}
+
+.fsim-box[data-state=restored] .fsim-filesystem-status-icon {
+    @extend .mdi;
+    @extend .mdi-redo;
+}
+
+.fsim-box[data-state=error] .fsim-program-status-icon {
+    @extend .mdi;
+    @extend .mdi-alert-circle-outline;
+}
+
+.fsim-box[data-state=success] .fsim-program-status-icon {
+    @extend .mdi;
+    @extend .mdi-check;
+}
+
+.fsim-box[data-state=unknown] .fsim-program-status-icon {
+    @extend .mdi;
+    @extend .mdi-all-inclusive;
+}
+
+.fsim-box[data-state=warning] .fsim-program-status-icon {
+    @extend .mdi;
+    @extend .mdi-clock;
 }
 
 .fsim-box-bottom {
     border-bottom: 1px solid $gray-100;
 }
 
-.fsim-box[data-state=error] .fsim-status-icon {
-    @extend .mdi;
-    @extend .mdi-alert-circle-outline;
-}
-
-.fsim-box[data-state=success] .fsim-status-icon {
-    @extend .mdi;
-    @extend .mdi-check;
-}
-
-.fsim-box[data-state=unknown] .fsim-status-icon {
-    @extend .mdi;
-    @extend .mdi-all-inclusive;
-}
-
-.fsim-box[data-state=warning] .fsim-status-icon {
-    @extend .mdi;
-    @extend .mdi-loading;
-    @extend .mdi-spin;
-}
 
 .client-header,
 .script-header {
@@ -701,8 +713,7 @@ footer {
 
 .fsim-progress[data-state="waiting"] {
     .mdi {
-        @extend .mdi-loading;
-        @extend .mdi-spin;
+        @extend .mdi-clock;
     }
 }
 

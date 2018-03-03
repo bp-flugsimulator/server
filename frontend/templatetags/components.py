@@ -8,7 +8,7 @@ register = template.Library()
 
 
 @register.inclusion_tag('frontend/slaves/slave.html')
-def slave_entry(slave, programs, files):
+def slave_entry(slave, programs, filesystems):
     """
     Template tag {% slave_entry slave programms %} is used to display a single
     slave.
@@ -26,7 +26,7 @@ def slave_entry(slave, programs, files):
     return {
         'slave': slave,
         'programs': programs,
-        'files': files,
+        'filesystems': filesystems,
     }
 
 
@@ -88,21 +88,21 @@ def modal_form(context, form, prefix):
     }
 
 
-@register.inclusion_tag('frontend/slaves/file.html')
-def file_entry(file):
+@register.inclusion_tag('frontend/slaves/filesystem.html')
+def filesystem_entry(filesystem):
     """
-    File tag {% file_entry file %} is used to display a single
-    file.
+    Filesystem tag {% filesystem_entry filesystem %} is used to display a single
+    filesystem.
 
     Arguments
     ---------
-        file: File object
+        filesystem: filesystem object
 
     Returns
     -------
-        A context which maps the file object to file.
+        A context which maps the filesystem object to filesystem.
     """
-    return {'file': file}
+    return {'filesystem': filesystem}
 
 
 @register.inclusion_tag('frontend/downloads/file.html')

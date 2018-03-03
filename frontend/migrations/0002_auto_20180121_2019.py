@@ -21,8 +21,8 @@ class Migration(migrations.Migration):
                      serialize=False,
                      verbose_name='ID')),
                 ('name', models.CharField(max_length=200)),
-                ('sourcePath', models.CharField(max_length=200)),
-                ('destinationPath', models.CharField(max_length=200)),
+                ('source_path', models.CharField(max_length=200)),
+                ('destination_path', models.CharField(max_length=200)),
             ],
         ),
         migrations.CreateModel(
