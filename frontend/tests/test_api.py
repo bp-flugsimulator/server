@@ -770,7 +770,7 @@ class FileTests(TestCase):
         )
 
     def test_allowed_methods(self):
-        resp = self.client.put("/api/filesystem")
+        self.client.put("/api/filesystem")
 
     def test_add_file_unsupported_function(self):
         api_response = self.client.delete('/api/filesystems')
@@ -1512,14 +1512,14 @@ class SlaveTests(TestCase):
         self.assertEqual(403, api_response.status_code)
 
     def test_query_get_all_files(self):
-        resp = self.client.get("/api/slaves?files=1")
+        resp = self.client.get("/api/slaves?filesystems=1")
 
         self.assertEqual(
             Status.ok([]),
             Status.from_json(resp.content.decode('utf-8')),
         )
 
-        resp = self.client.get("/api/slaves?files=1")
+        resp = self.client.get("/api/slaves?filesystems=1")
 
         self.assertEqual(
             Status.ok([]),
@@ -1528,7 +1528,7 @@ class SlaveTests(TestCase):
 
         filesystem = FileFactory()
 
-        resp = self.client.get("/api/slaves?files=1")
+        resp = self.client.get("/api/slaves?filesystems=1")
 
         self.assertEqual(
             Status.ok([filesystem.slave.name]),
@@ -1536,11 +1536,12 @@ class SlaveTests(TestCase):
         )
 
     def test_query_get_all_same(self):
-        resp = self.client.get("/api/slaves?programs=1&files=1")
+        resp = self.client.get("/api/slaves?programs=1&filesystems=1")
 
         self.assertEqual(
             Status.err(
-                "Can not query for files and programs at the same time."),
+                "Can not query for filesystems and programs at the same time."
+            ),
             Status.from_json(resp.content.decode('utf-8')),
         )
 

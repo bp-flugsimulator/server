@@ -69,8 +69,8 @@ const JsonForm = {
             addTypeEntry(container, 'program', options.querySlavesPrograms, options.queryPrograms);
         });
 
-        $('.script-file-add').on('click', function () {
-            addTypeEntry(container, 'file', options.querySlavesFiles, options.queryFiles);
+        $('.script-filesystem-add').on('click', function () {
+            addTypeEntry(container, 'filesystem', options.querySlavesFiles, options.queryFiles);
         });
     },
     /**
@@ -88,7 +88,7 @@ const JsonForm = {
         });
 
         json.filesystems.forEach(function (idx, val) {
-            addTypeEntry(container, 'file', options.querySlavesFiles, options.queryFiles, { 'choicesCurrent': val.slave, 'selects': [val.file] });
+            addTypeEntry(container, 'filesystem', options.querySlavesFiles, options.queryFiles, { 'choicesCurrent': val.slave, 'selects': [val.filesystem] });
         });
     },
     /**
@@ -146,7 +146,7 @@ const JsonForm = {
         };
 
         json.programs = dumpsArray('program');
-        json.filesystems = dumpsArray('file');
+        json.filesystems = dumpsArray('filesystem');
 
         return json;
     }

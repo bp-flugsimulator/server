@@ -60,10 +60,10 @@ def add_slave(request):
         query = request.GET.get('q', None)
 
         programs = request.GET.get('programs', '')
-        files = request.GET.get('files', '')
+        filesystems = request.GET.get('filesystems', '')
 
         programs = programs.lower() in ('yes', 'true', '1', 't', 'y')
-        files = files.lower() in ('yes', 'true', '1', 't', 'y')
+        filesystems = filesystems.lower() in ('yes', 'true', '1', 't', 'y')
 
         if query is not None:
             slaves = SlaveModel.objects.filter(
@@ -72,10 +72,10 @@ def add_slave(request):
                     flat=True,
                 )
         else:
-            if programs and files:
+            if programs and filesystems:
                 return StatusResponse(
                     Status.err(
-                        "Can not query for files and programs at the same time."
+                        "Can not query for filesystems and programs at the same time."
                     ))
             elif programs:
                 slaves = SlaveModel.objects.all().annotate(
@@ -84,10 +84,10 @@ def add_slave(request):
                             'name',
                             flat=True,
                         )
-            elif files:
+            elif filesystems:
                 slaves = SlaveModel.objects.all().annotate(
-                    file_count=Count('filesystem__pk')).filter(
-                        file_count__gt=0).values_list(
+                    filesystem_count=Count('filesystem__pk')).filter(
+                        filesystem_count__gt=0).values_list(
                             'name',
                             flat=True,
                         )
@@ -546,7 +546,7 @@ def filesystem_set(request):
 
     elif request.method == 'GET':
         # the URL takes an argument with ?q=<string>
-        # e.g. /files?q=test
+        # e.g. /filesystems?q=test
         query = request.GET.get('q', None)
         slave = request.GET.get('slave', None)
         slave_str = request.GET.get('slave_str', False)
@@ -555,7 +555,7 @@ def filesystem_set(request):
             slave_str = slave_str.lower() in ('true', 't', 'y', 'yes', '1')
 
         if query is not None:
-            files = FilesystemModel.objects.filter(
+            filesystems = FilesystemModel.objects.filter(
                 name__contains=query).values_list(
                     "name",
                     flat=True,
@@ -581,17 +581,18 @@ def filesystem_set(request):
 
                 return StatusResponse(Status.err(ret_err))
 
-            files = FilesystemModel.objects.filter(slave=slave).values_list(
-                "name",
-                flat=True,
-            )
+            filesystems = FilesystemModel.objects.filter(
+                slave=slave).values_list(
+                    "name",
+                    flat=True,
+                )
         else:
-            files = FilesystemModel.objects.all().values_list(
+            filesystems = FilesystemModel.objects.all().values_list(
                 "name",
                 flat=True,
             )
 
-        return StatusResponse(Status.ok(list(files)))
+        return StatusResponse(Status.ok(list(filesystems)))
     else:
         return HttpResponseForbidden()
 
@@ -603,7 +604,7 @@ def filesystem_move(request, filesystem_id):
     Parameters
     ----------
         request: HttpRequest
-        fileId: Unique identifier of a filesystem
+        filesystemId: Unique identifier of a filesystem
 
     Returns
     -------

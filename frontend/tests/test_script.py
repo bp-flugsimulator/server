@@ -30,6 +30,8 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
     def test_get_slave_int(self):
         slave = SlaveFactory()
 
+        self.assertEqual(get_slave(slave.id), slave)
+
     def test_get_slave_str(self):
         slave = SlaveFactory()
 
