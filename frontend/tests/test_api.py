@@ -772,6 +772,83 @@ class FileTests(TestCase):
             ),
             Command.from_json(json.dumps(ws_client.receive())),
         )
+    def test_edit_filesystem_wrong_http_method(self):
+        api_response = self.client.get("/api/filesystem/0")
+        self.assertEqual(api_response.status_code, 403)
+
+    def test_modify_filesystem(self):
+        filesystem = FileFactory()
+        slave = filesystem.slave
+
+        api_response = self.client.put(
+            "/api/filesystem/" + str(filesystem.id),
+            data=urlencode({
+                'name': "edit_filesystem_" + str(slave.id),
+                'source_path': str(slave.id),
+                'destination_path': str(slave.id),
+                'slave': str(slave.id),
+                'source_type': filesystem.source_type,
+                'destination_type': filesystem.destination_type,
+            }))
+
+        self.assertEqual(200, api_response.status_code)
+        self.assertEqual(
+            Status.ok(''),
+            Status.from_json(api_response.content.decode('utf-8')),
+        )
+
+    def test_modify_filesystem_fail(self):
+        filesystem = FileFactory(name="", source_path="", destination_path="")
+        slave = filesystem.slave
+
+        long_str = ''
+        for _ in range(2000):
+            long_str += 'a'
+
+        api_response = self.client.put(
+            "/api/filesystem/" + str(filesystem.id),
+            data=urlencode({
+                'name': long_str,
+                'source_path': long_str,
+                'destination_path': long_str,
+                'slave': str(slave.id),
+                'source_type': filesystem.source_type,
+                'destination_type': filesystem.destination_type,
+            }))
+
+        self.assertEqual(api_response.status_code, 200)
+        self.assertEqual(
+            Status.err({
+                "name": [
+                    "Ensure this value has at most 200 characters (it has 2000)."
+                ],
+            }),
+            Status.from_json(api_response.content.decode('utf-8')),
+        )
+
+    def test_edit_filesystem_unique_fail(self):
+        filesystem_exists = FileFactory()
+        filesystem_edit = FileFactory(slave=filesystem_exists.slave)
+
+        api_response = self.client.put(
+            "/api/filesystem/" + str(filesystem_edit.id),
+            data=urlencode({
+                'name': filesystem_exists.name,
+                'source_path': filesystem_exists.source_path,
+                'destination_path': filesystem_exists.destination_path,
+                'slave': str(filesystem_exists.slave.id),
+				'source_type': filesystem_exists.source_type,
+                'destination_type': filesystem_exists.destination_type,
+            }))
+
+        self.assertEqual(api_response.status_code, 200)
+        self.assertEqual(
+            Status.err({
+                "name":
+                ["Filesystem with this Name already exists on this Client."]
+            }),
+            Status.from_json(api_response.content.decode('utf-8')),
+        )
 
 
 class ProgramTests(TestCase):

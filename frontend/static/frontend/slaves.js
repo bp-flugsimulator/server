@@ -425,7 +425,35 @@ $(document).ready(function () {
     });
 
     $('.filesystem-action-modify').click(function () {
-        alert('Unimplemented');
+        let filesystemModal = $('#filesystemModal');
+        let filesystemForm = filesystemModal.children().find('#filesystemForm');
+
+        //get info of the filesystem
+        let id = $(this).data('filesystem-id');
+        let name = $(this).data('filesystem-name');
+        let source_path = $(this).data('filesystem-source_path');
+        let destination_path = $(this).data('filesystem-destination_path');
+		
+        //modify the form for the submit button
+        filesystemModal.children().find('.modal-title').text('Edit Filesystem');
+        filesystemForm.attr('action', '/api/filesystem/' + id);
+        filesystemForm.attr('method', 'PUT');
+        filesystemForm.children().find('.submit-btn').text('Edit');
+
+        //set values into input fields
+        filesystemForm.find('[name="name"]').val(name);
+        filesystemForm.find('[name="source_path"]').val(source_path);
+        filesystemForm.find('[name="destination_path"]').val(destination_path);
+
+        //clear error messages
+        clearErrorMessages(filesystemForm);
+
+        //find slave id and store it in the form
+        let slaveId = $(this).data('slave-id');
+        filesystemForm.find('[name="slave"]').val(slaveId);
+
+        //find slave id and store it in the form
+        filesystemModal.modal('toggle');
     });
 
     $('.filesystem-action-delete').click(function () {
