@@ -8,6 +8,7 @@ from django.http import HttpResponseForbidden
 from django.http.request import QueryDict
 from django.core.exceptions import ValidationError
 from django.db.utils import IntegrityError
+from django.db.models import Count
 
 from channels import Group
 from utils import Status, Command
@@ -56,15 +57,47 @@ def add_slave(request):
     elif request.method == 'GET':
         # the URL takes an argument with ?q=<string>
         # e.g. /slaves?q=test
-        query = request.GET.get('q', '')
-        return StatusResponse(
-            Status.ok(
-                list(
-                    set([
-                        obj['name']
-                        for obj in SlaveModel.objects.filter(
-                            name__contains=query).values("name")
-                    ]))))
+        query = request.GET.get('q', None)
+
+        programs = request.GET.get('programs', '')
+        filesystems = request.GET.get('filesystems', '')
+
+        programs = programs.lower() in ('yes', 'true', '1', 't', 'y')
+        filesystems = filesystems.lower() in ('yes', 'true', '1', 't', 'y')
+
+        if query is not None:
+            slaves = SlaveModel.objects.filter(
+                name__contains=query).values_list(
+                    "name",
+                    flat=True,
+                )
+        else:
+            if programs and filesystems:
+                return StatusResponse(
+                    Status.err(
+                        "Can not query for filesystems and programs at the same time."
+                    ))
+            elif programs:
+                slaves = SlaveModel.objects.all().annotate(
+                    prog_count=Count('program__pk')).filter(
+                        prog_count__gt=0).values_list(
+                            'name',
+                            flat=True,
+                        )
+            elif filesystems:
+                slaves = SlaveModel.objects.all().annotate(
+                    filesystem_count=Count('filesystem__pk')).filter(
+                        filesystem_count__gt=0).values_list(
+                            'name',
+                            flat=True,
+                        )
+            else:
+                slaves = SlaveModel.objects.all().values_list(
+                    'name',
+                    flat=True,
+                )
+
+        return StatusResponse(Status.ok(list(slaves)))
     else:
         return HttpResponseForbidden()
 
@@ -203,15 +236,53 @@ def add_program(request):
     elif request.method == 'GET':
         # the URL takes an argument with ?q=<string>
         # e.g. /programs?q=test
-        query = request.GET.get('q', '')
-        return StatusResponse(
-            Status.ok(
-                list(
-                    set([
-                        obj['name']
-                        for obj in ProgramModel.objects.filter(
-                            name__contains=query).values("name")
-                    ]))))
+        query = request.GET.get('q', None)
+        slave = request.GET.get('slave', None)
+        slave_str = request.GET.get('slave_str', False)
+
+        if slave_str:
+            slave_str = slave_str.lower() in ('true', 't', 'y', 'yes', '1')
+
+        if query is not None:
+            progs = ProgramModel.objects.filter(
+                name__contains=query).values_list(
+                    "name",
+                    flat=True,
+                )
+        elif slave is not None:
+
+            try:
+                if slave_str:
+                    slave = SlaveModel.objects.get(name=slave)
+                else:
+                    try:
+                        slave = SlaveModel.objects.get(id=int(slave))
+                    except ValueError:
+                        return StatusResponse(
+                            Status.err("Slave has to be an integer."))
+            except SlaveModel.DoesNotExist:
+                ret_err = "Could not find slave with"
+                if slave_str:
+                    ret_err += " name `{}`".format(slave)
+                else:
+                    ret_err += " id `{}`".format(slave)
+
+                ret_err += "."
+
+                return StatusResponse(Status.err(ret_err))
+
+            progs = ProgramModel.objects.filter(slave=slave).values_list(
+                "name",
+                flat=True,
+            )
+
+        else:
+            progs = ProgramModel.objects.all().values_list(
+                "name",
+                flat=True,
+            )
+
+        return StatusResponse(Status.ok(list(progs)))
     else:
         return HttpResponseForbidden()
 
@@ -317,13 +388,13 @@ def add_script(request):
             return StatusResponse(
                 Status.err("Could not find required key {}".format(
                     err.args[0])))
-        except TypeError:
-            return StatusResponse(Status.err("Wrong array items."))
+        except TypeError as err:
+            return StatusResponse(Status.err(str(err)))
         except ValueError as err:
             return StatusResponse(Status.err(str(err)))
-        except IntegrityError:
-            return StatusResponse(
-                Status.err("Script with that name already exists."))
+        except ValidationError as err:
+            return StatusResponse(Status.err('; '.join(err.messages)))
+
     else:
         return HttpResponseForbidden()
 
@@ -476,16 +547,52 @@ def filesystem_set(request):
     elif request.method == 'GET':
         # the URL takes an argument with ?q=<string>
         # e.g. /filesystems?q=test
-        query = request.GET.get('q', '')
+        query = request.GET.get('q', None)
+        slave = request.GET.get('slave', None)
+        slave_str = request.GET.get('slave_str', False)
 
-        return StatusResponse(
-            Status.ok(
-                list(
-                    set([
-                        obj['name']
-                        for obj in FilesystemModel.objects.filter(
-                            name__contains=query).values("name")
-                    ]))))
+        if slave_str:
+            slave_str = slave_str.lower() in ('true', 't', 'y', 'yes', '1')
+
+        if query is not None:
+            filesystems = FilesystemModel.objects.filter(
+                name__contains=query).values_list(
+                    "name",
+                    flat=True,
+                )
+        elif slave is not None:
+            try:
+                if slave_str:
+                    slave = SlaveModel.objects.get(name=slave)
+                else:
+                    try:
+                        slave = SlaveModel.objects.get(id=int(slave))
+                    except ValueError:
+                        return StatusResponse(
+                            Status.err("Slave has to be an integer."))
+            except SlaveModel.DoesNotExist:
+                ret_err = "Could not find slave with"
+                if slave_str:
+                    ret_err += " name `{}`".format(slave)
+                else:
+                    ret_err += " id `{}`".format(slave)
+
+                ret_err += "."
+
+                return StatusResponse(Status.err(ret_err))
+
+            filesystems = FilesystemModel.objects.filter(
+                slave=slave).values_list(
+                    "name",
+                    flat=True,
+                )
+        else:
+            filesystems = FilesystemModel.objects.all().values_list(
+                "name",
+                flat=True,
+            )
+
+        return StatusResponse(Status.ok(list(filesystems)))
     else:
         return HttpResponseForbidden()
 
@@ -497,7 +604,7 @@ def filesystem_move(request, filesystem_id):
     Parameters
     ----------
         request: HttpRequest
-        fileId: Unique identifier of a filesystem
+        filesystemId: Unique identifier of a filesystem
 
     Returns
     -------
@@ -565,12 +672,6 @@ def filesystem_move(request, filesystem_id):
 
                 filesystem.command_uuid = second.uuid
                 filesystem.save()
-
-                print("HERE FIRST: " + filesystem_replace.command_uuid)
-                print("HERE FIRST2: " + FilesystemModel.objects.get(
-                    id=filesystem_replace.id).command_uuid)
-                print("HERE SECOND: " + filesystem.command_uuid)
-
             else:
                 cmd = Command(
                     method="filesystem_move",

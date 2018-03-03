@@ -1,171 +1,53 @@
 /* eslint-env browser */
 /* eslint no-use-before-define: ["error", { "functions": false }] */
-/* global $, JSONEditor, getCookie, Status, modalDeleteAction, notify */
+/* global $, JsonForm, getCookie, Status, modalDeleteAction, notify */
 /* exported loadScript, newScript */
 
-var schema = {
-    'title': 'Script',
-    'type': 'object',
-    'definitions': {
-        'program_entry': {
-            'title': 'Program set',
-            'type': 'object',
-            'properties': {
-                'index': {
-                    'title': 'Index',
-                    'type': 'integer',
-                },
-                'slave': {
-                    'title': 'Client',
-                    'type': ['integer', 'string'],
-                },
-                'program': {
-                    'title': 'Program',
-                    'type': ['integer', 'string'],
+function promiseQuery(url) {
+    return new Promise(function (resolve, reject) {
+        $.ajax({
+            url,
+            beforeSend(xhr) {
+                xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
+            },
+            converters: {
+                'text json': Status.from_json
+            },
+            success(status) {
+                if (status.is_ok()) {
+                    resolve(status.payload);
+                } else {
+                    notify('Autocomplete query', 'Error while querying for autocomplete: ' + JSON.stringify(status.payload));
+                    reject();
                 }
             },
-            'required': ['index', 'slave', 'program'],
-            'additionalProperties': false
-        },
-        'file_entry': {
-            'title': 'File set',
-            'type': 'object',
-            'properties': {
-                'index': {
-                    'title': 'Index',
-                    'type': 'integer',
-                },
-                'slave': {
-                    'title': 'Client',
-                    'type': ['integer', 'string'],
-                },
-                'filesystem': {
-                    'title': 'File',
-                    'type': ['integer', 'string'],
-                }
-            },
-            'required': ['index', 'slave', 'filesystem'],
-            'additionalProperties': false
-        }
-    },
-    'properties': {
-        'name': {
-            'type': 'string',
-        },
-        'programs': {
-            'type': 'array',
-            'items': {
-                '$ref': '#/definitions/program_entry'
-            },
-            'uniqueItems': true
-        },
-        'filesystems': {
-            'type': 'array',
-            'items': {
-                '$ref': '#/definitions/file_entry'
-            },
-            'uniqueItems': true
-        }
-    },
-    'required': ['name', 'programs', 'filesystems'],
-    'additionalProperties': false
-};
-
-var options = {
-    search: false,
-    navigationBar: false,
-    modes: ['tree'],
-    templates: [{
-        text: 'File',
-        title: 'Insert a File Node',
-        className: 'jsoneditor-type-object',
-        field: 'FileTemplate',
-        value: {
-            'index': 0,
-            'slave': '',
-            'filesystem': ''
-        }
-    }, {
-        text: 'Program',
-        title: 'Insert a Program Node',
-        className: 'jsoneditor-type-object',
-        field: 'ProgramTemplate',
-        value: {
-            'index': 0,
-            'slave': '',
-            'program': ''
-        }
-    }],
-    schema,
-    autocomplete: {
-        caseSensitive: false,
-        //getOptions(text: string, path: string[], input: string, editor: JSONEditor)
-        getOptions(text, path) {
-            return new Promise(function (resolve, reject) {
-                switch (path[path.length - 1]) {
-                    case 'slave':
-                    case 'program':
-                    case 'filesystem':
-                        $.ajax({
-                            url: '/api/' + path[path.length - 1] + 's?q=' + text,
-                            beforeSend(xhr) {
-                                xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
-                            },
-                            converters: {
-                                'text json': Status.from_json
-                            },
-                            success(status) {
-                                if (status.is_ok()) {
-                                    resolve(status.payload);
-                                } else {
-                                    notify('Autocomplete error', 'Could not load autocomplete query from server (' + JSON.stringify(status.payload) + ')', 'danger');
-                                    reject();
-                                }
-                            },
-                            error(xhr, errorString, errorCode) {
-                                notify('Autocomplete error',
-                                    'Could not load autocomplete query from server (' + errorCode + ')', 'danger');
-                            }
-                        });
-                        break;
-                    default:
-                        reject();
-                        break;
-                }
-            });
-        }
-    },
-    onEditable(node) {
-        switch (node.field) {
-            case 'name':
-                return {
-                    field: false,
-                    value: true
-                };
-            case 'programs':
-                return {
-                    field: false,
-                    value: true
-                };
-            case 'filesystems':
-                return {
-                    field: false,
-                    value: true
-                };
-            default:
-                return true;
-        }
-    }
-};
-
-var editors = {};
-
-function createEditor(json, id) {
-    let container = document.getElementById('jsoneditor_' + id);
-    let editor = new JSONEditor(container, options, json);
-    editors['jsoneditor_' + id] = editor;
-    editor.expandAll();
+            error(xhr, errorString, errorCode) {
+                notify('Autocomplete query', 'Error while querying for autocomplete: ' + errorCode + '(' + errorString + ')');
+                reject();
+            }
+        });
+    });
 }
+
+const options = {
+    querySlavesPrograms() {
+        return promiseQuery('/api/slaves?programs=True');
+    },
+    queryPrograms(slave) {
+        return promiseQuery('/api/programs?slave_str=true&slave=' + slave);
+    },
+    querySlavesFiles() {
+        return promiseQuery('/api/slaves?filesystem=True');
+    },
+    queryFiles(slave) {
+        return promiseQuery('/api/filesystems?slave_str=true&slave=' + slave);
+    },
+};
+
+var createEditor = function (json, id) {
+    let container = document.getElementById('jsoneditor_' + id);
+    JsonForm.loads(container, options, json);
+};
 
 function loadScript(id) {
     $.ajax({
@@ -180,11 +62,11 @@ function loadScript(id) {
             if (status.is_ok()) {
                 createEditor(status.payload, id);
             } else {
-                notify('Not found', 'Could not load script from server (' + JSON.stringify(status.payload) + ')', 'danger');
+                notify('Loading script', 'Error while loading script: ' + JSON.stringify(status.payload));
             }
         },
         error(xhr, errorString, errorCode) {
-            notify('Transport error', 'Could not load script from server (' + errorCode + ')', 'danger');
+            notify('Loading script', 'Error while loading script: ' + errorCode + '(' + errorString + ')');
         }
     });
 }
@@ -226,8 +108,8 @@ $(document).ready(function () {
 
     $('.script-action-add-save').click(function () {
         let id = $(this).attr('data-editor-id');
-        let editor = editors['jsoneditor_' + id];
-        let string = JSON.stringify(editor.get());
+        let editor = JsonForm.dumps($('#jsoneditor_' + id));
+        let string = JSON.stringify(editor);
 
         $.ajax({
             method: 'POST',
@@ -262,12 +144,10 @@ $(document).ready(function () {
         let name = $(this).data('script-name');
         let message = '<a>Are you sure you want to remove script </a><b>' + name + '</b>?</a>';
 
-        //
         //changing button visibility and message of the delete modal
         let deleteWarning = $('#deleteWarning');
         deleteWarning.children().find('.modal-body').empty(message);
         deleteWarning.children().find('.modal-body').append(message);
-
 
         //adding id to modal and set it visible
         deleteWarning.data('sqlId', id);

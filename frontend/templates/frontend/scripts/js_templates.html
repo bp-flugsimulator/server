@@ -1,0 +1,80 @@
+{% verbatim %}
+<script id="templateEntry" type="text/x-handlebars-template">
+    <div class="list-group-item script-{{type}}-entry ">
+        <div class="justify-content-end form-group row">
+            <button class="btn script-{{type}}-remove inline-add-button" type="button">
+                    <i class="mdi mdi-delete"></i>
+                    <i class="font-weight-light">DELETE</i>
+            </button>
+        </div>
+
+        <div class="form-group row">
+            <label class="col-2 text-uppercase">Index</label>
+            <div class="col">
+                <input class="form-control script-{{type}}-index" type="number" value="{{#if index}}{{index}}{{else}}0{{/if}}" required/>
+            </div>
+        </div>
+
+        <div class="form-group row slave-choice">
+            <label class="col-2 text-uppercase">Client</label>
+            <div class="col">
+                <select class="form-control script-{{type}}-slave" type="text" required>
+                    {{#each slaves}}
+                    <option {{#ifEq slave this}}selected{{/ifEq}}>{{this}}</option>
+                    {{/each}}
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group row {{type}}-choice">
+            <label class="col-2 text-uppercase">
+                {{#if type-display}}{{type-display}}{{else}}{{type}}{{/if}}
+            </label>
+            <div class="col">
+                <select class="form-control script-{{type}}-{{type}}" type="text" name="script-{{type}}" required>
+                    {{#each selects}}
+                    <option>{{this}}</option>
+                    {{/each}}
+                </select>
+            </div>
+        </div>
+    </div>
+</script>
+
+<script id="templateNoElement" type="text/x-handlebars-template">
+    <div class="list-group-item slave-no-elements">
+        <i class="text-uppercase font-weight-bold">No Clients with {{type}}s created.</i>
+    </div>
+</script>
+
+<script id="templateContainer" type="text/x-handlebars-template">
+    <div class="row">
+        <label class="text-uppercase font-weight-bold">Script Name</label>
+    </div>
+
+    <div class="row mb-4">
+        <input class="form-control script-name" type="text" {{#if name}}value="{{name}}"{{/if}} required/>
+        <div class="invalid-feedback text-uppercase">Script name is required.</div>
+    </div>
+
+    <div class="row">
+        <label class="text-uppercase font-weight-bold">Programs</label>
+        <button type="button" class="btn script-program-add  inline-add-button">
+            <i class="mdi mdi-plus"></i>
+        </button>
+    </div>
+
+    <div class="script-program-content row list-group mb-4">
+    </div>
+
+    <div class="row">
+        <label class="text-uppercase font-weight-bold">Files</label>
+        <button type="button" class="btn script-filesystem-add inline-add-button">
+            <i class="mdi mdi-plus"></i>
+        </button>
+    </div>
+
+    <div class="script-filesystem-content row list-group">
+    </div>
+</script>
+{% endverbatim %}
