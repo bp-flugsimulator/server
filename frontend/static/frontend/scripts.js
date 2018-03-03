@@ -40,7 +40,7 @@ const options = {
         return promiseQuery('/api/slaves?files=True');
     },
     queryFiles(slave) {
-        return promiseQuery('/api/files?slave_str=true&slave=' + slave);
+        return promiseQuery('/api/filesystems?slave_str=true&slave=' + slave);
     },
 };
 
