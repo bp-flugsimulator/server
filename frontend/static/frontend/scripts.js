@@ -165,8 +165,8 @@ var unloadWarning = false;
 
 $(window).on('beforeunload', function (e) {
 	if (this.unloadWarning) {
-	    returnText = 'Are you sure you want to leave?'
-	    e.returnValue = returnText;
-	    return returnText;
+            let returnText = 'Are you sure you want to leave?';
+            e.returnValue = returnText;
+            return returnText;
 	}
 });
