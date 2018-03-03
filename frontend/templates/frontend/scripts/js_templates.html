@@ -20,7 +20,7 @@
             <div class="col">
                 <select class="form-control script-{{type}}-slave" type="text" required>
                     {{#each slaves}}
-                    <option {{#ifEq slave this}}selected{{/ifEq}}>{{this}}</option>
+                    <option {{#ifEq ../currentSlave this}}selected{{/ifEq}}>{{this}}</option>
                     {{/each}}
                 </select>
             </div>
@@ -28,10 +28,10 @@
 
         <div class="form-group row {{type}}-choice">
             <label class="col-2 text-uppercase">
-                {{#if type-display}}{{type-display}}{{else}}{{type}}{{/if}}
+                {{type}}
             </label>
             <div class="col">
-                <select class="form-control script-{{type}}-{{type}}" type="text" name="script-{{type}}" required>
+                <select class="form-control script-{{type}}-{{type}}" type="text" name="script-{{type}}" data-selected="{{#if currentSelects}}{{ currentSelects }}{{/if}}" required>
                     {{#each selects}}
                     <option>{{this}}</option>
                     {{/each}}

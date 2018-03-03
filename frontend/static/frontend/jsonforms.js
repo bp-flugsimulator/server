@@ -21,7 +21,7 @@ const templateNoElement = Handlebars.compile($('#templateNoElement').html(), { s
  * @param {Function} querySlaves A function which returns a Promise which queries a query set.
  * @param {Function} queryType A function which is called every time the choice changes.
  */
-function addTypeEntry(container, type, querySlaves, queryType, context) {
+function addTypeEntry(container, type, querySlaves, queryType, context = {}) {
     querySlaves().then(function (slaves) {
         $(container).find('.slave-no-elements').remove();
         let entryContainer = $(container).find('.script-' + type + '-content').first();
@@ -31,17 +31,19 @@ function addTypeEntry(container, type, querySlaves, queryType, context) {
             entryContainer.append(html);
         } else {
             let templateContext = Object.assign({}, { slaves, type }, context);
-
+            // add html template element
             let html = templateEntry(templateContext);
-
             entryContainer.prepend(html);
 
+            // get first element (-> prepend)
             let box = entryContainer.children().first();
 
+            // set .onClick for the remove button
             box.find('.script-' + type + '-remove').on('click', function () {
                 box.remove();
             });
 
+            // set the update hook if the select changes
             box.find('.script-' + type + '-slave').on('change', function () {
                 queryType($(this).find('option:selected').first().val()).then(
                     function (query) {
@@ -50,8 +52,14 @@ function addTypeEntry(container, type, querySlaves, queryType, context) {
                             target.children().remove();
                             target.removeAttr('hidden');
 
+                            let select_this = $(this).attr('data-selected');
+
                             $(query).each(function (idx, val) {
-                                target.append('<option> ' + val + ' </option>');
+                                if (select_this === val) {
+                                    target.append('<option selected> ' + val + ' </option>');
+                                } else {
+                                    target.append('<option> ' + val + ' </option>');
+                                }
                             });
                         });
                     }
@@ -70,7 +78,7 @@ const JsonForm = {
         });
 
         $('.script-filesystem-add').on('click', function () {
-            addTypeEntry(container, 'filesystem', options.querySlavesFiles, options.queryFiles);
+            addTypeEntry(container, 'filesystem', options.querySlavesFiles, options.queryFilesystems);
         });
     },
     /**
@@ -83,12 +91,12 @@ const JsonForm = {
 
         this.init(container, options);
 
-        json.programs.forEach(function (idx, val) {
-            addTypeEntry(container, 'program', options.querySlavesPrograms, options.queryPrograms, { 'choicesCurrent': val.slave, 'selects': [val.program] });
+        json.programs.forEach(function (val) {
+            addTypeEntry(container, 'program', options.querySlavesPrograms, options.queryPrograms, { 'currentSlave': val.slave, 'currentSelects': val.program });
         });
 
-        json.filesystems.forEach(function (idx, val) {
-            addTypeEntry(container, 'filesystem', options.querySlavesFiles, options.queryFiles, { 'choicesCurrent': val.slave, 'selects': [val.filesystem] });
+        json.filesystems.forEach(function (val) {
+            addTypeEntry(container, 'filesystem', options.querySlavesFiles, options.queryFilesystems, { 'currentSlave': val.slave, 'currentSelects': val.filesystem });
         });
     },
     /**
