@@ -689,6 +689,5 @@ def filesystem_entry(request, filesystem_id):
                 return StatusResponse(Status.err(error_dict))
         else:
             return StatusResponse(Status.err(form.errors))
-	
     else:
         return HttpResponseForbidden()

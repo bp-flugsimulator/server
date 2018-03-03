@@ -431,8 +431,8 @@ $(document).ready(function () {
         //get info of the filesystem
         let id = $(this).data('filesystem-id');
         let name = $(this).data('filesystem-name');
-        let source_path = $(this).data('filesystem-source_path');
-        let destination_path = $(this).data('filesystem-destination_path');
+        let sourcePath = $(this).data('filesystem-source_path');
+        let destinationPath = $(this).data('filesystem-destination_path');
 		
         //modify the form for the submit button
         filesystemModal.children().find('.modal-title').text('Edit Filesystem');
@@ -442,8 +442,8 @@ $(document).ready(function () {
 
         //set values into input fields
         filesystemForm.find('[name="name"]').val(name);
-        filesystemForm.find('[name="source_path"]').val(source_path);
-        filesystemForm.find('[name="destination_path"]').val(destination_path);
+        filesystemForm.find('[name="source_path"]').val(sourcePath);
+        filesystemForm.find('[name="destination_path"]').val(destinationPath);
 
         //clear error messages
         clearErrorMessages(filesystemForm);
