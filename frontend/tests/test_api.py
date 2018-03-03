@@ -32,6 +32,7 @@ from .factory import (
     ProgramStatusFactory,
 )
 
+
 class ScriptTest(TestCase):
     def test_script_run_forbidden(self):
         response = self.client.put("/api/script/0/run")
@@ -448,7 +449,8 @@ class FileTests(TestCase):
 
     def test_move_dir_ok(self):
         slave = SlaveFactory(online=True)
-        filesystem = FileFactory(slave=slave, source_type="dir", destination_type="dir")
+        filesystem = FileFactory(
+            slave=slave, source_type="dir", destination_type="dir")
 
         # connect slave to websocket
         ws_client = WSClient()
@@ -1131,6 +1133,9 @@ class ProgramTests(TestCase):
 
 
 class SlaveTests(TestCase):
+    def test_unknown_slave_delete(self):
+        response = self.client.delete("/api/slave/0")
+
     def test_slave_autocomplete(self):
         slave = SlaveFactory()
         name_half = int(len(slave.name) / 2)
