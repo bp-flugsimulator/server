@@ -748,7 +748,7 @@ def filesystem_restore(request, filesystem_id):
 
 def filesystem_entry(request, filesystem_id):
     """
-    Process DELETE requests for the FilesystemModel ressource.
+    Process DELETE and PUT requests for the FilesystemModel ressource.
 
     Parameters
     ----------
@@ -758,7 +758,7 @@ def filesystem_entry(request, filesystem_id):
     Returns
     -------
         A StatusResponse or HttpResponseForbidden if the request method was
-        other than DELETE.
+        other than DELETE or PUT.
     """
 
     if request.method == 'DELETE':
@@ -769,5 +769,26 @@ def filesystem_entry(request, filesystem_id):
         else:
             return StatusResponse(
                 Status.err('The file is still moved. Restore the file first.'))
+
+    elif request.method == 'PUT':
+        # create form from a new QueryDict made from the request body
+        # (request.PUT is unsupported) as an update (instance) of the
+        # existing slave
+        model = FilesystemModel.objects.get(id=filesystem_id)
+        form = FilesystemForm(QueryDict(request.body), instance=model)
+        if form.is_valid():
+            filesystem = form.save(commit=False)
+            try:
+                filesystem.full_clean()
+                form.save()
+                return StatusResponse(Status.ok(''))
+            except ValidationError as _:
+                error_dict = {
+                    'name':
+                    ['Filesystem with this Name already exists on this Client.']
+                }
+                return StatusResponse(Status.err(error_dict))
+        else:
+            return StatusResponse(Status.err(form.errors))
     else:
         return HttpResponseForbidden()
