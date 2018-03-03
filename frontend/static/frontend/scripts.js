@@ -136,7 +136,32 @@ $(document).ready(function () {
     });
 
     $('.script-action-save').click(function () {
-        alert('unimplemented');
+        let id = $(this).attr('data-editor-id');
+        let editor = JsonForm.dumps($('#jsoneditor_' + id));
+        let string = JSON.stringify(editor);
+
+        $.ajax({
+            method: 'PUT',
+            url: '/api/script/' + id,
+            contentType: 'application/json',
+            data: string,
+            beforeSend(xhr) {
+                xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
+            },
+            converters: {
+                'text json': Status.from_json
+            },
+            success(status) {
+                if (status.is_err()) {
+                    notify('Could not save script', JSON.stringify(status.payload), 'danger');
+                } else {
+                    window.location.reload();
+                }
+            },
+            error(xhr, errorString, errorCode) {
+                notify('Connection error', 'Could not deliver script add request. (' + errorCode + ')', 'danger');
+            }
+        });
     });
 
     $('.script-action-delete').click(function () {

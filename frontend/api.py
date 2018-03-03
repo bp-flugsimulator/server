@@ -449,6 +449,28 @@ def manage_script(request, script_id):
         except ScriptModel.DoesNotExist:
             return StatusResponse(Status.err("Script does not exist."))
 
+    elif request.method == 'PUT':
+        try:
+            script = Script.from_json(request.body.decode('utf-8'))
+            old_script = ScriptModel.objects.get(id=script_id)
+            old_script.delete()
+            script.save()
+            return StatusResponse(Status.ok(""))
+        except KeyError as err:
+            old_script.save()
+            return StatusResponse(
+                Status.err("Could not find required key {}".format(
+                    err.args[0])))
+        except TypeError as err:
+            old_script.save()
+            return StatusResponse(Status.err(str(err)))
+        except ValueError as err:
+            old_script.save()
+            return StatusResponse(Status.err(str(err)))
+        except ValidationError as err:
+            old_script.save()
+            return StatusResponse(Status.err('; '.join(err.messages)))
+
     elif request.method == 'DELETE':
         ScriptModel.objects.filter(id=script_id).delete()
         return StatusResponse(Status.ok(''))
