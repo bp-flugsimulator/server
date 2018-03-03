@@ -204,14 +204,20 @@ class Scheduler:
             query_programs = ScriptGraphPrograms.objects.filter(
                 script=self.__script,
                 index__gt=self.__index,
+            ).values_list(
+                'index',
+                flat=True,
             )
 
             query_filesystems = ScriptGraphPrograms.objects.filter(
                 script=self.__script,
                 index__gt=self.__index,
+            ).values_list(
+                'index',
+                flat=True,
             )
 
-            query = set(set(query_filesystems) + set(query_programs))
+            query = set(query_filesystems).union(set(query_programs))
 
             self.__index = min(query)
             LOGGER.debug("Scheduler found next index %s", self.__index)
@@ -269,7 +275,7 @@ class Scheduler:
                 self.__state_next()
 
             elif self.__state == SchedulerStatus.WAITING_FOR_PROGRAMS:
-                self.__state_wait_programs_files()
+                self.__state_wait_programs_filesystems()
 
             elif self.__state == SchedulerStatus.SUCCESS:
                 self.__state_success()
@@ -286,10 +292,12 @@ class Scheduler:
         In this state all slaves are started.
         """
         from .models import Script, Slave
+        from .controller import slave_wake_on_lan
 
-        for slave in Script.get_involved_slaves(self.__script):
-            LOGGER.debug("Starting slave `%s`", slave)
-            Slave.wake_on_lan(slave)
+        for slave_id in Script.get_involved_slaves(self.__script):
+            slave = Slave.objects.get(id=slave_id)
+            LOGGER.debug("Starting slave `%s`", slave.name)
+            slave_wake_on_lan(slave)
 
         self.__state = SchedulerStatus.WAITING_FOR_SLAVES
         self.__event.set()
@@ -319,7 +327,7 @@ class Scheduler:
         In this state the next index is selected and the programs are started.
         """
         from .controller import prog_start, fs_move
-        from .errors import FilesystemMovedError
+        from .errors import FilesystemMovedError, ProgramRunningError
         from .models import (
             Script,
             ScriptGraphPrograms,
@@ -349,14 +357,18 @@ class Scheduler:
                     script=self.__script,
                     index=self.__index,
             ):
-                prog_start(sgp)
+                try:
+                    prog_start(sgp.program)
+                except ProgramRunningError:
+                    # if the program is already running go on.
+                    pass
 
             for sgf in ScriptGraphFiles.objects.filter(
                     script=self.__script,
                     index=self.__index,
             ):
                 try:
-                    fs_move(sgf)
+                    fs_move(sgf.filesystem)
                 except FilesystemMovedError:
                     # if the filesystem is already moved go on.
                     pass
@@ -369,7 +381,7 @@ class Scheduler:
             'script_id': self.__script,
         })
 
-    def __state_wait_programs_files(self):
+    def __state_wait_programs_filesystems(self):
         """
         In this state the scheduler waits for all started programs to finish.
         """

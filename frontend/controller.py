@@ -28,6 +28,9 @@ from .errors import (
     FilesystemMovedError,
     FilesystemNotMovedError,
     FilesystemDeleteError,
+    ProgramError,
+    ProgramRunningError,
+    ProgramNotRunningError,
 )
 
 LOGGER = logging.getLogger("fsim.controller")
@@ -55,7 +58,7 @@ def fs_move(fs):
         SlaveOfflineError
         FilesystemMovedError
     """
-    ensure_type(fs, FilesystemModel)
+    ensure_type("fs", fs, FilesystemModel)
     slave = fs.slave
 
     if slave.is_online:
@@ -148,7 +151,7 @@ def fs_restore(fs):
         SlaveOfflineError
         FilesystemNotMovedError
     """
-    ensure_type(fs, FilesystemModel)
+    ensure_type("fs", fs, FilesystemModel)
     slave = fs.slave
 
     if slave.is_online:
@@ -190,7 +193,7 @@ def fs_delete(fs):
     -------
         FilesystemDeleteError
     """
-    ensure_type(fs, FilesystemModel)
+    ensure_type("fs", fs, FilesystemModel)
 
     if not fs.is_moved:
         fs.delete()
@@ -205,10 +208,14 @@ def prog_start(prog):
     Exception
     -------
         SlaveOfflineError
+        ProgramRunningError
     """
     ensure_type("prog", prog, ProgramModel)
 
     if prog.slave.is_online:
+        if prog.is_running:
+            raise ProgramRunningError(str(prog.name), str(prog.slave.name))
+
         cmd = Command(
             method="execute",
             path=prog.path,
@@ -265,9 +272,13 @@ def prog_stop(prog):
     Exception
     -------
         SlaveOfflineError
+        ProgramNotRunningError
     """
 
-    if prog.is_running:
+    if prog.slave.is_online:
+        if not prog.is_running:
+            raise ProgramNotRunningError(str(prog.name), str(prog.slave.name))
+
         LOGGER.info(
             "Stoping program %s on slave %s",
             prog.name,
@@ -295,4 +306,4 @@ def slave_wake_on_lan(slave):
     Sends wake on lan package to the slave.
     """
     ensure_type("slave", slave, SlaveModel)
-    send_magic_packet(slave.mac)
+    send_magic_packet(slave.mac_address)

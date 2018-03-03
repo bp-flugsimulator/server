@@ -47,7 +47,7 @@ class StatusResponse(HttpResponse):
         -------
             StatusResponse object with 'ok' in Status
         """
-        cls(Status.ok(payload), **kwargs)
+        return cls(Status.ok(payload), **kwargs)
 
     @classmethod
     def err(cls, payload, **kwargs):
@@ -63,7 +63,7 @@ class StatusResponse(HttpResponse):
         -------
             StatusResponse object with 'err' in Status
         """
-        cls(Status.err(payload), **kwargs)
+        return cls(Status.err(payload), **kwargs)
 
 
 def notify(message):

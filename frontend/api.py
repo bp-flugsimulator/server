@@ -29,7 +29,13 @@ from .scripts import Script
 from .forms import SlaveForm, ProgramForm, FilesystemForm
 from .consumers import notify
 
-from .errors import FilesystemError, FsimError
+from .errors import (
+    FilesystemError,
+    FsimError,
+    SlaveNotExistError,
+    ProgramNotExistError,
+    FilesystemNotExistError,
+)
 from .controller import (
     prog_start,
     prog_stop,
@@ -66,13 +72,14 @@ def add_slave(request):
         # the URL takes an argument with ?q=<string>
         # e.g. /slaves?q=test
         query = request.GET.get('q', '')
-        return StatusResponse.ok(
-            list(
-                set([
-                    obj['name']
-                    for obj in SlaveModel.objects.filter(
-                        name__contains=query).values("name")
-                ])))
+        return StatusResponse(
+            Status.ok(
+                list(
+                    set([
+                        obj['name']
+                        for obj in SlaveModel.objects.filter(
+                            name__contains=query).values("name")
+                    ]))))
     else:
         return HttpResponseForbidden()
 
@@ -93,27 +100,21 @@ def manage_slave(request, slave_id):
     """
     if request.method == 'DELETE':
         # i can't find any exceptions that can be thrown in our case
-        try:
-            SlaveModel.objects.get(id=slave_id).delete()
-            return StatusResponse.ok("")
-        except SlaveModel.DoesNotExist as err:
-            return StatusResponse.err(str(err))
+        SlaveModel.objects.filter(id=slave_id).delete()
+        return StatusResponse(Status.ok(''))
 
     elif request.method == 'PUT':
         # create form from a new QueryDict made from the request body
         # (request.PUT is unsupported) as an update (instance) of the
         # existing slave
-        try:
-            model = SlaveModel.objects.get(id=slave_id)
-            form = SlaveForm(QueryDict(request.body), instance=model)
+        model = SlaveModel.objects.get(id=slave_id)
+        form = SlaveForm(QueryDict(request.body), instance=model)
 
-            if form.is_valid():
-                form.save()
-                return StatusResponse.ok("")
-            else:
-                return StatusResponse.err("")
-        except SlaveModel.DoesNotExist as err:
-            return StatusResponse.err(str(err))
+        if form.is_valid():
+            form.save()
+            return StatusResponse(Status.ok(''))
+        else:
+            return StatusResponse(Status.err(form.errors))
     else:
         return HttpResponseForbidden()
 
@@ -133,7 +134,7 @@ def shutdown_slave(request, slave_id):
         other than GET.
     """
     if request.method == 'GET':
-        try:
+        if SlaveModel.objects.filter(id=slave_id).exists():
             slave = SlaveModel.objects.get(id=slave_id)
             if slave.is_online:
                 Group('client_' + str(slave_id)).send({
@@ -148,8 +149,10 @@ def shutdown_slave(request, slave_id):
             else:
                 return StatusResponse(
                     Status.err('Can not shutdown offline Client'))
-        except SlaveModel.DoesNotExist as err:
-            return StatusResponse.err(str(err))
+        else:
+            return StatusResponse(
+                Status.err('Can not shutdown unknown Client'))
+
     else:
         return HttpResponseForbidden()
 
@@ -172,13 +175,15 @@ def wol_slave(request, slave_id):
         try:
             slave = SlaveModel.objects.get(id=slave_id)
             slave_wake_on_lan(slave)
+
             notify({
                 "message":
                 "Send start command to client `{}`".format(slave.name)
             })
+
             return StatusResponse.ok("")
         except SlaveModel.DoesNotExist as err:
-            return StatusResponse.err(str(err))
+            return StatusResponse(SlaveNotExistError(err, slave_id))
     else:
         return HttpResponseForbidden()
 
@@ -206,15 +211,15 @@ def add_program(request):
             try:
                 program.full_clean()
                 form.save()
-                return StatusResponse.ok("")
+                return StatusResponse(Status.ok(''))
             except ValidationError as _:
                 error_dict = {
                     'name':
                     ["Program with this Name already exists on this Client."]
                 }
-                return StatusResponse.err(error_dict)
+                return StatusResponse(Status.err(error_dict))
         else:
-            return StatusResponse.err(form.errors)
+            return StatusResponse(Status.err(form.errors))
     elif request.method == 'GET':
         # the URL takes an argument with ?q=<string>
         # e.g. /programs?q=test
@@ -248,20 +253,18 @@ def manage_program(request, program_id):
     """
     if request.method == 'DELETE':
         ProgramModel.objects.filter(id=program_id).delete()
-        return StatusResponse.ok("")
+        return StatusResponse(Status.ok(''))
     if request.method == 'POST':
         try:
             program = ProgramModel.objects.get(id=program_id)
-            if program.enable():
+            try:
+                prog_start(program)
                 return StatusResponse.ok("")
-            else:
-                return StatusResponse.err(
-                    'Can not start {} because {} is offline!'.format(
-                        program.name, program.slave.name))
-        except ProgramModel.DoesNotExist:
-            return StatusResponse.err(
-                "Can not modify unknown program with id `{}`.".format(
-                    program_id))
+            except FsimError as err:
+                return StatusResponse(err)
+        except ProgramModel.DoesNotExist as err:
+            return StatusResponse(ProgramNotExistError(err, program_id))
+
     elif request.method == 'PUT':
         # create form from a new QueryDict made from the request body
         # (request.PUT is unsupported) as an update (instance) of the
@@ -273,15 +276,15 @@ def manage_program(request, program_id):
             try:
                 program.full_clean()
                 form.save()
-                return StatusResponse.ok("")
+                return StatusResponse(Status.ok(''))
             except ValidationError as _:
                 error_dict = {
                     'name':
                     ['Program with this Name already exists on this Client.']
                 }
-                return StatusResponse.err(error_dict)
+                return StatusResponse(Status.err(error_dict))
         else:
-            return StatusResponse.err(form.errors)
+            return StatusResponse(Status.err(form.errors))
     else:
         return HttpResponseForbidden()
 
@@ -304,14 +307,12 @@ def stop_program(request, program_id):
         try:
             program = ProgramModel.objects.get(id=program_id)
             try:
-                prog_start(program)
+                prog_stop(program)
                 return StatusResponse.ok("")
             except FsimError as err:
                 return StatusResponse(err)
-        except ProgramModel.DoesNotExist:
-            return StatusResponse.err(
-                "Can not stop unknown program with id `{}`.".format(
-                    program_id))
+        except ProgramModel.DoesNotExist as err:
+            return StatusResponse(ProgramNotExistError(err, program_id))
     else:
         return HttpResponseForbidden()
 
@@ -333,16 +334,18 @@ def add_script(request):
         try:
             script = Script.from_json(request.body.decode('utf-8'))
             script.save()
-            return StatusResponse.ok("")
+            return StatusResponse(Status.ok(""))
         except KeyError as err:
-            return StatusResponse.err("Could not find required key {}".format(
-                err.args[0]))
+            return StatusResponse(
+                Status.err("Could not find required key {}".format(
+                    err.args[0])))
         except TypeError:
-            return StatusResponse.err("Wrong array items.")
+            return StatusResponse(Status.err("Wrong array items."))
         except ValueError as err:
-            return StatusResponse.err(str(err))
+            return StatusResponse(Status.err(str(err)))
         except IntegrityError:
-            return StatusResponse.err("Script with that name already exists.")
+            return StatusResponse(
+                Status.err("Script with that name already exists."))
     else:
         return HttpResponseForbidden()
 
@@ -393,13 +396,14 @@ def manage_script(request, script_id):
                 program_key,
                 filesystem_key,
             )
-            return StatusResponse.ok(dict(script))
+            return StatusResponse(Status.ok(dict(script)))
         except ScriptModel.DoesNotExist:
-            return StatusResponse.err("Script does not exist.")
+            return StatusResponse(Status.err("Script does not exist."))
 
     elif request.method == 'DELETE':
         ScriptModel.objects.filter(id=script_id).delete()
-        return StatusResponse.ok("")
+        return StatusResponse(Status.ok(''))
+
     else:
         return HttpResponseForbidden()
 
@@ -425,13 +429,14 @@ def run_script(request, script_id):
             # only allow the start of a script if the old one is finished
             if FSIM_CURRENT_SCHEDULER.start(script.id):
                 FSIM_CURRENT_SCHEDULER.notify()
-                return StatusResponse.ok("Started script {}".format(
-                    script.name))
+                return StatusResponse(
+                    Status.ok("Started script {}".format(script.name)))
             else:
-                return StatusResponse.err("A script is still running.")
+                return StatusResponse(Status.err("A script is still running."))
         except ScriptModel.DoesNotExist:
-            return StatusResponse.err(
-                "The script with the id {} does not exist.".format(script_id))
+            return StatusResponse(
+                Status.err("The script with the id {} does not exist.".format(
+                    script_id)))
     else:
         return HttpResponseForbidden()
 
@@ -529,17 +534,10 @@ def filesystem_move(request, filesystem_id):
             try:
                 fs_move(filesystem)
                 return StatusResponse(Status.ok(""))
-            except FilesystemError as err:
-                LOGGER.warning(
-                    "Error while moving filesystem `%s`: %s",
-                    filesystem.name,
-                    err,
-                )
+            except FsimError as err:
                 return StatusResponse(err)
-        except FilesystemModel.DoesNotExist:
-            return StatusResponse.err(
-                "Can not move unknown filesystem with id `{}`.".format(
-                    filesystem_id))
+        except FilesystemModel.DoesNotExist as err:
+            return StatusResponse(FilesystemNotExistError(err, filesystem_id))
     else:
         return HttpResponseForbidden()
 
@@ -564,17 +562,10 @@ def filesystem_restore(request, filesystem_id):
             try:
                 fs_restore(filesystem)
                 return StatusResponse(Status.ok(""))
-            except FilesystemError as err:
-                LOGGER.warning(
-                    "Error while restoring filesystem `%s`: %s",
-                    filesystem.name,
-                    err,
-                )
+            except FsimError as err:
                 return StatusResponse(err)
         except FilesystemModel.DoesNotExist:
-            return StatusResponse.err(
-                "Can not restore unknown filesystem with id `{}`.".format(
-                    filesystem_id))
+            return StatusResponse(FilesystemNotExistError(err, filesystem_id))
     else:
         return HttpResponseForbidden()
 
@@ -600,16 +591,9 @@ def filesystem_entry(request, filesystem_id):
             try:
                 fs_delete(filesystem)
                 return StatusResponse.ok("")
-            except FilesystemError as err:
-                LOGGER.warning(
-                    "Error while deleting filesystem `%s`: %s",
-                    filesystem.name,
-                    err,
-                )
+            except FsimError as err:
                 return StatusResponse(err)
         except FilesystemModel.DoesNotExist:
-            return StatusResponse.err(
-                "Can not delete unknown filesystem with id `{}`.".format(
-                    filesystem_id))
+            return StatusResponse(FilesystemNotExistError(err, filesystem_id))
     else:
         return HttpResponseForbidden()

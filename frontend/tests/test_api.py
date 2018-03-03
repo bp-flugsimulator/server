@@ -11,7 +11,6 @@ from django.urls import reverse
 from channels.test import WSClient
 
 from utils import Status, Command
-
 from frontend.scripts import Script, ScriptEntryFile, ScriptEntryProgram
 
 from frontend.models import (
@@ -20,6 +19,16 @@ from frontend.models import (
     Filesystem as FilesystemModel,
     Program as ProgramModel,
     ProgramStatus as ProgramStatusModel,
+)
+
+from frontend.errors import (
+    SlaveOfflineError,
+    SlaveNotExistError,
+    ProgramNotExistError,
+    ProgramNotRunningError,
+    ProgramRunningError,
+    FilesystemMovedError,
+    FilesystemNotMovedError,
 )
 
 from .factory import (
@@ -31,6 +40,8 @@ from .factory import (
     MovedFileFactory,
     ProgramStatusFactory,
 )
+
+from .testcases import StatusTestCase
 
 
 class ScriptTest(TestCase):
@@ -388,7 +399,7 @@ class ScriptTest(TestCase):
         )
 
 
-class FileTests(TestCase):
+class FileTests(StatusTestCase):
     maxDiff = None
 
     def test_manage_file_forbidden(self):
@@ -410,12 +421,9 @@ class FileTests(TestCase):
                                        + "/move")
         self.assertEqual(api_response.status_code, 200)
 
-        self.assertEqual(
+        self.assertStatusRegex(
+            Status.err(SlaveOfflineError),
             Status.from_json(api_response.content.decode('utf-8')),
-            Status.err("Can not move {} because {} is offline!".format(
-                filesystem.name,
-                filesystem.slave.name,
-            )),
         )
 
     def test_move_file_ok(self):
@@ -688,10 +696,9 @@ class FileTests(TestCase):
                                        + "/move")
         self.assertEqual(api_response.status_code, 200)
 
-        self.assertEqual(
+        self.assertStatusRegex(
+            Status.err(FilesystemMovedError.regex_string()),
             Status.from_json(api_response.content.decode('utf-8')),
-            Status.err('Error: Filesystem `{}` is already moved.'.format(
-                filesystem.name)),
         )
 
         self.assertIsNone(ws_client.receive())
@@ -705,6 +712,7 @@ class FileTests(TestCase):
 
         restore_response = self.client.get("/api/filesystem/" + str(
             filesystem.id) + "/restore")
+
         self.assertEqual(restore_response.status_code, 200)
         self.assertIsNone(ws_client.receive())
 
@@ -713,16 +721,14 @@ class FileTests(TestCase):
         self.assertEqual(move_response.status_code, 200)
         self.assertIsNone(ws_client.receive())
 
-        self.assertEqual(
+        self.assertStatusRegex(
+            Status.err(SlaveOfflineError),
             Status.from_json(restore_response.content.decode('utf-8')),
-            Status.err('Can not restore {} because {} is offline!'.format(
-                filesystem.name, slave.name)),
         )
 
-        self.assertEqual(
+        self.assertStatusRegex(
+            Status.err(SlaveOfflineError),
             Status.from_json(move_response.content.decode('utf-8')),
-            Status.err('Can not move {} because {} is offline!'.format(
-                filesystem.name, slave.name)),
         )
 
     def test_restore_restored_file(self):
@@ -737,10 +743,9 @@ class FileTests(TestCase):
                                        + "/restore")
         self.assertEqual(api_response.status_code, 200)
 
-        self.assertEqual(
+        self.assertStatusRegex(
+            Status.err(FilesystemNotMovedError),
             Status.from_json(api_response.content.decode('utf-8')),
-            Status.err('Error: filesystem `{}` is not moved.'.format(
-                filesystem.name)),
         )
 
         self.assertIsNone(ws_client.receive())
@@ -776,7 +781,7 @@ class FileTests(TestCase):
         )
 
 
-class ProgramTests(TestCase):
+class ProgramTests(StatusTestCase):
     def test_program_autocomplete(self):
         program = ProgramFactory()
         name_half = int(len(program.name) / 2)
@@ -880,30 +885,6 @@ class ProgramTests(TestCase):
     def test_add_program_unsupported_function(self):
         api_response = self.client.delete('/api/programs')
         self.assertEqual(api_response.status_code, 403)
-
-    def test_wol(self):
-        #  add a test slave
-        slave = SlaveFactory()
-
-        #  non existent slave
-        res = self.client.get(
-            path=reverse('frontend:wol_slave', args=[999999]))
-        self.assertEqual(res.status_code, 500)
-        self.assertEqual(res.json()['status'], 'err')
-        self.assertEqual(
-            res.json()['payload'],
-            "DoesNotExist('Slave matching query does not exist.',)",
-        )
-
-        #  wrong http method
-        res = self.client.post(
-            path=reverse('frontend:wol_slave', args=[slave.id]))
-        self.assertEqual(res.status_code, 403)
-
-        res = self.client.get(
-            path=reverse('frontend:wol_slave', args=[slave.id]))
-        self.assertEqual(res.status_code, 200)
-        self.assertEqual(res.json()['status'], 'ok')
 
     def test_remove_program(self):
         data_set = [
@@ -1060,20 +1041,17 @@ class ProgramTests(TestCase):
         api_response = self.client.post("/api/program/" + str(program.id))
         self.assertEqual(api_response.status_code, 200)
 
-        self.assertEqual(
-            Status.err('Can not start {} because {} is offline!'.format(
-                program.name,
-                slave.name,
-            )),
+        self.assertStatusRegex(
+            Status.err(SlaveOfflineError),
             Status.from_json(api_response.content.decode('utf-8')),
         )
 
         self.assertIsNone(client.receive())
 
     def test_stop_program(self):
-        status = ProgramStatusFactory(running=True)
-        program = status.program
-        slave = program.slave
+        slave = SlaveFactory(online=True)
+        program = ProgramFactory(slave=slave)
+        status = ProgramStatusFactory(program=program, running=True)
 
         slave_ws = WSClient()
         slave_ws.join_group('client_' + str(slave.id))
@@ -1111,14 +1089,16 @@ class ProgramTests(TestCase):
                 args=[9999],
             ))
         self.assertEqual(200, api_response.status_code)
-        self.assertEqual(
-            Status.err('Can not stop unknown Program'),
+
+        self.assertStatusRegex(
+            Status.err(ProgramNotExistError),
             Status.from_json(api_response.content.decode('utf-8')),
         )
 
     def test_stop_program_stopped_program(self):
-        status = ProgramStatusFactory(running=False)
-        program = status.program
+        slave = SlaveFactory(online=True)
+        program = ProgramFactory(slave=slave)
+        status = ProgramStatusFactory(program=program, running=False)
 
         api_response = self.client.get(
             reverse(
@@ -1126,15 +1106,50 @@ class ProgramTests(TestCase):
                 args=[program.id],
             ))
         self.assertEqual(200, api_response.status_code)
-        self.assertEqual(
-            Status.err('Can not stop a not running Program'),
+
+        self.assertStatusRegex(
+            Status.err(ProgramNotRunningError),
             Status.from_json(api_response.content.decode('utf-8')),
         )
 
 
-class SlaveTests(TestCase):
-    def test_unknown_slave_delete(self):
-        response = self.client.delete("/api/slave/0")
+class SlaveTests(StatusTestCase):
+    def test_wol_no_slave(self):
+        #  non existent slave
+        res = self.client.get(path=reverse(
+            'frontend:wol_slave',
+            args=[999999],
+        ))
+
+        self.assertEqual(res.status_code, 200)
+
+        self.assertStatusRegex(
+            Status.err(SlaveNotExistError),
+            Status.from_json(res.content.decode('utf-8')),
+        )
+
+    def test_wol_not_found(self):
+        slave = SlaveFactory()
+        #  wrong http method
+        res = self.client.post(path=reverse(
+            'frontend:wol_slave',
+            args=[slave.id],
+        ))
+
+        self.assertEqual(res.status_code, 403)
+
+    def test_wol_success(self):
+        slave = SlaveFactory()
+        res = self.client.get(path=reverse(
+            'frontend:wol_slave',
+            args=[slave.id],
+        ))
+
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(
+            Status.ok(""),
+            Status.from_json(res.content.decode('utf-8')),
+        )
 
     def test_slave_autocomplete(self):
         slave = SlaveFactory()
