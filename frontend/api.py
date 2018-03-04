@@ -550,26 +550,13 @@ def manage_script(request, script_id):
                 defaults={"name": new_script.name},
             )
 
-            SGFModel.objects.filter(script=script_id).delete()
-            SGPModel.objects.filter(script=script_id).delete()
+            SGFModel.objects.filter(script_id=script_id).delete()
+            SGPModel.objects.filter(script_id=script_id).delete()
 
             for program in new_script.programs:
-                SGPModel.objects.create(
-                    script=new_model,
-                    index=program.index,
-                    program=ProgramModel.objects.get(
-                        name=program.program,
-                        slave=SlaveModel.objects.get(name=program.slave)),
-                )
+                program.save(new_model)
             for filesystem in new_script.filesystems:
-                SGFModel.objects.create(
-                    script=new_model,
-                    index=filesystem.index,
-                    filesystem=FilesystemModel.objects.get(
-                        name=filesystem.filesystem,
-                        slave=SlaveModel.objects.get(name=filesystem.slave)
-                    ),
-                )
+                filesystem.save(new_model)
 
             return StatusResponse(Status.ok(""))
         except KeyError as err:

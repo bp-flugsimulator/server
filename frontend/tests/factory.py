@@ -115,6 +115,7 @@ class SGPFactory(DjangoModelFactory):
         model = SGP
 
     index = FuzzyInteger(0)
+    program = SubFactory(ProgramFactory)
 
 
 class SGFFactory(DjangoModelFactory):
@@ -122,3 +123,4 @@ class SGFFactory(DjangoModelFactory):
         model = SGF
 
     index = FuzzyInteger(0)
+    filesystem = SubFactory(FileFactory)

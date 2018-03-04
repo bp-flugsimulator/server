@@ -16,6 +16,8 @@ from frontend.scripts import Script, ScriptEntryFilesystem, ScriptEntryProgram
 
 from frontend.models import (
     Script as ScriptModel,
+    ScriptGraphPrograms as SGP,
+    ScriptGraphFiles as SGF,
     Slave as SlaveModel,
     Filesystem as FilesystemModel,
     Program as ProgramModel,
@@ -27,6 +29,8 @@ from .factory import (
     SlaveOnlineFactory,
     ProgramFactory,
     ScriptFactory,
+    SGFFactory,
+    SGPFactory,
     FileFactory,
     MovedFileFactory,
     ProgramStatusFactory,
@@ -395,6 +399,43 @@ class ScriptTest(TestCase):
             Status.ok(expected_json),
             Status.from_json(response.content.decode('utf-8')),
         )
+
+    def test_edit_nothing(self):
+        script = ScriptFactory()
+        sgp = SGPFactory(script=script)
+        sgf = SGFFactory(script=script)
+        script_script = Script.from_model(script.id, "str", "str", "str")
+
+        api_response = self.client.put("/api/script/" + str(script.id),
+                                       json.dumps(dict(script_script)))
+        self.assertEqual(api_response.status_code, 200)
+        self.assertEqual(
+            Status.ok(""),
+            Status.from_json(api_response.content.decode('utf-8')),
+        )
+
+    # def test_edit(self):
+    #     script = ScriptFactory()
+    #     sgp = SGPFactory(script=script)
+    #     sgf = SGFFactory(script=script)
+    #     sgf2 = SGFFactory.build(script=script)
+
+    #     script_script = Script.from_model(script.id, "str", "str", "str")
+    #     script_script.filesystems.append(
+    #         ScriptEntryFilesystem(sgf2.index, sgf2.filesystem.name,
+    #                               sgf2.filesystem.slave.name))
+
+    #     api_response = self.client.put("/api/script/" + str(script.id),
+    #                                    json.dumps(dict(script_script)))
+
+    #     new_script_script = Script.from_model(script.id, "str", "str", "str")
+
+    #     self.assertEqual(script_script, new_script_script)
+    #     self.assertEqual(api_response.status_code, 200)
+    #     self.assertEqual(
+    #         Status.ok(""),
+    #         Status.from_json(api_response.content.decode('utf-8')),
+    #     )
 
 
 class FileTests(TestCase):
@@ -939,7 +980,7 @@ class FileTests(TestCase):
                 'source_path': filesystem_exists.source_path,
                 'destination_path': filesystem_exists.destination_path,
                 'slave': str(filesystem_exists.slave.id),
-				'source_type': filesystem_exists.source_type,
+    'source_type': filesystem_exists.source_type,
                 'destination_type': filesystem_exists.destination_type,
             }))
 
