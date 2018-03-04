@@ -25,6 +25,9 @@ function onFormSubmit(id) {
         //Stop form from submitting normally
         event.preventDefault();
 
+	//remove the unload-Hook
+	window.unloadPrompt = false;
+
         //send request to given url and with given method
         //data field contains information about the slave
         $.ajax({
@@ -69,7 +72,7 @@ function handleLogging(id, method, async = true) {
     $.ajax({
         type: 'GET',
         url: '/api/program/' + id + '/log/' + method,
-        async,
+        async: async,
         beforeSend(xhr) {
             xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
         },
@@ -618,6 +621,7 @@ $(document).ready(function () {
         //clear error messages
         clearErrorMessages(slaveForm);
         slaveModal.modal('toggle');
+
     });
 
     //opens the slaveModal to modify an existing slave
@@ -668,6 +672,50 @@ $(document).ready(function () {
 
     // slaveForm Handler
     $('#slaveForm').submit(onFormSubmit('slaveForm'));
+
+    //register load and unload hooks for modals
+    let hookModals = ['programModal', 'slaveModal', 'filesystemModal'];
+    for (let modal of hookModals){
+        $('#'+modal).on('show.bs.modal', function(e) {
+            window.unloadPrompt = true;
+        });
+        $('#'+modal).on('hidden.bs.modal', function(e) {
+                $('#unsafedChangesWarning').data('parentModal', e.target.id);
+                $('#unsafedChangesWarning').modal('toggle');
+                window.unloadPrompt = false;
+    });
+    }
+
+    $('#keepParentModal').click(function(e) {
+        let parentModal = $('#unsafedChangesWarning').data('parentModal');
+        $('#unsafedChangesWarning').modal('toggle');
+        $('#' + parentModal).modal('toggle');
+    });
+
+});
+
+// global variable which determines the usage of the
+// unload prompt
+var unloadPrompt = false;
+
+// if the site gets reloaded/closed all logging activity gets stopped
+function logUnloadHandler() {
+    $('.program-action-handle-logging').each(function () {
+        if ($(this).data('enabled')) {
+            let id = $(this).data('program-id');
+            handleLogging(id, 'disable', false);
+            $(this).data('enabled', false);
+        }
+    });
+}
+
+$(window).on('beforeunload', function (e) {
+    logUnloadHandler();
+    if (this.unloadPrompt) {
+        let returnText = 'Are you sure you want to leave?';
+        e.returnValue = returnText;
+        return returnText;
+    }
 });
 
 // if the site gets reloaded/closed all logging activity gets stopped

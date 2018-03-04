@@ -3,6 +3,10 @@
 /* global $, JsonForm, getCookie, Status, modalDeleteAction, notify */
 /* exported loadScript, newScript */
 
+// global variable, which indicates whether
+// an unload warning should be triggered
+var unloadWarning = false;
+
 function promiseQuery(url) {
     return new Promise(function (resolve, reject) {
         $.ajax({
@@ -92,6 +96,19 @@ $(document).ready(function () {
             $('.script-tabbutton-link').each(function (idx, val) {
                 $(val).parent('li').css('background-color', 'transparent');
             });
+            // Create a change listener on all available input fields
+            $(':input').change(function(e) {
+                unloadWarning = true;
+                removeAllChangeListener();
+            });
+            $('select').change(function(e) {
+                unloadWarning = true;
+                removeAllChangeListener();
+            });
+            $('.inline-add-button').on('click', function(e) {
+                unloadWarning = true;
+            });
+
 
             // Change the color of the current tab
             $(this).parent('li').css('background-color', '#dbdbdc');
@@ -112,6 +129,8 @@ $(document).ready(function () {
     });
 
     $('.script-action-add-save').click(function () {
+	window.unloadWarning = false;
+
         let id = $(this).attr('data-editor-id');
         let editor = JsonForm.dumps($('#jsoneditor_' + id));
         let string = JSON.stringify(editor);
@@ -158,4 +177,22 @@ $(document).ready(function () {
         deleteWarning.data('sqlId', id);
         deleteWarning.modal('toggle');
     });
+
+    $('.inline-add-button').on('click', function(e) {
+        unloadWarning = true;
+    });
 });
+
+
+$(window).on('beforeunload', function (e) {
+	if (this.unloadWarning) {
+            let returnText = 'Are you sure you want to leave?';
+            e.returnValue = returnText;
+            return returnText;
+	}
+});
+
+function removeAllChangeListener(){
+        $(':input').off('change');
+        $('select').off('change');
+}
