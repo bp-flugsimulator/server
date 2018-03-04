@@ -419,8 +419,8 @@ class FileTests(TestCase):
     def test_move_file_status_error(self):
         filesystem = FileFactory()
 
-        api_response = self.client.get("/api/filesystem/" + str(filesystem.id)
-                                       + "/move")
+        api_response = self.client.get(
+            "/api/filesystem/" + str(filesystem.id) + "/move")
         self.assertEqual(api_response.status_code, 200)
 
         self.assertEqual(
@@ -439,8 +439,8 @@ class FileTests(TestCase):
         ws_client = WSClient()
         ws_client.join_group('client_' + str(slave.id))
 
-        api_response = self.client.get("/api/filesystem/" + str(filesystem.id)
-                                       + "/move")
+        api_response = self.client.get(
+            "/api/filesystem/" + str(filesystem.id) + "/move")
         self.assertEqual(api_response.status_code, 200)
 
         self.assertEqual(
@@ -469,8 +469,8 @@ class FileTests(TestCase):
         ws_client = WSClient()
         ws_client.join_group('client_' + str(slave.id))
 
-        api_response = self.client.get("/api/filesystem/" + str(filesystem.id)
-                                       + "/move")
+        api_response = self.client.get(
+            "/api/filesystem/" + str(filesystem.id) + "/move")
         self.assertEqual(api_response.status_code, 200)
 
         self.assertEqual(
@@ -513,8 +513,8 @@ class FileTests(TestCase):
         ws_client = WSClient()
         ws_client.join_group('client_' + str(slave.id))
 
-        api_response = self.client.get("/api/filesystem/" + str(filesystem.id)
-                                       + "/move")
+        api_response = self.client.get(
+            "/api/filesystem/" + str(filesystem.id) + "/move")
         self.assertEqual(api_response.status_code, 200)
 
         self.assertEqual(
@@ -556,8 +556,8 @@ class FileTests(TestCase):
     def test_delete_file(self):
         filesystem = FileFactory()
 
-        api_response = self.client.delete('/api/filesystem/' + str(
-            filesystem.id))
+        api_response = self.client.delete(
+            '/api/filesystem/' + str(filesystem.id))
         self.assertEqual(api_response.status_code, 200)
         self.assertEquals(api_response.json()['status'], 'ok')
         self.assertFalse(
@@ -569,11 +569,11 @@ class FileTests(TestCase):
 
         response = self.client.get("/api/filesystems?q=")
         self.assertContains(response, filesystem.name)
-        response = self.client.get("/api/filesystems?q=" + str(
-            filesystem.name[:name_half]))
+        response = self.client.get(
+            "/api/filesystems?q=" + str(filesystem.name[:name_half]))
         self.assertContains(response, filesystem.name)
-        response = self.client.get("/api/filesystems?q=" + str(
-            filesystem.name))
+        response = self.client.get(
+            "/api/filesystems?q=" + str(filesystem.name))
         self.assertContains(response, filesystem.name)
 
     def test_add_file(self):
@@ -788,8 +788,8 @@ class FileTests(TestCase):
         ws_client = WSClient()
         ws_client.join_group('client_' + str(slave.id))
 
-        api_response = self.client.get("/api/filesystem/" + str(filesystem.id)
-                                       + "/move")
+        api_response = self.client.get(
+            "/api/filesystem/" + str(filesystem.id) + "/move")
         self.assertEqual(api_response.status_code, 200)
 
         self.assertEqual(
@@ -807,13 +807,13 @@ class FileTests(TestCase):
         ws_client = WSClient()
         ws_client.join_group('client_' + str(slave.id))
 
-        restore_response = self.client.get("/api/filesystem/" + str(
-            filesystem.id) + "/restore")
+        restore_response = self.client.get(
+            "/api/filesystem/" + str(filesystem.id) + "/restore")
         self.assertEqual(restore_response.status_code, 200)
         self.assertIsNone(ws_client.receive())
 
-        move_response = self.client.get("/api/filesystem/" + str(
-            filesystem.id) + "/move")
+        move_response = self.client.get(
+            "/api/filesystem/" + str(filesystem.id) + "/move")
         self.assertEqual(move_response.status_code, 200)
         self.assertIsNone(ws_client.receive())
 
@@ -837,8 +837,8 @@ class FileTests(TestCase):
         ws_client = WSClient()
         ws_client.join_group('client_' + str(slave.id))
 
-        api_response = self.client.get("/api/filesystem/" + str(filesystem.id)
-                                       + "/restore")
+        api_response = self.client.get(
+            "/api/filesystem/" + str(filesystem.id) + "/restore")
         self.assertEqual(api_response.status_code, 200)
 
         self.assertEqual(
@@ -857,8 +857,8 @@ class FileTests(TestCase):
         ws_client = WSClient()
         ws_client.join_group('client_' + str(slave.id))
 
-        api_response = self.client.get("/api/filesystem/" + str(filesystem.id)
-                                       + "/restore")
+        api_response = self.client.get(
+            "/api/filesystem/" + str(filesystem.id) + "/restore")
         self.assertEqual(api_response.status_code, 200)
 
         self.assertEqual(
@@ -878,6 +878,7 @@ class FileTests(TestCase):
             ),
             Command.from_json(json.dumps(ws_client.receive())),
         )
+
     def test_edit_filesystem_wrong_http_method(self):
         api_response = self.client.get("/api/filesystem/0")
         self.assertEqual(api_response.status_code, 403)
@@ -939,12 +940,18 @@ class FileTests(TestCase):
         api_response = self.client.put(
             "/api/filesystem/" + str(filesystem_edit.id),
             data=urlencode({
-                'name': filesystem_exists.name,
-                'source_path': filesystem_exists.source_path,
-                'destination_path': filesystem_exists.destination_path,
-                'slave': str(filesystem_exists.slave.id),
-				'source_type': filesystem_exists.source_type,
-                'destination_type': filesystem_exists.destination_type,
+                'name':
+                filesystem_exists.name,
+                'source_path':
+                filesystem_exists.source_path,
+                'destination_path':
+                filesystem_exists.destination_path,
+                'slave':
+                str(filesystem_exists.slave.id),
+                'source_type':
+                filesystem_exists.source_type,
+                'destination_type':
+                filesystem_exists.destination_type,
             }))
 
         self.assertEqual(api_response.status_code, 200)
@@ -964,8 +971,8 @@ class ProgramTests(TestCase):
 
         response = self.client.get("/api/programs?q=")
         self.assertContains(response, program.name)
-        response = self.client.get("/api/programs?q=" + str(
-            program.name[:name_half]))
+        response = self.client.get(
+            "/api/programs?q=" + str(program.name[:name_half]))
         self.assertContains(response, program.name)
         response = self.client.get("/api/programs?q=" + str(program.name))
         self.assertContains(response, program.name)
@@ -1005,13 +1012,14 @@ class ProgramTests(TestCase):
         for _ in range(2000):
             long_str += 'a'
 
-        api_response = self.client.post('/api/programs', {
-            'name': long_str,
-            'path': long_str,
-            'arguments': long_str,
-            'slave': str(slave.id),
-            'start_time': -1,
-        })
+        api_response = self.client.post(
+            '/api/programs', {
+                'name': long_str,
+                'path': long_str,
+                'arguments': long_str,
+                'slave': str(slave.id),
+                'start_time': -1,
+            })
 
         self.assertEqual(api_response.status_code, 200)
         self.assertEqual(
@@ -1026,13 +1034,14 @@ class ProgramTests(TestCase):
     def test_add_program_fail_not_unique(self):
         slave = SlaveFactory()
 
-        api_response = self.client.post('/api/programs', {
-            'name': 'name',
-            'path': 'path',
-            'arguments': '',
-            'slave': str(slave.id),
-            'start_time': -1,
-        })
+        api_response = self.client.post(
+            '/api/programs', {
+                'name': 'name',
+                'path': 'path',
+                'arguments': '',
+                'slave': str(slave.id),
+                'start_time': -1,
+            })
 
         self.assertEqual(api_response.status_code, 200)
         self.assertEqual(
@@ -1041,13 +1050,14 @@ class ProgramTests(TestCase):
         )
 
         # try to add program with the same name
-        api_response = self.client.post('/api/programs', {
-            'name': 'name',
-            'path': 'path',
-            'arguments': '',
-            'slave': str(slave.id),
-            'start_time': -1,
-        })
+        api_response = self.client.post(
+            '/api/programs', {
+                'name': 'name',
+                'path': 'path',
+                'arguments': '',
+                'slave': str(slave.id),
+                'start_time': -1,
+            })
 
         self.assertEqual(api_response.status_code, 200)
         self.assertEqual(
@@ -1107,8 +1117,8 @@ class ProgramTests(TestCase):
 
         #  make a request to delete the program entry
         for program in data_set:
-            api_response = self.client.delete('/api/program/' + str(
-                program.id))
+            api_response = self.client.delete(
+                '/api/program/' + str(program.id))
             self.assertEqual(api_response.status_code, 200)
             self.assertEquals(api_response.json()['status'], 'ok')
             self.assertFalse(
@@ -1260,10 +1270,11 @@ class ProgramTests(TestCase):
         slave_ws.join_group('client_' + str(slave.id))
 
         # test api
-        api_response = self.client.get(path=reverse(
-            'frontend:stop_program',
-            args=[program.id],
-        ))
+        api_response = self.client.get(
+            path=reverse(
+                'frontend:stop_program',
+                args=[program.id],
+            ))
 
         self.assertEqual(200, api_response.status_code)
         self.assertEqual(
@@ -1391,8 +1402,8 @@ class SlaveTests(TestCase):
 
         response = self.client.get("/api/slaves?q=")
         self.assertContains(response, slave.name)
-        response = self.client.get("/api/slaves?q=" + str(
-            slave.name[:name_half]))
+        response = self.client.get(
+            "/api/slaves?q=" + str(slave.name[:name_half]))
         self.assertContains(response, slave.name)
         response = self.client.get("/api/slaves?q=" + str(slave.name))
         self.assertContains(response, slave.name)
@@ -1545,10 +1556,11 @@ class SlaveTests(TestCase):
         ws_client.join_group('client_' + str(slave.id))
 
         #  make request
-        api_response = self.client.get(path=reverse(
-            'frontend:shutdown_slave',
-            args=[slave.id],
-        ))
+        api_response = self.client.get(
+            path=reverse(
+                'frontend:shutdown_slave',
+                args=[slave.id],
+            ))
 
         self.assertEqual(api_response.status_code, 200)
         self.assertEqual(
@@ -1670,13 +1682,15 @@ class SlaveTests(TestCase):
         sgp = SGPFactory(script=script)
         sgf = SGFFactory(script=script)
 
-        resp = self.client.get(reverse('frontend:copy_script', args=[str(script.id)]))
+        resp = self.client.get(
+            reverse('frontend:copy_script', args=[str(script.id)]))
 
         self.assertEqual(
             Status.ok(''),
             Status.from_json(resp.content.decode('utf-8')),
         )
-        self.assertTrue(ScriptModel.objects.filter(name=script.name + '_copy').exists())
+        self.assertTrue(
+            ScriptModel.objects.filter(name=script.name + '_copy').exists())
 
         self.assertTrue(SGF.objects.filter(script=script).exists())
         sgf_copy = SGF.objects.get(script=script)
@@ -1690,24 +1704,29 @@ class SlaveTests(TestCase):
 
     def test_copy_script_copy_already_exists(self):
         script = ScriptFactory()
-        resp = self.client.get(reverse('frontend:copy_script', args=[str(script.id)]))
+        resp = self.client.get(
+            reverse('frontend:copy_script', args=[str(script.id)]))
         self.assertEqual(
             Status.ok(''),
             Status.from_json(resp.content.decode('utf-8')),
         )
-        resp = self.client.get(reverse('frontend:copy_script', args=[str(script.id)]))
+        resp = self.client.get(
+            reverse('frontend:copy_script', args=[str(script.id)]))
 
-        for i in range(1,10):
-            resp = self.client.get(reverse('frontend:copy_script', args=[str(script.id)]))
+        for i in range(1, 10):
+            resp = self.client.get(
+                reverse('frontend:copy_script', args=[str(script.id)]))
             self.assertEqual(
                 Status.ok(''),
                 Status.from_json(resp.content.decode('utf-8')),
             )
-            self.assertTrue(ScriptModel.objects.filter(name=script.name + '_copy_' + str(i)).exists())
-
+            self.assertTrue(
+                ScriptModel.objects.filter(
+                    name=script.name + '_copy_' + str(i)).exists())
 
     def test_copy_script_unknown_script(self):
-        resp = self.client.get(reverse('frontend:copy_script', args=['9999999']))
+        resp = self.client.get(
+            reverse('frontend:copy_script', args=['9999999']))
 
         self.assertEqual(
             Status.err('Script does not exist.'),
@@ -1715,5 +1734,6 @@ class SlaveTests(TestCase):
         )
 
     def test_copy_script_unkown_http_request(self):
-        api_response = self.client.delete(reverse('frontend:copy_script', args=['0']))
+        api_response = self.client.delete(
+            reverse('frontend:copy_script', args=['0']))
         self.assertEqual(403, api_response.status_code)

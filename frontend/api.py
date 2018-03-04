@@ -456,6 +456,7 @@ def manage_script(request, script_id):
     else:
         return HttpResponseForbidden()
 
+
 def copy_script(request, script_id):
     """
     Process GET request which constructs a deep copy of a script.
@@ -480,8 +481,6 @@ def copy_script(request, script_id):
             return StatusResponse(Status.err("Script does not exist."))
     else:
         return HttpResponseForbidden()
-
-
 
 
 def run_script(request, script_id):
@@ -811,8 +810,9 @@ def filesystem_entry(request, filesystem_id):
                 return StatusResponse(Status.ok(''))
             except ValidationError as _:
                 error_dict = {
-                    'name':
-                    ['Filesystem with this Name already exists on this Client.']
+                    'name': [
+                        'Filesystem with this Name already exists on this Client.'
+                    ]
                 }
                 return StatusResponse(Status.err(error_dict))
         else:

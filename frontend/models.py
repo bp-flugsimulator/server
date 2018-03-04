@@ -519,11 +519,18 @@ class Script(Model):
             else:
                 copy = Script(name=name)
 
-        for file_entry in  ScriptGraphFiles.objects.filter(script_id=self.id):
-            ScriptGraphFiles(script=copy, index=file_entry.index, filesystem=file_entry.filesystem)
+        for file_entry in ScriptGraphFiles.objects.filter(script_id=self.id):
+            ScriptGraphFiles(
+                script=copy,
+                index=file_entry.index,
+                filesystem=file_entry.filesystem)
 
-        for program_entry in  ScriptGraphPrograms.objects.filter(script_id=self.id):
-            ScriptGraphPrograms(script=copy, index=program_entry.index, program=program_entry.program)
+        for program_entry in ScriptGraphPrograms.objects.filter(
+                script_id=self.id):
+            ScriptGraphPrograms(
+                script=copy,
+                index=program_entry.index,
+                program=program_entry.program)
 
         return copy
 

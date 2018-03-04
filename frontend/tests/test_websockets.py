@@ -96,9 +96,7 @@ class WebsocketTests(TestCase):
         ws_client.send_and_consume(
             'websocket.connect',
             path='/commands',
-            content={
-                'client': [slave.ip_address, slave.mac_address]
-            })
+            content={'client': [slave.ip_address, slave.mac_address]})
 
         # connect webinterface on /notifications
         webinterface = WSClient()
@@ -148,9 +146,7 @@ class WebsocketTests(TestCase):
         ws_client.send_and_consume(
             'websocket.connect',
             path='/commands',
-            content={
-                'client': [slave.ip_address, slave.mac_address]
-            })
+            content={'client': [slave.ip_address, slave.mac_address]})
 
         # connect webinterface on /notifications
         webinterface = WSClient()
@@ -277,9 +273,7 @@ class WebsocketTests(TestCase):
         ws_client.send_and_consume(
             'websocket.receive',
             path='/notifications',
-            content={
-                'text': error_status.to_json()
-            })
+            content={'text': error_status.to_json()})
 
         self.assertFalse(SlaveModel.objects.get(id=slave.id).is_online)
 

@@ -17,6 +17,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='file',
             name='hash_value',
-            field=models.CharField(blank=True, max_length=32, null=True, unique=True),
+            field=models.CharField(
+                blank=True, max_length=32, null=True, unique=True),
         ),
     ]
