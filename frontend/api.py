@@ -451,25 +451,47 @@ def manage_script(request, script_id):
 
     elif request.method == 'PUT':
         try:
-            script = Script.from_json(request.body.decode('utf-8'))
-            old_script = ScriptModel.objects.get(id=script_id)
-            old_script.delete()
-            script.save()
+            script_id = int(script_id)
+            new_script = Script.from_json(request.body.decode('utf-8'))
+            old_script =  Script.from_model(script_id, 'str', 'str', 'str')
+            print(new_script.to_json())
+            print(old_script.to_json())
+
+            (new_model, _) = ScriptModel.objects.update_or_create(
+                id=script_id,
+                defaults={"name": new_script.name},
+            )
+
+            SGFModel.objects.filter(script=script_id).delete()
+            SGPModel.objects.filter(script=script_id).delete()
+
+            for program in new_script.programs:
+                SGPModel.objects.create(
+                    script=new_model,
+                    index=program.index,
+                    program=ProgramModel.objects.get(name=program.program),
+                )
+            for filesystem in new_script.filesystems:
+                SGFModel.objects.create(
+                    script=new_model,
+                    index=filesystem.index,
+                    filesystem=FilesystemModel.objects.get(
+                        name=filesystem.filesystem),
+                )
+
             return StatusResponse(Status.ok(""))
         except KeyError as err:
-            old_script.save()
             return StatusResponse(
                 Status.err("Could not find required key {}".format(
                     err.args[0])))
         except TypeError as err:
-            old_script.save()
             return StatusResponse(Status.err(str(err)))
         except ValueError as err:
-            old_script.save()
             return StatusResponse(Status.err(str(err)))
         except ValidationError as err:
-            old_script.save()
             return StatusResponse(Status.err('; '.join(err.messages)))
+        except IntegrityError as err:
+            return StatusResponse(Status.err(str(err)))
 
     elif request.method == 'DELETE':
         ScriptModel.objects.filter(id=script_id).delete()
