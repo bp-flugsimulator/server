@@ -677,18 +677,18 @@ $(document).ready(function () {
     let hookModals = ['programModal', 'slaveModal', 'filesystemModal'];
     for (let modal of hookModals){
         $('#'+modal).on('show.bs.modal', function(e) {
-			window.unloadPrompt = true;
+            window.unloadPrompt = true;
         });
         $('#'+modal).on('hidden.bs.modal', function(e) {
                 $('#unsafedChangesWarning').data('parentModal', e.target.id);
                 $('#unsafedChangesWarning').modal('toggle');
                 window.unloadPrompt = false;
-		});
+    });
     }
 
     $('#keepParentModal').click(function(e) {
         let parentModal = $('#unsafedChangesWarning').data('parentModal');
-	      $('#unsafedChangesWarning').modal('toggle');
+        $('#unsafedChangesWarning').modal('toggle');
         $('#' + parentModal).modal('toggle');
     });
 
