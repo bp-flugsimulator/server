@@ -37,6 +37,7 @@ function addTypeEntry(container, type, querySlaves, queryType, context = {}) {
 
             // get first element (-> prepend)
             let box = entryContainer.children().first();
+            console.log(box);
 
             // set .onClick for the remove button
             box.find('.script-' + type + '-remove').on('click', function () {
@@ -73,11 +74,11 @@ function addTypeEntry(container, type, querySlaves, queryType, context = {}) {
 
 const JsonForm = {
     init(container, options) {
-        $('.script-program-add').on('click', function () {
+        $(container).find('.script-program-add').on('click', function () {
             addTypeEntry(container, 'program', options.querySlavesPrograms, options.queryPrograms);
         });
 
-        $('.script-filesystem-add').on('click', function () {
+        $(container).find('.script-filesystem-add').on('click', function () {
             addTypeEntry(container, 'filesystem', options.querySlavesFiles, options.queryFilesystems);
         });
     },
