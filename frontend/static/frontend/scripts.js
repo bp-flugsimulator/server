@@ -3,6 +3,10 @@
 /* global $, JsonForm, getCookie, Status, modalDeleteAction, notify */
 /* exported loadScript, newScript */
 
+// global variable, which indicates whether
+// an unload warning should be triggered
+var unloadWarning = false;
+
 function promiseQuery(url) {
     return new Promise(function (resolve, reject) {
         $.ajax({
@@ -174,9 +178,6 @@ $(document).ready(function () {
     });
 });
 
-// global variable, which indicates whether
-// an unload warning should be triggered
-var unloadWarning = false;
 
 $(window).on('beforeunload', function (e) {
 	if (this.unloadWarning) {
@@ -187,6 +188,6 @@ $(window).on('beforeunload', function (e) {
 });
 
 function removeAllChangeListener(){
-        $(':input').off( "change" );
-        $('select').off( "change" );
+        $(':input').off('change');
+        $('select').off('change');
 }

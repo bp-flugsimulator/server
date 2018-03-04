@@ -680,9 +680,9 @@ $(document).ready(function () {
 			window.unloadPrompt = true;
         });
         $('#'+modal).on('hidden.bs.modal', function(e) {
-	    $('#unsafedChangesWarning').data('parentModal', e.target.id);
-	    $('#unsafedChangesWarning').modal('toggle');
-            window.unloadPrompt = false;
+                $('#unsafedChangesWarning').data('parentModal', e.target.id);
+                $('#unsafedChangesWarning').modal('toggle');
+                window.unloadPrompt = false;
 		});
     }
 
