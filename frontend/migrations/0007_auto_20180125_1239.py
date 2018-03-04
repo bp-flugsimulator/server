@@ -14,7 +14,8 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='file',
             name='command_uuid',
-            field=models.CharField(blank=True, max_length=32, null=True, unique=True),
+            field=models.CharField(
+                blank=True, max_length=32, null=True, unique=True),
         ),
         migrations.AddField(
             model_name='file',
@@ -34,7 +35,9 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='program',
             name='arguments',
-            field=models.TextField(blank=True, validators=[frontend.models.validate_argument_list]),
+            field=models.TextField(
+                blank=True,
+                validators=[frontend.models.validate_argument_list]),
         ),
         migrations.AlterField(
             model_name='program',

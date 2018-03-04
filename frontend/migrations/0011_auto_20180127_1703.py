@@ -12,6 +12,7 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AlterUniqueTogether(
             name='file',
-            unique_together={('name', 'slave'), ('source_path', 'destination_path', 'slave')},
+            unique_together={('name', 'slave'), ('source_path',
+                                                 'destination_path', 'slave')},
         ),
     ]

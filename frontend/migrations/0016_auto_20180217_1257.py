@@ -14,16 +14,36 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Filesystem',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id',
+                 models.AutoField(
+                     auto_created=True,
+                     primary_key=True,
+                     serialize=False,
+                     verbose_name='ID')),
                 ('name', models.CharField(max_length=200)),
                 ('source_path', models.TextField()),
                 ('destination_path', models.TextField()),
-                ('command_uuid', models.CharField(blank=True, max_length=32, null=True, unique=True)),
-                ('hash_value', models.CharField(blank=True, default='', max_length=32)),
-                ('error_code', models.CharField(blank=True, default='', max_length=1000)),
-                ('source_type', models.CharField(choices=[('file', 'File'), ('dir', 'Directory')], default='file', max_length=4)),
-                ('destination_type', models.CharField(choices=[('file', 'File'), ('dir', 'Directory')], default='file', max_length=4)),
-                ('slave', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='frontend.Slave')),
+                ('command_uuid',
+                 models.CharField(
+                     blank=True, max_length=32, null=True, unique=True)),
+                ('hash_value',
+                 models.CharField(blank=True, default='', max_length=32)),
+                ('error_code',
+                 models.CharField(blank=True, default='', max_length=1000)),
+                ('source_type',
+                 models.CharField(
+                     choices=[('file', 'File'), ('dir', 'Directory')],
+                     default='file',
+                     max_length=4)),
+                ('destination_type',
+                 models.CharField(
+                     choices=[('file', 'File'), ('dir', 'Directory')],
+                     default='file',
+                     max_length=4)),
+                ('slave',
+                 models.ForeignKey(
+                     on_delete=django.db.models.deletion.CASCADE,
+                     to='frontend.Slave')),
             ],
         ),
         migrations.AlterUniqueTogether(
@@ -37,13 +57,15 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='scriptgraphfiles',
             name='file',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='frontend.Filesystem'),
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                to='frontend.Filesystem'),
         ),
-        migrations.DeleteModel(
-            name='File',
-        ),
+        migrations.DeleteModel(name='File', ),
         migrations.AlterUniqueTogether(
             name='filesystem',
-            unique_together={('name', 'slave'), ('source_path', 'destination_path', 'slave', 'source_type', 'destination_type')},
+            unique_together={('name', 'slave'),
+                             ('source_path', 'destination_path', 'slave',
+                              'source_type', 'destination_type')},
         ),
     ]
