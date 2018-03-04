@@ -42,10 +42,6 @@ const options = {
     queryFilesystems(slave) {
         return promiseQuery('/api/filesystems?slave_str=true&slave=' + slave);
     },
-    onChange: function() {
-        window.unloadWarning = true;
-    }
-
 };
 
 var createEditor = function (json, id) {
@@ -96,6 +92,19 @@ $(document).ready(function () {
             $('.script-tabbutton-link').each(function (idx, val) {
                 $(val).parent('li').css('background-color', 'transparent');
             });
+            // Create a change listener on all available input fields
+            $(':input').change(function(e) {
+                unloadWarning = true;
+                removeAllChangeListener();
+            });
+            $('select').change(function(e) {
+                unloadWarning = true;
+                removeAllChangeListener();
+            });
+            $('.inline-add-button').on('click', function(e) {
+                unloadWarning = true;
+            });
+
 
             // Change the color of the current tab
             $(this).parent('li').css('background-color', '#dbdbdc');
@@ -111,6 +120,8 @@ $(document).ready(function () {
     });
 
     $('.script-action-add-save').click(function () {
+	window.unloadWarning = false;
+
         let id = $(this).attr('data-editor-id');
         let editor = JsonForm.dumps($('#jsoneditor_' + id));
         let string = JSON.stringify(editor);
@@ -157,6 +168,10 @@ $(document).ready(function () {
         deleteWarning.data('sqlId', id);
         deleteWarning.modal('toggle');
     });
+
+    $('.inline-add-button').on('click', function(e) {
+        unloadWarning = true;
+    });
 });
 
 // global variable, which indicates whether
@@ -170,3 +185,8 @@ $(window).on('beforeunload', function (e) {
             return returnText;
 	}
 });
+
+function removeAllChangeListener(){
+        $(':input').off( "change" );
+        $('select').off( "change" );
+}
