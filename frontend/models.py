@@ -19,7 +19,6 @@ from django.db.models import (
     Count,
 )
 
-from django.db.utils import IntegrityError
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from channels import Group
