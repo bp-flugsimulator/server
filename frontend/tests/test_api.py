@@ -461,8 +461,8 @@ class ScriptTest(TestCase):
         self.assertEqual(403, api_response.status_code)
     def test_edit_nothing(self):
         script = ScriptFactory()
-        sgp = SGPFactory(script=script)
-        sgf = SGFFactory(script=script)
+        SGPFactory(script=script)
+        SGFFactory(script=script)
         script_script = Script.from_model(script.id, "str", "str", "str")
 
         api_response = self.client.put("/api/script/" + str(script.id),
@@ -475,8 +475,8 @@ class ScriptTest(TestCase):
 
     def test_edit(self):
         script = ScriptFactory()
-        sgp = SGPFactory(script=script)
-        sgf = SGFFactory(script=script)
+        SGPFactory(script=script)
+        SGFFactory(script=script)
         slave2 = SlaveFactory()
         filesystem2 = FileFactory(slave=slave2)
         sgf2 = SGFFactory.build(script=script, filesystem=filesystem2)
@@ -501,8 +501,8 @@ class ScriptTest(TestCase):
     def test_edit_name_excists(self):
         script = ScriptFactory()
         script2 = ScriptFactory()
-        sgp = SGPFactory(script=script)
-        sgf = SGFFactory(script=script)
+        SGPFactory(script=script)
+        SGFFactory(script=script)
         script_script = Script.from_model(script.id, "str", "str", "str")
 
         script_script.name = script2.name
