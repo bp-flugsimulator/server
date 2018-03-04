@@ -121,16 +121,27 @@ class SchedulerTests(TestCase):
             SchedulerStatus.WAITING_FOR_PROGRAMS_FILESYSTEMS,
         )
 
-        self.assertEqual(
-            Status.ok({
-                'script_status': 'next_step',
-                'index': 0,
-                'last_index': -1,
-                'start_time': 0,
-                'script_id': self.script.id,
-            }),
-            Status.from_json(json.dumps(webinterface.receive())),
-        )
+        msg1 = Status.from_json(json.dumps(webinterface.receive()))
+        msg2 = Status.from_json(json.dumps(webinterface.receive()))
+
+        expct1 = Status.ok({
+            'script_status': 'next_step',
+            'index': 0,
+            'last_index': -1,
+            'start_time': 0,
+            'script_id': self.script.id,
+        })
+
+        expct2 = Status.ok({
+            'program_status': 'started',
+            'pid': self.prog1.id,
+        })
+
+        if msg1 != expct1 and msg1 != expct2:
+            raise ValueError(msg1, expct1, expct2)
+
+        if msg2 != expct1 and msg2 != expct2:
+            raise ValueError(msg2, expct1, expct2)
 
         self.sched._Scheduler__state = SchedulerStatus.NEXT_STEP
         self.sched._Scheduler__state_next()
@@ -140,16 +151,27 @@ class SchedulerTests(TestCase):
             SchedulerStatus.WAITING_FOR_PROGRAMS_FILESYSTEMS,
         )
 
-        self.assertEqual(
-            Status.ok({
-                'script_status': 'next_step',
-                'index': 2,
-                'last_index': 0,
-                'start_time': 1,
-                'script_id': self.script.id,
-            }),
-            Status.from_json(json.dumps(webinterface.receive())),
-        )
+        msg1 = Status.from_json(json.dumps(webinterface.receive()))
+        msg2 = Status.from_json(json.dumps(webinterface.receive()))
+
+        expct1 = Status.ok({
+            'script_status': 'next_step',
+            'index': 2,
+            'last_index': 0,
+            'start_time': 1,
+            'script_id': self.script.id,
+        })
+
+        expct2 = Status.ok({
+            'program_status': 'started',
+            'pid': self.prog2.id,
+        })
+
+        if msg1 != expct1 and msg1 != expct2:
+            raise ValueError(msg1, expct1, expct2)
+
+        if msg2 != expct1 and msg2 != expct2:
+            raise ValueError(msg2, expct1, expct2)
 
         self.sched._Scheduler__state = SchedulerStatus.NEXT_STEP
         self.sched._Scheduler__state_next()
@@ -162,7 +184,7 @@ class SchedulerTests(TestCase):
         self.assertEqual(
             Status.ok({
                 'script_status': 'next_step',
-                'index': 3,
+                'index': -1,
                 'last_index': 2,
                 'start_time': 0,
                 'script_id': self.script.id,

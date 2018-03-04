@@ -367,6 +367,9 @@ class Scheduler:
                     index=self.__index,
             ):
                 try:
+                    if sgp.program.start_time > max_start_time:
+                        max_start_time = sgp.program.start_time
+
                     prog_start(sgp.program)
                     LOGGER.info("Started program `%s`", sgp.program.name)
                 except ProgramRunningError as err:
