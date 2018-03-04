@@ -150,7 +150,7 @@ class SchedulerTests(TestCase):
 
     #     self.assertEqual(
     #         self.sched._Scheduler__state,
-    #         SchedulerStatus.WAITING_FOR_PROGRAMS,
+    #         SchedulerStatus.WAITING_FOR_PROGRAMS_FILESYSTEMS,
     #     )
 
     #     self.assertEqual(
@@ -169,7 +169,7 @@ class SchedulerTests(TestCase):
 
     #     self.assertEqual(
     #         self.sched._Scheduler__state,
-    #         SchedulerStatus.WAITING_FOR_PROGRAMS,
+    #         SchedulerStatus.WAITING_FOR_PROGRAMS_FILESYSTEMS,
     #     )
 
     #     self.assertEqual(
@@ -205,7 +205,7 @@ class SchedulerTests(TestCase):
     def test_state_waiting_programs(self):
         self.sched._Scheduler__script = self.script.id
         self.sched._Scheduler__index = 0
-        self.sched._Scheduler__state = SchedulerStatus.WAITING_FOR_PROGRAMS
+        self.sched._Scheduler__state = SchedulerStatus.WAITING_FOR_PROGRAMS_FILESYSTEMS
 
         ProgramStatusModel(
             running=True,
@@ -222,7 +222,7 @@ class SchedulerTests(TestCase):
 
         self.assertEqual(
             self.sched._Scheduler__state,
-            SchedulerStatus.WAITING_FOR_PROGRAMS,
+            SchedulerStatus.WAITING_FOR_PROGRAMS_FILESYSTEMS,
         )
 
         ProgramStatusModel.objects.filter(program=self.prog1).update(
@@ -236,7 +236,7 @@ class SchedulerTests(TestCase):
         )
 
         self.sched._Scheduler__index = 2
-        self.sched._Scheduler__state = SchedulerStatus.WAITING_FOR_PROGRAMS
+        self.sched._Scheduler__state = SchedulerStatus.WAITING_FOR_PROGRAMS_FILESYSTEMS
 
         ProgramStatusModel.objects.filter(program=self.prog2).update(
             running=False, )
@@ -251,7 +251,7 @@ class SchedulerTests(TestCase):
     def test_state_waiting_programs_error(self):
         self.sched._Scheduler__script = self.script.id
         self.sched._Scheduler__index = 0
-        self.sched._Scheduler__state = SchedulerStatus.WAITING_FOR_PROGRAMS
+        self.sched._Scheduler__state = SchedulerStatus.WAITING_FOR_PROGRAMS_FILESYSTEMS
 
         ProgramStatusModel(
             running=True,
@@ -269,7 +269,7 @@ class SchedulerTests(TestCase):
 
         self.assertEqual(
             self.sched._Scheduler__state,
-            SchedulerStatus.WAITING_FOR_PROGRAMS,
+            SchedulerStatus.WAITING_FOR_PROGRAMS_FILESYSTEMS,
         )
 
         ProgramStatusModel.objects.filter(program=self.prog1).update(
@@ -283,7 +283,7 @@ class SchedulerTests(TestCase):
         )
 
         self.sched._Scheduler__index = 2
-        self.sched._Scheduler__state = SchedulerStatus.WAITING_FOR_PROGRAMS
+        self.sched._Scheduler__state = SchedulerStatus.WAITING_FOR_PROGRAMS_FILESYSTEMS
 
         ProgramStatusModel.objects.filter(program=self.prog2).update(
             running=False,

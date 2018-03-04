@@ -360,11 +360,17 @@ class Script(Model):
         -------
             array of maps where 'index' and 'id__count' is in.
         """
-        query = ScriptGraphPrograms.objects.filter(
-            script=self).values("index").annotate(
-                Count("id")).order_by("index")
+        query_program = ScriptGraphPrograms.objects.filter(
+            script=self).values_list(
+                "index", flat=True).annotate(Count("id")).order_by("index")
 
-        return query
+        query_filesystems = ScriptGraphFiles.objects.filter(
+            script=self).values_list(
+                "index", flat=True).annotate(Count("id")).order_by("index")
+
+        query = set(query_filesystems).union(set(query_program))
+
+        return list(query)
 
     @property
     def has_error(self):

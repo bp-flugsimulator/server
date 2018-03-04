@@ -1,7 +1,12 @@
+"""
+Controller
+"""
+
 import logging
 import os
 from shlex import split
 
+from django.core.cache import cache
 from django.db.models import (
     Count,
     Q,
@@ -240,21 +245,18 @@ def prog_start(prog):
         # create status entry
         ProgramStatusModel(program=prog, command_uuid=cmd.uuid).save()
 
-        if prog.start_time > 0:
+        if prog.start_time >= 0:
             LOGGER.debug(
                 'started timeout on %s, for %d seconds',
                 prog.name,
                 prog.start_time,
             )
 
-            FSIM_CURRENT_EVENT_LOOP.spawn(
+            FSIM_CURRENT_SCHEDULER.spawn(
                 prog.start_time,
                 timer_timeout_program,
                 prog.id,
             )
-        elif prog.start_time == 0:
-            prog.timeouted = True
-            prog.save()
 
     else:
         raise SlaveOfflineError(

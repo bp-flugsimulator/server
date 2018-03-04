@@ -7,6 +7,9 @@ import asyncio
 import logging
 
 from server.utils import notify
+from .safeloop import SafeLoop
+
+from django.core.cache import caches
 
 LOGGER = logging.getLogger("fsim.scheduler")
 
@@ -27,7 +30,7 @@ class SchedulerStatus:
     ---------
         The scheduler fetches the next index and executes the right programs.
 
-    WAITING_FOR_PROGRAMS
+    WAITING_FOR_PROGRAMS_FILESYSTEMS
     --------------------
         The scheduler waits for all programs to finish.
 
@@ -43,7 +46,7 @@ class SchedulerStatus:
     INIT = 0
     WAITING_FOR_SLAVES = 1
     NEXT_STEP = 2
-    WAITING_FOR_PROGRAMS = 3
+    WAITING_FOR_PROGRAMS_FILESYSTEMS = 3
     SUCCESS = 4
     ERROR = 5
 
@@ -53,16 +56,27 @@ class Scheduler:
     A thread-safe scheduler which starts programs from a slave.
     """
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         self.lock = threading.Lock()
+
+        self.loop = SafeLoop()
+        self.loop.start()
 
         self.__event = None
         self.__task = None
         self.__error_code = None
         self.__stop = False
         self.__state = SchedulerStatus.INIT
-        self.__index = -1
+        self.__index = None
         self.__script = None
+
+    def spawn(self, *args, **kwargs):
+        """
+        Forwards to self.
+        """
+        self.lock.acquire()
+        self.loop.spawn(*args, **kwargs)
+        self.lock.release()
 
     def is_running(self):
         """
@@ -79,11 +93,10 @@ class Scheduler:
         if self.__task is not None:
             done = self.__task.done()
             LOGGER.debug(
-                "Task is %s.",
+                "Task in Scheduler event loop is %s.",
                 "done" if done else "pending",
             )
         else:
-            LOGGER.debug("Thread is done.")
             done = True
 
         self.lock.release()
@@ -144,16 +157,16 @@ class Scheduler:
         else:
             from .models import Script
             self.lock.acquire()
-            LOGGER.debug("Starting task in event loop.")
+            LOGGER.debug("Adding task to scheduler event loop")
 
             self.__error_code = None
             self.__stop = False
             self.__state = SchedulerStatus.INIT
-            self.__index = -1
+            self.__index = None
             self.__script = script
-            self.__event = asyncio.Event(loop=FSIM_CURRENT_EVENT_LOOP.loop)
+            self.__event = asyncio.Event(loop=self.loop.loop)
 
-            self.__task = FSIM_CURRENT_EVENT_LOOP.create_task(self.__run__())
+            self.__task = self.loop.create_task(self.__run__())
 
             Script.objects.filter(id=self.__script).update(
                 is_running=True,
@@ -161,7 +174,6 @@ class Scheduler:
                 current_index=-1,
             )
 
-            LOGGER.debug("Task started")
             self.lock.release()
             return True
 
@@ -173,7 +185,7 @@ class Scheduler:
         scheduler will look at the data again.
         """
         if self.is_running():
-            LOGGER.debug("Task is running -> notify!")
+            LOGGER.debug("Send notify to task in scheduler event loop.")
 
             def callback():
                 """
@@ -182,11 +194,9 @@ class Scheduler:
                 if not self.__event.is_set():
                     self.__event.set()
 
-            FSIM_CURRENT_EVENT_LOOP.run(callback)
-        else:
-            LOGGER.debug("Task is not running -> no notify!")
+            self.loop.run(callback)
 
-    def __next_stage(self):
+    def __get_next_stage(self):
         """
         Generates the next stage and returns the number of the last stage and
         if this stage is valid.
@@ -196,7 +206,10 @@ class Scheduler:
             last index and if this stage is valid
 
         """
-        from .models import ScriptGraphPrograms
+        from .models import (
+            ScriptGraphPrograms,
+            ScriptGraphFiles,
+        )
 
         old_index = self.__index
 
@@ -209,7 +222,7 @@ class Scheduler:
                 flat=True,
             )
 
-            query_filesystems = ScriptGraphPrograms.objects.filter(
+            query_filesystems = ScriptGraphFiles.objects.filter(
                 script=self.__script,
                 index__gt=self.__index,
             ).values_list(
@@ -224,7 +237,7 @@ class Scheduler:
             all_done = False
         except IndexError:
             LOGGER.debug("Scheduler done")
-            self.__index += 1
+            self.__index = -1
             all_done = True
 
         return (old_index, all_done)
@@ -254,38 +267,39 @@ class Scheduler:
         """
 
         while True:
-            LOGGER.debug("Waiting for notification.")
+            LOGGER.debug("Scheduler is waiting for wakeup notification.")
             yield from self.__event.wait()
             self.__event.clear()
-            LOGGER.debug("Notification received.")
+            LOGGER.debug("Scheduler is doing a step.")
 
             if self.__stop:
-                LOGGER.info("Exit task -> should_stop() == True")
+                LOGGER.info(
+                    "Scheduler received interupt event. Exiting scheduler loop."
+                )
                 return
-
-            LOGGER.debug("Current state: %s", self.__state)
 
             if self.__state == SchedulerStatus.INIT:
+                LOGGER.debug("State: INIT")
                 self.__state_init()
-
             elif self.__state == SchedulerStatus.WAITING_FOR_SLAVES:
+                LOGGER.debug("State: WAITING_FOR_SLAVES")
                 self.__state_wait_slaves()
-
             elif self.__state == SchedulerStatus.NEXT_STEP:
+                LOGGER.debug("State: NEXT_STEP")
                 self.__state_next()
-
-            elif self.__state == SchedulerStatus.WAITING_FOR_PROGRAMS:
+            elif self.__state == SchedulerStatus.WAITING_FOR_PROGRAMS_FILESYSTEMS:
+                LOGGER.debug("State: WAITING_FOR_PROGRAMS_FILESYSTEMS")
                 self.__state_wait_programs_filesystems()
-
             elif self.__state == SchedulerStatus.SUCCESS:
+                LOGGER.debug("State: SUCCESS")
                 self.__state_success()
+                LOGGER.debug("Scheduler has finished ... exiting.")
                 return
-
             elif self.__state == SchedulerStatus.ERROR:
+                LOGGER.debug("State: ERROR")
                 self.__state_error()
+                LOGGER.debug("Scheduler has finished ... exiting.")
                 return
-
-        LOGGER.debug("Task out of scope.")
 
     def __state_init(self):
         """
@@ -296,13 +310,13 @@ class Scheduler:
 
         for slave_id in Script.get_involved_slaves(self.__script):
             slave = Slave.objects.get(id=slave_id)
-            LOGGER.debug("Starting slave `%s`", slave.name)
+            LOGGER.debug("Send WOL to the slave `%s`.", slave.name)
             slave_wake_on_lan(slave)
 
         self.__state = SchedulerStatus.WAITING_FOR_SLAVES
         self.__event.set()
 
-        FSIM_CURRENT_EVENT_LOOP.spawn(300, self.timer_scheduler_slave_timeout)
+        self.loop.spawn(300, self.timer_scheduler_slave_timeout)
 
         notify({
             'script_status': 'waiting_for_slaves',
@@ -316,8 +330,9 @@ class Scheduler:
         from .models import Script
 
         if Script.check_online(self.__script):
-            LOGGER.info("All slaves online")
+            LOGGER.info("All slaves are online ... continue with execution.")
             self.__state = SchedulerStatus.NEXT_STEP
+            self.__index = -1
             self.__event.set()
         else:
             LOGGER.info("Waiting for all slaves to be online.")
@@ -327,41 +342,55 @@ class Scheduler:
         In this state the next index is selected and the programs are started.
         """
         from .controller import prog_start, fs_move
-        from .errors import FilesystemMovedError, ProgramRunningError
+        from .errors import (
+            FilesystemMovedError,
+            ProgramRunningError,
+            SlaveOfflineError,
+        )
         from .models import (
             Script,
             ScriptGraphPrograms,
             ScriptGraphFiles,
         )
 
+        (last_index, all_done) = self.__get_next_stage()
+        max_start_time = 0
+
         LOGGER.info(
-            "Starting program for stage %s",
+            "Starting programs and moving files for stage `%s`",
             self.__index,
         )
-
-        (last_index, all_done) = self.__next_stage()
-        max_start_time = 0
 
         Script.objects.filter(id=self.__script).update(
             current_index=self.__index)
 
         if all_done:
-            LOGGER.info("Everything done ... scheduler done")
+            LOGGER.info(
+                "Could not find another index after `%s` ... done.",
+                last_index,
+            )
             self.__state = SchedulerStatus.SUCCESS
             self.__event.set()
-
         else:
-            self.__state = SchedulerStatus.WAITING_FOR_PROGRAMS
-
+            notify_me = False
             for sgp in ScriptGraphPrograms.objects.filter(
                     script=self.__script,
                     index=self.__index,
             ):
                 try:
                     prog_start(sgp.program)
-                except ProgramRunningError:
-                    # if the program is already running go on.
-                    pass
+                    LOGGER.info("Started program `%s`", sgp.program.name)
+                except ProgramRunningError as err:
+                    LOGGER.info("Program `%s` is already started.", err.name)
+                    notify_me = True
+                    continue
+                except SlaveOfflineError as err:
+                    LOGGER.error(
+                        "A slave is gone offline while the execution.")
+                    self.__state = SchedulerStatus.ERROR
+                    self.__error_code = str(err)
+                    self.__event.set()
+                    return
 
             for sgf in ScriptGraphFiles.objects.filter(
                     script=self.__script,
@@ -369,9 +398,29 @@ class Scheduler:
             ):
                 try:
                     fs_move(sgf.filesystem)
-                except FilesystemMovedError:
+                    LOGGER.info("Moved filesystem `%s`", sgf.filesystem.name)
+                except FilesystemMovedError as err:
                     # if the filesystem is already moved go on.
-                    pass
+                    LOGGER.info("Filesystem `%s` is already moved.", err.name)
+                    notify_me = True
+                except SlaveOfflineError as err:
+                    LOGGER.error(
+                        "A slave is gone offline while the execution.")
+                    self.__state = SchedulerStatus.ERROR
+                    self.__error_code = str(err)
+                    self.__event.set()
+                    return
+
+            LOGGER.info(
+                "Started all programs for stage `%s`.",
+                self.__index,
+            )
+
+            self.__state = SchedulerStatus.WAITING_FOR_PROGRAMS_FILESYSTEMS
+            if notify_me:
+                LOGGER.info(
+                    "Notify myself because some entries are already ready.")
+                self.__event.set()
 
         notify({
             'script_status': 'next_step',
@@ -400,58 +449,44 @@ class Scheduler:
             index=self.__index,
         )
 
-        step = True
-
         for sgp in progs:
             prog = sgp.program
 
             if prog.is_error:
-                LOGGER.debug("Error in program %s", prog.name)
+                LOGGER.debug("Error in program: %s", prog.name)
                 self.__state = SchedulerStatus.ERROR
                 self.__error_code = "Program {} has an error.".format(
                     prog.name)
-                step = False
                 self.__event.set()
-
-                break
+                return
 
             elif prog.is_running and not prog.is_timeouted:
                 LOGGER.debug(
                     "Program %s is not ready yet.",
                     prog.name,
                 )
-                step = False
-
-                break
+                return
 
         for sgf in filesystems:
-            fs = sgf.filesystem
+            filesystem = sgf.filesystem
 
-            if fs.is_error:
-                LOGGER.debug("Error in filesystem %s", fs.name)
+            if filesystem.is_error:
+                LOGGER.debug("Error in filesystem: %s", filesystem.name)
                 self.__state = SchedulerStatus.ERROR
                 self.__error_code = "Filesystem {} has an error.".format(
-                    fs.name)
-                step = False
+                    filesystem.name)
                 self.__event.set()
+                return
 
-                break
-
-            elif not fs.is_moved:
+            elif not filesystem.is_moved:
                 LOGGER.debug(
                     "Filesystem %s is not ready yet.",
                     prog.name,
                 )
-                step = False
-                break
+                return
 
-        if step:
-            self.__state = SchedulerStatus.NEXT_STEP
-            self.__event.set()
-        else:
-            LOGGER.info(
-                "Not all programs are finished and not all filesystems are moved."
-            )
+        self.__state = SchedulerStatus.NEXT_STEP
+        self.__event.set()
 
     def __state_success(self):
         """
@@ -459,7 +494,7 @@ class Scheduler:
         """
         from .models import Script
 
-        LOGGER.info("Scheduler is already finished. (SUCCESS)")
+        LOGGER.info("Scheduler is finished. (SUCCESS)")
 
         notify({
             'script_status': 'success',
@@ -479,7 +514,7 @@ class Scheduler:
         """
         from .models import Script
 
-        LOGGER.info("Scheduler is already finished. (ERROR)")
+        LOGGER.info("Scheduler is finished. (ERROR)")
 
         Script.objects.filter(id=self.__script).update(
             is_running=False,

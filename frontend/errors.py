@@ -111,7 +111,7 @@ class ProgramError(FsimError):
         return ".*[Pp]rogram.*"
 
 
-class ProgramRunningError(FsimError):
+class ProgramRunningError(ProgramError):
     """
     If the program is running but an start command was received.
     """
@@ -127,7 +127,7 @@ class ProgramRunningError(FsimError):
         return "Can not start the program `.*` on the client `.*` because it is already running"
 
 
-class ProgramNotRunningError(FsimError):
+class ProgramNotRunningError(ProgramError):
     """
     If the program is not running but an stop command was received.
     """

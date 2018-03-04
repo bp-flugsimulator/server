@@ -4,6 +4,7 @@ This module contains all functions that handle requests on the REST api.
 import logging
 import os
 
+from django.core.cache import cache
 from django.http import HttpResponseForbidden
 from django.http.request import QueryDict
 from django.core.exceptions import ValidationError

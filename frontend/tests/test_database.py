@@ -53,13 +53,10 @@ class DatabaseTests(TestCase):  # pylint: disable=unused-variable
         sgp1 = SGPFactory(index=0, program=prog1, script=script)
         sgp2 = SGPFactory(index=2, program=prog2, script=script)
 
-        self.assertEqual([{
-            'index': sgp1.index,
-            'id__count': 1
-        }, {
-            'index': sgp2.index,
-            'id__count': 1
-        }], list(script.indexes))
+        self.assertEqual([
+            sgp1.index,
+            sgp2.index,
+        ], list(script.indexes))
 
     def test_script_name(self):
         script = ScriptFactory()
