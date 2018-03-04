@@ -545,8 +545,6 @@ def manage_script(request, script_id):
             script_id = int(script_id)
             new_script = Script.from_json(request.body.decode('utf-8'))
             old_script =  Script.from_model(script_id, 'str', 'str', 'str')
-            print(new_script.to_json())
-            print(old_script.to_json())
 
             (new_model, _) = ScriptModel.objects.update_or_create(
                 id=script_id,
@@ -560,7 +558,9 @@ def manage_script(request, script_id):
                 SGPModel.objects.create(
                     script=new_model,
                     index=program.index,
-                    program=ProgramModel.objects.get(name=program.program),
+                    program=ProgramModel.objects.get(
+                        name=program.program,
+                        slave=SlaveModel.objects.get(name=program.slave)),
                 )
             for filesystem in new_script.filesystems:
                 SGFModel.objects.create(
