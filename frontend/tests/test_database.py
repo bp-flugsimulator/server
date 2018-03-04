@@ -211,3 +211,10 @@ class DatabaseTests(TestCase):  # pylint: disable=unused-variable
         flush("ProgramStatus")
 
         self.assertEqual(ProgramStatusModel.objects.count(), 0)
+
+    def test_filesystem_str(self):
+        filesystem = FileFactory()
+        self.assertEqual(
+            str(filesystem),
+            filesystem.name,
+        )

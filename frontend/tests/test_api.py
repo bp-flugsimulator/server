@@ -30,6 +30,8 @@ from frontend.errors import (
     ProgramRunningError,
     FilesystemMovedError,
     FilesystemNotMovedError,
+    FilesystemNotExistError,
+    FilesystemDeleteError,
 )
 
 from .factory import (
@@ -409,12 +411,23 @@ class ScriptTest(TestCase):
         )
 
 
-class FileTests(StatusTestCase):
+class FilesystemTests(StatusTestCase):
     maxDiff = None
 
     def test_manage_file_forbidden(self):
         api_response = self.client.post("/api/filesystem/0")
         self.assertEqual(api_response.status_code, 403)
+
+    def test_delete_moved_error(self):
+        filesystem = FileFactory(hash_value="Some")
+        api_response = self.client.delete("/api/filesystem/" + str(
+            filesystem.id))
+        self.assertEqual(api_response.status_code, 200)
+
+        self.assertStatusRegex(
+            Status.err(FilesystemDeleteError),
+            Status.from_json(api_response.content.decode('utf-8')),
+        )
 
     def test_move_file_forbidden(self):
         api_response = self.client.post("/api/filesystem/0/restore")
@@ -433,6 +446,37 @@ class FileTests(StatusTestCase):
 
         self.assertStatusRegex(
             Status.err(SlaveOfflineError),
+            Status.from_json(api_response.content.decode('utf-8')),
+        )
+
+    def test_move_get_not_exist(self):
+        api_response = self.client.get("/api/filesystem/" + str(0) + "/move")
+
+        self.assertEqual(api_response.status_code, 200)
+
+        self.assertStatusRegex(
+            Status.err(FilesystemNotExistError),
+            Status.from_json(api_response.content.decode('utf-8')),
+        )
+
+    def test_restore_get_not_exist(self):
+        api_response = self.client.get("/api/filesystem/" + str(0) +
+                                       "/restore")
+
+        self.assertEqual(api_response.status_code, 200)
+
+        self.assertStatusRegex(
+            Status.err(FilesystemNotExistError),
+            Status.from_json(api_response.content.decode('utf-8')),
+        )
+
+    def test_entry_delete_not_exist(self):
+        api_response = self.client.delete("/api/filesystem/" + str(0))
+
+        self.assertEqual(api_response.status_code, 200)
+
+        self.assertStatusRegex(
+            Status.err(FilesystemNotExistError),
             Status.from_json(api_response.content.decode('utf-8')),
         )
 
@@ -880,6 +924,7 @@ class FileTests(StatusTestCase):
             ),
             Command.from_json(json.dumps(ws_client.receive())),
         )
+
     def test_edit_filesystem_wrong_http_method(self):
         api_response = self.client.get("/api/filesystem/0")
         self.assertEqual(api_response.status_code, 403)
@@ -941,12 +986,18 @@ class FileTests(StatusTestCase):
         api_response = self.client.put(
             "/api/filesystem/" + str(filesystem_edit.id),
             data=urlencode({
-                'name': filesystem_exists.name,
-                'source_path': filesystem_exists.source_path,
-                'destination_path': filesystem_exists.destination_path,
-                'slave': str(filesystem_exists.slave.id),
-				'source_type': filesystem_exists.source_type,
-                'destination_type': filesystem_exists.destination_type,
+                'name':
+                filesystem_exists.name,
+                'source_path':
+                filesystem_exists.source_path,
+                'destination_path':
+                filesystem_exists.destination_path,
+                'slave':
+                str(filesystem_exists.slave.id),
+                'source_type':
+                filesystem_exists.source_type,
+                'destination_type':
+                filesystem_exists.destination_type,
             }))
 
         self.assertEqual(api_response.status_code, 200)
@@ -998,6 +1049,33 @@ class ProgramTests(StatusTestCase):
                 arguments='arguments' + str(slave.id),
                 slave=slave,
             ))
+
+    def test_stop_offline_salve(self):
+        program = ProgramFactory()
+
+        api_response = self.client.get("/api/program/" + str(program.id) +
+                                        "/stop")
+
+        self.assertEqual(api_response.status_code, 200)
+
+        self.assertStatusRegex(
+            Status.err(SlaveOfflineError),
+            Status.from_json(api_response.content.decode('utf-8')),
+        )
+
+    def test_start_already_running_error(self):
+        slave = SlaveFactory(online=True)
+        program = ProgramFactory(slave=slave)
+        ProgramStatusFactory(program=program, running=True)
+
+        api_response = self.client.post("/api/program/" + str(program.id))
+
+        self.assertEqual(api_response.status_code, 200)
+
+        self.assertStatusRegex(
+            Status.err(ProgramRunningError),
+            Status.from_json(api_response.content.decode('utf-8')),
+        )
 
     def test_add_program_fail_length(self):
         slave = SlaveFactory()
@@ -1141,6 +1219,16 @@ class ProgramTests(StatusTestCase):
                     "Ensure this value has at most 1000 characters (it has 2000)."
                 ],
             }),
+            Status.from_json(api_response.content.decode('utf-8')),
+        )
+
+    def test_start_no_exist(self):
+        api_response = self.client.post("/api/program/" + str(0))
+
+        self.assertEqual(api_response.status_code, 200)
+
+        self.assertStatusRegex(
+            Status.err(ProgramNotExistError),
             Status.from_json(api_response.content.decode('utf-8')),
         )
 

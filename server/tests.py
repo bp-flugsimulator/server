@@ -9,6 +9,7 @@ from utils.status import Status
 from server.management.commands.compilesass import Command
 
 from .utils import StatusResponse
+from .errors import FsimError
 
 
 class StatusResponseTest(TestCase):
@@ -38,3 +39,12 @@ class ManagementTest(TestCase):
         else:
             com.handle()
             self.assertTrue(isfile(self.CSS_PATH))
+
+
+class ErrorTests(TestCase):
+    def test_raise_error(self):
+        self.assertRaisesRegex(
+            ValueError,
+            "This method is not implemented by the child class.",
+            FsimError(None).regex_string,
+        )

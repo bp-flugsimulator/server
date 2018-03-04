@@ -673,7 +673,7 @@ def filesystem_restore(request, filesystem_id):
                 return StatusResponse(Status.ok(""))
             except FsimError as err:
                 return StatusResponse(err)
-        except FilesystemModel.DoesNotExist:
+        except FilesystemModel.DoesNotExist as err:
             return StatusResponse(FilesystemNotExistError(err, filesystem_id))
     else:
         return HttpResponseForbidden()
@@ -702,16 +702,8 @@ def filesystem_entry(request, filesystem_id):
                 return StatusResponse.ok("")
             except FsimError as err:
                 return StatusResponse(err)
-        except FilesystemModel.DoesNotExist:
+        except FilesystemModel.DoesNotExist as err:
             return StatusResponse(FilesystemNotExistError(err, filesystem_id))
-        filesystem = FilesystemModel.objects.get(id=filesystem_id)
-        if not filesystem.is_moved:
-            filesystem.delete()
-            return StatusResponse(Status.ok(''))
-        else:
-            return StatusResponse(
-                Status.err('The file is still moved. Restore the file first.'))
-
     elif request.method == 'PUT':
         # create form from a new QueryDict made from the request body
         # (request.PUT is unsupported) as an update (instance) of the
