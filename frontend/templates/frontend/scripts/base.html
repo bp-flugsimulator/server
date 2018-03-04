@@ -20,11 +20,11 @@
         </div>
     </div>
 </div>
-
 {% endblock %}
+
 {% block content %}
-<div class="ml-4 mr-4">
-    <div class="col col-xs-12 col-sm-12 col-md-3 col-xl-2 col-lg-3 mb-4">
+<div class="row ml-4 mr-4">
+    <div class="col-12 col-sm-12 col-md-3 col-xl-2 col-lg-3 mb-4">
         <div class="row-2 form-group">
             <label class="client-header font-weight-bold">
                 SCRIPTS
@@ -53,19 +53,17 @@
         </div>
     </div>
 
-    <div class="container-fluid tab-content col col-xs-12 col-sm-12 col-md-8 col-lg-8 col-xl-9">
+    <div class="container-fluid tab-content col-12 col-sm-12 col-md-8 col-lg-8 col-xl-9">
         <div class="tab-pane fade show" role="tabpanel"  id="scriptTabContentNew">
-            <div class="row mb-4">
-                <div class="btn-toolbar col d-flex justify-content-end" role="toolbar">
-                    <div class="btn-group mr-2" role="group">
-                        <button type="button" class="btn btn-outline-dark program-action-add-save font-weight-light script-action-add-save" data-editor-id="new_script">
-                            <i class="mdi mdi-check"></i> SAVE
-                        </button>
-                    </div>
+            <div class="btn-toolbar justify-content-end" role="toolbar">
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-outline-dark font-weight-light script-action-add-save" data-editor-id="new_script">
+                        <i class="mdi mdi-check"></i> SAVE
+                    </button>
                 </div>
             </div>
 
-            <div class="row" id="jsoneditor_new_script" style="height: 90%;">
+            <div id="jsoneditor_new_script">
                 <script>
                     newScript('new_script');
                 </script>
@@ -87,6 +85,11 @@
 {% endblock %}
 
 {% block script %}
-    <script src="{% static 'node/jsoneditor/dist/jsoneditor.min.js' %}"></script>
+    {% script_js_templates %}
+
+    <script src="{% static 'node/handlebars/dist/handlebars.min.js' %}"></script>
+    <script src="{% static 'frontend/jsonforms.js'%}"></script>
+
+    <script src="{% static 'frontend/base.js'%}"></script>
     <script src="{% static 'frontend/scripts.js'%}"></script>
 {% endblock %}

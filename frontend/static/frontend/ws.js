@@ -1,8 +1,8 @@
 /* eslint-env browser*/
 /* eslint no-use-before-define: ["error", { "functions": false }] */
+/* eslint no-console: ["error", { allow: ["log"] }] */
 /* global Status, notify */
-/* export fsimWebsocket */
-/*eslint no-console: ["error", { allow: ["log"] }] */
+/* exported fsimWebsocket */
 
 function fsimWebsocket(partialSocketEventHandler) {
     let socket = new WebSocket('ws://' + window.location.host + '/notifications');

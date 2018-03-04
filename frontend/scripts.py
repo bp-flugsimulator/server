@@ -5,6 +5,8 @@ to javascript
 
 import json
 
+from utils.typecheck import ensure_type, ensure_type_array
+
 from django.db import transaction
 
 from .models import (
@@ -19,8 +21,7 @@ from .models import (
 
 def get_slave(slave):
     """
-    Checks if the given object is string or integer and queries the slave from
-    that.
+    Checks if the given object is string or integer and queries the slave from that.
 
     Arguments
     ---------
@@ -28,15 +29,29 @@ def get_slave(slave):
 
     Returns
     -------
-        Slave object if it is in the database or None if it is not string or
-        int
+        A Slave objects
     """
     if isinstance(slave, str):
-        return SlaveModel.objects.get(name=slave)
+        try:
+            return SlaveModel.objects.get(name=slave)
+        except SlaveModel.DoesNotExist:
+            raise ValueError(
+                "The client with the name `{}` does not exist.".format(slave))
     elif isinstance(slave, int):
-        return SlaveModel.objects.get(id=slave)
-    else:
-        return None
+        try:
+            return SlaveModel.objects.get(id=slave)
+        except SlaveModel.DoesNotExist:
+            raise ValueError(
+                "The client with the id `{}` does not exist.".format(slave))
+
+
+def typecheck_index(index):
+    """
+    Checks if the types are correct for an index variable.
+    """
+    ensure_type("index", index, int)
+    if index < 0:
+        raise ValueError("Only positive integers are allowed for index.")
 
 
 class Script:
@@ -49,27 +64,16 @@ class Script:
     """
 
     def __init__(self, name, programs, filesystems):
-        if not isinstance(programs, list):
-            raise ValueError("Program has to be a list.")
-        for prog in programs:
-            if not isinstance(prog, ScriptEntryProgram):
-                raise ValueError(
-                    "All list elements has to be ScriptEntryProgram.")
+        ensure_type("programs", programs, list)
+        ensure_type_array("programs", programs, ScriptEntryProgram)
         self.programs = programs
 
-        if not isinstance(filesystems, list):
-            raise ValueError("filesystems has to be a list.")
-        for filesystem in filesystems:
-            if not isinstance(filesystem, ScriptEntryFile):
-                raise ValueError(
-                    "All list elements has to be ScriptEntryFile.")
+        ensure_type("filesystems", filesystems, list)
+        ensure_type_array("filesystem", filesystems, ScriptEntryFilesystem)
         self.filesystems = filesystems
 
-        if len(self.filesystems) + len(self.programs) < 1:
-            raise ValueError("Add a filesystem or a program to the script.")
+        ensure_type("name", name, str)
 
-        if not isinstance(name, str):
-            raise ValueError("Name has to be a string.")
         self.name = name
 
     def __eq__(self, other):
@@ -117,7 +121,8 @@ class Script:
             for model in SGPModel.objects.filter(script=script)
         ]
         filesystems = [
-            ScriptEntryFile.from_query(model, slaves_type, filesystem_type)
+            ScriptEntryFilesystem.from_query(model, slaves_type,
+                                             filesystem_type)
             for model in SGFModel.objects.filter(script=script)
         ]
 
@@ -134,19 +139,16 @@ class Script:
         """
         data = json.loads(string)
 
-        if not isinstance(data['programs'], list):
-            raise ValueError('Programs has to be a list')
+        ensure_type("programs", data["programs"], list)
+        ensure_type("filesystems", data["filesystems"], list)
 
-        if not isinstance(data['filesystems'], list):
-            raise ValueError('filesystems has to be a list')
+        ensure_type_array("programs", data["programs"], dict)
+        ensure_type_array("filesystems", data["filesystems"], dict)
 
         return cls(
-            data['name'],
-            [ScriptEntryProgram(**program) for program in data['programs']],
-            [
-                ScriptEntryFile(**filesystem)
-                for filesystem in data['filesystems']
-            ],
+            data["name"],
+            [ScriptEntryProgram(**program) for program in data["programs"]],
+            [ScriptEntryFilesystem(**file) for file in data["filesystems"]],
         )
 
     @transaction.atomic
@@ -154,8 +156,9 @@ class Script:
         """
         Saves this object to the database.
         """
-
-        script = ScriptModel.objects.create(name=self.name)
+        script = ScriptModel(name=self.name)
+        script.full_clean()
+        script.save()
 
         for obj in self.programs:
             obj.save(script)
@@ -174,7 +177,7 @@ class Script:
         return json.dumps(dict(self))
 
 
-class ScriptEntryFile:
+class ScriptEntryFilesystem:
     """
     Consists of the following fields
 
@@ -186,18 +189,13 @@ class ScriptEntryFile:
     """
 
     def __init__(self, index, filesystem, slave):
-        if not isinstance(index, int):
-            raise ValueError("Index has to be an integer.")
-        if index < 0:
-            raise ValueError("Use positive or null for the index.")
+        typecheck_index(index)
         self.index = index
 
-        if not isinstance(filesystem, str) and not isinstance(filesystem, int):
-            raise ValueError("Name has to be a string or int.")
+        ensure_type("filesystem", filesystem, str, int)
         self.filesystem = filesystem
 
-        if not isinstance(slave, str) and not isinstance(slave, int):
-            raise ValueError("Slave has to be a string or integer")
+        ensure_type("slavesystem", slave, str, int)
         self.slave = slave
 
     def __eq__(self, other):
@@ -221,22 +219,22 @@ class ScriptEntryFile:
 
         Returns
         -------
-             ScriptEntryFile object
+             ScriptEntryFilesystem object
         """
 
-        if slaves_type == 'int':
+        if slaves_type == "int":
             slave = query.filesystem.slave.id
-        elif slaves_type == 'str':
+        elif slaves_type == "str":
             slave = query.filesystem.slave.name
         else:
             raise ValueError("Slave_type has to be int or str.")
 
-        if programs_type == 'int':
+        if programs_type == "int":
             program = query.filesystem.id
-        elif programs_type == 'str':
+        elif programs_type == "str":
             program = query.filesystem.name
         else:
-            raise ValueError("Program_type has to be int or str.")
+            raise ValueError("File_type has to be int or str.")
 
         return cls(
             query.index,
@@ -255,9 +253,9 @@ class ScriptEntryFile:
         """
         data = json.loads(string)
         return cls(
-            data['index'],
-            data['filesystem'],
-            data['slave'],
+            data["index"],
+            data["filesystem"],
+            data["slave"],
         )
 
     @transaction.atomic
@@ -275,36 +273,36 @@ class ScriptEntryFile:
             Django model
         """
 
-        try:
-            slave = get_slave(self.slave)
-        except SlaveModel.DoesNotExist:
-            raise ValueError("Client with name/id {} does not exist.".format(
-                self.slave))
+        slave = get_slave(self.slave)
 
         try:
             if isinstance(self.filesystem, str):
                 obj = FilesystemModel.objects.get(
                     slave=slave, name=self.filesystem)
-                SGFModel.objects.create(
+                model = SGFModel(
                     script=script,
                     index=self.index,
                     filesystem=obj,
                 )
+                model.full_clean()
+                model.save()
         except FilesystemModel.DoesNotExist:
-            raise ValueError("filesystem with name {} does not exist.".format(
+            raise ValueError("The file with name `{}` does not exist.".format(
                 self.filesystem))
 
         try:
             if isinstance(self.filesystem, int):
                 obj = FilesystemModel.objects.get(
                     slave=slave, id=self.filesystem)
-                SGFModel.objects.create(
+                model = SGFModel(
                     script=script,
                     index=self.index,
                     filesystem=obj,
                 )
+                model.full_clean()
+                model.save()
         except FilesystemModel.DoesNotExist:
-            raise ValueError("filesystem with id {} does not exist.".format(
+            raise ValueError("The file with id `{}` does not exist.".format(
                 self.filesystem))
 
     def to_json(self):
@@ -330,18 +328,13 @@ class ScriptEntryProgram:
     """
 
     def __init__(self, index, program, slave):
-        if not isinstance(index, int):
-            raise ValueError("Index has to be an integer.")
-        if index < 0:
-            raise ValueError("Use positive or null for the index.")
+        typecheck_index(index)
         self.index = index
 
-        if not isinstance(program, str) and not isinstance(program, int):
-            raise ValueError("Name has to be a string or int.")
+        ensure_type("program", program, str, int)
         self.program = program
 
-        if not isinstance(slave, str) and not isinstance(slave, int):
-            raise ValueError("Slave has to be a string or integer")
+        ensure_type("slave", slave, str, int)
         self.slave = slave
 
     def __eq__(self, other):
@@ -366,16 +359,16 @@ class ScriptEntryProgram:
              ScriptEntry object
         """
 
-        if slaves_type == 'int':
+        if slaves_type == "int":
             slave = query.program.slave.id
-        elif slaves_type == 'str':
+        elif slaves_type == "str":
             slave = query.program.slave.name
         else:
             raise ValueError("Slave_type has to be int or str.")
 
-        if programs_type == 'int':
+        if programs_type == "int":
             program = query.program.id
-        elif programs_type == 'str':
+        elif programs_type == "str":
             program = query.program.name
         else:
             raise ValueError("Program_type has to be int or str.")
@@ -407,9 +400,9 @@ class ScriptEntryProgram:
         """
         data = json.loads(string)
         return cls(
-            data['index'],
-            data['program'],
-            data['slave'],
+            data["index"],
+            data["program"],
+            data["slave"],
         )
 
     @transaction.atomic
@@ -426,32 +419,32 @@ class ScriptEntryProgram:
         -------
             Django model
         """
-        try:
-            slave = get_slave(self.slave)
-        except SlaveModel.DoesNotExist:
-            raise ValueError("Client with name/id {} does not exist.".format(
-                self.slave))
+        slave = get_slave(self.slave)
 
         try:
             if isinstance(self.program, str):
                 obj = ProgramModel.objects.get(slave=slave, name=self.program)
-                SGPModel.objects.create(
+                model = SGPModel(
                     script=script,
                     index=self.index,
                     program=obj,
                 )
+                model.full_clean()
+                model.save()
         except ProgramModel.DoesNotExist:
-            raise ValueError("Program with name {} does not exist.".format(
+            raise ValueError("The program with name {} does not exist.".format(
                 self.program))
 
         try:
             if isinstance(self.program, int):
                 obj = ProgramModel.objects.get(slave=slave, id=self.program)
-                SGPModel.objects.create(
+                model = SGPModel(
                     script=script,
                     index=self.index,
                     program=obj,
                 )
+                model.full_clean()
+                model.save()
         except ProgramModel.DoesNotExist:
-            raise ValueError("Program with id {} does not exist.".format(
+            raise ValueError("The program with id {} does not exist.".format(
                 self.program))
