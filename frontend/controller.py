@@ -5,6 +5,7 @@ Controller
 import logging
 import os
 from shlex import split
+from uuid import uuid4
 
 from django.core.cache import cache
 from django.db.models import (
@@ -220,8 +221,12 @@ def prog_start(prog):
     if prog.slave.is_online:
         if prog.is_running:
             raise ProgramRunningError(str(prog.name), str(prog.slave.name))
+        uuid = uuid4().hex
 
         cmd = Command(
+            uuid=uuid,  # for the command
+            pid=prog.id,
+            own_uuid=uuid,  # for the function that gets executed
             method="execute",
             path=prog.path,
             arguments=split(prog.arguments),
@@ -276,6 +281,7 @@ def prog_stop(prog):
         SlaveOfflineError
         ProgramNotRunningError
     """
+    ensure_type("prog", prog, ProgramModel)
 
     if prog.slave.is_online:
         if not prog.is_running:
@@ -309,3 +315,74 @@ def slave_wake_on_lan(slave):
     """
     ensure_type("slave", slave, SlaveModel)
     send_magic_packet(slave.mac_address)
+
+
+def log_get(prog):
+    """
+    Requests a log of the program on the slave.
+
+        Returns
+    -------
+        boolean which indicates if the Request was possible.
+    """
+    ensure_type("prog", prog, ProgramModel)
+
+    LOGGER.info(
+        "Requesting log for program %s on slave %s",
+        prog.name,
+        prog.slave.name,
+    )
+    if prog.slave.is_online:
+        Group('client_' + str(prog.slave.id)).send({
+            'text':
+            Command(
+                method="get_log",
+                target_uuid=prog.programstatus.command_uuid).to_json()
+        })
+        return True
+    else:
+        return False
+
+
+def log_enable(prog):
+    ensure_type("prog", prog, ProgramModel)
+
+    LOGGER.info(
+        "Enabling logging for program %s on slave %s",
+        prog.name,
+        prog.slave.name,
+    )
+
+    if prog.slave.is_online:
+        Group('client_' + str(prog.slave.id)).send({
+            'text':
+            Command(
+                method="enable_logging",
+                target_uuid=prog.programstatus.command_uuid,
+            ).to_json()
+        })
+        return True
+    else:
+        return False
+
+
+def log_disable(prog):
+    ensure_type("prog", prog, ProgramModel)
+
+    LOGGER.info(
+        "Disabling logging for program %s on slave %s",
+        prog.name,
+        prog.slave.name,
+    )
+
+    if prog.slave.is_online:
+        Group('client_' + str(prog.slave.id)).send({
+            'text':
+            Command(
+                method="disable_logging",
+                target_uuid=prog.programstatus.command_uuid,
+            ).to_json()
+        })
+        return True
+    else:
+        return False

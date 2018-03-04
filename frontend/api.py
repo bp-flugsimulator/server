@@ -44,6 +44,9 @@ from .controller import (
     fs_delete,
     fs_move,
     fs_restore,
+    log_disable,
+    log_enable,
+    log_get,
     slave_wake_on_lan,
 )
 
@@ -368,7 +371,7 @@ def stop_program(request, program_id):
     Parameters
     ----------
         request: HttpRequest
-        id: Unique identifier of a program
+        program_id: Unique identifier of a program
 
     Returns
     -------
@@ -385,6 +388,97 @@ def stop_program(request, program_id):
                 return StatusResponse(err)
         except ProgramModel.DoesNotExist as err:
             return StatusResponse(ProgramNotExistError(err, program_id))
+    else:
+        return HttpResponseForbidden()
+
+
+def program_manage_log(request, program_id):
+    """
+    Process GET requests which will request a log from a programm on a slave.
+
+    Parameters
+    ----------
+        request: HttpRequest
+        program_id: Unique identifier of a program
+
+    Returns
+    -------
+        A StatusResponse or HttpResponseForbidden if the request method was
+        other than GET.
+    """
+    if request.method == 'GET':
+        if ProgramModel.objects.filter(id=program_id).exists():
+            program = ProgramModel.objects.get(id=program_id)
+            if log_get(program):
+                return StatusResponse(Status.ok(''))
+            else:
+                return StatusResponse(
+                    Status.err(
+                        'Can not request a log from an offline Client.'))
+        else:
+            return StatusResponse(
+                Status.err('Can not get a log of an unknown program.'))
+
+    else:
+        return HttpResponseForbidden()
+
+
+def program_enable_logging(request, program_id):
+    """
+    Process GET requests which will enable remote logging on a slave.
+
+    Parameters
+    ----------
+        request: HttpRequest
+        program_id: Unique identifier of a program
+
+    Returns
+    -------
+        A StatusResponse or HttpResponseForbidden if the request method was
+        other than GET.
+    """
+    if request.method == 'GET':
+        if ProgramModel.objects.filter(id=program_id).exists():
+            program = ProgramModel.objects.get(id=program_id)
+            if log_enable(program):
+                return StatusResponse(Status.ok(''))
+            else:
+                return StatusResponse(
+                    Status.err('Can not enable logging on an offline Client.'))
+        else:
+            return StatusResponse(
+                Status.err('Can not enable logging on an unknown program.'))
+
+    else:
+        return HttpResponseForbidden()
+
+
+def program_disable_logging(request, program_id):
+    """
+    Process GET requests which will disable remote logging on a slave.
+
+    Parameters
+    ----------
+        request: HttpRequest
+        program_id: Unique identifier of a program
+
+    Returns
+    -------
+        A StatusResponse or HttpResponseForbidden if the request method was
+        other than GET.
+    """
+    if request.method == 'GET':
+        if ProgramModel.objects.filter(id=program_id).exists():
+            program = ProgramModel.objects.get(id=program_id)
+            if log_disable(program):
+                return StatusResponse(Status.ok(''))
+            else:
+                return StatusResponse(
+                    Status.err(
+                        'Can not disable logging on an offline Client.'))
+        else:
+            return StatusResponse(
+                Status.err('Can not disable logging on an unknown program.'))
     else:
         return HttpResponseForbidden()
 

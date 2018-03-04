@@ -5,6 +5,7 @@ This module contains all databasemodels from the frontend application.
 import logging
 import os
 from shlex import split
+from uuid import uuid4
 
 from django.db.models import (
     Model,

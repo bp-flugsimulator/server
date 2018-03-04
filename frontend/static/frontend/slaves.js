@@ -65,6 +65,30 @@ function restoreSlaveInnerTab(slaveId) {
     }
 }
 
+function handleLogging(id, method, async = true) {
+    $.ajax({
+        type: 'GET',
+        url: '/api/program/' + id + '/log/' + method,
+        async,
+        beforeSend(xhr) {
+            xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
+        },
+        converters: {
+            'text json': Status.from_json
+        },
+        success(status) {
+            if (status.is_err()) {
+                notify('Error while handeling a log', 'Could not handle log. (' + JSON.stringify(status.payload) + ')', 'danger');
+            }
+        },
+        error(xhr, errorString, errorCode) {
+            notify('Could deliver', 'Could not deliver request `GET` to server.' + errorCode + ')', 'danger');
+        }
+    });
+}
+
+let terminals = {};
+
 const socketEventHandler = {
     slaveConnect(payload) {
         let statusContainer = $('#slaveStatusContainer_' + payload.sid);
@@ -112,7 +136,7 @@ const socketEventHandler = {
         let cardButton = $('#programCardButton_' + payload.pid);
 
         statusContainer.attr('data-state', 'warning');
-        cardButton.prop('disabled', true);
+        cardButton.prop('disabled', false);
 
         // Use Python notation !!!
         startstopButton.attr('data-is-running', 'True');
@@ -134,14 +158,12 @@ const socketEventHandler = {
     programStopped(payload) {
         let statusContainer = $('#programStatusContainer_' + payload.pid);
         let startstopButton = $('#programStartStop_' + payload.pid);
+
         let cardButton = $('#programCardButton_' + payload.pid);
-        let cardBox = $('#programCard_' + payload.pid);
+        cardButton.prop('disabled', false);
 
-        if (payload.code !== 0) {
+        if (payload.code !== 0 && payload.code !== '0') {
             statusContainer.attr('data-state', 'error');
-
-            cardButton.prop('disabled', false);
-            cardBox.text(payload.code);
         } else {
             statusContainer.attr('data-state', 'success');
         }
@@ -162,6 +184,16 @@ const socketEventHandler = {
         startstopButton.children('[data-text-swap]').each(function (idx, val) {
             swapText($(val));
         });
+    },
+    programUpdateLog(payload) {
+        let pid = payload.pid;
+        if (terminals[pid] == null) {
+            terminals[pid] = new AnsiTerm(pid, 80);
+        }
+
+        terminals[pid].feed(payload.log);
+        $('#waitingText_' + pid).empty();
+        $('#programLog_' + pid).data('has-log', true);
     },
     filesystemMoved(payload) {
         let statusContainer = $('#filesystemStatusContainer_' + payload.fid);
@@ -273,6 +305,27 @@ $(document).ready(function () {
         localStorage.setItem('tab-status', 'program');
     });
 
+
+    $('.program-action-handle-logging').click(function () {
+        let pid = $(this).data('program-id');
+        let logBox = $('#programLog_' + pid);
+
+        if (!$(this).data('enabled')) {
+            let waitingText = $('<span/>',{
+                id: 'waitingText_' + pid,
+                text:'Processing the log from the client.\n'
+            });
+            logBox.append(waitingText);
+            $(this).data('enabled', true);
+            handleLogging(pid, 'enable');
+        } else {
+            handleLogging(pid, 'disable');
+            $(this).data('enabled', false);
+            terminals[pid].clear();
+        }
+    });
+
+
     $('.program-action-start-stop').click(function () {
         let apiRequest = function (url, type) {
             $.ajax({
@@ -296,6 +349,9 @@ $(document).ready(function () {
         };
 
         let id = $(this).data('program-id');
+
+        let cardButton = $('#programCardButton_' + id);
+        cardButton.prop('disabled', false);
 
         if ($(this).attr('data-is-running') === 'True') {
             apiRequest('/api/program/' + id + '/stop', 'GET');
@@ -613,3 +669,15 @@ $(document).ready(function () {
     // slaveForm Handler
     $('#slaveForm').submit(onFormSubmit('slaveForm'));
 });
+
+// if the site gets reloaded/closed all logging activity gets stopped
+$(window).on('unload', function (e) {
+    $('.program-action-handle-logging').each(function () {
+        if ($(this).data('enabled')) {
+            let id = $(this).data('program-id');
+            handleLogging(id, 'disable', false);
+            $(this).data('enabled', false);
+        }
+    });
+});
+
