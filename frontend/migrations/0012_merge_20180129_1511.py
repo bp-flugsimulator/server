@@ -10,5 +10,4 @@ class Migration(migrations.Migration):
         ('frontend', '0011_auto_20180127_1703'),
     ]
 
-    operations = [
-    ]
+    operations = []
