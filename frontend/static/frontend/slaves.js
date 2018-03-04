@@ -679,10 +679,18 @@ $(document).ready(function () {
         $('#'+modal).on('show.bs.modal', function(e) {
 			window.unloadPrompt = true;
         });
-        $('#'+modal).on('hide.bs.modal', function(e) {
+        $('#'+modal).on('hidden.bs.modal', function(e) {
+	    $('#unsafedChangesWarning').data('parentModal', e.target.id);
+	    $('#unsafedChangesWarning').modal('toggle');
             window.unloadPrompt = false;
 		});
-	}
+    }
+
+    $('#keepParentModal').click(function(e) {
+        let parentModal = $('#unsafedChangesWarning').data('parentModal');
+	      $('#unsafedChangesWarning').modal('toggle');
+        $('#' + parentModal).modal('toggle');
+    });
 
 });
 
