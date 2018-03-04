@@ -439,6 +439,22 @@ class ScriptTest(TestCase):
         new_script_script = Script.from_model(script.id, "str", "str", "str")
         self.assertEqual(script_script, new_script_script)
 
+    def test_edit_name_excists(self):
+        script = ScriptFactory()
+        script2 = ScriptFactory()
+        sgp = SGPFactory(script=script)
+        sgf = SGFFactory(script=script)
+        script_script = Script.from_model(script.id, "str", "str", "str")
+
+        script_script.name = script2.name
+        api_response = self.client.put("/api/script/" + str(script.id),
+                                       json.dumps(dict(script_script)))
+        self.assertEqual(api_response.status_code, 200)
+        self.assertContains(
+            api_response,
+            "UNIQUE constraint failed"
+            )
+
 
 class FileTests(TestCase):
     maxDiff = None

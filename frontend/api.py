@@ -63,6 +63,8 @@ def script_put_post(data, script_id):
         return StatusResponse(Status.err(str(err)))
     except ValidationError as err:
         return StatusResponse(Status.err('; '.join(err.messages)))
+    except IntegrityError as err:
+        return StatusResponse(Status.err(str(err)))
 
 
 def add_slave(request):
