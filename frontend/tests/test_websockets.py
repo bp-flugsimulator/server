@@ -1,6 +1,9 @@
 #  pylint: disable=C0111,C0103
 
 import json
+import string
+
+from random import choice
 
 from django.test import TestCase
 from channels import Group
@@ -64,12 +67,12 @@ class WebsocketTests(TestCase):
         )
         self.assertEqual(ws_client.receive(json=False), 'ok')
 
-    def test_ws_notifications_wrong_json(self):
+    def test_ws_rpc_wrong_json(self):
         ws_client = WSClient()
 
         ws_client.send_and_consume(
             'websocket.receive',
-            path='/notifications',
+            path='/commands',
             content={'text': "str"},
         )
 
@@ -77,7 +80,7 @@ class WebsocketTests(TestCase):
 
         ws_client.send_and_consume(
             'websocket.receive',
-            path='/notifications',
+            path='/commands',
             content={'text': {
                 "test": "test"
             }},
@@ -96,9 +99,7 @@ class WebsocketTests(TestCase):
         ws_client.send_and_consume(
             'websocket.connect',
             path='/commands',
-            content={
-                'client': [slave.ip_address, slave.mac_address]
-            })
+            content={'client': [slave.ip_address, slave.mac_address]})
 
         # connect webinterface on /notifications
         webinterface = WSClient()
@@ -148,9 +149,7 @@ class WebsocketTests(TestCase):
         ws_client.send_and_consume(
             'websocket.connect',
             path='/commands',
-            content={
-                'client': [slave.ip_address, slave.mac_address]
-            })
+            content={'client': [slave.ip_address, slave.mac_address]})
 
         # connect webinterface on /notifications
         webinterface = WSClient()
@@ -196,15 +195,15 @@ class WebsocketTests(TestCase):
         Group('notifications').send({'text': Status.ok('').to_json()})
         self.assertIsNone(ws_client.receive())
 
-    def test_ws_notifications_receive_fail(self):
+    def test_ws_rpc_receive_fail(self):
         ws_client = WSClient()
         ws_client.send_and_consume(
             'websocket.receive',
-            path='/notifications',
+            path='/commands',
         )
         self.assertIsNone(ws_client.receive())
 
-    def test_ws_notifications_receive_online(self):
+    def test_ws_rpc_receive_online(self):
         slave = SlaveOnlineFactory(online=False)
 
         expected_status = Status.ok({'method': 'online'})
@@ -218,7 +217,7 @@ class WebsocketTests(TestCase):
         ws_client = WSClient()
         ws_client.send_and_consume(
             'websocket.receive',
-            path='/notifications',
+            path='/commands',
             content={'text': expected_status.to_json()},
         )
 
@@ -233,7 +232,7 @@ class WebsocketTests(TestCase):
             Status.from_json(json.dumps(webinterface.receive())),
         )
 
-    def test_ws_notifications_receive_online_delted_slave(self):
+    def test_ws_rpc_receive_online_delted_slave(self):
         slave = SlaveOnlineFactory(online=False)
 
         expected_status = Status.ok({'method': 'online'})
@@ -249,7 +248,7 @@ class WebsocketTests(TestCase):
         ws_client = WSClient()
         ws_client.send_and_consume(
             'websocket.receive',
-            path='/notifications',
+            path='/commands',
             content={'text': expected_status.to_json()},
         )
 
@@ -258,7 +257,7 @@ class WebsocketTests(TestCase):
         # test if a connected message was send on /notifications
         self.assertIsNone(webinterface.receive())
 
-    def test_ws_notifications_receive_online_status_err(self):
+    def test_ws_rpc_receive_online_status_err(self):
         slave = SlaveOnlineFactory(online=False)
 
         error_status = Status.err({
@@ -276,10 +275,8 @@ class WebsocketTests(TestCase):
         ws_client = WSClient()
         ws_client.send_and_consume(
             'websocket.receive',
-            path='/notifications',
-            content={
-                'text': error_status.to_json()
-            })
+            path='/commands',
+            content={'text': error_status.to_json()})
 
         self.assertFalse(SlaveModel.objects.get(id=slave.id).is_online)
 
@@ -291,7 +288,7 @@ class WebsocketTests(TestCase):
             Status.from_json(json.dumps(webinterface.receive())),
         )
 
-    def test_ws_notifications_receive_execute(self):
+    def test_ws_rpc_receive_execute(self):
         program_status = ProgramStatusFactory(running=True)
         program = program_status.program
 
@@ -308,7 +305,7 @@ class WebsocketTests(TestCase):
         ws_client = WSClient()
         ws_client.send_and_consume(
             'websocket.receive',
-            path='/notifications',
+            path='/commands',
             content={'text': expected_status.to_json()},
         )
 
@@ -326,7 +323,7 @@ class WebsocketTests(TestCase):
             Status.from_json(json.dumps(webinterface.receive())),
         )
 
-    def test_ws_notifications_receive_execute_delete_slave(self):
+    def test_ws_rpc_receive_execute_delete_slave(self):
         program_status = ProgramStatusFactory(running=True)
         program = program_status.program
 
@@ -345,7 +342,7 @@ class WebsocketTests(TestCase):
         ws_client = WSClient()
         ws_client.send_and_consume(
             'websocket.receive',
-            path='/notifications',
+            path='/commands',
             content={'text': expected_status.to_json()},
         )
 
@@ -355,7 +352,7 @@ class WebsocketTests(TestCase):
         #  test if the webinterface gets the "finished" message
         self.assertIsNone(webinterface.receive())
 
-    def test_ws_notifications_receive_execute_status_err(self):
+    def test_ws_rpc_receive_execute_status_err(self):
         program_status = ProgramStatusFactory(running=True)
         program = program_status.program
 
@@ -372,7 +369,7 @@ class WebsocketTests(TestCase):
         ws_client = WSClient()
         ws_client.send_and_consume(
             'websocket.receive',
-            path='/notifications',
+            path='/commands',
             content={'text': error_status.to_json()},
         )
 
@@ -390,11 +387,92 @@ class WebsocketTests(TestCase):
             Status.from_json(json.dumps(webinterface.receive())),
         )
 
-    def test_ws_notifications_receive_unknown_method(self):
+    def test_ws_rpc_receive_log(self):
+        program_status = ProgramStatusFactory(running=True)
+        program = program_status.program
+
+        error_status = Status.ok({
+            'method': 'get_log',
+            'result': {
+                'log': 'this is the content of a logfile',
+                'uuid': program_status.command_uuid,
+            },
+        })
+
+        #  connect webinterface
+        webinterface = WSClient()
+        webinterface.join_group('notifications')
+
         ws_client = WSClient()
         ws_client.send_and_consume(
             'websocket.receive',
-            path='/notifications',
+            path='/commands',
+            content={'text': error_status.to_json()},
+        )
+
+        #  test if the webinterface gets the error message
+        self.assertEqual(
+            Status.ok({
+                'log': 'this is the content of a logfile',
+                'pid': str(program.id),
+            }),
+            Status.from_json(json.dumps(webinterface.receive())),
+        )
+
+    def test_ws_rpc_receive_log_status_err(self):
+        error_status = Status.err({
+            'method': 'get_log',
+            'result': str(Exception('foobar')),
+        })
+
+        #  connect webinterface
+        webinterface = WSClient()
+        webinterface.join_group('notifications')
+
+        ws_client = WSClient()
+        ws_client.send_and_consume(
+            'websocket.receive',
+            path='/commands',
+            content={'text': error_status.to_json()},
+        )
+
+        #  test if the webinterface gets the error message
+        self.assertEqual(
+            Status.err('An error occured while reading a log file!'),
+            Status.from_json(json.dumps(webinterface.receive())),
+        )
+
+    def test_ws_rpc_receive_log_unknown_program(self):
+        error_status = Status.ok({
+            'method': 'get_log',
+            'result': {
+                'log': '',
+                'uuid': '0'
+            },
+        })
+
+        #  connect webinterface
+        webinterface = WSClient()
+        webinterface.join_group('notifications')
+
+        ws_client = WSClient()
+        ws_client.send_and_consume(
+            'websocket.receive',
+            path='/commands',
+            content={'text': error_status.to_json()},
+        )
+
+        #  test if the webinterface gets the error message
+        self.assertEqual(
+            Status.err('Received log from unknown program!'),
+            Status.from_json(json.dumps(webinterface.receive())),
+        )
+
+    def test_ws_rpc_receive_unknown_method(self):
+        ws_client = WSClient()
+        ws_client.send_and_consume(
+            'websocket.receive',
+            path='/commands',
             content={'text': Status.ok({
                 'method': ''
             }).to_json()},
@@ -402,7 +480,30 @@ class WebsocketTests(TestCase):
 
         self.assertIsNone(ws_client.receive())
 
-    def test_ws_notifications_moved_success(self):
+    def test_ws_logs(self):
+        webinterface = WSClient()
+        webinterface.join_group('notifications')
+
+        ws_client = WSClient()
+        ws_client.send_and_consume('websocket.connect', path='/logs')
+        self.assertIsNone(ws_client.receive())
+
+        msg = Status.ok({
+            'log':
+            ''.join([
+                choice(string.ascii_letters + string.digits)
+                for _ in range(500)
+            ]),
+            'pid':
+            choice(string.digits)
+        })
+
+        ws_client.send_and_consume(
+            'websocket.receive', path='/logs', content={'text': msg.to_json()})
+        self.assertEqual(msg,
+                         Status.from_json(json.dumps(webinterface.receive())))
+
+    def test_ws_rpc_moved_success(self):
         filesystem = FileFactory()
 
         moved = MovedFileFactory.build()
@@ -420,7 +521,7 @@ class WebsocketTests(TestCase):
         ws_client = WSClient()
         ws_client.send_and_consume(
             'websocket.receive',
-            path='/notifications',
+            path='/commands',
             content={'text': error_status.to_json()},
         )
 
@@ -436,7 +537,7 @@ class WebsocketTests(TestCase):
             Status.from_json(json.dumps(webinterface.receive())),
         )
 
-    def test_ws_notifications_moved_failed(self):
+    def test_ws_rpc_moved_failed(self):
         filesystem = FileFactory()
 
         error_code = 'any kind of string'
@@ -455,7 +556,7 @@ class WebsocketTests(TestCase):
         ws_client = WSClient()
         ws_client.send_and_consume(
             'websocket.receive',
-            path='/notifications',
+            path='/commands',
             content={'text': error_status.to_json()},
         )
 
@@ -472,7 +573,7 @@ class WebsocketTests(TestCase):
             Status.from_json(json.dumps(webinterface.receive())),
         )
 
-    def test_ws_notifications_restore_success(self):
+    def test_ws_rpc_restore_success(self):
         filesystem = MovedFileFactory()
 
         error_status = Status.ok({
@@ -489,7 +590,7 @@ class WebsocketTests(TestCase):
         ws_client = WSClient()
         ws_client.send_and_consume(
             'websocket.receive',
-            path='/notifications',
+            path='/commands',
             content={'text': error_status.to_json()},
         )
 
@@ -505,7 +606,7 @@ class WebsocketTests(TestCase):
             Status.from_json(json.dumps(webinterface.receive())),
         )
 
-    def test_ws_notifications_restore_failed(self):
+    def test_ws_rpc_restore_failed(self):
         filesystem = MovedFileFactory()
 
         error_code = 'any kind of string'
@@ -524,7 +625,7 @@ class WebsocketTests(TestCase):
         ws_client = WSClient()
         ws_client.send_and_consume(
             'websocket.receive',
-            path='/notifications',
+            path='/commands',
             content={'text': error_status.to_json()},
         )
 
@@ -541,7 +642,7 @@ class WebsocketTests(TestCase):
             Status.from_json(json.dumps(webinterface.receive())),
         )
 
-    def test_ws_notifications_restore_not_found(self):
+    def test_ws_rpc_restore_not_found(self):
         webinterface = WSClient()
         webinterface.join_group('notifications')
 
@@ -553,13 +654,13 @@ class WebsocketTests(TestCase):
         ws_client = WSClient()
         ws_client.send_and_consume(
             'websocket.receive',
-            path='/notifications',
+            path='/commands',
             content={'text': error_status.to_json()},
         )
 
         self.assertIsNone(webinterface.receive())
 
-    def test_ws_notifications_move_not_found(self):
+    def test_ws_rpc_move_not_found(self):
         webinterface = WSClient()
         webinterface.join_group('notifications')
 
@@ -571,13 +672,13 @@ class WebsocketTests(TestCase):
         ws_client = WSClient()
         ws_client.send_and_consume(
             'websocket.receive',
-            path='/notifications',
+            path='/commands',
             content={'text': error_status.to_json()},
         )
 
         self.assertIsNone(webinterface.receive())
 
-    def test_ws_notifications_chain_commands_err(self):
+    def test_ws_rpc_chain_commands_err(self):
         error_chain = Status.err({
             'method': 'chain_execution',
             'result': None,
@@ -590,13 +691,13 @@ class WebsocketTests(TestCase):
         ws_client = WSClient()
         ws_client.send_and_consume(
             'websocket.receive',
-            path='/notifications',
+            path='/commands',
             content={'text': error_chain.to_json()},
         )
 
         self.assertIsNone(webinterface.receive())
 
-    def test_ws_notifications_chain_commands(self):
+    def test_ws_rpc_chain_commands(self):
         filesystem = FileFactory()
 
         moved = MovedFileFactory.build()
@@ -627,7 +728,7 @@ class WebsocketTests(TestCase):
         ws_client = WSClient()
         ws_client.send_and_consume(
             'websocket.receive',
-            path='/notifications',
+            path='/commands',
             content={'text': error_chain.to_json()},
         )
 
