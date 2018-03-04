@@ -583,18 +583,19 @@ class Script(Model):
             else:
                 copy = Script(name=name)
 
+        copy.save()
         for file_entry in ScriptGraphFiles.objects.filter(script_id=self.id):
             ScriptGraphFiles(
                 script=copy,
                 index=file_entry.index,
-                filesystem=file_entry.filesystem)
+                filesystem=file_entry.filesystem).save()
 
         for program_entry in ScriptGraphPrograms.objects.filter(
                 script_id=self.id):
             ScriptGraphPrograms(
                 script=copy,
                 index=program_entry.index,
-                program=program_entry.program)
+                program=program_entry.program).save()
 
         return copy
 

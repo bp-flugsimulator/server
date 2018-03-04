@@ -565,8 +565,7 @@ def copy_script(request, script_id):
     if request.method == 'GET':
         try:
             script = ScriptModel.objects.get(id=script_id)
-            copy = script.deep_copy()
-            copy.save()
+            script.deep_copy()
             return StatusResponse(Status.ok(''))
         except ScriptModel.DoesNotExist:
             return StatusResponse(Status.err("Script does not exist."))
