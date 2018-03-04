@@ -674,7 +674,7 @@ $(document).ready(function () {
     $('#slaveForm').submit(onFormSubmit('slaveForm'));
 
     //register load and unload hooks for modals
-    let hookModals = ['programModal', 'slaveModal', 'fileModal'];
+    let hookModals = ['programModal', 'slaveModal', 'filesystemModal'];
     for (let modal of hookModals){
         $('#'+modal).on('show.bs.modal', function(e) {
 			window.unloadPrompt = true;
