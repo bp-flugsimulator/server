@@ -37,9 +37,9 @@ const options = {
         return promiseQuery('/api/programs?slave_str=true&slave=' + slave);
     },
     querySlavesFiles() {
-        return promiseQuery('/api/slaves?filesystem=True');
+        return promiseQuery('/api/slaves?filesystems=True');
     },
-    queryFiles(slave) {
+    queryFilesystems(slave) {
         return promiseQuery('/api/filesystems?slave_str=true&slave=' + slave);
     },
 };

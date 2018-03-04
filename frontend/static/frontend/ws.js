@@ -76,6 +76,9 @@ function fsimWebsocket(partialSocketEventHandler) {
                     default:
                         notify('Unknown message', 'Unknown script_status received (' + JSON.stringify(status.payload.message) + ')', 'info');
                 }
+            } else if (status.payload.log != null) {
+                // handle program log update
+                socketEventHandler.programUpdateLog(status.payload);
             } else if (status.payload.filesystem_status != null) {
                 switch (status.payload.filesystem_status) {
                     case 'moved':
