@@ -567,7 +567,9 @@ def manage_script(request, script_id):
                     script=new_model,
                     index=filesystem.index,
                     filesystem=FilesystemModel.objects.get(
-                        name=filesystem.filesystem),
+                        name=filesystem.filesystem,
+                        slave=SlaveModel.objects.get(name=filesystem.slave)
+                    ),
                 )
 
             return StatusResponse(Status.ok(""))
