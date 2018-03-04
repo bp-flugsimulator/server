@@ -498,6 +498,13 @@ class Script(Model):
                     'slave', flat=True)
 
     def deep_copy(self):
+        """
+        Returns a deep copy of a script
+
+        Returns
+        -------
+            Script
+        """
         i = 0
         copy = None
 
