@@ -187,12 +187,12 @@ const socketEventHandler = {
     },
     programUpdateLog(payload) {
         let pid = payload.pid;
-        $('#waitingText_' + pid).text('Processing the log.');
-
         if (terminals[pid] == null) {
             terminals[pid] = new AnsiTerm(pid, 80);
         }
+
         terminals[pid].feed(payload.log);
+        $('#waitingText_' + pid).empty();
         $('#programLog_' + pid).data('has-log', true);
     },
     filesystemMoved(payload) {
@@ -311,14 +311,13 @@ $(document).ready(function () {
         let logBox = $('#programLog_' + pid);
 
         if (!$(this).data('enabled')) {
-            handleLogging(pid, 'enable');
             let waitingText = $('<span/>',{
                 id: 'waitingText_' + pid,
-                text:'Waiting for the log from the client.\n',
-                class:'waiting-text'
+                text:'Processing the log from the client.\n'
             });
             logBox.append(waitingText);
             $(this).data('enabled', true);
+            handleLogging(pid, 'enable');
         } else {
             handleLogging(pid, 'disable');
             $(this).data('enabled', false);

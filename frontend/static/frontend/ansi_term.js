@@ -29,7 +29,6 @@ class AnsiTerm {
     }
 
     updateHtml() {
-        $('#waitingText_' + this.pid).remove();
         // TODO could be speed up on updates by only updating changed lines
         for (let row = 0; row < this.grid.length; row++) {
             let completedRow = [];
