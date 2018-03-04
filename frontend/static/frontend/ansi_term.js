@@ -3,6 +3,7 @@ class AnsiTerm {
         this.pid = pid;
         this.row = 0;
         this.col = 0;
+        this.rest = '';
         this.width = width;
         this.grid = [[new Array(width)]]; // addressed with grid[row][wrapping][col]
         this.moveCursor(this.row, this.col);
@@ -28,6 +29,7 @@ class AnsiTerm {
     }
 
     updateHtml() {
+        $('#waitingText_' + this.pid).remove();
         // TODO could be speed up on updates by only updating changed lines
         for (let row = 0; row < this.grid.length; row++) {
             let completedRow = [];
@@ -96,7 +98,7 @@ class AnsiTerm {
         for (let i = 0; i < text.length; i++) {
             let c = text.charAt(i);
             switch (c) {
-                // TODO missing escape codes && save uncomplete commands on the end of the text
+                // TODO missing escape codes
                 case '\u001B':
                     let rest = text.substring(i, i + 20);
                     let matches = null;
@@ -108,7 +110,7 @@ class AnsiTerm {
                      **/
                     if ((matches = rest.match(/^\u001B\[(\d*)[A-G]/))) {
                         i = i + matches[0].length - '\x1b'.length;
-                        if (matches[1] == '') {
+                        if (matches[1] === '') {
                             matches[1] = '1';
                         }
 
@@ -291,7 +293,7 @@ class AnsiTerm {
                         break;
                     }
 
-                    if((i - text.length) < 10 && (rest.substring(1).search('\u001B') == -1)){
+                    if((i - text.length) < 10 && (rest.substring(1).search('\u001B') === -1)){
                         this.rest = rest;
                         i = text.length;
                     }

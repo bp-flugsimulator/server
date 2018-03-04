@@ -186,13 +186,14 @@ const socketEventHandler = {
         });
     },
     programUpdateLog(payload) {
-        let logBox = $('#programLog_' + payload.pid);
-        let pid = logBox.data('pid');
+        let pid = payload.pid;
+        $('#waitingText_' + pid).text('Processing the log.');
+
         if (terminals[pid] == null) {
             terminals[pid] = new AnsiTerm(pid, 80);
         }
         terminals[pid].feed(payload.log);
-        logBox.data('has-log', true);
+        $('#programLog_' + pid).data('has-log', true);
     },
     filesystemMoved(payload) {
         let statusContainer = $('#filesystemStatusContainer_' + payload.fid);
@@ -311,6 +312,12 @@ $(document).ready(function () {
 
         if (!$(this).data('enabled')) {
             handleLogging(pid, 'enable');
+            let waitingText = $('<span/>',{
+                id: 'waitingText_' + pid,
+                text:'Waiting for the log from the client.\n',
+                class:'waiting-text'
+            });
+            logBox.append(waitingText);
             $(this).data('enabled', true);
         } else {
             handleLogging(pid, 'disable');
