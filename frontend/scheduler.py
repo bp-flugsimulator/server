@@ -211,29 +211,29 @@ class Scheduler:
 
         old_index = self.__index
 
-        try:
-            query_programs = ScriptGraphPrograms.objects.filter(
-                script=self.__script,
-                index__gt=self.__index,
-            ).values_list(
-                'index',
-                flat=True,
-            )
+        query_programs = ScriptGraphPrograms.objects.filter(
+            script=self.__script,
+            index__gt=self.__index,
+        ).values_list(
+            'index',
+            flat=True,
+        )
 
-            query_filesystems = ScriptGraphFiles.objects.filter(
-                script=self.__script,
-                index__gt=self.__index,
-            ).values_list(
-                'index',
-                flat=True,
-            )
+        query_filesystems = ScriptGraphFiles.objects.filter(
+            script=self.__script,
+            index__gt=self.__index,
+        ).values_list(
+            'index',
+            flat=True,
+        )
 
-            query = set(query_filesystems).union(set(query_programs))
+        query = set(query_filesystems).union(set(query_programs))
 
+        if query:
             self.__index = min(query)
             LOGGER.debug("Scheduler found next index %s", self.__index)
             all_done = False
-        except IndexError:
+        else:
             LOGGER.debug("Scheduler done")
             self.__index = -1
             all_done = True
@@ -437,6 +437,11 @@ class Scheduler:
             ScriptGraphFiles,
         )
 
+        LOGGER.debug(
+            "Waiting for programs and filesystems in stage `%s`.",
+            self.__index,
+        )
+
         progs = ScriptGraphPrograms.objects.filter(
             script=self.__script,
             index=self.__index,
@@ -479,7 +484,7 @@ class Scheduler:
             elif not filesystem.is_moved:
                 LOGGER.debug(
                     "Filesystem %s is not ready yet.",
-                    prog.name,
+                    filesystem.name,
                 )
                 return
 

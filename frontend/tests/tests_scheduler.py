@@ -35,6 +35,7 @@ class SchedulerTests(TestCase):
             name="test_slav21",
             ip_address="0.1.2.0",
             mac_address="01:01:01:00:00100",
+            online=True,
         )
         slave1.save()
 
@@ -42,6 +43,7 @@ class SchedulerTests(TestCase):
             name="test_sl1ve2",
             ip_address="0.1.2.1",
             mac_address="00:02:01:01:00:00",
+            online=True,
         )
         slave2.save()
 
@@ -105,102 +107,68 @@ class SchedulerTests(TestCase):
             Status.from_json(json.dumps(webinterface.receive())),
         )
 
-    def test_state_waiting_slaves(self):
+    def test_state_next(self):
+        webinterface = WSClient()
+        webinterface.join_group('notifications')
+
+        self.sched._Scheduler__index = -1
         self.sched._Scheduler__script = self.script.id
-        self.sched._Scheduler__state = SchedulerStatus.WAITING_FOR_SLAVES
-        self.sched._Scheduler__state_wait_slaves()
+        self.sched._Scheduler__state = SchedulerStatus.NEXT_STEP
+        self.sched._Scheduler__state_next()
 
         self.assertEqual(
             self.sched._Scheduler__state,
-            SchedulerStatus.WAITING_FOR_SLAVES,
+            SchedulerStatus.WAITING_FOR_PROGRAMS_FILESYSTEMS,
         )
 
-        SlaveModel.objects.filter(id=self.slave1.id).update(
-            online=True,
-            command_uuid=uuid4().hex,
+        self.assertEqual(
+            Status.ok({
+                'script_status': 'next_step',
+                'index': 0,
+                'last_index': -1,
+                'start_time': 0,
+                'script_id': self.script.id,
+            }),
+            Status.from_json(json.dumps(webinterface.receive())),
         )
 
-        self.sched._Scheduler__state_wait_slaves()
+        self.sched._Scheduler__state = SchedulerStatus.NEXT_STEP
+        self.sched._Scheduler__state_next()
 
         self.assertEqual(
             self.sched._Scheduler__state,
-            SchedulerStatus.WAITING_FOR_SLAVES,
+            SchedulerStatus.WAITING_FOR_PROGRAMS_FILESYSTEMS,
         )
 
-        SlaveModel.objects.filter(id=self.slave2.id).update(
-            online=True,
-            command_uuid=uuid4().hex,
+        self.assertEqual(
+            Status.ok({
+                'script_status': 'next_step',
+                'index': 2,
+                'last_index': 0,
+                'start_time': 1,
+                'script_id': self.script.id,
+            }),
+            Status.from_json(json.dumps(webinterface.receive())),
         )
 
-        self.sched._Scheduler__state_wait_slaves()
+        self.sched._Scheduler__state = SchedulerStatus.NEXT_STEP
+        self.sched._Scheduler__state_next()
 
         self.assertEqual(
             self.sched._Scheduler__state,
-            SchedulerStatus.NEXT_STEP,
+            SchedulerStatus.SUCCESS,
         )
 
-    # def test_state_next(self):
-    #     webinterface = WSClient()
-    #     webinterface.join_group('notifications')
-
-    #     self.sched._Scheduler__index = -1
-    #     self.sched._Scheduler__script = self.script.id
-    #     self.sched._Scheduler__state = SchedulerStatus.NEXT_STEP
-    #     self.sched._Scheduler__state_next()
-
-    #     self.assertEqual(
-    #         self.sched._Scheduler__state,
-    #         SchedulerStatus.WAITING_FOR_PROGRAMS_FILESYSTEMS,
-    #     )
-
-    #     self.assertEqual(
-    #         Status.ok({
-    #             'script_status': 'next_step',
-    #             'index': 0,
-    #             'last_index': -1,
-    #             'start_time': 0,
-    #             'script_id': self.script.id,
-    #         }),
-    #         Status.from_json(json.dumps(webinterface.receive())),
-    #     )
-
-    #     self.sched._Scheduler__state = SchedulerStatus.NEXT_STEP
-    #     self.sched._Scheduler__state_next()
-
-    #     self.assertEqual(
-    #         self.sched._Scheduler__state,
-    #         SchedulerStatus.WAITING_FOR_PROGRAMS_FILESYSTEMS,
-    #     )
-
-    #     self.assertEqual(
-    #         Status.ok({
-    #             'script_status': 'next_step',
-    #             'index': 2,
-    #             'last_index': 0,
-    #             'start_time': 1,
-    #             'script_id': self.script.id,
-    #         }),
-    #         Status.from_json(json.dumps(webinterface.receive())),
-    #     )
-
-    #     self.sched._Scheduler__state = SchedulerStatus.NEXT_STEP
-    #     self.sched._Scheduler__state_next()
-
-    #     self.assertEqual(
-    #         self.sched._Scheduler__state,
-    #         SchedulerStatus.SUCCESS,
-    #     )
-
-    #     self.assertEqual(
-    #         Status.ok({
-    #             'script_status': 'next_step',
-    #             'index': 3,
-    #             'last_index': 2,
-    #             'start_time': 0,
-    #             'script_id': self.script.id,
-    #         }),
-    #         Status.from_json(json.dumps(webinterface.receive())),
-    #     )
+        self.assertEqual(
+            Status.ok({
+                'script_status': 'next_step',
+                'index': 3,
+                'last_index': 2,
+                'start_time': 0,
+                'script_id': self.script.id,
+            }),
+            Status.from_json(json.dumps(webinterface.receive())),
+        )
 
     def test_state_waiting_programs(self):
         self.sched._Scheduler__script = self.script.id
