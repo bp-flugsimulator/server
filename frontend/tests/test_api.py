@@ -414,28 +414,30 @@ class ScriptTest(TestCase):
             Status.from_json(api_response.content.decode('utf-8')),
         )
 
-    # def test_edit(self):
-    #     script = ScriptFactory()
-    #     sgp = SGPFactory(script=script)
-    #     sgf = SGFFactory(script=script)
-    #     sgf2 = SGFFactory.build(script=script)
+    def test_edit(self):
+        script = ScriptFactory()
+        sgp = SGPFactory(script=script)
+        sgf = SGFFactory(script=script)
+        slave2 = SlaveFactory()
+        filesystem2 = FileFactory(slave=slave2)
+        sgf2 = SGFFactory.build(script=script, filesystem=filesystem2)
 
-    #     script_script = Script.from_model(script.id, "str", "str", "str")
-    #     script_script.filesystems.append(
-    #         ScriptEntryFilesystem(sgf2.index, sgf2.filesystem.name,
-    #                               sgf2.filesystem.slave.name))
+        script_script = Script.from_model(script.id, "str", "str", "str")
+        script_script.filesystems.append(
+            ScriptEntryFilesystem(sgf2.index, sgf2.filesystem.name,
+                                  sgf2.filesystem.slave.name))
 
-    #     api_response = self.client.put("/api/script/" + str(script.id),
-    #                                    json.dumps(dict(script_script)))
+        api_response = self.client.put("/api/script/" + str(script.id),
+                                       json.dumps(dict(script_script)))
 
-    #     new_script_script = Script.from_model(script.id, "str", "str", "str")
+        self.assertEqual(api_response.status_code, 200)
+        self.assertEqual(
+            Status.ok(""),
+            Status.from_json(api_response.content.decode('utf-8')),
+        )
 
-    #     self.assertEqual(script_script, new_script_script)
-    #     self.assertEqual(api_response.status_code, 200)
-    #     self.assertEqual(
-    #         Status.ok(""),
-    #         Status.from_json(api_response.content.decode('utf-8')),
-    #     )
+        new_script_script = Script.from_model(script.id, "str", "str", "str")
+        self.assertEqual(script_script, new_script_script)
 
 
 class FileTests(TestCase):
@@ -915,6 +917,7 @@ class FileTests(TestCase):
             ),
             Command.from_json(json.dumps(ws_client.receive())),
         )
+
     def test_edit_filesystem_wrong_http_method(self):
         api_response = self.client.get("/api/filesystem/0")
         self.assertEqual(api_response.status_code, 403)
@@ -976,12 +979,18 @@ class FileTests(TestCase):
         api_response = self.client.put(
             "/api/filesystem/" + str(filesystem_edit.id),
             data=urlencode({
-                'name': filesystem_exists.name,
-                'source_path': filesystem_exists.source_path,
-                'destination_path': filesystem_exists.destination_path,
-                'slave': str(filesystem_exists.slave.id),
-    'source_type': filesystem_exists.source_type,
-                'destination_type': filesystem_exists.destination_type,
+                'name':
+                filesystem_exists.name,
+                'source_path':
+                filesystem_exists.source_path,
+                'destination_path':
+                filesystem_exists.destination_path,
+                'slave':
+                str(filesystem_exists.slave.id),
+                'source_type':
+                filesystem_exists.source_type,
+                'destination_type':
+                filesystem_exists.destination_type,
             }))
 
         self.assertEqual(api_response.status_code, 200)
@@ -1145,8 +1154,8 @@ class ProgramTests(TestCase):
 
         response = self.client.get("/api/programs?q=")
         self.assertContains(response, program.name)
-        response = self.client.get(
-            "/api/programs?q=" + str(program.name[:name_half]))
+        response = self.client.get("/api/programs?q=" + str(
+            program.name[:name_half]))
         self.assertContains(response, program.name)
         response = self.client.get("/api/programs?q=" + str(program.name))
         self.assertContains(response, program.name)
@@ -1186,14 +1195,13 @@ class ProgramTests(TestCase):
         for _ in range(2000):
             long_str += 'a'
 
-        api_response = self.client.post(
-            '/api/programs', {
-                'name': long_str,
-                'path': long_str,
-                'arguments': long_str,
-                'slave': str(slave.id),
-                'start_time': -1,
-            })
+        api_response = self.client.post('/api/programs', {
+            'name': long_str,
+            'path': long_str,
+            'arguments': long_str,
+            'slave': str(slave.id),
+            'start_time': -1,
+        })
 
         self.assertEqual(api_response.status_code, 200)
         self.assertEqual(
@@ -1208,14 +1216,13 @@ class ProgramTests(TestCase):
     def test_add_program_fail_not_unique(self):
         slave = SlaveFactory()
 
-        api_response = self.client.post(
-            '/api/programs', {
-                'name': 'name',
-                'path': 'path',
-                'arguments': '',
-                'slave': str(slave.id),
-                'start_time': -1,
-            })
+        api_response = self.client.post('/api/programs', {
+            'name': 'name',
+            'path': 'path',
+            'arguments': '',
+            'slave': str(slave.id),
+            'start_time': -1,
+        })
 
         self.assertEqual(api_response.status_code, 200)
         self.assertEqual(
@@ -1224,14 +1231,13 @@ class ProgramTests(TestCase):
         )
 
         # try to add program with the same name
-        api_response = self.client.post(
-            '/api/programs', {
-                'name': 'name',
-                'path': 'path',
-                'arguments': '',
-                'slave': str(slave.id),
-                'start_time': -1,
-            })
+        api_response = self.client.post('/api/programs', {
+            'name': 'name',
+            'path': 'path',
+            'arguments': '',
+            'slave': str(slave.id),
+            'start_time': -1,
+        })
 
         self.assertEqual(api_response.status_code, 200)
         self.assertEqual(
@@ -1291,8 +1297,8 @@ class ProgramTests(TestCase):
 
         #  make a request to delete the program entry
         for program in data_set:
-            api_response = self.client.delete(
-                '/api/program/' + str(program.id))
+            api_response = self.client.delete('/api/program/' + str(
+                program.id))
             self.assertEqual(api_response.status_code, 200)
             self.assertEquals(api_response.json()['status'], 'ok')
             self.assertFalse(
@@ -1447,11 +1453,10 @@ class ProgramTests(TestCase):
         slave_ws.join_group('client_' + str(slave.id))
 
         # test api
-        api_response = self.client.get(
-            path=reverse(
-                'frontend:stop_program',
-                args=[program.id],
-            ))
+        api_response = self.client.get(path=reverse(
+            'frontend:stop_program',
+            args=[program.id],
+        ))
 
         self.assertEqual(200, api_response.status_code)
         self.assertEqual(
@@ -1579,8 +1584,8 @@ class SlaveTests(TestCase):
 
         response = self.client.get("/api/slaves?q=")
         self.assertContains(response, slave.name)
-        response = self.client.get(
-            "/api/slaves?q=" + str(slave.name[:name_half]))
+        response = self.client.get("/api/slaves?q=" + str(
+            slave.name[:name_half]))
         self.assertContains(response, slave.name)
         response = self.client.get("/api/slaves?q=" + str(slave.name))
         self.assertContains(response, slave.name)
@@ -1733,11 +1738,10 @@ class SlaveTests(TestCase):
         ws_client.join_group('client_' + str(slave.id))
 
         #  make request
-        api_response = self.client.get(
-            path=reverse(
-                'frontend:shutdown_slave',
-                args=[slave.id],
-            ))
+        api_response = self.client.get(path=reverse(
+            'frontend:shutdown_slave',
+            args=[slave.id],
+        ))
 
         self.assertEqual(api_response.status_code, 200)
         self.assertEqual(

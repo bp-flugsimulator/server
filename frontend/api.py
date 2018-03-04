@@ -34,6 +34,37 @@ LOGGER = logging.getLogger("fsim.api")
 FILE_BACKUP_ENDING = "_BACK"
 
 
+def script_put_post(data, script_id):
+    try:
+        script = Script.from_json(data)
+        if script_id is None:
+            script.save()
+        else:
+            (new_model, _) = ScriptModel.objects.update_or_create(
+                id=script_id,
+                defaults={"name": script.name},
+            )
+
+            SGFModel.objects.filter(script_id=script_id).delete()
+            SGPModel.objects.filter(script_id=script_id).delete()
+
+            for program in script.programs:
+                program.save(new_model)
+            for filesystem in script.filesystems:
+                filesystem.save(new_model)
+
+        return StatusResponse(Status.ok(""))
+    except KeyError as err:
+        return StatusResponse(
+            Status.err("Could not find required key {}".format(err.args[0])))
+    except TypeError as err:
+        return StatusResponse(Status.err(str(err)))
+    except ValueError as err:
+        return StatusResponse(Status.err(str(err)))
+    except ValidationError as err:
+        return StatusResponse(Status.err('; '.join(err.messages)))
+
+
 def add_slave(request):
     """
     Process POST requests which adds new SlaveModel and GET requests to query
@@ -471,21 +502,7 @@ def add_script(request):
         other than GET.
     """
     if request.method == 'POST':
-        try:
-            script = Script.from_json(request.body.decode('utf-8'))
-            script.save()
-            return StatusResponse(Status.ok(""))
-        except KeyError as err:
-            return StatusResponse(
-                Status.err("Could not find required key {}".format(
-                    err.args[0])))
-        except TypeError as err:
-            return StatusResponse(Status.err(str(err)))
-        except ValueError as err:
-            return StatusResponse(Status.err(str(err)))
-        except ValidationError as err:
-            return StatusResponse(Status.err('; '.join(err.messages)))
-
+        return script_put_post(request.body.decode('utf-8'), None)
     else:
         return HttpResponseForbidden()
 
@@ -541,37 +558,7 @@ def manage_script(request, script_id):
             return StatusResponse(Status.err("Script does not exist."))
 
     elif request.method == 'PUT':
-        try:
-            script_id = int(script_id)
-            new_script = Script.from_json(request.body.decode('utf-8'))
-
-            (new_model, _) = ScriptModel.objects.update_or_create(
-                id=script_id,
-                defaults={"name": new_script.name},
-            )
-
-            SGFModel.objects.filter(script_id=script_id).delete()
-            SGPModel.objects.filter(script_id=script_id).delete()
-
-            for program in new_script.programs:
-                program.save(new_model)
-            for filesystem in new_script.filesystems:
-                filesystem.save(new_model)
-
-            return StatusResponse(Status.ok(""))
-        except KeyError as err:
-            return StatusResponse(
-                Status.err("Could not find required key {}".format(
-                    err.args[0])))
-        except TypeError as err:
-            return StatusResponse(Status.err(str(err)))
-        except ValueError as err:
-            return StatusResponse(Status.err(str(err)))
-        except ValidationError as err:
-            return StatusResponse(Status.err('; '.join(err.messages)))
-        except IntegrityError as err:
-            return StatusResponse(Status.err(str(err)))
-
+        return script_put_post(request.body.decode('utf-8'), int(script_id))
     elif request.method == 'DELETE':
         ScriptModel.objects.filter(id=script_id).delete()
         return StatusResponse(Status.ok(''))
@@ -907,8 +894,9 @@ def filesystem_entry(request, filesystem_id):
                 return StatusResponse(Status.ok(''))
             except ValidationError as _:
                 error_dict = {
-                    'name':
-                    ['Filesystem with this Name already exists on this Client.']
+                    'name': [
+                        'Filesystem with this Name already exists on this Client.'
+                    ]
                 }
                 return StatusResponse(Status.err(error_dict))
         else:
