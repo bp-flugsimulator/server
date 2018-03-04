@@ -106,6 +106,11 @@ $(document).ready(function () {
         $('#scriptTabNew').click();
     });
 
+    $('.script-action-copy').click(function () {
+        let id = $(this).attr('data-script-id');
+        basicRequest('/api/script/' + id + '/copy', 'GET', 'copy script', {} ,() => {window.location.reload();});
+    });
+
     $('.script-action-add-save').click(function () {
         let id = $(this).attr('data-editor-id');
         let editor = JsonForm.dumps($('#jsoneditor_' + id));

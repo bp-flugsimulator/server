@@ -429,6 +429,44 @@ class Script(Model):
                     flat=True,
                 )
 
+    def deep_copy(self):
+        """
+        Returns a deep copy of a script
+
+        Returns
+        -------
+            Script
+        """
+        i = 0
+        copy = None
+
+        while not copy:
+            if i is 0:
+                name = self.name + '_copy'
+            else:
+                name = self.name + '_copy_' + str(i)
+
+            if Script.objects.filter(name=name).exists():
+                i = i + 1
+            else:
+                copy = Script(name=name)
+
+        copy.save()
+        for file_entry in ScriptGraphFiles.objects.filter(script_id=self.id):
+            ScriptGraphFiles(
+                script=copy,
+                index=file_entry.index,
+                filesystem=file_entry.filesystem).save()
+
+        for program_entry in ScriptGraphPrograms.objects.filter(
+                script_id=self.id):
+            ScriptGraphPrograms(
+                script=copy,
+                index=program_entry.index,
+                program=program_entry.program).save()
+
+        return copy
+
 
 class ScriptGraphPrograms(Model):
     """

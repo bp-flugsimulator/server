@@ -16,6 +16,8 @@ from frontend.scripts import Script, ScriptEntryFilesystem, ScriptEntryProgram
 
 from frontend.models import (
     Script as ScriptModel,
+    ScriptGraphPrograms as SGP,
+    ScriptGraphFiles as SGF,
     Slave as SlaveModel,
     Filesystem as FilesystemModel,
     Program as ProgramModel,
@@ -39,6 +41,8 @@ from .factory import (
     SlaveOnlineFactory,
     ProgramFactory,
     ScriptFactory,
+    SGFFactory,
+    SGPFactory,
     FileFactory,
     MovedFileFactory,
     ProgramStatusFactory,
@@ -409,7 +413,66 @@ class ScriptTest(TestCase):
             Status.ok(expected_json),
             Status.from_json(response.content.decode('utf-8')),
         )
+    def test_copy_script(self):
+        script = ScriptFactory()
+        sgp = SGPFactory(script=script)
+        sgf = SGFFactory(script=script)
 
+        resp = self.client.get(
+            reverse('frontend:copy_script', args=[str(script.id)]))
+
+        self.assertEqual(
+            Status.ok(''),
+            Status.from_json(resp.content.decode('utf-8')),
+        )
+        self.assertTrue(
+            ScriptModel.objects.filter(name=script.name + '_copy').exists())
+
+        self.assertTrue(SGF.objects.filter(script=script).exists())
+        sgf_copy = SGF.objects.get(script=script)
+        self.assertEqual(sgf.index, sgf_copy.index)
+        self.assertEqual(sgf.filesystem, sgf_copy.filesystem)
+
+        self.assertTrue(SGP.objects.filter(script=script).exists())
+        sgp_copy = SGP.objects.get(script=script)
+        self.assertEqual(sgp.index, sgp_copy.index)
+        self.assertEqual(sgp.program, sgp_copy.program)
+
+    def test_copy_script_copy_already_exists(self):
+        script = ScriptFactory()
+        resp = self.client.get(
+            reverse('frontend:copy_script', args=[str(script.id)]))
+        self.assertEqual(
+            Status.ok(''),
+            Status.from_json(resp.content.decode('utf-8')),
+        )
+        resp = self.client.get(
+            reverse('frontend:copy_script', args=[str(script.id)]))
+
+        for i in range(1, 10):
+            resp = self.client.get(
+                reverse('frontend:copy_script', args=[str(script.id)]))
+            self.assertEqual(
+                Status.ok(''),
+                Status.from_json(resp.content.decode('utf-8')),
+            )
+            self.assertTrue(
+                ScriptModel.objects.filter(
+                    name=script.name + '_copy_' + str(i)).exists())
+
+    def test_copy_script_unknown_script(self):
+        resp = self.client.get(
+            reverse('frontend:copy_script', args=['9999999']))
+
+        self.assertEqual(
+            Status.err('Script does not exist.'),
+            Status.from_json(resp.content.decode('utf-8')),
+        )
+
+    def test_copy_script_unkown_http_request(self):
+        api_response = self.client.delete(
+            reverse('frontend:copy_script', args=['0']))
+        self.assertEqual(403, api_response.status_code)
 
 class FilesystemTests(StatusTestCase):
     maxDiff = None
@@ -440,8 +503,8 @@ class FilesystemTests(StatusTestCase):
     def test_move_file_status_error(self):
         filesystem = FileFactory()
 
-        api_response = self.client.get("/api/filesystem/" + str(filesystem.id)
-                                       + "/move")
+        api_response = self.client.get(
+            "/api/filesystem/" + str(filesystem.id) + "/move")
         self.assertEqual(api_response.status_code, 200)
 
         self.assertStatusRegex(
@@ -488,8 +551,8 @@ class FilesystemTests(StatusTestCase):
         ws_client = WSClient()
         ws_client.join_group('client_' + str(slave.id))
 
-        api_response = self.client.get("/api/filesystem/" + str(filesystem.id)
-                                       + "/move")
+        api_response = self.client.get(
+            "/api/filesystem/" + str(filesystem.id) + "/move")
         self.assertEqual(api_response.status_code, 200)
 
         self.assertEqual(
@@ -518,8 +581,8 @@ class FilesystemTests(StatusTestCase):
         ws_client = WSClient()
         ws_client.join_group('client_' + str(slave.id))
 
-        api_response = self.client.get("/api/filesystem/" + str(filesystem.id)
-                                       + "/move")
+        api_response = self.client.get(
+            "/api/filesystem/" + str(filesystem.id) + "/move")
         self.assertEqual(api_response.status_code, 200)
 
         self.assertEqual(
@@ -562,8 +625,8 @@ class FilesystemTests(StatusTestCase):
         ws_client = WSClient()
         ws_client.join_group('client_' + str(slave.id))
 
-        api_response = self.client.get("/api/filesystem/" + str(filesystem.id)
-                                       + "/move")
+        api_response = self.client.get(
+            "/api/filesystem/" + str(filesystem.id) + "/move")
         self.assertEqual(api_response.status_code, 200)
 
         self.assertEqual(
@@ -605,8 +668,8 @@ class FilesystemTests(StatusTestCase):
     def test_delete_file(self):
         filesystem = FileFactory()
 
-        api_response = self.client.delete('/api/filesystem/' + str(
-            filesystem.id))
+        api_response = self.client.delete(
+            '/api/filesystem/' + str(filesystem.id))
         self.assertEqual(api_response.status_code, 200)
         self.assertEquals(api_response.json()['status'], 'ok')
         self.assertFalse(
@@ -618,11 +681,11 @@ class FilesystemTests(StatusTestCase):
 
         response = self.client.get("/api/filesystems?q=")
         self.assertContains(response, filesystem.name)
-        response = self.client.get("/api/filesystems?q=" + str(
-            filesystem.name[:name_half]))
+        response = self.client.get(
+            "/api/filesystems?q=" + str(filesystem.name[:name_half]))
         self.assertContains(response, filesystem.name)
-        response = self.client.get("/api/filesystems?q=" + str(
-            filesystem.name))
+        response = self.client.get(
+            "/api/filesystems?q=" + str(filesystem.name))
         self.assertContains(response, filesystem.name)
 
     def test_add_file(self):
@@ -837,8 +900,8 @@ class FilesystemTests(StatusTestCase):
         ws_client = WSClient()
         ws_client.join_group('client_' + str(slave.id))
 
-        api_response = self.client.get("/api/filesystem/" + str(filesystem.id)
-                                       + "/move")
+        api_response = self.client.get(
+            "/api/filesystem/" + str(filesystem.id) + "/move")
         self.assertEqual(api_response.status_code, 200)
 
         self.assertStatusRegex(
@@ -861,8 +924,8 @@ class FilesystemTests(StatusTestCase):
         self.assertEqual(restore_response.status_code, 200)
         self.assertIsNone(ws_client.receive())
 
-        move_response = self.client.get("/api/filesystem/" + str(
-            filesystem.id) + "/move")
+        move_response = self.client.get(
+            "/api/filesystem/" + str(filesystem.id) + "/move")
         self.assertEqual(move_response.status_code, 200)
         self.assertIsNone(ws_client.receive())
 
@@ -884,8 +947,8 @@ class FilesystemTests(StatusTestCase):
         ws_client = WSClient()
         ws_client.join_group('client_' + str(slave.id))
 
-        api_response = self.client.get("/api/filesystem/" + str(filesystem.id)
-                                       + "/restore")
+        api_response = self.client.get(
+            "/api/filesystem/" + str(filesystem.id) + "/restore")
         self.assertEqual(api_response.status_code, 200)
 
         self.assertStatusRegex(
@@ -903,8 +966,8 @@ class FilesystemTests(StatusTestCase):
         ws_client = WSClient()
         ws_client.join_group('client_' + str(slave.id))
 
-        api_response = self.client.get("/api/filesystem/" + str(filesystem.id)
-                                       + "/restore")
+        api_response = self.client.get(
+            "/api/filesystem/" + str(filesystem.id) + "/restore")
         self.assertEqual(api_response.status_code, 200)
 
         self.assertEqual(
@@ -1919,3 +1982,4 @@ class SlaveTests(StatusTestCase):
             Status.ok([program.slave.name]),
             Status.from_json(resp.content.decode('utf-8')),
         )
+
