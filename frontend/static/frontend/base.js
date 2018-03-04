@@ -220,7 +220,6 @@ function basicRequest(url, type, action, data = {}, onSuccess=$.noop) {
         },
         success(status) {
             if (status.is_ok()) {
-                console.log('hihi');
                 onSuccess();
             } else {
                 notify('Error while' + action, 'Could not ' + action + '.\nReason:\n' + JSON.stringify(status.payload), 'danger');

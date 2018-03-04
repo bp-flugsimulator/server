@@ -108,7 +108,7 @@ $(document).ready(function () {
 
     $('.script-action-copy').click(function () {
         let id = $(this).attr('data-script-id');
-        basicRequest('/api/script/' + id + '/copy', 'GET', 'copy script', {} ,() => {window.location.reload(); console.log('cdefg')});
+        basicRequest('/api/script/' + id + '/copy', 'GET', 'copy script', {} ,() => {window.location.reload();});
     });
 
     $('.script-action-add-save').click(function () {
