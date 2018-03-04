@@ -72,7 +72,7 @@ function handleLogging(id, method, async = true) {
     $.ajax({
         type: 'GET',
         url: '/api/program/' + id + '/log/' + method,
-        async,
+        async: async,
         beforeSend(xhr) {
             xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
         },
