@@ -9,8 +9,6 @@ import logging
 from server.utils import notify
 from .safeloop import SafeLoop
 
-from django.core.cache import caches
-
 LOGGER = logging.getLogger("fsim.scheduler")
 
 
@@ -56,7 +54,7 @@ class Scheduler:
     A thread-safe scheduler which starts programs from a slave.
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self):
         self.lock = threading.Lock()
 
         self.loop = SafeLoop()

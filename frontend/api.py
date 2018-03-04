@@ -4,7 +4,6 @@ This module contains all functions that handle requests on the REST api.
 import logging
 import os
 
-from django.core.cache import cache
 from django.http import HttpResponseForbidden
 from django.http.request import QueryDict
 from django.core.exceptions import ValidationError
@@ -32,7 +31,6 @@ from .forms import SlaveForm, ProgramForm, FilesystemForm
 from .consumers import notify
 
 from .errors import (
-    FilesystemError,
     FsimError,
     SlaveNotExistError,
     ProgramNotExistError,
@@ -47,6 +45,7 @@ from .controller import (
     log_disable,
     log_enable,
     log_get,
+    script_deep_copy,
     slave_wake_on_lan,
 )
 
@@ -591,7 +590,7 @@ def copy_script(request, script_id):
     if request.method == 'GET':
         try:
             script = ScriptModel.objects.get(id=script_id)
-            script.deep_copy()
+            script_deep_copy(script)
             return StatusResponse(Status.ok(''))
         except ScriptModel.DoesNotExist:
             return StatusResponse(Status.err("Script does not exist."))

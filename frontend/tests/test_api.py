@@ -1578,7 +1578,7 @@ class ProgramTests(StatusTestCase):
     def test_stop_program_stopped_program(self):
         slave = SlaveFactory(online=True)
         program = ProgramFactory(slave=slave)
-        status = ProgramStatusFactory(program=program, running=False)
+        ProgramStatusFactory(program=program, running=False)
 
         api_response = self.client.get(
             reverse(

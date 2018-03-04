@@ -17,10 +17,10 @@ class SlaveOfflineError(FsimError):
     Base class for slave offline Exception's.
     """
 
-    def __init__(self, name, type, slave, action):
+    def __init__(self, name, ty, slave, action):
         super().__init__(
-            "Could not execute {action} {type} `{name}` because the client `{slave}` is offline.".
-            format(name=name, type=type, slave=slave, action=action))
+            "Could not execute {action} {ty} `{name}` because the client `{slave}` is offline.".
+            format(name=name, ty=ty, slave=slave, action=action))
 
     @staticmethod
     def regex_string():

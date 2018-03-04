@@ -7,11 +7,7 @@ import os
 from shlex import split
 from uuid import uuid4
 
-from django.core.cache import cache
-from django.db.models import (
-    Count,
-    Q,
-)
+from django.db.models import Q
 
 from channels import Group
 from wakeonlan import send_magic_packet
@@ -23,13 +19,15 @@ from utils.typecheck import ensure_type
 from .models import (
     FILE_BACKUP_ENDING,
     Slave as SlaveModel,
+    Script as ScriptModel,
+    ScriptGraphFiles as SGF,
+    ScriptGraphPrograms as SGP,
     Filesystem as FilesystemModel,
     Program as ProgramModel,
     ProgramStatus as ProgramStatusModel,
 )
 
 from .errors import (
-    FilesystemError,
     SlaveOfflineError,
     FilesystemMovedError,
     FilesystemNotMovedError,
@@ -386,3 +384,40 @@ def log_disable(prog):
         return True
     else:
         return False
+
+
+def script_deep_copy(script):
+    """
+    Returns a deep copy of a script
+
+    Returns
+    -------
+        Script
+    """
+    ensure_type("script", script, ScriptModel)
+    i = 0
+    copy = None
+
+    while not copy:
+        if i is 0:
+            name = script.name + '_copy'
+        else:
+            name = script.name + '_copy_' + str(i)
+
+        if ScriptModel.objects.filter(name=name).exists():
+            i = i + 1
+        else:
+            copy = ScriptModel(name=name)
+
+    copy.save()
+    for file_entry in SGF.objects.filter(script_id=script.id):
+        SGF(script=copy,
+            index=file_entry.index,
+            filesystem=file_entry.filesystem).save()
+
+    for program_entry in SGP.objects.filter(script_id=script.id):
+        SGP(script=copy,
+            index=program_entry.index,
+            program=program_entry.program).save()
+
+    return copy
