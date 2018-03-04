@@ -544,7 +544,6 @@ def manage_script(request, script_id):
         try:
             script_id = int(script_id)
             new_script = Script.from_json(request.body.decode('utf-8'))
-            old_script =  Script.from_model(script_id, 'str', 'str', 'str')
 
             (new_model, _) = ScriptModel.objects.update_or_create(
                 id=script_id,
