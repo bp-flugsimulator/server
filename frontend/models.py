@@ -18,6 +18,7 @@ from django.db.models import (
     Count,
 )
 
+from django.db.utils import IntegrityError
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from channels import Group
@@ -495,6 +496,29 @@ class Script(Model):
             scriptgraphprograms__script=script).annotate(
                 dcount=Count('slave')).values_list(
                     'slave', flat=True)
+
+    def deep_copy(self):
+        i = 0
+        copy = None
+
+        while not copy:
+            if i is 0:
+                name = self.name + '_copy'
+            else:
+                name = self.name + '_copy_' + str(i)
+
+            if Script.objects.filter(name=name).exists():
+                i = i + 1
+            else:
+                copy = Script(name=name)
+
+        for file_entry in  ScriptGraphFiles.objects.filter(script_id=self.id):
+            ScriptGraphFiles(script=copy, index=file_entry.index, filesystem=file_entry.filesystem)
+
+        for program_entry in  ScriptGraphPrograms.objects.filter(script_id=self.id):
+            ScriptGraphPrograms(script=copy, index=program_entry.index, program=program_entry.program)
+
+        return copy
 
 
 class ScriptGraphPrograms(Model):

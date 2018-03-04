@@ -205,8 +205,9 @@ function notify(title, message, type) {
  * @param {*} type  HTTP request type
  * @param {*} action Determines the kind of action which this request performs
  * @param {*} data HTTP data (e.g. POST request)
+ * @param {*} onSuccess function that gets called on success
  */
-function basicRequest(url, type, action, data = {}) {
+function basicRequest(url, type, action, data = {}, onSuccess=$.noop) {
     $.ajax({
         type,
         url,
@@ -218,7 +219,10 @@ function basicRequest(url, type, action, data = {}) {
             'text json': Status.from_json
         },
         success(status) {
-            if (status.is_err()) {
+            if (status.is_ok()) {
+                console.log('hihi');
+                onSuccess();
+            } else {
                 notify('Error while' + action, 'Could not ' + action + '.\nReason:\n' + JSON.stringify(status.payload), 'danger');
             }
         },
