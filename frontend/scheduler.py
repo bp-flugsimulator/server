@@ -72,9 +72,8 @@ class Scheduler:
         """
         Forwards to self.
         """
-        self.lock.acquire()
-        self.loop.spawn(*args, **kwargs)
-        self.lock.release()
+        with self.lock:
+            self.loop.spawn(*args, **kwargs)
 
     def is_running(self):
         """
@@ -86,18 +85,16 @@ class Scheduler:
         -------
             bool
         """
-        self.lock.acquire()
+        with self.lock:
+            if self.__task is not None:
+                done = self.__task.done()
+                LOGGER.debug(
+                    "Task in Scheduler event loop is %s.",
+                    "done" if done else "pending",
+                )
+            else:
+                done = True
 
-        if self.__task is not None:
-            done = self.__task.done()
-            LOGGER.debug(
-                "Task in Scheduler event loop is %s.",
-                "done" if done else "pending",
-            )
-        else:
-            done = True
-
-        self.lock.release()
         return not done
 
     def should_stop(self):
@@ -110,9 +107,8 @@ class Scheduler:
         -------
             bool
         """
-        self.lock.acquire()
-        stop = self.__stop
-        self.lock.release()
+        with self.lock:
+            stop = self.__stop
         return stop
 
     def stop(self):
@@ -121,19 +117,15 @@ class Scheduler:
 
         Stops the scheduler and his thread.
         """
-        self.lock.acquire()
-        self.__stop = True
-        self.lock.release()
+        with self.lock:
+            self.__stop = True
 
         self.notify()
 
-        self.lock.acquire()
-
-        if self.__task is not None:
-            self.__task.cancel()
-            self.__task = None
-
-        self.lock.release()
+        with self.lock:
+            if self.__task is not None:
+                self.__task.cancel()
+                self.__task = None
 
     def start(self, script):
         """
@@ -154,25 +146,24 @@ class Scheduler:
             return False
         else:
             from .models import Script
-            self.lock.acquire()
-            LOGGER.debug("Adding task to scheduler event loop")
+            with self.lock:
+                LOGGER.debug("Adding task to scheduler event loop")
 
-            self.__error_code = None
-            self.__stop = False
-            self.__state = SchedulerStatus.INIT
-            self.__index = None
-            self.__script = script
-            self.__event = asyncio.Event(loop=self.loop.loop)
+                self.__error_code = None
+                self.__stop = False
+                self.__state = SchedulerStatus.INIT
+                self.__index = None
+                self.__script = script
+                self.__event = asyncio.Event(loop=self.loop.loop)
 
-            self.__task = self.loop.create_task(self.__run__())
+                self.__task = self.loop.create_task(self.__run__())
 
-            Script.objects.filter(id=self.__script).update(
-                is_running=True,
-                is_initialized=True,
-                current_index=-1,
-            )
+                Script.objects.filter(id=self.__script).update(
+                    is_running=True,
+                    is_initialized=True,
+                    current_index=-1,
+                )
 
-            self.lock.release()
             return True
 
     def notify(self):

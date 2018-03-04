@@ -254,7 +254,7 @@ def prog_start(prog):
                 prog.name,
                 prog.start_time,
             )
-
+            LOGGER.debug(type(prog.start_time))
             FSIM_CURRENT_SCHEDULER.spawn(
                 prog.start_time,
                 timer_timeout_program,
