@@ -565,14 +565,15 @@ class ScriptTest(StatusTestCase):
 class FilesystemTests(StatusTestCase):
     maxDiff = None
 
-    def test_manage_file_forbidden(self):
-        api_response = self.client.post("/api/filesystem/0")
+    def test_entry_post_forbidden(self):
+        api_response = self.client.post(
+          reverse("frontend:filesystem_entry", args=['0']))
         self.assertEqual(api_response.status_code, 403)
 
-    def test_delete_moved_error(self):
+    def test_entry_delete_deleted_error(self):
         filesystem = FileFactory(hash_value="Some")
         api_response = self.client.delete(
-            "/api/filesystem/" + str(filesystem.id))
+            reverse("frontend:filesystem_entry", args=[filesystem.id]))
         self.assertEqual(api_response.status_code, 200)
 
         self.assertStatusRegex(
@@ -580,19 +581,21 @@ class FilesystemTests(StatusTestCase):
             Status.from_json(api_response.content.decode('utf-8')),
         )
 
-    def test_move_file_forbidden(self):
-        api_response = self.client.post("/api/filesystem/0/restore")
+    def test_restore_post_forbidden(self):
+        api_response = self.client.post(
+            reverse("frontend:filesystem_restore", args=['0']))
         self.assertEqual(api_response.status_code, 403)
 
-    def test_restore_file_forbidden(self):
-        api_response = self.client.post("/api/filesystem/0/move")
+    def test_move_post_forbidden(self):
+        api_response = self.client.post(
+            reverse("frontend:filesystem_move", args=['0']))
         self.assertEqual(api_response.status_code, 403)
 
-    def test_move_file_status_error(self):
+    def test_move_get_offline_error(self):
         filesystem = FileFactory()
 
         api_response = self.client.get(
-            "/api/filesystem/" + str(filesystem.id) + "/move")
+            reverse("frontend:filesystem_move", args=[filesystem.id]))
         self.assertEqual(api_response.status_code, 200)
 
         self.assertStatusRegex(
@@ -601,7 +604,8 @@ class FilesystemTests(StatusTestCase):
         )
 
     def test_move_get_not_exist(self):
-        api_response = self.client.get("/api/filesystem/" + str(0) + "/move")
+        api_response = self.client.get(
+            reverse("frontend:filesystem_move", args=['0']))
 
         self.assertEqual(api_response.status_code, 200)
 
@@ -612,7 +616,7 @@ class FilesystemTests(StatusTestCase):
 
     def test_restore_get_not_exist(self):
         api_response = self.client.get(
-            "/api/filesystem/" + str(0) + "/restore")
+            reverse("frontend:filesystem_restore", args=['0']))
 
         self.assertEqual(api_response.status_code, 200)
 
@@ -622,7 +626,8 @@ class FilesystemTests(StatusTestCase):
         )
 
     def test_entry_delete_not_exist(self):
-        api_response = self.client.delete("/api/filesystem/" + str(0))
+        api_response = self.client.delete(
+            reverse("frontend:filesystem_entry", args=['0']))
 
         self.assertEqual(api_response.status_code, 200)
 
@@ -631,7 +636,7 @@ class FilesystemTests(StatusTestCase):
             Status.from_json(api_response.content.decode('utf-8')),
         )
 
-    def test_move_file_ok(self):
+    def test_move_get_success(self):
         slave = SlaveFactory(online=True)
         filesystem = FileFactory(slave=slave)
 
@@ -640,7 +645,7 @@ class FilesystemTests(StatusTestCase):
         ws_client.join_group('client_' + str(slave.id))
 
         api_response = self.client.get(
-            "/api/filesystem/" + str(filesystem.id) + "/move")
+            reverse("frontend:filesystem_move", args=[filesystem.id]))
         self.assertEqual(api_response.status_code, 200)
 
         self.assertEqual(
@@ -660,8 +665,7 @@ class FilesystemTests(StatusTestCase):
             Command.from_json(json.dumps(ws_client.receive())),
         )
 
-    def test_move_dir_ok(self):
-        slave = SlaveFactory(online=True)
+        #case directory
         filesystem = FileFactory(
             slave=slave, source_type="dir", destination_type="dir")
 
@@ -670,7 +674,7 @@ class FilesystemTests(StatusTestCase):
         ws_client.join_group('client_' + str(slave.id))
 
         api_response = self.client.get(
-            "/api/filesystem/" + str(filesystem.id) + "/move")
+            reverse("frontend:filesystem_move", args=[filesystem.id]))
         self.assertEqual(api_response.status_code, 200)
 
         self.assertEqual(
@@ -690,7 +694,7 @@ class FilesystemTests(StatusTestCase):
             Command.from_json(json.dumps(ws_client.receive())),
         )
 
-    def test_move_file_conflicting(self):
+    def test_move_get_conflict_success(self):
         self.assertTrue(FilesystemModel.objects.all().count() == 0)
         slave = SlaveFactory(online=True)
         filesystem = FileFactory(slave=slave)
@@ -714,7 +718,7 @@ class FilesystemTests(StatusTestCase):
         ws_client.join_group('client_' + str(slave.id))
 
         api_response = self.client.get(
-            "/api/filesystem/" + str(filesystem.id) + "/move")
+            reverse("frontend:filesystem_move", args=[filesystem.id]))
         self.assertEqual(api_response.status_code, 200)
 
         self.assertEqual(
@@ -753,36 +757,37 @@ class FilesystemTests(StatusTestCase):
             cmd,
         )
 
-    def test_delete_file(self):
+    def test_entry_delete_success(self):
         filesystem = FileFactory()
 
         api_response = self.client.delete(
-            '/api/filesystem/' + str(filesystem.id))
+            reverse("frontend:filesystem_entry", args=[filesystem.id]))
         self.assertEqual(api_response.status_code, 200)
         self.assertEquals(api_response.json()['status'], 'ok')
         self.assertFalse(
             FilesystemModel.objects.filter(id=filesystem.id).exists())
 
-    def test_file_autocomplete(self):
+    def test_set_get_query_success(self):
         filesystem = FileFactory()
         name_half = int(len(filesystem.name) / 2)
 
-        response = self.client.get("/api/filesystems?q=")
+        response = self.client.get(
+            reverse("frontend:filesystem_set"), args={})
         self.assertContains(response, filesystem.name)
         response = self.client.get(
-            "/api/filesystems?q=" + str(filesystem.name[:name_half]))
+            reverse("frontend:filesystem_set"), args={filesystem.name[:name_half]})
         self.assertContains(response, filesystem.name)
         response = self.client.get(
-            "/api/filesystems?q=" + str(filesystem.name))
+            reverse("frontend:filesystem_set"), args={filesystem.name})
         self.assertContains(response, filesystem.name)
 
-    def test_add_file(self):
+    def test_set_post_success(self):
         slave = SlaveFactory()
         filesystem = FileFactory.build()
 
         # add all programs
         api_response = self.client.post(
-            '/api/filesystems', {
+            reverse("frontend:filesystem_set"), {
                 'name': filesystem.name,
                 'source_path': filesystem.source_path,
                 'source_type': filesystem.source_type,
@@ -805,8 +810,8 @@ class FilesystemTests(StatusTestCase):
                 destination_path=filesystem.destination_path,
                 slave=slave,
             ))
-
-    def test_add_file_fail_length(self):
+#TODO merge
+    def test_set_post_value_error(self):
         slave = SlaveFactory()
         filesystem = FileFactory.build()
 
@@ -816,7 +821,7 @@ class FilesystemTests(StatusTestCase):
             long_str += 'a'
 
         api_response = self.client.post(
-            '/api/filesystems', {
+            reverse("frontend:filesystem_set"), {
                 'name': long_str,
                 'source_path': filesystem.source_path,
                 'source_type': filesystem.source_type,
@@ -834,13 +839,13 @@ class FilesystemTests(StatusTestCase):
             }),
             Status.from_json(api_response.content.decode('utf-8')),
         )
-
-    def test_add_filesystemfail_not_unique_nam(self):
+#TODO merge
+    def test_set_post_name_error(self):
         filesystem = FileFactory()
 
         # add all programs
         api_response = self.client.post(
-            '/api/filesystems', {
+            reverse("frontend:filesystem_set"), {
                 'name': filesystem.name,
                 'source_path': filesystem.source_path,
                 'source_type': filesystem.source_type,
@@ -857,13 +862,13 @@ class FilesystemTests(StatusTestCase):
             }),
             Status.from_json(api_response.content.decode('utf-8')),
         )
-
-    def test_add_file_fail_not_unique_paths(self):
+#TODO merge
+    def test_set_post_path_error(self):
         filesystem = FileFactory()
 
         # add all programs
         api_response = self.client.post(
-            '/api/filesystems', {
+            reverse("frontend:filesystem_set"), {
                 'name': filesystem.name + "new",
                 'source_path': filesystem.source_path,
                 'source_type': filesystem.source_type,
@@ -884,7 +889,7 @@ class FilesystemTests(StatusTestCase):
             }),
             Status.from_json(api_response.content.decode('utf-8')),
         )
-
+#TODO rename + reverse
     def test_query_get_all_by_slave(self):
         filesystem = FileFactory()
 
@@ -926,7 +931,7 @@ class FilesystemTests(StatusTestCase):
             ints,
             Status.ok(slaves),
         )
-
+#TODO rename + reverse
     def test_query_get_all_wrong_type(self):
         resp = self.client.get('/api/filesystems?slave=not_an_int')
 
@@ -936,7 +941,7 @@ class FilesystemTests(StatusTestCase):
             Status.err(QueryTypeError),
             Status.from_json(resp.content.decode('utf-8')),
         )
-
+#TODO rename +reverse
     def test_query_get_does_not_exist(self):
         resp_int = self.client.get('/api/filesystems?slave=-1')
         resp_str = self.client.get(
@@ -954,7 +959,7 @@ class FilesystemTests(StatusTestCase):
             Status.err(SlaveNotExistError),
             Status.from_json(resp_str.content.decode('utf-8')),
         )
-
+#TODO rename + reverse
     def test_query_get_all(self):
         resp = self.client.get('/api/filesystems')
 
@@ -972,15 +977,16 @@ class FilesystemTests(StatusTestCase):
             Status.ok([filesystem.name]),
             Status.from_json(resp.content.decode('utf-8')),
         )
-
+#TODO assert + rename + reverse
     def test_allowed_methods(self):
         self.client.put("/api/filesystem")
 
-    def test_add_file_unsupported_function(self):
-        api_response = self.client.delete('/api/filesystems')
+    def test_set_delete_forbidden(self):
+        api_response = self.client.delete(
+            reverse("frontend:filesystem_set"))
         self.assertEqual(api_response.status_code, 403)
 
-    def test_move_moved_file(self):
+    def test_move_get_exists_error(self):
         slave = SlaveFactory(online=True)
         filesystem = MovedFileFactory(slave=slave)
 
@@ -989,7 +995,7 @@ class FilesystemTests(StatusTestCase):
         ws_client.join_group('client_' + str(slave.id))
 
         api_response = self.client.get(
-            "/api/filesystem/" + str(filesystem.id) + "/move")
+            reverse("frontend:filesystem_move", args=[filesystem.id]))
         self.assertEqual(api_response.status_code, 200)
 
         self.assertStatusRegex(
@@ -999,7 +1005,7 @@ class FilesystemTests(StatusTestCase):
 
         self.assertIsNone(ws_client.receive())
 
-    def test_move_offline(self):
+    def test_move_get_offline(self):
         slave = SlaveFactory(online=False)
         filesystem = FileFactory(slave=slave)
 
@@ -1007,13 +1013,13 @@ class FilesystemTests(StatusTestCase):
         ws_client.join_group('client_' + str(slave.id))
 
         restore_response = self.client.get(
-            "/api/filesystem/" + str(filesystem.id) + "/restore")
+            reverse("frontend:filesystem_restore", args=[filesystem.id]))
 
         self.assertEqual(restore_response.status_code, 200)
         self.assertIsNone(ws_client.receive())
 
         move_response = self.client.get(
-            "/api/filesystem/" + str(filesystem.id) + "/move")
+            reverse("frontend:filesystem_move", args=[filesystem.id]))
         self.assertEqual(move_response.status_code, 200)
         self.assertIsNone(ws_client.receive())
 
@@ -1027,7 +1033,7 @@ class FilesystemTests(StatusTestCase):
             Status.from_json(move_response.content.decode('utf-8')),
         )
 
-    def test_restore_restored_file(self):
+    def test_restore_get_exists(self):
         slave = SlaveFactory(online=True)
         filesystem = FileFactory(slave=slave)
 
@@ -1036,7 +1042,7 @@ class FilesystemTests(StatusTestCase):
         ws_client.join_group('client_' + str(slave.id))
 
         api_response = self.client.get(
-            "/api/filesystem/" + str(filesystem.id) + "/restore")
+            reverse("frontend:filesystem_restore", args=[filesystem.id]))
         self.assertEqual(api_response.status_code, 200)
 
         self.assertStatusRegex(
@@ -1046,7 +1052,7 @@ class FilesystemTests(StatusTestCase):
 
         self.assertIsNone(ws_client.receive())
 
-    def test_restore_file_ok(self):
+    def test_restore_get_success(self):
         slave = SlaveFactory(online=True)
         filesystem = MovedFileFactory(slave=slave)
 
@@ -1055,7 +1061,7 @@ class FilesystemTests(StatusTestCase):
         ws_client.join_group('client_' + str(slave.id))
 
         api_response = self.client.get(
-            "/api/filesystem/" + str(filesystem.id) + "/restore")
+            reverse("frontend:filesystem_restore", args=[filesystem.id]))
         self.assertEqual(api_response.status_code, 200)
 
         self.assertEqual(
@@ -1076,16 +1082,17 @@ class FilesystemTests(StatusTestCase):
             Command.from_json(json.dumps(ws_client.receive())),
         )
 
-    def test_edit_filesystem_wrong_http_method(self):
-        api_response = self.client.get("/api/filesystem/0")
+    def test_entry_get_forbidden(self):
+        api_response = self.client.get(
+            reverse("frontend:filesystem_entry", args=['0']))
         self.assertEqual(api_response.status_code, 403)
 
-    def test_modify_filesystem(self):
+    def test_entry_put_success(self):
         filesystem = FileFactory()
         slave = filesystem.slave
 
         api_response = self.client.put(
-            "/api/filesystem/" + str(filesystem.id),
+            reverse("frontend:filesystem_entry", args=[filesystem.id]),
             data=urlencode({
                 'name': "edit_filesystem_" + str(slave.id),
                 'source_path': str(slave.id),
@@ -1101,7 +1108,8 @@ class FilesystemTests(StatusTestCase):
             Status.from_json(api_response.content.decode('utf-8')),
         )
 
-    def test_modify_filesystem_fail(self):
+
+    def test_entry_put_validation_error(self):
         filesystem = FileFactory(name="", source_path="", destination_path="")
         slave = filesystem.slave
 
@@ -1110,7 +1118,7 @@ class FilesystemTests(StatusTestCase):
             long_str += 'a'
 
         api_response = self.client.put(
-            "/api/filesystem/" + str(filesystem.id),
+            reverse("frontend:filesystem_entry", args=[filesystem.id]),
             data=urlencode({
                 'name': long_str,
                 'source_path': long_str,
@@ -1130,12 +1138,12 @@ class FilesystemTests(StatusTestCase):
             Status.from_json(api_response.content.decode('utf-8')),
         )
 
-    def test_edit_filesystem_unique_fail(self):
+    def test_entry_put_exists(self):
         filesystem_exists = FileFactory()
         filesystem_edit = FileFactory(slave=filesystem_exists.slave)
 
         api_response = self.client.put(
-            "/api/filesystem/" + str(filesystem_edit.id),
+            reverse("frontend:filesystem_entry", args=[filesystem_edit.id]),
             data=urlencode({
                 'name':
                 filesystem_exists.name,
