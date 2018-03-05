@@ -1,3 +1,6 @@
+"""
+Move into Frontenend tests.
+"""
 #  pylint: disable=C0111,C0103
 
 from os import getcwd, remove, mkdir, rmdir

@@ -1,3 +1,16 @@
+"""
+TESTCASE NAMING SCHEME
+
+def test_<MODEL>_<OPERATION/ERROR>:
+    pass
+
+<MODEL>:
+    The name of the model.
+
+<OPERATION/ERROR>:
+    If there is no error then use the operation name
+    else use the error.
+"""
 #  pylint: disable=C0111,C0103,R0201
 
 from django.test import TestCase

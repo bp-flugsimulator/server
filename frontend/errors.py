@@ -215,7 +215,7 @@ class QueryError(FsimError):
     Base Class for Query errors
     """
 
-    def __init__(self,message):
+    def __init__(self, message):
         if message:
             super().__init__(message)
         else:
@@ -232,10 +232,77 @@ class SimultaneousQueryError(QueryError):
     """
 
     def __init__(self, param1, param2):
-        super().__init__("Can not query for {} and {} at the same time.".format(param1, param2))
+        super().__init__(
+            "Can not query for {} and {} at the same time.".format(
+                param1, param2))
 
     @staticmethod
     def regex_string():
         return "Can not query for .* and .* at the same time."
 
 
+class ScriptError(FsimError):
+    """
+    Base class for all ScriptError's
+    """
+
+    def __init__(self, script, message):
+        if message is None:
+            message = "An error ocurred in the Script model."
+
+        super().__init__(message)
+        self.script = script
+
+    @staticmethod
+    def regex_string():
+        return "[Ss]cript"
+
+
+class ScriptRunningError(ScriptError):
+    """
+    Script is running while trying to start it again.
+    """
+
+    def __init__(self, script):
+        super().__init__(
+            script,
+            "The script `{}` is already running and can not be started again.".
+            format(script))
+
+    @staticmethod
+    def regex_string():
+        return "The script `.*` is already running and can not be started again."
+
+
+class QueryParameterError(QueryError):
+    """
+    The given parameter for the query is not supported.
+    """
+
+    def __init__(self, given_type, expected_types):
+        super().__init__("Expected one of `{}` but got `{}` instead.".format(
+            given_type,
+            ' or'.join(expected_types),
+        ), )
+
+    @staticmethod
+    def regex_string():
+        return "Expected one of `.*` but got `.*` instead."
+
+
+class QueryTypeError(QueryError):
+    """
+    The given parameter has not the matching type.
+    """
+
+    def __init__(self, given, expected):
+        super().__init__(
+            "Expected something that can be transformet into `{}` from `{}`.".
+            format(
+                expected,
+                given,
+            ), )
+
+    @staticmethod
+    def regex_string():
+        return "Expected something that can be transformet into `.*` from `.*`."

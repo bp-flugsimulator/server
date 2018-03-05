@@ -160,6 +160,8 @@ $(document).ready(function () {
     });
 
     $('.script-action-save').click(function () {
+	window.unloadWarning = false;
+		
         let id = $(this).attr('data-editor-id');
         let editor = JsonForm.dumps($('#jsoneditor_' + id));
         let string = JSON.stringify(editor);

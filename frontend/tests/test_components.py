@@ -1,3 +1,13 @@
+"""
+TESTCASE NAMING SCHEME
+
+def test_<TEMPLATE TAG NAME>:
+    pass
+
+<TEMPLATE TAG NAME>:
+    The name which is the same as the template tag.
+"""
+
 #  pylint: disable=C0111
 #  pylint: disable=C0103
 

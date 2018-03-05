@@ -375,26 +375,13 @@ def ws_rpc_receive(message):
     """
     try:
         try:
-            from json.decoder import JSONDecodeError
-            try:
-                status = Status.from_json(message.content['text'])
-            except JSONDecodeError as err:
-                LOGGER.error(
-                    "Error while parsing json. (cause: %s)",
-                    str(err),
-                )
-                return
-
-        except ImportError:
-            try:
-                status = Status.from_json(message.content['text'])
-            except ValueError as err:
-                LOGGER.error(
-                    "Error while parsing json. (cause: %s)",
-                    str(err),
-                )
-                return
-
+            status = Status.from_json(message.content['text'])
+        except ValueError as err:
+            LOGGER.error(
+                "Error while parsing json. (cause: %s)",
+                str(err),
+            )
+            return
         select_method(status)
     except FormatError as err:
         LOGGER.error(

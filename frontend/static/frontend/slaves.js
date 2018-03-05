@@ -359,7 +359,7 @@ $(document).ready(function () {
         if ($(this).attr('data-is-running') === 'True') {
             apiRequest('/api/program/' + id + '/stop', 'GET');
         } else if ($(this).attr('data-is-running') === 'False') {
-            apiRequest('/api/program/' + id, 'POST');
+		apiRequest('/api/program/' + id + '/start', 'GET');
         }
     });
 
