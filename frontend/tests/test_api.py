@@ -34,6 +34,7 @@ from frontend.errors import (
     FilesystemNotMovedError,
     FilesystemNotExistError,
     FilesystemDeleteError,
+    SimultaneousQueryError,
 )
 
 from .factory import (
@@ -1128,6 +1129,20 @@ class FilesystemTests(StatusTestCase):
 
 
 class ProgramTests(StatusTestCase):
+    def test_start_unknown_http_method(self):
+        api_response = self.client.delete(reverse('frontend:program_start', args=['0']))
+        self.assertEqual(403, api_response.status_code)
+
+
+    def test_update_unknown_program(self):
+        api_response = self.client.put(reverse('frontend:program_entry', args=['1234']))
+        self.assertEqual(200, api_response.status_code)
+        self.assertStatusRegex(
+            Status.err(ProgramNotExistError),
+            Status.from_json(api_response.content.decode('utf-8')),
+        )
+
+
     def test_program_disable_logging(self):
         slave = SlaveFactory(online=True)
         program = ProgramFactory(slave=slave)
@@ -1329,7 +1344,7 @@ class ProgramTests(StatusTestCase):
         program = ProgramFactory(slave=slave)
         ProgramStatusFactory(program=program, running=True)
 
-        api_response = self.client.post("/api/program/" + str(program.id))
+        api_response = self.client.get(reverse('frontend:program_start', args=[program.id]))
 
         self.assertEqual(api_response.status_code, 200)
 
@@ -1484,7 +1499,7 @@ class ProgramTests(StatusTestCase):
         )
 
     def test_start_no_exist(self):
-        api_response = self.client.post("/api/program/" + str(0))
+        api_response = self.client.get(reverse('frontend:program_start', args=[1234]))
 
         self.assertEqual(api_response.status_code, 200)
 
@@ -1528,7 +1543,7 @@ class ProgramTests(StatusTestCase):
         webinterface = WSClient()
         webinterface.join_group('notifications')
 
-        api_response = self.client.post("/api/program/" + str(program.id))
+        api_response = self.client.get(reverse('frontend:program_start', args=[program.id]))
 
         self.assertEqual(api_response.status_code, 200)
         self.assertEqual(
@@ -1568,7 +1583,7 @@ class ProgramTests(StatusTestCase):
         client = WSClient()
         client.join_group("commands_" + str(slave.id))
 
-        api_response = self.client.post("/api/program/" + str(program.id))
+        api_response = self.client.get(reverse('frontend:program_start', args=[program.id]))
         self.assertEqual(api_response.status_code, 200)
 
         self.assertStatusRegex(
@@ -1588,7 +1603,7 @@ class ProgramTests(StatusTestCase):
 
         # test api
         api_response = self.client.get(path=reverse(
-            'frontend:stop_program',
+            'frontend:program_stop',
             args=[program.id],
         ))
 
@@ -1607,7 +1622,7 @@ class ProgramTests(StatusTestCase):
     def test_stop_program_unknown_request(self):
         api_request = self.client.post(
             reverse(
-                'frontend:stop_program',
+                'frontend:program_stop',
                 args=[0],
             ))
         self.assertEqual(403, api_request.status_code)
@@ -1615,7 +1630,7 @@ class ProgramTests(StatusTestCase):
     def test_stop_program_unknown_program(self):
         api_response = self.client.get(
             reverse(
-                'frontend:stop_program',
+                'frontend:program_stop',
                 args=[9999],
             ))
         self.assertEqual(200, api_response.status_code)
@@ -1632,7 +1647,7 @@ class ProgramTests(StatusTestCase):
 
         api_response = self.client.get(
             reverse(
-                'frontend:stop_program',
+                'frontend:program_stop',
                 args=[program.id],
             ))
         self.assertEqual(200, api_response.status_code)
@@ -1688,13 +1703,13 @@ class ProgramTests(StatusTestCase):
         resp_int = self.client.get('/api/programs?slave=-1')
         resp_str = self.client.get('/api/programs?slave=none&slave_str=True')
 
-        self.assertEqual(
-            Status.err("Could not find slave with id `-1`."),
+        self.assertStatusRegex(
+            Status.err(SlaveNotExistError),
             Status.from_json(resp_int.content.decode('utf-8')),
         )
 
-        self.assertEqual(
-            Status.err("Could not find slave with name `none`."),
+        self.assertStatusRegex(
+            Status.err(SlaveNotExistError),
             Status.from_json(resp_str.content.decode('utf-8')),
         )
 
@@ -1715,10 +1730,20 @@ class ProgramTests(StatusTestCase):
 
 
 class SlaveTests(StatusTestCase):
+    def test_update_unknown_slave(self):
+        res = self.client.put(reverse('frontend:slave_entry', args=['1234']))
+
+        self.assertEqual(res.status_code, 200)
+
+        self.assertStatusRegex(
+            Status.err(SlaveNotExistError),
+            Status.from_json(res.content.decode('utf-8')),
+        )
+
     def test_wol_no_slave(self):
         #  non existent slave
         res = self.client.get(path=reverse(
-            'frontend:wol_slave',
+            'frontend:slave_wol',
             args=[999999],
         ))
 
@@ -1733,7 +1758,7 @@ class SlaveTests(StatusTestCase):
         slave = SlaveFactory()
         #  wrong http method
         res = self.client.post(path=reverse(
-            'frontend:wol_slave',
+            'frontend:slave_wol',
             args=[slave.id],
         ))
 
@@ -1742,7 +1767,7 @@ class SlaveTests(StatusTestCase):
     def test_wol_success(self):
         slave = SlaveFactory()
         res = self.client.get(path=reverse(
-            'frontend:wol_slave',
+            'frontend:slave_wol',
             args=[slave.id],
         ))
 
@@ -1768,7 +1793,7 @@ class SlaveTests(StatusTestCase):
         slave = SlaveFactory.build()
 
         api_response = self.client.post(
-            reverse('frontend:add_slaves'), {
+            reverse('frontend:slave_set'), {
                 'name': slave.name,
                 'ip_address': slave.ip_address,
                 'mac_address': slave.mac_address
@@ -1790,7 +1815,7 @@ class SlaveTests(StatusTestCase):
         slave = SlaveFactory()
 
         api_response = self.client.post(
-            reverse('frontend:add_slaves'), {
+            reverse('frontend:slave_set'), {
                 'name': slave.name,
                 'ip_address': slave.ip_address,
                 'mac_address': slave.mac_address
@@ -1817,7 +1842,7 @@ class SlaveTests(StatusTestCase):
         slave = SlaveFactory.build(mac_address="0", ip_address="0")
 
         api_response = self.client.post(
-            reverse('frontend:add_slaves'), {
+            reverse('frontend:slave_set'), {
                 'name': slave.name,
                 'ip_address': slave.ip_address,
                 'mac_address': slave.mac_address
@@ -1843,7 +1868,7 @@ class SlaveTests(StatusTestCase):
             ).exists())
 
     def test_add_slave_no_post(self):
-        api_response = self.client.put(reverse('frontend:add_slaves'))
+        api_response = self.client.put(reverse('frontend:slave_set'))
         self.assertEqual(api_response.status_code, 403)
 
     def test_manage_slave_forbidden(self):
@@ -1904,7 +1929,7 @@ class SlaveTests(StatusTestCase):
             Status.from_json(api_response.content.decode('utf-8')),
         )
 
-    def test_shutdown_slave(self):
+    def test_slave_shutdown(self):
         slave = SlaveFactory(online=True)
 
         #  connect slave to websocket
@@ -1913,7 +1938,7 @@ class SlaveTests(StatusTestCase):
 
         #  make request
         api_response = self.client.get(path=reverse(
-            'frontend:shutdown_slave',
+            'frontend:slave_shutdown',
             args=[slave.id],
         ))
 
@@ -1929,33 +1954,33 @@ class SlaveTests(StatusTestCase):
             Command.from_json(json.dumps(ws_client.receive())),
         )
 
-    def test_shutdown_slave_unknown_slave(self):
+    def test_slave_shutdown_unknown_slave(self):
         #  make request
         api_response = self.client.get('/api/slave/111/shutdown')
 
         self.assertEqual(api_response.status_code, 200)
-        self.assertEqual(
-            Status.err('Can not shutdown unknown Client'),
+        self.assertStatusRegex(
+            Status.err(SlaveNotExistError),
             Status.from_json(api_response.content.decode('utf-8')),
         )
 
-    def test_shutdown_slave_offline_slave(self):
+    def test_slave_shutdown_offline_slave(self):
         slave = SlaveFactory()
 
         #  make request
         api_response = self.client.get(
             reverse(
-                'frontend:shutdown_slave',
+                'frontend:slave_shutdown',
                 args=[slave.id],
             ))
 
         self.assertEqual(api_response.status_code, 200)
-        self.assertEqual(
-            Status.err('Can not shutdown offline Client'),
+        self.assertStatusRegex(
+            Status.err(SlaveOfflineError),
             Status.from_json(api_response.content.decode('utf-8')),
         )
 
-    def test_shutdown_slave_forbidden_function(self):
+    def test_slave_shutdown_forbidden_function(self):
         api_response = self.client.delete('/api/slave/1/shutdown')
         self.assertEqual(403, api_response.status_code)
 
@@ -1986,10 +2011,8 @@ class SlaveTests(StatusTestCase):
     def test_query_get_all_same(self):
         resp = self.client.get("/api/slaves?programs=1&filesystems=1")
 
-        self.assertEqual(
-            Status.err(
-                "Can not query for filesystems and programs at the same time."
-            ),
+        self.assertStatusRegex(
+            Status.err(SimultaneousQueryError),
             Status.from_json(resp.content.decode('utf-8')),
         )
 

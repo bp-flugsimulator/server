@@ -198,3 +198,34 @@ class ProgramNotExistError(ObjectNotExistError):
     def __init__(self, error, identifier):
         ensure_type("error", error, ProgramModel.DoesNotExist)
         super().__init__("program", identifier)
+
+
+class QueryError(FsimError):
+    """
+    Base Class for Query errors
+    """
+
+    def __init__(self,message):
+        if message:
+            super().__init__(message)
+        else:
+            super().__init__("There was an error while querying.")
+
+    @staticmethod
+    def regex_string():
+        return "[Qq]uery"
+
+
+class SimultaneousQueryError(QueryError):
+    """
+    This error is raised, if two queries with different types get requested at the same time
+    """
+
+    def __init__(self, param1, param2):
+        super().__init__("Can not query for {} and {} at the same time.".format(param1, param2))
+
+    @staticmethod
+    def regex_string():
+        return "Can not query for .* and .* at the same time."
+
+

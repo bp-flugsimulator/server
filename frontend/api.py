@@ -35,6 +35,8 @@ from .errors import (
     SlaveNotExistError,
     ProgramNotExistError,
     FilesystemNotExistError,
+    SimultaneousQueryError,
+    SlaveOfflineError,
 )
 from .controller import (
     prog_start,
@@ -85,9 +87,9 @@ def script_put_post(data, script_id):
         return StatusResponse(Status.err(str(err)))
 
 
-def add_slave(request):
+def slave_set(request):
     """
-    Process POST requests which adds new SlaveModel and GET requests to query
+    Process POST requests which adds a new SlaveModel and GET requests to query
     for SlaveModel which contains the query string.
 
     Parameters
@@ -103,8 +105,8 @@ def add_slave(request):
         form = SlaveForm(request.POST)
         if form.is_valid():
             form.save()
-            return StatusResponse(Status.ok(""))
-        return StatusResponse(Status.err(form.errors))
+            return StatusResponse.ok('')
+        return StatusResponse.err(form.errors)
     elif request.method == 'GET':
         # the URL takes an argument with ?q=<string>
         # e.g. /slaves?q=test
@@ -124,10 +126,7 @@ def add_slave(request):
                 )
         else:
             if programs and filesystems:
-                return StatusResponse(
-                    Status.err(
-                        "Can not query for filesystems and programs at the same time."
-                    ))
+                return StatusResponse(SimultaneousQueryError('filesystems', 'programs'))
             elif programs:
                 slaves = SlaveModel.objects.all().annotate(
                     prog_count=Count('program__pk')).filter(
@@ -148,19 +147,19 @@ def add_slave(request):
                     flat=True,
                 )
 
-        return StatusResponse(Status.ok(list(slaves)))
+        return StatusResponse.ok(list(slaves))
     else:
         return HttpResponseForbidden()
 
 
-def manage_slave(request, slave_id):
+def slave_entry(request, slave_id):
     """
     Process DELETE, PUT and POST requests for the SlaveModel ressource.
 
     Parameters
     ----------
         request: HttpRequest
-        id: Unique identifier of a slave
+        slave_id: Unique identifier of a slave
 
     Returns
     -------
@@ -170,32 +169,35 @@ def manage_slave(request, slave_id):
     if request.method == 'DELETE':
         # i can't find any exceptions that can be thrown in our case
         SlaveModel.objects.filter(id=slave_id).delete()
-        return StatusResponse(Status.ok(''))
+        return StatusResponse.ok('')
 
     elif request.method == 'PUT':
-        # create form from a new QueryDict made from the request body
-        # (request.PUT is unsupported) as an update (instance) of the
-        # existing slave
-        model = SlaveModel.objects.get(id=slave_id)
-        form = SlaveForm(QueryDict(request.body), instance=model)
+        try:
+            # create form from a new QueryDict made from the request body
+            # (request.PUT is unsupported) as an update (instance) of the
+            # existing slave
+            model = SlaveModel.objects.get(id=slave_id)
+            form = SlaveForm(QueryDict(request.body), instance=model)
 
-        if form.is_valid():
-            form.save()
-            return StatusResponse(Status.ok(''))
-        else:
-            return StatusResponse(Status.err(form.errors))
+            if form.is_valid():
+                form.save()
+                return StatusResponse.ok('')
+            else:
+                return StatusResponse.err(form.errors)
+        except SlaveModel.DoesNotExist as err:
+            return StatusResponse(SlaveNotExistError(err, slave_id))
     else:
         return HttpResponseForbidden()
 
 
-def shutdown_slave(request, slave_id):
+def slave_shutdown(request, slave_id):
     """
     Process GET requests which will shutdown a slave.
 
     Parameters
     ----------
         request: HttpRequest
-        id: Unique identifier of a slave
+        slave_id: Unique identifier of a slave
 
     Returns
     -------
@@ -203,7 +205,7 @@ def shutdown_slave(request, slave_id):
         other than GET.
     """
     if request.method == 'GET':
-        if SlaveModel.objects.filter(id=slave_id).exists():
+        try:
             slave = SlaveModel.objects.get(id=slave_id)
             if slave.is_online:
                 Group('client_' + str(slave_id)).send({
@@ -214,26 +216,24 @@ def shutdown_slave(request, slave_id):
                     "message":
                     "Send shutdown Command to {}".format(slave.name)
                 })
-                return StatusResponse(Status.ok(''))
+                return StatusResponse.ok('')
             else:
-                return StatusResponse(
-                    Status.err('Can not shutdown offline Client'))
-        else:
-            return StatusResponse(
-                Status.err('Can not shutdown unknown Client'))
+                return StatusResponse(SlaveOfflineError('', '', 'shutdown', slave.name))
+        except SlaveModel.DoesNotExist as err:
+            return StatusResponse(SlaveNotExistError(err, slave_id))
 
     else:
         return HttpResponseForbidden()
 
 
-def wol_slave(request, slave_id):
+def slave_wol(request, slave_id):
     """
     Process GET requests which will start a Slave via Wake-On-Lan.
 
     Parameters
     ----------
         request: HttpRequest
-        id: Unique identifier of a slave
+        slave_id: Unique identifier of a slave
 
     Returns
     -------
@@ -250,14 +250,14 @@ def wol_slave(request, slave_id):
                 "Send start command to client `{}`".format(slave.name)
             })
 
-            return StatusResponse.ok("")
+            return StatusResponse.ok('')
         except SlaveModel.DoesNotExist as err:
             return StatusResponse(SlaveNotExistError(err, slave_id))
     else:
         return HttpResponseForbidden()
 
 
-def add_program(request):
+def program_set(request):
     """
     Process POST requests which adds new ProgramModel and GET requests to query
     for ProgramModel which contains the query string.
@@ -280,15 +280,15 @@ def add_program(request):
             try:
                 program.full_clean()
                 form.save()
-                return StatusResponse(Status.ok(''))
+                return StatusResponse.ok('')
             except ValidationError as _:
                 error_dict = {
                     'name':
                     ["Program with this Name already exists on this Client."]
                 }
-                return StatusResponse(Status.err(error_dict))
+                return StatusResponse.err(error_dict)
         else:
-            return StatusResponse(Status.err(form.errors))
+            return StatusResponse.err(form.errors)
     elif request.method == 'GET':
         # the URL takes an argument with ?q=<string>
         # e.g. /programs?q=test
@@ -315,17 +315,9 @@ def add_program(request):
                         slave = SlaveModel.objects.get(id=int(slave))
                     except ValueError:
                         return StatusResponse(
-                            Status.err("Slave has to be an integer."))
-            except SlaveModel.DoesNotExist:
-                ret_err = "Could not find slave with"
-                if slave_str:
-                    ret_err += " name `{}`".format(slave)
-                else:
-                    ret_err += " id `{}`".format(slave)
-
-                ret_err += "."
-
-                return StatusResponse(Status.err(ret_err))
+                            Status.err("Slave has to be an integer.")) # TODO
+            except SlaveModel.DoesNotExist as err:
+                return StatusResponse(SlaveNotExistError(err , slave))
 
             progs = ProgramModel.objects.filter(slave=slave).values_list(
                 "name",
@@ -338,20 +330,19 @@ def add_program(request):
                 flat=True,
             )
 
-        return StatusResponse(Status.ok(list(progs)))
+        return StatusResponse.ok(list(progs))
     else:
         return HttpResponseForbidden()
 
 
-def manage_program(request, program_id):
+def program_entry(request, program_id):
     """
     Process DELETE, PUT and POST requests for the ProgramModel ressource.
 
     Parameters
     ----------
         request: HttpRequest
-        slaveId: Unique identifier of a slave
-        programId: Unique identifier of a program
+        program_id: Unique identifier of a program
 
     Returns
     -------
@@ -360,43 +351,61 @@ def manage_program(request, program_id):
     """
     if request.method == 'DELETE':
         ProgramModel.objects.filter(id=program_id).delete()
-        return StatusResponse(Status.ok(''))
-    if request.method == 'POST':
-        try:
-            program = ProgramModel.objects.get(id=program_id)
-            try:
-                prog_start(program)
-                return StatusResponse.ok("")
-            except FsimError as err:
-                return StatusResponse(err)
-        except ProgramModel.DoesNotExist as err:
-            return StatusResponse(ProgramNotExistError(err, program_id))
-
+        return StatusResponse.ok('')
     elif request.method == 'PUT':
         # create form from a new QueryDict made from the request body
         # (request.PUT is unsupported) as an update (instance) of the
         # existing slave
-        model = ProgramModel.objects.get(id=program_id)
-        form = ProgramForm(QueryDict(request.body), instance=model)
-        if form.is_valid():
-            program = form.save(commit=False)
-            try:
-                program.full_clean()
-                form.save()
-                return StatusResponse(Status.ok(''))
-            except ValidationError as _:
-                error_dict = {
-                    'name':
-                    ['Program with this Name already exists on this Client.']
-                }
-                return StatusResponse(Status.err(error_dict))
-        else:
-            return StatusResponse(Status.err(form.errors))
+        try:
+            model = ProgramModel.objects.get(id=program_id)
+            form = ProgramForm(QueryDict(request.body), instance=model)
+            if form.is_valid():
+                program = form.save(commit=False)
+                try:
+                    program.full_clean()
+                    form.save()
+                    return StatusResponse.ok('')
+                except ValidationError as _:
+                    error_dict = {
+                        'name':
+                        ['Program with this Name already exists on this Client.']
+                    }
+                    return StatusResponse.err(error_dict)
+            else:
+                return StatusResponse.err(form.errors)
+        except ProgramModel.DoesNotExist as err:
+            return StatusResponse(ProgramNotExistError(err, program_id))
     else:
         return HttpResponseForbidden()
 
 
-def stop_program(request, program_id):
+def program_start(request, program_id):
+    """
+    Process GET requests which will start a programm on a slave.
+
+    Parameters
+    ----------
+        request: HttpRequest
+        program_id: Unique identifier of a program
+
+    Returns
+    -------
+        A StatusResponse or HttpResponseForbidden if the request method was
+        other than GET.
+    """
+    if request.method == 'GET':
+        try:
+            program = ProgramModel.objects.get(id=program_id)
+            prog_start(program)
+            return StatusResponse.ok('')
+        except FsimError as err:
+            return StatusResponse(err)
+        except ProgramModel.DoesNotExist as err:
+            return StatusResponse(ProgramNotExistError(err, program_id))
+    else:
+        return HttpResponseForbidden()
+
+def program_stop(request, program_id):
     """
     Process GET requests which will stop a running programm on a slave.
 
@@ -415,7 +424,7 @@ def stop_program(request, program_id):
             program = ProgramModel.objects.get(id=program_id)
             try:
                 prog_stop(program)
-                return StatusResponse.ok("")
+                return StatusResponse.ok('')
             except FsimError as err:
                 return StatusResponse(err)
         except ProgramModel.DoesNotExist as err:
