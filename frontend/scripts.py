@@ -18,6 +18,14 @@ from .models import (
     Slave as SlaveModel,
 )
 
+from .errors import (
+    SlaveNotExistError,
+    ScriptNotExistError,
+    QueryParameterError,
+    FilesystemNotExistError,
+    ProgramNotExistError,
+)
+
 
 def get_slave(slave):
     """
@@ -34,15 +42,13 @@ def get_slave(slave):
     if isinstance(slave, str):
         try:
             return SlaveModel.objects.get(name=slave)
-        except SlaveModel.DoesNotExist:
-            raise ValueError(
-                "The client with the name `{}` does not exist.".format(slave))
+        except SlaveModel.DoesNotExist as err:
+            raise SlaveNotExistError(err, slave)
     elif isinstance(slave, int):
         try:
             return SlaveModel.objects.get(id=slave)
-        except SlaveModel.DoesNotExist:
-            raise ValueError(
-                "The client with the id `{}` does not exist.".format(slave))
+        except SlaveModel.DoesNotExist as err:
+            raise SlaveNotExistError(err, slave)
 
 
 def typecheck_index(index):
@@ -221,20 +227,25 @@ class ScriptEntryFilesystem:
         -------
              ScriptEntryFilesystem object
         """
-
         if slaves_type == "int":
             slave = query.filesystem.slave.id
         elif slaves_type == "str":
             slave = query.filesystem.slave.name
         else:
-            raise ValueError("Slave_type has to be int or str.")
+            raise QueryParameterError(
+                slaves_type,
+                ["int", "str"],
+            )
 
         if programs_type == "int":
             program = query.filesystem.id
         elif programs_type == "str":
             program = query.filesystem.name
         else:
-            raise ValueError("File_type has to be int or str.")
+            raise QueryParameterError(
+                programs_type,
+                ["int", "str"],
+            )
 
         return cls(
             query.index,
@@ -286,9 +297,8 @@ class ScriptEntryFilesystem:
                 )
                 model.full_clean()
                 model.save()
-        except FilesystemModel.DoesNotExist:
-            raise ValueError("The file with name `{}` does not exist.".format(
-                self.filesystem))
+        except FilesystemModel.DoesNotExist as err:
+            raise FilesystemNotExistError(err, self.filesystem)
 
         try:
             if isinstance(self.filesystem, int):
@@ -301,9 +311,8 @@ class ScriptEntryFilesystem:
                 )
                 model.full_clean()
                 model.save()
-        except FilesystemModel.DoesNotExist:
-            raise ValueError("The file with id `{}` does not exist.".format(
-                self.filesystem))
+        except FilesystemModel.DoesNotExist as err:
+            raise FilesystemNotExistError(err, self.filesystem)
 
     def to_json(self):
         """
@@ -358,20 +367,25 @@ class ScriptEntryProgram:
         -------
              ScriptEntry object
         """
-
         if slaves_type == "int":
             slave = query.program.slave.id
         elif slaves_type == "str":
             slave = query.program.slave.name
         else:
-            raise ValueError("Slave_type has to be int or str.")
+            raise QueryParameterError(
+                slaves_type,
+                ["int", "str"],
+            )
 
         if programs_type == "int":
             program = query.program.id
         elif programs_type == "str":
             program = query.program.name
         else:
-            raise ValueError("Program_type has to be int or str.")
+            raise QueryParameterError(
+                programs_type,
+                ["int", "str"],
+            )
 
         return cls(
             query.index,
@@ -431,10 +445,8 @@ class ScriptEntryProgram:
                 )
                 model.full_clean()
                 model.save()
-        except ProgramModel.DoesNotExist:
-            raise ValueError("The program with name {} does not exist.".format(
-                self.program))
-
+        except ProgramModel.DoesNotExist as err:
+            raise ProgramNotExistError(err, self.program)
         try:
             if isinstance(self.program, int):
                 obj = ProgramModel.objects.get(slave=slave, id=self.program)
@@ -445,6 +457,5 @@ class ScriptEntryProgram:
                 )
                 model.full_clean()
                 model.save()
-        except ProgramModel.DoesNotExist:
-            raise ValueError("The program with id {} does not exist.".format(
-                self.program))
+        except ProgramModel.DoesNotExist as err:
+            raise ProgramNotExistError(err, self.program)

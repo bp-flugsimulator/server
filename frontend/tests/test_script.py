@@ -25,6 +25,14 @@ from .factory import (
     FileFactory,
 )
 
+from frontend.errors import (
+    SlaveNotExistError,
+    ProgramNotExistError,
+    ScriptNotExistError,
+    QueryParameterError,
+    FilesystemNotExistError,
+)
+
 
 class ScriptTests(TestCase):  # pylint: disable=unused-variable
     def test_get_slave_int(self):
@@ -38,17 +46,15 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
         self.assertEqual(get_slave(slave.name), slave)
 
     def test_get_slave_str_not_found(self):
-        self.assertRaisesRegex(
-            ValueError,
-            "client.*name.*not.*exist",
+        self.assertRaises(
+            SlaveNotExistError,
             get_slave,
             "empty",
         )
 
     def test_get_slave_int_not_found(self):
-        self.assertRaisesRegex(
-            ValueError,
-            "client.*id.*not.*exist",
+        self.assertRaises(
+            SlaveNotExistError,
             get_slave,
             -1,
         )
@@ -157,11 +163,11 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
             [],
         )
 
-        self.assertRaisesRegex(
-            ValueError,
-            "program.*id.*{}.*not exist".format(program.id + 1),
+        self.assertRaises(
+            ProgramNotExistError,
             script.save,
         )
+
         self.assertFalse(ScriptModel.objects.filter(name=script_name).exists())
         self.assertTrue(len(SGP.objects.all()) == 0)
 
@@ -202,40 +208,37 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
                         class Dummy:
                             def __init__(self):
                                 self.id = None
+                                self.name = None
 
                         self.slave = Dummy()
 
                 self.program = Dummy()
                 self.filesystem = Dummy()
 
-        self.assertRaisesRegex(
-            ValueError,
-            "Slave_type.*int or str",
+        self.assertRaises(
+            QueryParameterError,
             ScriptEntryProgram.from_query,
             Dummy(),
             "not int",
             "not str",
         )
-        self.assertRaisesRegex(
-            ValueError,
-            "Program_type.*int or str",
+        self.assertRaises(
+            QueryParameterError,
             ScriptEntryProgram.from_query,
             Dummy(),
             "int",
             "not str",
         )
 
-        self.assertRaisesRegex(
-            ValueError,
-            "Slave_type.*int or str",
+        self.assertRaises(
+            QueryParameterError,
             ScriptEntryFilesystem.from_query,
             Dummy(),
             "not int",
             "not str",
         )
-        self.assertRaisesRegex(
-            ValueError,
-            "File_type.*int or str",
+        self.assertRaises(
+            QueryParameterError,
             ScriptEntryFilesystem.from_query,
             Dummy(),
             "int",
@@ -269,9 +272,8 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
         slave = SlaveFactory()
         script = ScriptFactory()
 
-        self.assertRaisesRegex(
-            ValueError,
-            "program.*id.*{}.*not exist".format(-1),
+        self.assertRaises(
+            ProgramNotExistError,
             ScriptEntryProgram(
                 0,
                 -1,
@@ -280,9 +282,8 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
             script,
         )
 
-        self.assertRaisesRegex(
-            ValueError,
-            "program.*name.*{}.*not exist".format(""),
+        self.assertRaises(
+            ProgramNotExistError,
             ScriptEntryProgram(
                 0,
                 "",
@@ -293,9 +294,8 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
 
         slave.delete()
 
-        self.assertRaisesRegex(
-            ValueError,
-            "client.*id.*{}.*not exist".format(-1),
+        self.assertRaises(
+            SlaveNotExistError,
             ScriptEntryProgram(
                 0,
                 -1,
@@ -308,9 +308,8 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
         slave = SlaveFactory()
         script = ScriptFactory()
 
-        self.assertRaisesRegex(
-            ValueError,
-            "file.*id.*{}.*not exist".format(-1),
+        self.assertRaises(
+            FilesystemNotExistError,
             ScriptEntryFilesystem(
                 0,
                 -1,
@@ -319,9 +318,8 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
             script,
         )
 
-        self.assertRaisesRegex(
-            ValueError,
-            "file.*name.*{}.*not exist".format(""),
+        self.assertRaises(
+            FilesystemNotExistError,
             ScriptEntryFilesystem(
                 0,
                 "",
@@ -332,9 +330,8 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
 
         slave.delete()
 
-        self.assertRaisesRegex(
-            ValueError,
-            "client.*id.*{}.*not exist.".format(-1),
+        self.assertRaises(
+            SlaveNotExistError,
             ScriptEntryFilesystem(
                 0,
                 -1,

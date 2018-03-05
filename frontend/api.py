@@ -37,6 +37,9 @@ from .errors import (
     FilesystemNotExistError,
     SimultaneousQueryError,
     SlaveOfflineError,
+    ScriptRunningError,
+    ScriptNotExistError,
+    QueryTypeError,
 )
 from .controller import (
     prog_start,
@@ -73,18 +76,20 @@ def script_put_post(data, script_id):
             for filesystem in script.filesystems:
                 filesystem.save(new_model)
 
-        return StatusResponse(Status.ok(""))
+        return StatusResponse.ok('')
+    except FsimError as err:
+        return StatusResponse(err)
     except KeyError as err:
-        return StatusResponse(
-            Status.err("Could not find required key {}".format(err.args[0])))
+        return StatusResponse.err("Could not find required key {}".format(
+            err.args[0]))
     except TypeError as err:
-        return StatusResponse(Status.err(str(err)))
+        return StatusResponse.err(str(err))
     except ValueError as err:
-        return StatusResponse(Status.err(str(err)))
+        return StatusResponse.err(str(err))
     except ValidationError as err:
-        return StatusResponse(Status.err('; '.join(err.messages)))
+        return StatusResponse.err('; '.join(err.messages))
     except IntegrityError as err:
-        return StatusResponse(Status.err(str(err)))
+        return StatusResponse.err(str(err))
 
 
 def slave_set(request):
@@ -126,7 +131,8 @@ def slave_set(request):
                 )
         else:
             if programs and filesystems:
-                return StatusResponse(SimultaneousQueryError('filesystems', 'programs'))
+                return StatusResponse(
+                    SimultaneousQueryError('filesystems', 'programs'))
             elif programs:
                 slaves = SlaveModel.objects.all().annotate(
                     prog_count=Count('program__pk')).filter(
@@ -218,7 +224,8 @@ def slave_shutdown(request, slave_id):
                 })
                 return StatusResponse.ok('')
             else:
-                return StatusResponse(SlaveOfflineError('', '', 'shutdown', slave.name))
+                return StatusResponse(
+                    SlaveOfflineError('', '', 'shutdown', slave.name))
         except SlaveModel.DoesNotExist as err:
             return StatusResponse(SlaveNotExistError(err, slave_id))
 
@@ -315,9 +322,9 @@ def program_set(request):
                         slave = SlaveModel.objects.get(id=int(slave))
                     except ValueError:
                         return StatusResponse(
-                            Status.err("Slave has to be an integer.")) # TODO
+                            Status.err("Slave has to be an integer."))  # TODO
             except SlaveModel.DoesNotExist as err:
-                return StatusResponse(SlaveNotExistError(err , slave))
+                return StatusResponse(SlaveNotExistError(err, slave))
 
             progs = ProgramModel.objects.filter(slave=slave).values_list(
                 "name",
@@ -367,8 +374,9 @@ def program_entry(request, program_id):
                     return StatusResponse.ok('')
                 except ValidationError as _:
                     error_dict = {
-                        'name':
-                        ['Program with this Name already exists on this Client.']
+                        'name': [
+                            'Program with this Name already exists on this Client.'
+                        ]
                     }
                     return StatusResponse.err(error_dict)
             else:
@@ -404,6 +412,7 @@ def program_start(request, program_id):
             return StatusResponse(ProgramNotExistError(err, program_id))
     else:
         return HttpResponseForbidden()
+
 
 def program_stop(request, program_id):
     """
@@ -524,7 +533,7 @@ def program_disable_logging(request, program_id):
         return HttpResponseForbidden()
 
 
-def add_script(request):
+def script_set(request):
     """
     Process POST requests which adds new SlaveModel.
 
@@ -543,7 +552,7 @@ def add_script(request):
         return HttpResponseForbidden()
 
 
-def manage_script(request, script_id):
+def script_entry(request, script_id):
     """
     Process GET, DELETE requests for the ScriptModel ressource.
 
@@ -565,45 +574,25 @@ def manage_script(request, script_id):
             program_key = request.GET.get('programs', 'int')
             filesystem_key = request.GET.get('filesystems', 'int')
 
-            if slave_key != 'str' and slave_key != 'int':
-                return StatusResponse(
-                    Status.err(
-                        "slaves only allow str or int. (given {})".format(
-                            slave_key)))
-
-            if program_key != 'str' and program_key != 'int':
-                return StatusResponse(
-                    Status.err(
-                        "programs only allow str or int. (given {})".format(
-                            program_key)))
-
-            if filesystem_key != 'str' and filesystem_key != 'int':
-                return StatusResponse(
-                    Status.err(
-                        "filesystems only allow str or int. (given {})".format(
-                            filesystem_key)))
-
             script = Script.from_model(
                 script_id,
                 slave_key,
                 program_key,
                 filesystem_key,
             )
-            return StatusResponse(Status.ok(dict(script)))
-        except ScriptModel.DoesNotExist:
-            return StatusResponse(Status.err("Script does not exist."))
-
+            return StatusResponse.ok(dict(script))
+        except ScriptModel.DoesNotExist as err:
+            return StatusResponse(ScriptNotExistError(err, script_id))
     elif request.method == 'PUT':
         return script_put_post(request.body.decode('utf-8'), int(script_id))
     elif request.method == 'DELETE':
         ScriptModel.objects.filter(id=script_id).delete()
-        return StatusResponse(Status.ok(''))
-
+        return StatusResponse.ok('')
     else:
         return HttpResponseForbidden()
 
 
-def copy_script(request, script_id):
+def script_copy(request, script_id):
     """
     Process GET request which constructs a deep copy of a script.
 
@@ -621,14 +610,14 @@ def copy_script(request, script_id):
         try:
             script = ScriptModel.objects.get(id=script_id)
             script_deep_copy(script)
-            return StatusResponse(Status.ok(''))
-        except ScriptModel.DoesNotExist:
-            return StatusResponse(Status.err("Script does not exist."))
+            return StatusResponse.ok('')
+        except ScriptModel.DoesNotExist as err:
+            return StatusResponse(ScriptNotExistError(err, script_id))
     else:
         return HttpResponseForbidden()
 
 
-def run_script(request, script_id):
+def script_run(request, script_id):
     """
     Process GET requests for the ScriptModel ressource.
 
@@ -649,14 +638,12 @@ def run_script(request, script_id):
             # only allow the start of a script if the old one is finished
             if FSIM_CURRENT_SCHEDULER.start(script.id):
                 FSIM_CURRENT_SCHEDULER.notify()
-                return StatusResponse(
-                    Status.ok("Started script {}".format(script.name)))
+                return StatusResponse.ok("Started script {}".format(
+                    script.name))
             else:
-                return StatusResponse(Status.err("A script is still running."))
-        except ScriptModel.DoesNotExist:
-            return StatusResponse(
-                Status.err("The script with the id {} does not exist.".format(
-                    script_id)))
+                return StatusResponse(ScriptRunningError(str(script.name)))
+        except ScriptModel.DoesNotExist as err:
+            return StatusResponse(ScriptNotExistError(err, script_id))
     else:
         return HttpResponseForbidden()
 
@@ -740,20 +727,13 @@ def filesystem_set(request):
                     slave = SlaveModel.objects.get(name=slave)
                 else:
                     try:
-                        slave = SlaveModel.objects.get(id=int(slave))
-                    except ValueError:
-                        return StatusResponse(
-                            Status.err("Slave has to be an integer."))
-            except SlaveModel.DoesNotExist:
-                ret_err = "Could not find slave with"
-                if slave_str:
-                    ret_err += " name `{}`".format(slave)
-                else:
-                    ret_err += " id `{}`".format(slave)
+                        slave = int(slave)
+                    except ValueError as err:
+                        return StatusResponse(QueryTypeError(slave, "int"))
 
-                ret_err += "."
-
-                return StatusResponse(Status.err(ret_err))
+                    slave = SlaveModel.objects.get(id=slave)
+            except SlaveModel.DoesNotExist as err:
+                return StatusResponse(SlaveNotExistError(err, slave))
 
             filesystems = FilesystemModel.objects.filter(
                 slave=slave).values_list(
@@ -766,7 +746,7 @@ def filesystem_set(request):
                 flat=True,
             )
 
-        return StatusResponse(Status.ok(list(filesystems)))
+        return StatusResponse.ok(list(filesystems))
     else:
         return HttpResponseForbidden()
 
@@ -856,22 +836,26 @@ def filesystem_entry(request, filesystem_id):
         # create form from a new QueryDict made from the request body
         # (request.PUT is unsupported) as an update (instance) of the
         # existing slave
-        model = FilesystemModel.objects.get(id=filesystem_id)
-        form = FilesystemForm(QueryDict(request.body), instance=model)
-        if form.is_valid():
-            filesystem = form.save(commit=False)
-            try:
-                filesystem.full_clean()
-                form.save()
-                return StatusResponse(Status.ok(''))
-            except ValidationError as _:
-                error_dict = {
-                    'name': [
-                        'Filesystem with this Name already exists on this Client.'
-                    ]
-                }
-                return StatusResponse(Status.err(error_dict))
-        else:
-            return StatusResponse(Status.err(form.errors))
+        try:
+            model = FilesystemModel.objects.get(id=filesystem_id)
+
+            form = FilesystemForm(QueryDict(request.body), instance=model)
+            if form.is_valid():
+                filesystem = form.save(commit=False)
+                try:
+                    filesystem.full_clean()
+                    form.save()
+                    return StatusResponse.ok('')
+                except ValidationError as _:
+                    error_dict = {
+                        'name': [
+                            'Filesystem with this Name already exists on this Client.'
+                        ]
+                    }
+                    return StatusResponse(Status.err(error_dict))
+            else:
+                return StatusResponse(Status.err(form.errors))
+        except FilesystemModel.DoesNotExist as err:
+            return StatusResponse(FilesystemNotExistError(err, filesystem_id))
     else:
         return HttpResponseForbidden()
