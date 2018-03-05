@@ -35,6 +35,7 @@ from frontend.errors import (
     FilesystemNotExistError,
     FilesystemDeleteError,
     SimultaneousQueryError,
+    LogNotExistError,
 )
 
 from .factory import (
@@ -1143,150 +1144,6 @@ class ProgramTests(StatusTestCase):
         )
 
 
-    def test_program_disable_logging(self):
-        slave = SlaveFactory(online=True)
-        program = ProgramFactory(slave=slave)
-        status = ProgramStatusFactory(running=True, program=program)
-
-        ws_slave = WSClient()
-        ws_slave.join_group('client_' + str(slave.id))
-
-        api_response = self.client.get(
-            reverse('frontend:program_disable_logging', args=[program.id]))
-        self.assertEqual(200, api_response.status_code)
-        self.assertEqual(
-            Status.ok(''),
-            Status.from_json(api_response.content.decode('utf-8')),
-        )
-
-        self.assertEqual(
-            Command(
-                method='disable_logging',
-                target_uuid=status.command_uuid,
-            ),
-            Command.from_json(json.dumps(ws_slave.receive())),
-        )
-
-    def test_program_disable_logging_offline_client(self):
-        program = ProgramFactory()
-        api_response = self.client.get(
-            reverse('frontend:program_disable_logging', args=[program.id]))
-        self.assertEqual(200, api_response.status_code)
-        self.assertEqual(
-            Status.err('Can not disable logging on an offline Client.'),
-            Status.from_json(api_response.content.decode('utf-8')),
-        )
-
-    def test_program_disable_logging_unknown_program(self):
-        api_response = self.client.get(
-            reverse('frontend:program_disable_logging', args=[999999]))
-        self.assertEqual(200, api_response.status_code)
-        self.assertEqual(
-            Status.err('Can not disable logging on an unknown program.'),
-            Status.from_json(api_response.content.decode('utf-8')),
-        )
-
-    def test_program_disable_logging_unknown_httpmethod(self):
-        api_response = self.client.post(
-            reverse('frontend:program_disable_logging', args=[999999]))
-        self.assertEqual(403, api_response.status_code)
-
-    def test_program_enable_logging(self):
-        slave = SlaveFactory(online=True)
-        program = ProgramFactory(slave=slave)
-        status = ProgramStatusFactory(running=True, program=program)
-
-        ws_slave = WSClient()
-        ws_slave.join_group('client_' + str(slave.id))
-
-        api_response = self.client.get(
-            reverse('frontend:program_enable_logging', args=[program.id]))
-        self.assertEqual(200, api_response.status_code)
-        self.assertEqual(
-            Status.ok(''),
-            Status.from_json(api_response.content.decode('utf-8')),
-        )
-
-        self.assertEqual(
-            Command(
-                method='enable_logging',
-                target_uuid=status.command_uuid,
-            ),
-            Command.from_json(json.dumps(ws_slave.receive())),
-        )
-
-    def test_program_enable_logging_offline_client(self):
-        program = ProgramFactory()
-        api_response = self.client.get(
-            reverse('frontend:program_enable_logging', args=[program.id]))
-        self.assertEqual(200, api_response.status_code)
-        self.assertEqual(
-            Status.err('Can not enable logging on an offline Client.'),
-            Status.from_json(api_response.content.decode('utf-8')),
-        )
-
-    def test_program_enable_logging_unknown_program(self):
-        api_response = self.client.get(
-            reverse('frontend:program_enable_logging', args=[999999]))
-        self.assertEqual(200, api_response.status_code)
-        self.assertEqual(
-            Status.err('Can not enable logging on an unknown program.'),
-            Status.from_json(api_response.content.decode('utf-8')),
-        )
-
-    def test_program_enable_logging_unknown_httpmethod(self):
-        api_response = self.client.post(
-            reverse('frontend:program_enable_logging', args=[999999]))
-        self.assertEqual(403, api_response.status_code)
-
-    def test_program_manage_log(self):
-        slave = SlaveFactory(online=True)
-        program = ProgramFactory(slave=slave)
-        status = ProgramStatusFactory(running=True, program=program)
-
-        ws_slave = WSClient()
-        ws_slave.join_group('client_' + str(slave.id))
-
-        api_response = self.client.get(
-            reverse('frontend:program_manage_log', args=[program.id]))
-        self.assertEqual(200, api_response.status_code)
-        self.assertEqual(
-            Status.ok(''),
-            Status.from_json(api_response.content.decode('utf-8')),
-        )
-
-        self.assertEqual(
-            Command(
-                method='get_log',
-                target_uuid=status.command_uuid,
-            ),
-            Command.from_json(json.dumps(ws_slave.receive())),
-        )
-
-    def test_program_manage_log_offline_client(self):
-        program = ProgramFactory()
-        api_response = self.client.get(
-            reverse('frontend:program_manage_log', args=[program.id]))
-        self.assertEqual(200, api_response.status_code)
-        self.assertEqual(
-            Status.err('Can not request a log from an offline Client.'),
-            Status.from_json(api_response.content.decode('utf-8')),
-        )
-
-    def test_program_manage_log_unknown_program(self):
-        api_response = self.client.get(
-            reverse('frontend:program_manage_log', args=[999999]))
-        self.assertEqual(200, api_response.status_code)
-        self.assertEqual(
-            Status.err('Can not get a log of an unknown program.'),
-            Status.from_json(api_response.content.decode('utf-8')),
-        )
-
-    def test_program_manage_log_unknown_httpmethod(self):
-        api_response = self.client.post(
-            reverse('frontend:program_manage_log', args=[999999]))
-        self.assertEqual(403, api_response.status_code)
-
     def test_program_autocomplete(self):
         program = ProgramFactory()
         name_half = int(len(program.name) / 2)
@@ -1728,6 +1585,177 @@ class ProgramTests(StatusTestCase):
             Status.from_json(resp.content.decode('utf-8')),
         )
 
+
+class LogTests(StatusTestCase):
+    def test_entry_get(self):
+        slave = SlaveFactory(online=True)
+        program = ProgramFactory(slave=slave)
+        status = ProgramStatusFactory(running=True, program=program)
+
+        ws_slave = WSClient()
+        ws_slave.join_group('client_' + str(slave.id))
+
+        api_response = self.client.get(
+            reverse('frontend:log_entry', args=[program.id]))
+        self.assertEqual(200, api_response.status_code)
+        self.assertEqual(
+            Status.ok(''),
+            Status.from_json(api_response.content.decode('utf-8')),
+        )
+
+        self.assertEqual(
+            Command(
+                method='get_log',
+                target_uuid=status.command_uuid,
+            ),
+            Command.from_json(json.dumps(ws_slave.receive())),
+        )
+
+    def test_entry_get_offline_slave(self):
+        program = ProgramFactory()
+        api_response = self.client.get(
+            reverse('frontend:log_entry', args=[program.id]))
+        self.assertEqual(200, api_response.status_code)
+        self.assertStatusRegex(
+            Status.err(SlaveOfflineError),
+            Status.from_json(api_response.content.decode('utf-8')),
+        )
+
+    def test_entry_get_log_not_exist(self):
+        slave = SlaveFactory(online=True)
+        program = ProgramFactory(slave=slave)
+        api_response = self.client.get(
+            reverse('frontend:log_entry', args=[program.id]))
+        self.assertEqual(200, api_response.status_code)
+        self.assertStatusRegex(
+            Status.err(LogNotExistError),
+            Status.from_json(api_response.content.decode('utf-8')),
+        )
+
+
+
+    def test_program_manage_log_unknown_program(self):
+        api_response = self.client.get(
+            reverse('frontend:log_entry', args=[999999]))
+        self.assertEqual(200, api_response.status_code)
+        self.assertStatusRegex(
+            Status.err(ProgramNotExistError),
+            Status.from_json(api_response.content.decode('utf-8')),
+        )
+
+    def test_program_manage_log_unknown_httpmethod(self):
+        api_response = self.client.post(
+            reverse('frontend:log_entry', args=[999999]))
+        self.assertEqual(403, api_response.status_code)
+
+    def test_program_disable_logging(self):
+        slave = SlaveFactory(online=True)
+        program = ProgramFactory(slave=slave)
+        status = ProgramStatusFactory(running=True, program=program)
+
+        ws_slave = WSClient()
+        ws_slave.join_group('client_' + str(slave.id))
+
+        api_response = self.client.get(
+            reverse('frontend:log_disable', args=[program.id]))
+        self.assertEqual(200, api_response.status_code)
+        self.assertEqual(
+            Status.ok(''),
+            Status.from_json(api_response.content.decode('utf-8')),
+        )
+
+        self.assertEqual(
+            Command(
+                method='disable_logging',
+                target_uuid=status.command_uuid,
+            ),
+            Command.from_json(json.dumps(ws_slave.receive())),
+        )
+
+    def test_program_disable_logging_offline_client(self):
+        program = ProgramFactory()
+        api_response = self.client.get(
+            reverse('frontend:log_disable', args=[program.id]))
+        self.assertEqual(200, api_response.status_code)
+        self.assertStatusRegex(
+            Status.err(SlaveOfflineError),
+            Status.from_json(api_response.content.decode('utf-8')),
+        )
+
+    def test_program_disable_logging_unknown_program(self):
+        api_response = self.client.get(
+            reverse('frontend:log_disable', args=[999999]))
+        self.assertEqual(200, api_response.status_code)
+        self.assertStatusRegex(
+            Status.err(ProgramNotExistError),
+            Status.from_json(api_response.content.decode('utf-8')),
+        )
+
+    def test_program_disable_logging_unknown_httpmethod(self):
+        api_response = self.client.post(
+            reverse('frontend:log_disable', args=[999999]))
+        self.assertEqual(403, api_response.status_code)
+
+    def test_program_enable_logging(self):
+        slave = SlaveFactory(online=True)
+        program = ProgramFactory(slave=slave)
+        status = ProgramStatusFactory(running=True, program=program)
+
+        ws_slave = WSClient()
+        ws_slave.join_group('client_' + str(slave.id))
+
+        api_response = self.client.get(
+            reverse('frontend:log_enable', args=[program.id]))
+        self.assertEqual(200, api_response.status_code)
+        self.assertEqual(
+            Status.ok(''),
+            Status.from_json(api_response.content.decode('utf-8')),
+        )
+
+        self.assertEqual(
+            Command(
+                method='enable_logging',
+                target_uuid=status.command_uuid,
+            ),
+            Command.from_json(json.dumps(ws_slave.receive())),
+        )
+
+    def test_program_enable_logging_offline_client(self):
+        program = ProgramFactory()
+        api_response = self.client.get(
+            reverse('frontend:log_enable', args=[program.id]))
+        self.assertEqual(200, api_response.status_code)
+        self.assertStatusRegex(
+            Status.err(SlaveOfflineError),
+            Status.from_json(api_response.content.decode('utf-8')),
+        )
+
+    def test_program_enable_logging_unknown_program(self):
+        api_response = self.client.get(
+            reverse('frontend:log_enable', args=[999999]))
+        self.assertEqual(200, api_response.status_code)
+        self.assertStatusRegex(
+            Status.err(ProgramNotExistError),
+            Status.from_json(api_response.content.decode('utf-8')),
+        )
+
+    def test_program_enable_logging_unknown_httpmethod(self):
+        api_response = self.client.post(
+            reverse('frontend:log_enable', args=[999999]))
+        self.assertEqual(403, api_response.status_code)
+
+    def test_program_enable_logging_log_not_exist(self):
+        slave = SlaveFactory(online=True)
+        prog = ProgramFactory(slave=slave)
+
+        api_response = self.client.get(
+            reverse('frontend:log_enable', args=[prog.id]))
+        self.assertEqual(200, api_response.status_code)
+
+        self.assertStatusRegex(
+            Status.err(LogNotExistError),
+            Status.from_json(api_response.content.decode('utf-8')),
+        )
 
 class SlaveTests(StatusTestCase):
     def test_update_unknown_slave(self):
