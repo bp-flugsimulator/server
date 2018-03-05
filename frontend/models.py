@@ -17,6 +17,7 @@ from django.db.models import (
     OneToOneField,
     TextField,
     Count,
+    Q,
 )
 
 from django.core.exceptions import ValidationError
@@ -27,18 +28,7 @@ from utils import Command
 from server.utils import notify
 
 LOGGER = logging.getLogger("fsim.models")
-
-
-def timer_timeout_program(identifier):
-    """
-    Sets the timeout flag for a program.
-
-    Arguments
-    ---------
-        id: Program id
-    """
-    ProgramStatus.objects.filter(program=identifier).update(timeouted=True)
-    FSIM_CURRENT_SCHEDULER.notify()
+FILE_BACKUP_ENDING = "_BACK"
 
 
 def validate_mac_address(mac_addr):
@@ -132,14 +122,6 @@ class Slave(Model):
     )
     command_uuid = CharField(blank=True, null=True, max_length=32, unique=True)
     online = BooleanField(unique=False, default=False)
-
-    @staticmethod
-    def wake_on_lan(slave):
-        """
-        Sends wake on lan package to the slave.
-        """
-        (mac, ) = Slave.objects.values_list('mac_address').get(id=slave)
-        send_magic_packet(mac)
 
     @property
     def is_online(self):
@@ -252,139 +234,6 @@ class Program(Model):
         # is false
         return self.is_executed and self.programstatus.code == '0'
 
-    def enable(self):
-        """
-        Starts the program on the slave.
-
-        Returns
-        -------
-            boolean which indicates if the program was started.
-        """
-
-        if self.slave.is_online:
-            uuid = uuid4().hex
-            cmd = Command(
-                uuid=uuid,  # for the command
-                pid=self.id,
-                own_uuid=uuid,  # for the function that gets executed
-                method="execute",
-                path=self.path,
-                arguments=split(self.arguments),
-            )
-
-            LOGGER.info(
-                "Starting program %s on slave %s",
-                self.name,
-                self.slave.name,
-            )
-
-            # send command to the client
-            Group('client_' + str(self.slave.id)).send({'text': cmd.to_json()})
-
-            # tell webinterface that the program has started
-            notify({
-                'program_status': 'started',
-                'pid': self.id,
-            })
-
-            # create status entry
-            ProgramStatus(program=self, command_uuid=cmd.uuid).save()
-
-            if self.start_time > 0:
-                LOGGER.debug('started timeout on %s, for %d seconds',
-                             self.name, self.start_time)
-                FSIM_CURRENT_EVENT_LOOP.spawn(self.start_time,
-                                              timer_timeout_program, self.id)
-
-            return True
-        else:
-            return False
-
-    def disable(self):
-        """
-        Stops the program on the slave.
-
-        Returns
-        -------
-            boolean which indicates if the program was stopped.
-        """
-
-        if self.is_running:
-            LOGGER.info(
-                "Stoping program %s on slave %s",
-                self.name,
-                self.slave.name,
-            )
-            Group('client_' + str(self.slave.id)).send({
-                'text':
-                Command(
-                    method="execute",
-                    uuid=self.programstatus.command_uuid).to_json()
-            })
-            return True
-        else:
-            return False
-
-    def get_log(self):
-        """
-        Requests a log of the program on the slave.
-
-         Returns
-        -------
-            boolean which indicates if the Request was possible.
-        """
-        LOGGER.info(
-            "Requesting log for program %s on slave %s",
-            self.name,
-            self.slave.name,
-        )
-        if self.slave.is_online:
-            Group('client_' + str(self.slave.id)).send({
-                'text':
-                Command(
-                    method="get_log",
-                    target_uuid=self.programstatus.command_uuid).to_json()
-            })
-            return True
-        else:
-            return False
-
-    def enable_logging(self):
-        LOGGER.info(
-            "Enabling logging for program %s on slave %s",
-            self.name,
-            self.slave.name,
-        )
-        if self.slave.is_online:
-            Group('client_' + str(self.slave.id)).send({
-                'text':
-                Command(
-                    method="enable_logging",
-                    target_uuid=self.programstatus.command_uuid,
-                ).to_json()
-            })
-            return True
-        else:
-            return False
-
-    def disable_logging(self):
-        LOGGER.info(
-            "Disabling logging for program %s on slave %s",
-            self.name,
-            self.slave.name,
-        )
-        if self.slave.is_online:
-            Group('client_' + str(self.slave.id)).send({
-                'text':
-                Command(
-                    method="disable_logging",
-                    target_uuid=self.programstatus.command_uuid,
-                ).to_json()
-            })
-            return True
-        else:
-            return False
-
 
 class Filesystem(Model):
     """
@@ -406,16 +255,26 @@ class Filesystem(Model):
     slave: Slave The slave on which the filesystem belongs to
     """
 
-    CHOICES_SET = [('file', 'Replace with'), ('dir', 'Insert into')]
+    CHOICES_SET_SOURCE = [
+        ('file', 'Source is a file'),
+        ('dir', 'Source is a directory'),
+    ]
+    CHOICES_SET_DESTINATION = [
+        ('file', 'Replace with'),
+        ('dir', 'Insert into'),
+    ]
 
+    # persistant fields
     name = CharField(unique=False, max_length=200)
+    slave = ForeignKey(Slave, on_delete=CASCADE)
     source_path = TextField(unique=False)
+    source_type = CharField(
+        max_length=4, choices=CHOICES_SET_SOURCE, default='file')
     destination_path = TextField(unique=False)
-    command_uuid = CharField(
-        max_length=32,
-        unique=True,
-        blank=True,
-        null=True,
+    destination_type = CharField(
+        max_length=4,
+        choices=CHOICES_SET_DESTINATION,
+        default='file',
     )
     hash_value = CharField(
         unique=False,
@@ -423,14 +282,14 @@ class Filesystem(Model):
         blank=True,
         default="",
     )
-    error_code = CharField(blank=True, default="", max_length=1000)
-    slave = ForeignKey(Slave, on_delete=CASCADE)
-    source_type = CharField(max_length=4, choices=CHOICES_SET, default='file')
-    destination_type = CharField(
-        max_length=4,
-        choices=CHOICES_SET,
-        default='file',
+    # state fields
+    command_uuid = CharField(
+        max_length=32,
+        unique=True,
+        blank=True,
+        null=True,
     )
+    error_code = CharField(blank=True, default="", max_length=1000)
 
     class Meta:
         unique_together = (
@@ -501,11 +360,17 @@ class Script(Model):
         -------
             array of maps where 'index' and 'id__count' is in.
         """
-        query = ScriptGraphPrograms.objects.filter(
-            script=self).values("index").annotate(
-                Count("id")).order_by("index")
+        query_program = ScriptGraphPrograms.objects.filter(
+            script=self).values_list(
+                "index", flat=True).annotate(Count("id")).order_by("index")
 
-        return query
+        query_filesystems = ScriptGraphFiles.objects.filter(
+            script=self).values_list(
+                "index", flat=True).annotate(Count("id")).order_by("index")
+
+        query = set(query_filesystems).union(set(query_program))
+
+        return list(query)
 
     @property
     def has_error(self):
@@ -559,45 +424,9 @@ class Script(Model):
         return Program.objects.filter(
             scriptgraphprograms__script=script).annotate(
                 dcount=Count('slave')).values_list(
-                    'slave', flat=True)
-
-    def deep_copy(self):
-        """
-        Returns a deep copy of a script
-
-        Returns
-        -------
-            Script
-        """
-        i = 0
-        copy = None
-
-        while not copy:
-            if i is 0:
-                name = self.name + '_copy'
-            else:
-                name = self.name + '_copy_' + str(i)
-
-            if Script.objects.filter(name=name).exists():
-                i = i + 1
-            else:
-                copy = Script(name=name)
-
-        copy.save()
-        for file_entry in ScriptGraphFiles.objects.filter(script_id=self.id):
-            ScriptGraphFiles(
-                script=copy,
-                index=file_entry.index,
-                filesystem=file_entry.filesystem).save()
-
-        for program_entry in ScriptGraphPrograms.objects.filter(
-                script_id=self.id):
-            ScriptGraphPrograms(
-                script=copy,
-                index=program_entry.index,
-                program=program_entry.program).save()
-
-        return copy
+                    'slave',
+                    flat=True,
+                )
 
 
 class ScriptGraphPrograms(Model):

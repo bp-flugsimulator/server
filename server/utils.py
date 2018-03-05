@@ -5,6 +5,7 @@ from django.http.response import HttpResponse
 from channels import Group
 
 from utils.status import Status
+from .errors import FsimError
 
 
 class StatusResponse(HttpResponse):
@@ -20,11 +21,49 @@ class StatusResponse(HttpResponse):
         :param data: a status object
         :param kwargs: standard kwargs for HttpResponse
         """
-        if data and not isinstance(data, Status):
+        if data and not isinstance(data, Status) and not isinstance(
+                data, FsimError):
             raise TypeError('Only Status objects are allowed here')
+
         kwargs.setdefault('content_type', 'application/json')
+
+        if isinstance(data, FsimError):
+            data = data.to_status()
+
         data = data.to_json()
         super(StatusResponse, self).__init__(content=data, **kwargs)
+
+    @classmethod
+    def ok(cls, payload, **kwargs):
+        """
+        Shorthand for StatusResponse(Status.ok(payload))
+
+        Arguments
+        ---------
+            payload: Payload for Status object
+            **kwargs: arguments for HttpResponse
+
+        Returns
+        -------
+            StatusResponse object with 'ok' in Status
+        """
+        return cls(Status.ok(payload), **kwargs)
+
+    @classmethod
+    def err(cls, payload, **kwargs):
+        """
+        Shorthand for StatusResponse(Status.err(payload))
+
+        Arguments
+        ---------
+            payload: Payload for Status object
+            **kwargs: arguments for HttpResponse
+
+        Returns
+        -------
+            StatusResponse object with 'err' in Status
+        """
+        return cls(Status.err(payload), **kwargs)
 
 
 def notify(message):

@@ -35,6 +35,7 @@ class SchedulerTests(TestCase):
             name="test_slav21",
             ip_address="0.1.2.0",
             mac_address="01:01:01:00:00100",
+            online=True,
         )
         slave1.save()
 
@@ -42,6 +43,7 @@ class SchedulerTests(TestCase):
             name="test_sl1ve2",
             ip_address="0.1.2.1",
             mac_address="00:02:01:01:00:00",
+            online=True,
         )
         slave2.save()
 
@@ -105,40 +107,6 @@ class SchedulerTests(TestCase):
             Status.from_json(json.dumps(webinterface.receive())),
         )
 
-    def test_state_waiting_slaves(self):
-        self.sched._Scheduler__script = self.script.id
-        self.sched._Scheduler__state = SchedulerStatus.WAITING_FOR_SLAVES
-        self.sched._Scheduler__state_wait_slaves()
-
-        self.assertEqual(
-            self.sched._Scheduler__state,
-            SchedulerStatus.WAITING_FOR_SLAVES,
-        )
-
-        SlaveModel.objects.filter(id=self.slave1.id).update(
-            online=True,
-            command_uuid=uuid4().hex,
-        )
-
-        self.sched._Scheduler__state_wait_slaves()
-
-        self.assertEqual(
-            self.sched._Scheduler__state,
-            SchedulerStatus.WAITING_FOR_SLAVES,
-        )
-
-        SlaveModel.objects.filter(id=self.slave2.id).update(
-            online=True,
-            command_uuid=uuid4().hex,
-        )
-
-        self.sched._Scheduler__state_wait_slaves()
-
-        self.assertEqual(
-            self.sched._Scheduler__state,
-            SchedulerStatus.NEXT_STEP,
-        )
-
     def test_state_next(self):
         webinterface = WSClient()
         webinterface.join_group('notifications')
@@ -150,38 +118,60 @@ class SchedulerTests(TestCase):
 
         self.assertEqual(
             self.sched._Scheduler__state,
-            SchedulerStatus.WAITING_FOR_PROGRAMS,
+            SchedulerStatus.WAITING_FOR_PROGRAMS_FILESYSTEMS,
         )
 
-        self.assertEqual(
-            Status.ok({
-                'script_status': 'next_step',
-                'index': 0,
-                'last_index': -1,
-                'start_time': 0,
-                'script_id': self.script.id,
-            }),
-            Status.from_json(json.dumps(webinterface.receive())),
-        )
+        msg1 = Status.from_json(json.dumps(webinterface.receive()))
+        msg2 = Status.from_json(json.dumps(webinterface.receive()))
+
+        expct1 = Status.ok({
+            'script_status': 'next_step',
+            'index': 0,
+            'last_index': -1,
+            'start_time': 0,
+            'script_id': self.script.id,
+        })
+
+        expct2 = Status.ok({
+            'program_status': 'started',
+            'pid': self.prog1.id,
+        })
+
+        if msg1 != expct1 and msg1 != expct2:
+            raise ValueError(msg1, expct1, expct2)
+
+        if msg2 != expct1 and msg2 != expct2:
+            raise ValueError(msg2, expct1, expct2)
 
         self.sched._Scheduler__state = SchedulerStatus.NEXT_STEP
         self.sched._Scheduler__state_next()
 
         self.assertEqual(
             self.sched._Scheduler__state,
-            SchedulerStatus.WAITING_FOR_PROGRAMS,
+            SchedulerStatus.WAITING_FOR_PROGRAMS_FILESYSTEMS,
         )
 
-        self.assertEqual(
-            Status.ok({
-                'script_status': 'next_step',
-                'index': 2,
-                'last_index': 0,
-                'start_time': 1,
-                'script_id': self.script.id,
-            }),
-            Status.from_json(json.dumps(webinterface.receive())),
-        )
+        msg1 = Status.from_json(json.dumps(webinterface.receive()))
+        msg2 = Status.from_json(json.dumps(webinterface.receive()))
+
+        expct1 = Status.ok({
+            'script_status': 'next_step',
+            'index': 2,
+            'last_index': 0,
+            'start_time': 1,
+            'script_id': self.script.id,
+        })
+
+        expct2 = Status.ok({
+            'program_status': 'started',
+            'pid': self.prog2.id,
+        })
+
+        if msg1 != expct1 and msg1 != expct2:
+            raise ValueError(msg1, expct1, expct2)
+
+        if msg2 != expct1 and msg2 != expct2:
+            raise ValueError(msg2, expct1, expct2)
 
         self.sched._Scheduler__state = SchedulerStatus.NEXT_STEP
         self.sched._Scheduler__state_next()
@@ -194,7 +184,7 @@ class SchedulerTests(TestCase):
         self.assertEqual(
             Status.ok({
                 'script_status': 'next_step',
-                'index': 3,
+                'index': -1,
                 'last_index': 2,
                 'start_time': 0,
                 'script_id': self.script.id,
@@ -205,7 +195,7 @@ class SchedulerTests(TestCase):
     def test_state_waiting_programs(self):
         self.sched._Scheduler__script = self.script.id
         self.sched._Scheduler__index = 0
-        self.sched._Scheduler__state = SchedulerStatus.WAITING_FOR_PROGRAMS
+        self.sched._Scheduler__state = SchedulerStatus.WAITING_FOR_PROGRAMS_FILESYSTEMS
 
         ProgramStatusModel(
             running=True,
@@ -218,17 +208,17 @@ class SchedulerTests(TestCase):
             command_uuid=uuid4().hex,
         ).save()
 
-        self.sched._Scheduler__state_wait_programs()
+        self.sched._Scheduler__state_wait_programs_filesystems()
 
         self.assertEqual(
             self.sched._Scheduler__state,
-            SchedulerStatus.WAITING_FOR_PROGRAMS,
+            SchedulerStatus.WAITING_FOR_PROGRAMS_FILESYSTEMS,
         )
 
         ProgramStatusModel.objects.filter(program=self.prog1).update(
             running=False, )
 
-        self.sched._Scheduler__state_wait_programs()
+        self.sched._Scheduler__state_wait_programs_filesystems()
 
         self.assertEqual(
             self.sched._Scheduler__state,
@@ -236,12 +226,12 @@ class SchedulerTests(TestCase):
         )
 
         self.sched._Scheduler__index = 2
-        self.sched._Scheduler__state = SchedulerStatus.WAITING_FOR_PROGRAMS
+        self.sched._Scheduler__state = SchedulerStatus.WAITING_FOR_PROGRAMS_FILESYSTEMS
 
         ProgramStatusModel.objects.filter(program=self.prog2).update(
             running=False, )
 
-        self.sched._Scheduler__state_wait_programs()
+        self.sched._Scheduler__state_wait_programs_filesystems()
 
         self.assertEqual(
             self.sched._Scheduler__state,
@@ -251,7 +241,7 @@ class SchedulerTests(TestCase):
     def test_state_waiting_programs_error(self):
         self.sched._Scheduler__script = self.script.id
         self.sched._Scheduler__index = 0
-        self.sched._Scheduler__state = SchedulerStatus.WAITING_FOR_PROGRAMS
+        self.sched._Scheduler__state = SchedulerStatus.WAITING_FOR_PROGRAMS_FILESYSTEMS
 
         ProgramStatusModel(
             running=True,
@@ -265,17 +255,17 @@ class SchedulerTests(TestCase):
             command_uuid=uuid4().hex,
         ).save()
 
-        self.sched._Scheduler__state_wait_programs()
+        self.sched._Scheduler__state_wait_programs_filesystems()
 
         self.assertEqual(
             self.sched._Scheduler__state,
-            SchedulerStatus.WAITING_FOR_PROGRAMS,
+            SchedulerStatus.WAITING_FOR_PROGRAMS_FILESYSTEMS,
         )
 
         ProgramStatusModel.objects.filter(program=self.prog1).update(
             running=False, )
 
-        self.sched._Scheduler__state_wait_programs()
+        self.sched._Scheduler__state_wait_programs_filesystems()
 
         self.assertEqual(
             self.sched._Scheduler__state,
@@ -283,14 +273,14 @@ class SchedulerTests(TestCase):
         )
 
         self.sched._Scheduler__index = 2
-        self.sched._Scheduler__state = SchedulerStatus.WAITING_FOR_PROGRAMS
+        self.sched._Scheduler__state = SchedulerStatus.WAITING_FOR_PROGRAMS_FILESYSTEMS
 
         ProgramStatusModel.objects.filter(program=self.prog2).update(
             running=False,
             code="Some error",
         )
 
-        self.sched._Scheduler__state_wait_programs()
+        self.sched._Scheduler__state_wait_programs_filesystems()
 
         self.assertEqual(
             self.sched._Scheduler__state,

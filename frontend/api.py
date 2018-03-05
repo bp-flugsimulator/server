@@ -30,8 +30,26 @@ from .scripts import Script
 from .forms import SlaveForm, ProgramForm, FilesystemForm
 from .consumers import notify
 
+from .errors import (
+    FsimError,
+    SlaveNotExistError,
+    ProgramNotExistError,
+    FilesystemNotExistError,
+)
+from .controller import (
+    prog_start,
+    prog_stop,
+    fs_delete,
+    fs_move,
+    fs_restore,
+    log_disable,
+    log_enable,
+    log_get,
+    script_deep_copy,
+    slave_wake_on_lan,
+)
+
 LOGGER = logging.getLogger("fsim.api")
-FILE_BACKUP_ENDING = "_BACK"
 
 
 def script_put_post(data, script_id):
@@ -224,12 +242,17 @@ def wol_slave(request, slave_id):
     """
     if request.method == 'GET':
         try:
-            SlaveModel.wake_on_lan(slave_id)
-        except Exception as err:  # pylint: disable=W0703
-            return StatusResponse(Status.err(repr(err)), status=500)
+            slave = SlaveModel.objects.get(id=slave_id)
+            slave_wake_on_lan(slave)
 
-        notify({"message": "Send Wake On Lan Packet"})
-        return StatusResponse(Status.ok(''))
+            notify({
+                "message":
+                "Send start command to client `{}`".format(slave.name)
+            })
+
+            return StatusResponse.ok("")
+        except SlaveModel.DoesNotExist as err:
+            return StatusResponse(SlaveNotExistError(err, slave_id))
     else:
         return HttpResponseForbidden()
 
@@ -339,13 +362,16 @@ def manage_program(request, program_id):
         ProgramModel.objects.filter(id=program_id).delete()
         return StatusResponse(Status.ok(''))
     if request.method == 'POST':
-        program = ProgramModel.objects.get(id=program_id)
-        if program.enable():
-            return StatusResponse(Status.ok(''))
-        else:
-            return StatusResponse(
-                Status.err('Can not start {} because {} is offline!'.format(
-                    program.name, program.slave.name)))
+        try:
+            program = ProgramModel.objects.get(id=program_id)
+            try:
+                prog_start(program)
+                return StatusResponse.ok("")
+            except FsimError as err:
+                return StatusResponse(err)
+        except ProgramModel.DoesNotExist as err:
+            return StatusResponse(ProgramNotExistError(err, program_id))
+
     elif request.method == 'PUT':
         # create form from a new QueryDict made from the request body
         # (request.PUT is unsupported) as an update (instance) of the
@@ -385,16 +411,15 @@ def stop_program(request, program_id):
         other than GET.
     """
     if request.method == 'GET':
-        if ProgramModel.objects.filter(id=program_id).exists():
+        try:
             program = ProgramModel.objects.get(id=program_id)
-            if program.disable():
-                return StatusResponse(Status.ok(''))
-            else:
-                return StatusResponse(
-                    Status.err('Can not stop a not running Program'))
-        else:
-            return StatusResponse(Status.err('Can not stop unknown Program'))
-
+            try:
+                prog_stop(program)
+                return StatusResponse.ok("")
+            except FsimError as err:
+                return StatusResponse(err)
+        except ProgramModel.DoesNotExist as err:
+            return StatusResponse(ProgramNotExistError(err, program_id))
     else:
         return HttpResponseForbidden()
 
@@ -416,7 +441,7 @@ def program_manage_log(request, program_id):
     if request.method == 'GET':
         if ProgramModel.objects.filter(id=program_id).exists():
             program = ProgramModel.objects.get(id=program_id)
-            if program.get_log():
+            if log_get(program):
                 return StatusResponse(Status.ok(''))
             else:
                 return StatusResponse(
@@ -447,7 +472,7 @@ def program_enable_logging(request, program_id):
     if request.method == 'GET':
         if ProgramModel.objects.filter(id=program_id).exists():
             program = ProgramModel.objects.get(id=program_id)
-            if program.enable_logging():
+            if log_enable(program):
                 return StatusResponse(Status.ok(''))
             else:
                 return StatusResponse(
@@ -477,7 +502,7 @@ def program_disable_logging(request, program_id):
     if request.method == 'GET':
         if ProgramModel.objects.filter(id=program_id).exists():
             program = ProgramModel.objects.get(id=program_id)
-            if program.disable_logging():
+            if log_disable(program):
                 return StatusResponse(Status.ok(''))
             else:
                 return StatusResponse(
@@ -586,7 +611,7 @@ def copy_script(request, script_id):
     if request.method == 'GET':
         try:
             script = ScriptModel.objects.get(id=script_id)
-            script.deep_copy()
+            script_deep_copy(script)
             return StatusResponse(Status.ok(''))
         except ScriptModel.DoesNotExist:
             return StatusResponse(Status.err("Script does not exist."))
@@ -647,7 +672,6 @@ def filesystem_set(request):
         if form.is_valid():
             filesystem = form.save(commit=False)
             filesystem.slave = form.cleaned_data['slave']
-            LOGGER.info("filesystem: %s", filesystem)
 
             try:
                 filesystem.full_clean()
@@ -659,9 +683,13 @@ def filesystem_set(request):
                     filesystem.source_path)
                 form.save()
 
-                return StatusResponse(Status.ok(''))
+                return StatusResponse.ok("")
             except ValidationError as err:
-                LOGGER.error("Error while adding filesystem: %s", err)
+                LOGGER.warning(
+                    "Error while adding filesystem `%s`: %s",
+                    filesystem.name,
+                    err,
+                )
 
                 string = err.message_dict['__all__'][0]
                 if 'Source path' in string and 'Destination path' in string and 'Slave' in string:
@@ -677,9 +705,9 @@ def filesystem_set(request):
                             'Filesystem with this Name already exists on this Client.'
                         ]
                     }
-                return StatusResponse(Status.err(error_dict))
+                return StatusResponse.err(error_dict)
         else:
-            return StatusResponse(Status.err(form.errors))
+            return StatusResponse.err(form.errors)
 
     elif request.method == 'GET':
         # the URL takes an argument with ?q=<string>
@@ -749,87 +777,15 @@ def filesystem_move(request, filesystem_id):
         other than GET.
     """
     if request.method == 'GET':
-        filesystem = FilesystemModel.objects.get(id=filesystem_id)
-        slave = filesystem.slave
-
-        if slave.is_online:
-            if filesystem.is_moved:
-                return StatusResponse(
-                    Status.err(
-                        'Error: Filesystem `{}` is already moved.'.format(
-                            filesystem.name)))
-
-            if filesystem.destination_type == 'file':
-                lookup_file_name = os.path.basename(filesystem.source_path)
-                lookup_file = filesystem.destination_path
-                (lookup_dir, _) = os.path.split(filesystem.destination_path)
-
-            elif filesystem.destination_type == 'dir':
-                lookup_file_name = os.path.basename(filesystem.source_path)
-                lookup_file = os.path.join(filesystem.destination_path,
-                                           lookup_file_name)
-                lookup_dir = filesystem.destination_path
-
-            query = FilesystemModel.objects.filter(
-                ~Q(hash_value__exact='') & ~Q(id=filesystem.id) &
-                ((Q(destination_path=lookup_file) & Q(destination_type='file'))
-                 | (Q(destination_path=lookup_dir) & Q(destination_type='dir')
-                    & (Q(source_path__endswith='/' + lookup_file_name)
-                       | Q(source_path__endswith='\\' + lookup_file_name)))))
-
-            if query:
-                filesystem_replace = query.get()
-
-                first = Command(
-                    method="filesystem_restore",
-                    source_path=filesystem_replace.source_path,
-                    source_type=filesystem_replace.source_type,
-                    destination_path=filesystem_replace.destination_path,
-                    destination_type=filesystem_replace.destination_type,
-                    backup_ending=FILE_BACKUP_ENDING,
-                    hash_value=filesystem_replace.hash_value,
-                )
-
-                second = Command(
-                    method="filesystem_move",
-                    source_path=filesystem.source_path,
-                    source_type=filesystem.source_type,
-                    destination_path=filesystem.destination_path,
-                    destination_type=filesystem.destination_type,
-                    backup_ending=FILE_BACKUP_ENDING,
-                )
-
-                cmd = Command(
-                    method="chain_execution",
-                    commands=[dict(first), dict(second)],
-                )
-
-                filesystem_replace.command_uuid = first.uuid
-                filesystem_replace.save()
-
-                filesystem.command_uuid = second.uuid
-                filesystem.save()
-            else:
-                cmd = Command(
-                    method="filesystem_move",
-                    source_path=filesystem.source_path,
-                    source_type=filesystem.source_type,
-                    destination_path=filesystem.destination_path,
-                    destination_type=filesystem.destination_type,
-                    backup_ending=FILE_BACKUP_ENDING,
-                )
-
-                filesystem.command_uuid = cmd.uuid
-                filesystem.save()
-
-            # send command to the client
-            Group('client_' + str(slave.id)).send({'text': cmd.to_json()})
-
-            return StatusResponse(Status.ok(''))
-        else:
-            return StatusResponse(
-                Status.err('Can not move {} because {} is offline!'.format(
-                    filesystem.name, slave.name)))
+        try:
+            filesystem = FilesystemModel.objects.get(id=filesystem_id)
+            try:
+                fs_move(filesystem)
+                return StatusResponse(Status.ok(""))
+            except FsimError as err:
+                return StatusResponse(err)
+        except FilesystemModel.DoesNotExist as err:
+            return StatusResponse(FilesystemNotExistError(err, filesystem_id))
     else:
         return HttpResponseForbidden()
 
@@ -849,36 +805,15 @@ def filesystem_restore(request, filesystem_id):
         other than GET.
     """
     if request.method == 'GET':
-        filesystem = FilesystemModel.objects.get(id=filesystem_id)
-        slave = filesystem.slave
-
-        if slave.is_online:
-            if not filesystem.is_moved:
-                return StatusResponse(
-                    Status.err('Error: filesystem `{}` is not moved.'.format(
-                        filesystem.name)))
-
-            cmd = Command(
-                method="filesystem_restore",
-                source_path=filesystem.source_path,
-                source_type=filesystem.source_type,
-                destination_path=filesystem.destination_path,
-                destination_type=filesystem.destination_type,
-                backup_ending=FILE_BACKUP_ENDING,
-                hash_value=filesystem.hash_value,
-            )
-
-            # send command to the client
-            Group('client_' + str(slave.id)).send({'text': cmd.to_json()})
-
-            filesystem.command_uuid = cmd.uuid
-            filesystem.save()
-
-            return StatusResponse(Status.ok(''))
-        else:
-            return StatusResponse(
-                Status.err('Can not restore {} because {} is offline!'.format(
-                    filesystem.name, slave.name)))
+        try:
+            filesystem = FilesystemModel.objects.get(id=filesystem_id)
+            try:
+                fs_restore(filesystem)
+                return StatusResponse(Status.ok(""))
+            except FsimError as err:
+                return StatusResponse(err)
+        except FilesystemModel.DoesNotExist as err:
+            return StatusResponse(FilesystemNotExistError(err, filesystem_id))
     else:
         return HttpResponseForbidden()
 
@@ -899,14 +834,15 @@ def filesystem_entry(request, filesystem_id):
     """
 
     if request.method == 'DELETE':
-        filesystem = FilesystemModel.objects.get(id=filesystem_id)
-        if not filesystem.is_moved:
-            filesystem.delete()
-            return StatusResponse(Status.ok(''))
-        else:
-            return StatusResponse(
-                Status.err('The file is still moved. Restore the file first.'))
-
+        try:
+            filesystem = FilesystemModel.objects.get(id=filesystem_id)
+            try:
+                fs_delete(filesystem)
+                return StatusResponse.ok("")
+            except FsimError as err:
+                return StatusResponse(err)
+        except FilesystemModel.DoesNotExist as err:
+            return StatusResponse(FilesystemNotExistError(err, filesystem_id))
     elif request.method == 'PUT':
         # create form from a new QueryDict made from the request body
         # (request.PUT is unsupported) as an update (instance) of the

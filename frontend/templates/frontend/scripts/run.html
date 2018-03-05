@@ -44,10 +44,10 @@
                         <i class="mdi"></i>
                         <i class="fsim-progress-name">Wait for Clients</i>
                     </li>
-                    {% for query in script.indexes %}
+                    {% for index in script.indexes %}
                         <li class="list-group-item fsim-progress" id="runStage{{ script.id }}_{{ query.index }}" data-state="{% if script.current_index > query.index %}done{% elif script.current_index == query.index %}{% if script.has_error %}error{% else %}waiting{% endif %}{% else %}none{% endif %}">
                             <i class="mdi"></i>
-                            <i class="fsim-progress-name">Stage {{ query.index }}</i>
+                            <i class="fsim-progress-name">Stage {{ index }}</i>
                         </li>
                     {% endfor %}
                     <li class="list-group-item fsim-progress" id="runDone{{ script.id }}" data-state="{% if script.is_initialized and not script.is_running and not script.has_error %}done{% elif script.has_error %}error{% else %}none{% endif %}">
