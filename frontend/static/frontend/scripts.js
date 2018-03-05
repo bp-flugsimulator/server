@@ -93,9 +93,7 @@ $(document).ready(function () {
     $('.script-tab-link').click(function () {
         if (!$(this).hasClass('active')) {
             // Remove color from the old tabs
-            $('.script-tabbutton-link').each(function (idx, val) {
-                $(val).parent('li').css('background-color', 'transparent');
-            });
+	    $('.active').removeClass('active');
             // Create a change listener on all available input fields
             $(':input').change(function(e) {
                 unloadWarning = true;
@@ -111,7 +109,7 @@ $(document).ready(function () {
 
 
             // Change the color of the current tab
-            $(this).parent('li').css('background-color', '#dbdbdc');
+            $(this).parent('li').addClass('active');
         }
     });
 
