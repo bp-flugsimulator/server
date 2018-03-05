@@ -77,11 +77,11 @@ from .testcases import StatusTestCase
 
 
 class ScriptTest(StatusTestCase):
-    def test_script_run_forbidden(self):
-        response = self.client.put("/api/script/0/run")
+    def test_run_put_forbidden(self):
+        response = self.client.put(reverse("frontend:script_run", args=[0]))
         self.assertEqual(response.status_code, 403)
 
-    def test_script_run_get_unknown_scriptlave(self):
+    def test_run_get_not_exist(self):
         response = self.client.get(reverse("frontend:script_run", args=[0]))
         self.assertEqual(response.status_code, 200)
 
@@ -90,7 +90,7 @@ class ScriptTest(StatusTestCase):
             Status.from_json(response.content.decode('utf-8')),
         )
 
-    def test_script_delete(self):
+    def test_entry_delete_success(self):
         slave = SlaveFactory()
         program = ProgramFactory(slave=slave)
         filesystem = FileFactory(slave=slave)
@@ -105,17 +105,19 @@ class ScriptTest(StatusTestCase):
 
         db_script = ScriptModel.objects.get(name=script_name)
 
-        response = self.client.delete("/api/script/" + str(db_script.id))
+        response = self.client.delete(reverse("frontend:script_entry",
+                                              args=[db_script.id]),)
         self.assertEqual(response.status_code, 200)
         self.assertFalse(ScriptModel.objects.filter(name=script_name).exists())
 
-    def test_add_script_forbidden(self):
-        response = self.client.put("/api/scripts")
+    def test_set_put_forbidden(self):
+        response = self.client.put(reverse("frontend:script_set"))
         self.assertEqual(response.status_code, 403)
 
-    def test_add_script_type_error(self):
+    def test_set_post_type_error(self):
+        #TODO: fix this test
         response = self.client.post(
-            "/api/scripts",
+            reverse("frontend:script_set"),
             data='{"name": "test", "programs": [], "filesystems": [null]}',
             content_type="application/json",
         )
@@ -132,23 +134,25 @@ class ScriptTest(StatusTestCase):
             "0 has type NoneType",
         )
 
-    def test_add_script_json_error(self):
+    def test_set_post_value_error(self):
         response = self.client.post(
-            "/api/scripts",
+            reverse("frontend:script_set"),
             data={
                 "name": "test",
                 "programs": {},
                 "filesystems": {}
             })
+        self.assertEqual(response.status_code, 200)
 
         self.assertEqual(
             Status.err("Expecting value: line 1 column 1 (char 0)"),
             Status.from_json(response.content.decode('utf-8')),
         )
 
-    def test_add_script_value_error(self):
+    def test_set_post_success(self):
+        #TODO: fix this test
         response = self.client.post(
-            "/api/scripts",
+            reverse("frontend:script_set"),
             data='{"name": "test", "programs": {}, "filesystems": {}}',
             content_type="application/json",
         )
@@ -160,7 +164,7 @@ class ScriptTest(StatusTestCase):
             "programs has to be list",
         )
 
-    def test_add_script_unique_error(self):
+    def test_set_post_unique_error(self):
         program = ProgramFactory()
         script = ScriptFactory.build()
 
@@ -169,8 +173,8 @@ class ScriptTest(StatusTestCase):
             script.name,
             "programs": [
                 {
-                    "slave": int(program.slave.id),
-                    "program": int(program.id),
+                    "slave": program.slave.id,
+                    "program": program.id,
                     "index": 0,
                 },
             ],
@@ -178,7 +182,7 @@ class ScriptTest(StatusTestCase):
         }
 
         response = self.client.post(
-            "/api/scripts",
+            reverse("frontend:script_set"),
             data=json.dumps(data),
             content_type="application/text",
         )
@@ -191,7 +195,7 @@ class ScriptTest(StatusTestCase):
         )
 
         response = self.client.post(
-            "/api/scripts",
+            reverse("frontend:script_set"),
             data=json.dumps(data),
             content_type="application/text",
         )
@@ -201,18 +205,20 @@ class ScriptTest(StatusTestCase):
             Status.from_json(response.content.decode('utf-8')),
         )
 
-    def test_add_script_key_error(self):
+    def test_set_post_key_error(self):
         response = self.client.post(
-            "/api/scripts",
+            reverse("frontend:script_set"),
             data='{"name": "test", "program":  [], "filesystems": []}',
             content_type="application/json",
         )
+        self.assertEqual(response.status_code, 200)
+
         self.assertContains(
             response,
             "Could not find required key {}".format("program"),
         )
 
-    def test_add_script(self):
+    def test_set_post_success(self):
         program = ProgramFactory()
         script = ScriptFactory.build()
 
@@ -220,15 +226,15 @@ class ScriptTest(StatusTestCase):
             "name":
             script.name,
             "programs": [{
-                "slave": int(program.slave.id),
-                "program": int(program.id),
+                "slave": program.slave.id,
+                "program": program.id,
                 "index": 0,
             }],
             "filesystems": [],
         }
 
         response = self.client.post(
-            "/api/scripts",
+            reverse("frontend:script_set"),
             data=json.dumps(data),
             content_type="application/text",
         )
@@ -239,7 +245,7 @@ class ScriptTest(StatusTestCase):
             Status.from_json(response.content.decode('utf-8')),
         )
 
-    def test_get_script(self):
+    def test_entry_get_success(self):
         slave = SlaveFactory()
         program = ProgramFactory(slave=slave)
         filesystem = FileFactory(slave=slave)
@@ -254,15 +260,21 @@ class ScriptTest(StatusTestCase):
 
         db_script = ScriptModel.objects.get(name=script_name)
 
-        response = self.client.get("/api/script/{}".format(db_script.id))
+        response = self.client.get(
+            reverse("frontend:script_entry", args=[db_script.id]),
+        )
+        self.assertEqual(response.status_code, 200)
 
         self.assertEqual(
             Status.ok(dict(script)),
             Status.from_json(response.content.decode('utf-8')),
         )
 
-    def test_script_wrong_type_slaves(self):
-        response = self.client.get("/api/script/0?slaves=float")
+    def test_entry_get_type_error(self):
+        response = self.client.get(
+            reverse("frontend:script_entry", args=[0]),
+            {'slaves': 'float'},
+        )
         self.assertEqual(response.status_code, 200)
 
         self.assertStatusRegex(
@@ -270,8 +282,10 @@ class ScriptTest(StatusTestCase):
             Status.from_json(response.content.decode('utf-8')),
         )
 
-    def test_script_wrong_type_programs(self):
-        response = self.client.get("/api/script/0?programs=float")
+        response = self.client.get(
+            reverse("frontend:script_entry", args=[0]),
+            {'programs': 'float'},
+        )
         self.assertEqual(response.status_code, 200)
 
         self.assertStatusRegex(
@@ -279,8 +293,10 @@ class ScriptTest(StatusTestCase):
             Status.from_json(response.content.decode('utf-8')),
         )
 
-    def test_script_wrong_type_files(self):
-        response = self.client.get("/api/script/0?filesystems=float")
+        response = self.client.get(
+            reverse("frontend:script_entry", args=[0]),
+            {'filesystems': 'float'},
+        )
         self.assertEqual(response.status_code, 200)
 
         self.assertStatusRegex(
@@ -288,7 +304,7 @@ class ScriptTest(StatusTestCase):
             Status.from_json(response.content.decode('utf-8')),
         )
 
-    def test_script_not_exist(self):
+    def test_entry_get_not_exist(self):
         response = self.client.get(reverse("frontend:script_entry", args=[0]))
         self.assertEqual(response.status_code, 200)
 
@@ -297,157 +313,140 @@ class ScriptTest(StatusTestCase):
             Status.from_json(response.content.decode('utf-8')),
         )
 
-    def test_script_404(self):
+    def test_entry_post_forbidden(self):
         response = self.client.post(reverse("frontend:script_entry", args=[0]))
         self.assertEqual(response.status_code, 403)
 
-    def test_get_script_slave_type_int(self):
+    def test_entry_get_query_slaves_success(self):
         slave = SlaveFactory()
         program = ProgramFactory(slave=slave)
         filesystem = FileFactory(slave=slave)
         script_name = ScriptFactory.build().name
 
-        script = Script(
+        script_int = Script(
             script_name,
             [ScriptEntryProgram(0, program.id, slave.id)],
             [ScriptEntryFilesystem(0, filesystem.id, slave.id)],
         )
-        script.save()
+        script_int.save()
 
-        db_script = ScriptModel.objects.get(name=script_name)
-
-        response = self.client.get("/api/script/{}?slaves=int".format(
-            db_script.id))
-
-        self.assertEqual(
-            Status.ok(dict(script)),
-            Status.from_json(response.content.decode('utf-8')),
-        )
-
-    def test_get_script_program_type_int(self):
-        slave = SlaveFactory()
-        program = ProgramFactory(slave=slave)
-        filesystem = FileFactory(slave=slave)
-        script_name = ScriptFactory.build().name
-
-        script = Script(
+        script_str = Script(
             script_name,
-            [ScriptEntryProgram(0, program.id, slave.id)],
-            [ScriptEntryFilesystem(0, filesystem.id, slave.id)],
+            [ScriptEntryProgram(0, program.id, slave.name)],
+            [ScriptEntryFilesystem(0, filesystem.id, slave.name)],
         )
-        script.save()
-
-        db_script = ScriptModel.objects.get(name=script_name)
-
-        response = self.client.get("/api/script/{}?programs=int".format(
-            db_script.id))
-
-        self.assertEqual(
-            Status.ok(dict(script)),
-            Status.from_json(response.content.decode('utf-8')))
-
-    def test_get_script_slave_program_type_int(self):
-        slave = SlaveFactory()
-        program = ProgramFactory(slave=slave)
-        filesystem = FileFactory(slave=slave)
-        script_name = ScriptFactory.build().name
-
-        script = Script(
-            script_name,
-            [ScriptEntryProgram(0, program.id, slave.id)],
-            [ScriptEntryFilesystem(0, filesystem.id, slave.id)],
-        )
-        script.save()
 
         db_script = ScriptModel.objects.get(name=script_name)
 
         response = self.client.get(
-            "/api/script/{}?programs=int&slaves=int".format(db_script.id))
+            reverse("frontend:script_entry", args=[db_script.id],),
+            {'slaves': 'int'},
+        )
+        self.assertEqual(response.status_code, 200)
 
         self.assertEqual(
-            Status.ok(dict(script)),
-            Status.from_json(response.content.decode('utf-8')))
+            Status.ok(dict(script_int)),
+            Status.from_json(response.content.decode('utf-8')),
+        )
 
-    def test_get_script_slave_program_type_str(self):
+        response = self.client.get(
+            reverse("frontend:script_entry", args=[db_script.id],),
+            {'slaves': 'str'},
+        )
+        self.assertEqual(response.status_code, 200)
+
+        self.assertEqual(
+            Status.ok(dict(script_str)),
+            Status.from_json(response.content.decode('utf-8')),
+        )
+
+    def test_entry_get_query_programs_success(self):
         slave = SlaveFactory()
         program = ProgramFactory(slave=slave)
         filesystem = FileFactory(slave=slave)
         script_name = ScriptFactory.build().name
 
-        script = Script(
+        script_int = Script(
             script_name,
             [ScriptEntryProgram(0, program.id, slave.id)],
             [ScriptEntryFilesystem(0, filesystem.id, slave.id)],
         )
-        script.save()
+        script_int.save()
+
+        script_str = Script(
+            script_name,
+            [ScriptEntryProgram(0, program.name, slave.id)],
+            [ScriptEntryFilesystem(0, filesystem.id, slave.id)],
+        )
 
         db_script = ScriptModel.objects.get(name=script_name)
 
         response = self.client.get(
-            "/api/script/{}?programs=str&slaves=str&filesystems=str".format(
-                db_script.id))
-
-        expected_json = dict(script)
-        expected_json['programs'][0]['slave'] = slave.name
-        expected_json['programs'][0]['program'] = program.name
-        expected_json['filesystems'][0]['filesystem'] = filesystem.name
-        expected_json['filesystems'][0]['slave'] = slave.name
+            reverse("frontend:script_entry", args=[db_script.id],),
+            {'programs': 'int'},
+        )
+        self.assertEqual(response.status_code, 200)
 
         self.assertEqual(
-            Status.ok(expected_json),
+            Status.ok(dict(script_int)),
             Status.from_json(response.content.decode('utf-8')),
         )
 
-    def test_get_script_slave_type_str(self):
-        program = ProgramFactory()
-        slave = program.slave
-        script_name = ScriptFactory.build().name
-
-        raw_script = Script(
-            script_name,
-            [ScriptEntryProgram(0, program.id, slave.id)],
-            [],
+        response = self.client.get(
+            reverse("frontend:script_entry", args=[db_script.id],),
+            {'programs': 'str'},
         )
-        raw_script.save()
-
-        script = ScriptModel.objects.get(name=script_name)
-
-        response = self.client.get("/api/script/{}?slaves=str".format(
-            script.id))
-
-        expected_json = dict(raw_script)
-        expected_json['programs'][0]['slave'] = slave.name
+        self.assertEqual(response.status_code, 200)
 
         self.assertEqual(
-            Status.ok(expected_json),
+            Status.ok(dict(script_str)),
             Status.from_json(response.content.decode('utf-8')),
         )
 
-    def test_get_script_program_type_str(self):
-        program = ProgramFactory()
-        slave = program.slave
+    def test_entry_get_query_filesystem_success(self):
+        slave = SlaveFactory()
+        program = ProgramFactory(slave=slave)
+        filesystem = FileFactory(slave=slave)
         script_name = ScriptFactory.build().name
 
-        script = Script(
+        script_int = Script(
             script_name,
             [ScriptEntryProgram(0, program.id, slave.id)],
-            [],
+            [ScriptEntryFilesystem(0, filesystem.id, slave.id)],
         )
-        script.save()
+        script_int.save()
+
+        script_str = Script(
+            script_name,
+            [ScriptEntryProgram(0, program.id, slave.id)],
+            [ScriptEntryFilesystem(0, filesystem.name, slave.id)],
+        )
 
         db_script = ScriptModel.objects.get(name=script_name)
 
-        response = self.client.get("/api/script/{}?programs=str".format(
-            db_script.id))
+        response = self.client.get(
+            reverse("frontend:script_entry", args=[db_script.id],),
+            {'filesystems': 'int'},
+        )
+        self.assertEqual(response.status_code, 200)
 
-        expected_json = dict(script)
-        expected_json['programs'][0]['program'] = program.name
         self.assertEqual(
-            Status.ok(expected_json),
+            Status.ok(dict(script_int)),
             Status.from_json(response.content.decode('utf-8')),
         )
 
-    def test_copy_script(self):
+        response = self.client.get(
+            reverse("frontend:script_entry", args=[db_script.id],),
+            {'filesystems': 'str'},
+        )
+        self.assertEqual(response.status_code, 200)
+
+        self.assertEqual(
+            Status.ok(dict(script_str)),
+            Status.from_json(response.content.decode('utf-8')),
+        )
+
+    def test_copy_get_success(self):
         script = ScriptFactory()
         sgp = SGPFactory(script=script)
         sgf = SGFFactory(script=script)
@@ -472,29 +471,17 @@ class ScriptTest(StatusTestCase):
         self.assertEqual(sgp.index, sgp_copy.index)
         self.assertEqual(sgp.program, sgp_copy.program)
 
-    def test_copy_script_copy_already_exists(self):
-        script = ScriptFactory()
-        resp = self.client.get(
-            reverse('frontend:script_copy', args=[str(script.id)]))
-        self.assertEqual(
-            Status.ok(''),
-            Status.from_json(resp.content.decode('utf-8')),
-        )
-        resp = self.client.get(
-            reverse('frontend:script_copy', args=[str(script.id)]))
-
         for i in range(1, 10):
             resp = self.client.get(
-                reverse('frontend:script_copy', args=[str(script.id)]))
+                reverse('frontend:script_copy', args=[script.id]))
             self.assertEqual(
                 Status.ok(''),
                 Status.from_json(resp.content.decode('utf-8')),
             )
-            self.assertTrue(
-                ScriptModel.objects.filter(
-                    name=script.name + '_copy_' + str(i)).exists())
+            copy_name = "{}_copy_{}".format(script.name, i)
+            self.assertTrue(ScriptModel.objects.filter(name=copy_name).exists())
 
-    def test_copy_script_unknown_script(self):
+    def test_copy_get_not_exist(self):
         resp = self.client.get(reverse(
             'frontend:script_copy',
             args=[0],
@@ -505,40 +492,43 @@ class ScriptTest(StatusTestCase):
             Status.from_json(resp.content.decode('utf-8')),
         )
 
-    def test_copy_script_unkown_http_request(self):
+    def test_copy_delete_forbidden(self):
         api_response = self.client.delete(
             reverse('frontend:script_copy', args=['0']))
         self.assertEqual(403, api_response.status_code)
 
-    def test_edit_nothing(self):
+    def test_entry_put_success(self):
+        # send the same object to the api route
         script = ScriptFactory()
         SGPFactory(script=script)
         SGFFactory(script=script)
         script_script = Script.from_model(script.id, "str", "str", "str")
 
-        api_response = self.client.put("/api/script/" + str(script.id),
-                                       json.dumps(dict(script_script)))
+        api_response = self.client.put(
+            reverse("frontend:script_entry", args=[script.id]),
+            data=json.dumps(dict(script_script)),
+        )
+
         self.assertEqual(api_response.status_code, 200)
         self.assertEqual(
             Status.ok(""),
             Status.from_json(api_response.content.decode('utf-8')),
         )
 
-    def test_edit(self):
-        script = ScriptFactory()
-        SGPFactory(script=script)
-        SGFFactory(script=script)
+        # modifiy the element and resend it
         slave2 = SlaveFactory()
         filesystem2 = FileFactory(slave=slave2)
         sgf2 = SGFFactory.build(script=script, filesystem=filesystem2)
 
-        script_script = Script.from_model(script.id, "str", "str", "str")
         script_script.filesystems.append(
             ScriptEntryFilesystem(sgf2.index, sgf2.filesystem.name,
-                                  sgf2.filesystem.slave.name))
+                                  sgf2.filesystem.slave.name,),
+        )
 
-        api_response = self.client.put("/api/script/" + str(script.id),
-                                       json.dumps(dict(script_script)))
+        api_response = self.client.put(
+            reverse("frontend:script_entry", args=[script.id]),
+            data=json.dumps(dict(script_script)),
+        )
 
         self.assertEqual(api_response.status_code, 200)
         self.assertEqual(
@@ -549,16 +539,20 @@ class ScriptTest(StatusTestCase):
         new_script_script = Script.from_model(script.id, "str", "str", "str")
         self.assertEqual(script_script, new_script_script)
 
-    def test_edit_name_excists(self):
+    def test_entry_put_exist(self):
         script = ScriptFactory()
         script2 = ScriptFactory()
         SGPFactory(script=script)
         SGFFactory(script=script)
+
         script_script = Script.from_model(script.id, "str", "str", "str")
 
         script_script.name = script2.name
-        api_response = self.client.put("/api/script/" + str(script.id),
-                                       json.dumps(dict(script_script)))
+        api_response = self.client.put(
+            reverse("frontend:script_entry", args=[script.id]),
+            data=json.dumps(dict(script_script)),
+        )
+
         self.assertEqual(api_response.status_code, 200)
         self.assertContains(api_response, "UNIQUE constraint failed")
 
