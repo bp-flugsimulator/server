@@ -11,7 +11,7 @@
         <div class="form-group row">
             <label class="col-2 text-uppercase">Index</label>
             <div class="col">
-                <input class="form-control script-{{type}}-index" type="number" value="{{#if index}}{{index}}{{else}}0{{/if}}" required/>
+                <input class="form-control script-{{type}}-index" type="number" min="0" value="{{#if index}}{{index}}{{else}}0{{/if}}" required/>
             </div>
         </div>
 
