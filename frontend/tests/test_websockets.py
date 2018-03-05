@@ -1,3 +1,17 @@
+"""
+TESTCEASE NAMING SCHEME:
+- every channel has an own class
+
+def test_<Command>(self):
+    pass
+
+<COMMAND>:
+    connnect
+    disconnect
+    <condition for failure>:
+        e.g. slave_not_exist
+"""
+
 #  pylint: disable=C0111,C0103
 
 import json

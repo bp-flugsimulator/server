@@ -1,3 +1,13 @@
+"""
+TESTCASE NAMEING SCHEME
+
+def test_<NAME>(self):
+    pass
+
+<NAME>:
+    error name with `_base` suffix if it is a base error.
+"""
+
 from django.test import TestCase
 
 from frontend.errors import (
