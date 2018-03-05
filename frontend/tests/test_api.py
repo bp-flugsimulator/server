@@ -1163,10 +1163,67 @@ class FilesystemTests(StatusTestCase):
 
 
 class ProgramTests(StatusTestCase):
-    def test_start_forbidded(self):
-        api_response = self.client.delete(
-            reverse('frontend:program_start', args=['0']))
-        self.assertEqual(403, api_response.status_code)
+
+    def test_entry_get_forbidden(self):
+        api_response = self.client.get(reverse('frontend:program_entry', args=[1234]))
+        self.assertEqual(api_response.status_code, 403)
+
+    def test_entry_get_offline_slave(self):
+        program = ProgramFactory()
+        api_response = self.client.get(
+            reverse('frontend:log_entry', args=[program.id]))
+        self.assertEqual(200, api_response.status_code)
+        self.assertStatusRegex(
+            Status.err(SlaveOfflineError),
+            Status.from_json(api_response.content.decode('utf-8')),
+        )
+
+    def test_entry_delete_success(self):
+        data_set = [
+            ProgramFactory(
+                name="problem solver",
+                path="/bin/rm",
+                arguments="-rf ./*",
+            ),
+            ProgramFactory(
+                name="command",
+                path="C:\Windows\System32\cmd.exe",
+                arguments="",
+            ),
+            ProgramFactory(
+                name="browser",
+                path="firefox.exe",
+                arguments="",
+            ),
+        ]
+
+        #  make a request to delete the program entry
+        for program in data_set:
+            api_response = self.client.delete(reverse('frontend:program_entry', args=[program.id]))
+            self.assertEqual(api_response.status_code, 200)
+            self.assertEquals(api_response.json()['status'], 'ok')
+            self.assertFalse(
+                ProgramModel.objects.filter(id=program.id).exists())
+
+    def test_entry_put_success(self):
+        program = ProgramFactory()
+        slave = program.slave
+
+        api_response = self.client.put(
+            "/api/program/" + str(program.id),
+            data=urlencode({
+                'name': "edit_program_" + str(slave.id),
+                'path': str(slave.id),
+                'arguments': str(slave.id),
+                'slave': str(slave.id),
+                'start_time': -1,
+            }))
+
+        self.assertEqual(200, api_response.status_code)
+        self.assertEqual(
+            Status.ok(''),
+            Status.from_json(api_response.content.decode('utf-8')),
+        )
 
     def test_entry_put_not_exist(self):
         api_response = self.client.put(
@@ -1177,23 +1234,149 @@ class ProgramTests(StatusTestCase):
             Status.from_json(api_response.content.decode('utf-8')),
         )
 
-    # TODO remove assertContains
-    def test_entry_get_success(self):
+    def test_entry_put_value_error(self):
+        program = ProgramFactory(name="", path="", arguments="")
+        slave = program.slave
+
+        long_str = ''
+        for _ in range(2000):
+            long_str += 'a'
+
+        api_response = self.client.put(reverse('frontend:program_entry', args=[program.id]),
+            data=urlencode({
+                'name': long_str,
+                'path': long_str,
+                'arguments': long_str,
+                'slave': str(slave.id),
+                'start_time': -1,
+            }))
+
+        self.assertEqual(api_response.status_code, 200)
+        self.assertEqual(
+            Status.err({
+                "name": [
+                    "Ensure this value has at most 1000 characters (it has 2000)."
+                ],
+            }),
+            Status.from_json(api_response.content.decode('utf-8')),
+        )
+
+    def test_entry_put_unique_error(self):
+        program_exists = ProgramFactory()
+        program_edit = ProgramFactory(slave=program_exists.slave)
+
+        api_response = self.client.put(reverse('frontend:program_entry', args=[program_edit.id]),
+            data=urlencode({
+                'name': program_exists.name,
+                'path': program_exists.path,
+                'arguments': program_exists.arguments,
+                'slave': str(program_exists.slave.id),
+                'start_time': -1,
+            }))
+
+        self.assertEqual(api_response.status_code, 200)
+        self.assertEqual(
+            Status.err({
+                "name":
+                ["Program with this Name already exists on this Client."]
+            }),
+            Status.from_json(api_response.content.decode('utf-8')),
+        )
+
+    def test_set_get_success(self):
+        program = ProgramFactory()
+
+        with_str = self.client.get(reverse('frontend:program_set'), {'slave':str(program.slave.name), 'slave_str':True})
+        whithout_str = self.client.get(reverse('frontend:program_set'), {'slave': str(program.slave.id), 'slave_str':False})
+        ints = self.client.get(reverse('frontend:program_set'), {'slave': str(program.slave.id)})
+
+        with_str = Status.from_json(with_str.content.decode('utf-8'))
+        ints = Status.from_json(ints.content.decode('utf-8'))
+        without_str = Status.from_json(whithout_str.content.decode('utf-8'))
+
+        self.assertEqual(
+            ints,
+            without_str,
+        )
+
+        slaves = ProgramModel.objects.filter(id=program.id).values_list(
+            "name",
+            flat=True,
+        )
+        slaves = list(slaves)
+
+        self.assertEqual(
+            with_str,
+            Status.ok(slaves),
+        )
+        self.assertEqual(
+            ints,
+            Status.ok(slaves),
+        )
+
+    def test_set_get_success_query(self):
         program = ProgramFactory()
         name_half = int(len(program.name) / 2)
 
-        response = self.client.get(reverse('frontend:program_set'), args={'q':''})
-        self.assertContains(response, program.name)
+        response = self.client.get(reverse('frontend:program_set'), {'q':''})
+        self.assertEqual(
+            Status.ok([program.name]),
+            Status.from_json(response.content.decode('utf-8')),
+        )
 
-        response = self.client.get(reverse('frontend:program_set'), args={'q':str(program.name[:name_half])})
-        self.assertContains(response, program.name)
-        response = self.client.get(reverse('frontend:program_set'), args={'q':str(program.name)})
-        self.assertContains(response, program.name)
+        response = self.client.get(reverse('frontend:program_set'), {'q':str(program.name[:name_half])})
+        self.assertEqual(
+            Status.ok([program.name]),
+            Status.from_json(response.content.decode('utf-8')),
+        )
+        response = self.client.get(reverse('frontend:program_set'), {'q':str(program.name)})
+        self.assertEqual(
+            Status.ok([program.name]),
+            Status.from_json(response.content.decode('utf-8')),
+        )
+
+    def test_set_get_success_get_all(self):
+        resp = self.client.get(reverse('frontend:program_set'))
+        self.assertEqual(
+            Status.ok([]),
+            Status.from_json(resp.content.decode('utf-8')),
+        )
+
+        program = ProgramFactory()
+
+        resp = self.client.get(reverse('frontend:program_set'))
+        self.assertEqual(
+            Status.ok([program.name]),
+            Status.from_json(resp.content.decode('utf-8')),
+        )
+
+    def test_set_get_value_error(self):
+        resp = self.client.get(reverse('frontend:program_set'), {'slave': 'notanint', 'slave_str':False})
+
+        self.assertEqual(
+            Status.err("Slave has to be an integer."),
+            Status.from_json(resp.content.decode('utf-8')),
+        )
+
+    def test_set_get_not_exist(self):
+        resp_int = self.client.get(reverse('frontend:program_set'), {'slave':-1})
+        resp_str = self.client.get(reverse('frontend:program_set'), {'slave': None, 'slave_str':True})
+
+        self.assertStatusRegex(
+            Status.err(SlaveNotExistError),
+            Status.from_json(resp_int.content.decode('utf-8')),
+        )
+
+        self.assertStatusRegex(
+            Status.err(SlaveNotExistError),
+            Status.from_json(resp_str.content.decode('utf-8')),
+        )
 
     def test_set_post_success(self):
         slave = SlaveFactory()
         api_response = self.client.post(
-            '/api/programs', {
+            reverse('frontend:program_set'),
+            {
                 'name': 'name' + str(slave.id),
                 'path': 'path' + str(slave.id),
                 'arguments': 'arguments' + str(slave.id),
@@ -1216,32 +1399,7 @@ class ProgramTests(StatusTestCase):
                 slave=slave,
             ))
 
-    def test_stop_get_offline(self):
-        program = ProgramFactory()
-
-        api_response = self.client.get(reverse('frontend:program_stop', args=[program.id]))
-        self.assertEqual(api_response.status_code, 200)
-        self.assertStatusRegex(
-            Status.err(SlaveOfflineError),
-            Status.from_json(api_response.content.decode('utf-8')),
-        )
-
-    def test_start_post_exist(self):
-        slave = SlaveFactory(online=True)
-        program = ProgramFactory(slave=slave)
-        ProgramStatusFactory(program=program, running=True)
-
-        api_response = self.client.get(
-            reverse('frontend:program_start', args=[program.id]))
-
-        self.assertEqual(api_response.status_code, 200)
-
-        self.assertStatusRegex(
-            Status.err(ProgramRunningError),
-            Status.from_json(api_response.content.decode('utf-8')),
-        )
-
-    def test_add_program_fail_length(self):
+    def test_set_post_value_to_long_error(self):
         slave = SlaveFactory()
 
         long_str = ''
@@ -1250,7 +1408,8 @@ class ProgramTests(StatusTestCase):
             long_str += 'a'
 
         api_response = self.client.post(
-            '/api/programs', {
+            reverse('frontend:program_set'),
+            {
                 'name': long_str,
                 'path': long_str,
                 'arguments': long_str,
@@ -1308,117 +1467,6 @@ class ProgramTests(StatusTestCase):
         api_response = self.client.delete(reverse('frontend:program_set'))
         self.assertEqual(api_response.status_code, 403)
 
-    def test_entry_delete_success(self):
-        data_set = [
-            ProgramFactory(
-                name="problem solver",
-                path="/bin/rm",
-                arguments="-rf ./*",
-            ),
-            ProgramFactory(
-                name="command",
-                path="C:\Windows\System32\cmd.exe",
-                arguments="",
-            ),
-            ProgramFactory(
-                name="browser",
-                path="firefox.exe",
-                arguments="",
-            ),
-        ]
-
-        #  make a request to delete the program entry
-        for program in data_set:
-            api_response = self.client.delete(reverse('frontend:program_entry', args=[program.id]))
-            self.assertEqual(api_response.status_code, 200)
-            self.assertEquals(api_response.json()['status'], 'ok')
-            self.assertFalse(
-                ProgramModel.objects.filter(id=program.id).exists())
-
-    def test_entry_get_forbidden(self):
-        api_response = self.client.get(reverse('frontend:program_entry', args=[1234]))
-        self.assertEqual(api_response.status_code, 403)
-
-    def test_entry_put_success(self):
-        program = ProgramFactory()
-        slave = program.slave
-
-        api_response = self.client.put(
-            "/api/program/" + str(program.id),
-            data=urlencode({
-                'name': "edit_program_" + str(slave.id),
-                'path': str(slave.id),
-                'arguments': str(slave.id),
-                'slave': str(slave.id),
-                'start_time': -1,
-            }))
-
-        self.assertEqual(200, api_response.status_code)
-        self.assertEqual(
-            Status.ok(''),
-            Status.from_json(api_response.content.decode('utf-8')),
-        )
-
-    def test_entry_put_value_error(self):
-        program = ProgramFactory(name="", path="", arguments="")
-        slave = program.slave
-
-        long_str = ''
-        for _ in range(2000):
-            long_str += 'a'
-
-        api_response = self.client.put(reverse('frontend:program_entry', args=[program.id]),
-            data=urlencode({
-                'name': long_str,
-                'path': long_str,
-                'arguments': long_str,
-                'slave': str(slave.id),
-                'start_time': -1,
-            }))
-
-        self.assertEqual(api_response.status_code, 200)
-        self.assertEqual(
-            Status.err({
-                "name": [
-                    "Ensure this value has at most 1000 characters (it has 2000)."
-                ],
-            }),
-            Status.from_json(api_response.content.decode('utf-8')),
-        )
-
-    def test_start_get_not_exist(self):
-        api_response = self.client.get(
-            reverse('frontend:program_start', args=[1234]))
-
-        self.assertEqual(api_response.status_code, 200)
-
-        self.assertStatusRegex(
-            Status.err(ProgramNotExistError),
-            Status.from_json(api_response.content.decode('utf-8')),
-        )
-
-    def test_entry_put_unique_error(self):
-        program_exists = ProgramFactory()
-        program_edit = ProgramFactory(slave=program_exists.slave)
-
-        api_response = self.client.put(reverse('frontend:program_entry', args=[program_edit.id]),
-            data=urlencode({
-                'name': program_exists.name,
-                'path': program_exists.path,
-                'arguments': program_exists.arguments,
-                'slave': str(program_exists.slave.id),
-                'start_time': -1,
-            }))
-
-        self.assertEqual(api_response.status_code, 200)
-        self.assertEqual(
-            Status.err({
-                "name":
-                ["Program with this Name already exists on this Client."]
-            }),
-            Status.from_json(api_response.content.decode('utf-8')),
-        )
-
     def test_start_get_success(self):
         slave = SlaveOnlineFactory()
         program = ProgramFactory(slave=slave)
@@ -1464,6 +1512,37 @@ class ProgramTests(StatusTestCase):
 
         #  test if the programstatus entry exists
         self.assertTrue(ProgramStatusModel.objects.filter())
+
+    def test_start_post_exist(self):
+        slave = SlaveFactory(online=True)
+        program = ProgramFactory(slave=slave)
+        ProgramStatusFactory(program=program, running=True)
+
+        api_response = self.client.get(
+            reverse('frontend:program_start', args=[program.id]))
+
+        self.assertEqual(api_response.status_code, 200)
+
+        self.assertStatusRegex(
+            Status.err(ProgramRunningError),
+            Status.from_json(api_response.content.decode('utf-8')),
+        )
+
+    def test_start_forbidden(self):
+        api_response = self.client.delete(
+            reverse('frontend:program_start', args=['0']))
+        self.assertEqual(403, api_response.status_code)
+
+    def test_start_get_not_exist(self):
+        api_response = self.client.get(
+            reverse('frontend:program_start', args=[1234]))
+
+        self.assertEqual(api_response.status_code, 200)
+
+        self.assertStatusRegex(
+            Status.err(ProgramNotExistError),
+            Status.from_json(api_response.content.decode('utf-8')),
+        )
 
     def test_start_get_offline(self):
         program = ProgramFactory()
@@ -1548,72 +1627,14 @@ class ProgramTests(StatusTestCase):
             Status.from_json(api_response.content.decode('utf-8')),
         )
 
-    def test_set_get_success(self):
+    def test_stop_get_offline(self):
         program = ProgramFactory()
 
-        with_str = self.client.get(reverse('frontend:program_set'), args={'slave':str(program.slave.name), 'slave_str':True})
-        whithout_str = self.client.get(reverse('frontend:program_set'), args={'slave': str(program.slave.id), 'slave_str':False})
-        ints = self.client.get(reverse('frontend:program_set'), args={'slave': str(program.slave.id)})
-
-        with_str = Status.from_json(with_str.content.decode('utf-8'))
-        ints = Status.from_json(ints.content.decode('utf-8'))
-        without_str = Status.from_json(whithout_str.content.decode('utf-8'))
-
-        self.assertEqual(
-            ints,
-            without_str,
-        )
-
-        slaves = ProgramModel.objects.filter(id=program.id).values_list(
-            "name",
-            flat=True,
-        )
-        slaves = list(slaves)
-
-        self.assertEqual(
-            with_str,
-            Status.ok(slaves),
-        )
-        self.assertEqual(
-            ints,
-            Status.ok(slaves),
-        )
-
-    def test_set_get_value_error(self):
-        resp = self.client.get(reverse('frontend:program_set'), args={'slave': 'notanint', 'slave_str':False})
-
-        self.assertEqual(
-            Status.err("Slave has to be an integer."),
-            Status.from_json(resp.content.decode('utf-8')),
-        )
-
-    def test_set_get_not_exist(self):
-        resp_int = self.client.get(reverse('frontend:program_set'), args={'slave':-1})
-        resp_str = self.client.get(reverse('frontend:program_set'), args={'slave':None, 'slave_str':True})
-
+        api_response = self.client.get(reverse('frontend:program_stop', args=[program.id]))
+        self.assertEqual(api_response.status_code, 200)
         self.assertStatusRegex(
-            Status.err(SlaveNotExistError),
-            Status.from_json(resp_int.content.decode('utf-8')),
-        )
-
-        self.assertStatusRegex(
-            Status.err(SlaveNotExistError),
-            Status.from_json(resp_str.content.decode('utf-8')),
-        )
-
-    def test_set_get_all_successfull(self):
-        resp = self.client.get('/api/programs')
-        self.assertEqual(
-            Status.ok([]),
-            Status.from_json(resp.content.decode('utf-8')),
-        )
-
-        program = ProgramFactory()
-
-        resp = self.client.get('/api/programs')
-        self.assertEqual(
-            Status.ok([program.name]),
-            Status.from_json(resp.content.decode('utf-8')),
+            Status.err(SlaveOfflineError),
+            Status.from_json(api_response.content.decode('utf-8')),
         )
 
     def test_log_entry_get_success(self):
@@ -1640,17 +1661,7 @@ class ProgramTests(StatusTestCase):
             Command.from_json(json.dumps(ws_slave.receive())),
         )
 
-    def test_entry_get_offline_slave(self):
-        program = ProgramFactory()
-        api_response = self.client.get(
-            reverse('frontend:log_entry', args=[program.id]))
-        self.assertEqual(200, api_response.status_code)
-        self.assertStatusRegex(
-            Status.err(SlaveOfflineError),
-            Status.from_json(api_response.content.decode('utf-8')),
-        )
-
-    def test_entry_get_log_not_exist(self):
+    def test_log_entry_get_not_exist_log(self):
         slave = SlaveFactory(online=True)
         program = ProgramFactory(slave=slave)
         api_response = self.client.get(
@@ -1661,9 +1672,7 @@ class ProgramTests(StatusTestCase):
             Status.from_json(api_response.content.decode('utf-8')),
         )
 
-
-
-    def test_program_manage_log_unknown_program(self):
+    def test_log_entry_get_not_exist_program(self):
         api_response = self.client.get(
             reverse('frontend:log_entry', args=[999999]))
         self.assertEqual(200, api_response.status_code)
@@ -1672,12 +1681,12 @@ class ProgramTests(StatusTestCase):
             Status.from_json(api_response.content.decode('utf-8')),
         )
 
-    def test_program_manage_log_unknown_httpmethod(self):
+    def test_log_entry_post_forbidden(self):
         api_response = self.client.post(
             reverse('frontend:log_entry', args=[999999]))
         self.assertEqual(403, api_response.status_code)
 
-    def test_program_disable_logging(self):
+    def test_log_disable_get_success(self):
         slave = SlaveFactory(online=True)
         program = ProgramFactory(slave=slave)
         status = ProgramStatusFactory(running=True, program=program)
@@ -1701,7 +1710,7 @@ class ProgramTests(StatusTestCase):
             Command.from_json(json.dumps(ws_slave.receive())),
         )
 
-    def test_program_disable_logging_offline_client(self):
+    def test_log_disable_get_offline(self):
         program = ProgramFactory()
         api_response = self.client.get(
             reverse('frontend:log_disable', args=[program.id]))
@@ -1711,7 +1720,7 @@ class ProgramTests(StatusTestCase):
             Status.from_json(api_response.content.decode('utf-8')),
         )
 
-    def test_program_disable_logging_unknown_program(self):
+    def test_log_disable_get_not_exist(self):
         api_response = self.client.get(
             reverse('frontend:log_disable', args=[999999]))
         self.assertEqual(200, api_response.status_code)
@@ -1720,12 +1729,12 @@ class ProgramTests(StatusTestCase):
             Status.from_json(api_response.content.decode('utf-8')),
         )
 
-    def test_program_disable_logging_unknown_httpmethod(self):
+    def test_log_disable_post_forbidden(self):
         api_response = self.client.post(
             reverse('frontend:log_disable', args=[999999]))
         self.assertEqual(403, api_response.status_code)
 
-    def test_program_enable_logging(self):
+    def test_log_enable_get_success(self):
         slave = SlaveFactory(online=True)
         program = ProgramFactory(slave=slave)
         status = ProgramStatusFactory(running=True, program=program)
@@ -1749,7 +1758,7 @@ class ProgramTests(StatusTestCase):
             Command.from_json(json.dumps(ws_slave.receive())),
         )
 
-    def test_program_enable_logging_offline_client(self):
+    def test_log_enable_get_offline_error(self):
         program = ProgramFactory()
         api_response = self.client.get(
             reverse('frontend:log_enable', args=[program.id]))
@@ -1759,7 +1768,7 @@ class ProgramTests(StatusTestCase):
             Status.from_json(api_response.content.decode('utf-8')),
         )
 
-    def test_program_enable_logging_unknown_program(self):
+    def test_log_enable_get_not_exist_program(self):
         api_response = self.client.get(
             reverse('frontend:log_enable', args=[999999]))
         self.assertEqual(200, api_response.status_code)
@@ -1768,12 +1777,7 @@ class ProgramTests(StatusTestCase):
             Status.from_json(api_response.content.decode('utf-8')),
         )
 
-    def test_program_enable_logging_unknown_httpmethod(self):
-        api_response = self.client.post(
-            reverse('frontend:log_enable', args=[999999]))
-        self.assertEqual(403, api_response.status_code)
-
-    def test_program_enable_logging_log_not_exist(self):
+    def test_log_enable_get_not_exist_log(self):
         slave = SlaveFactory(online=True)
         prog = ProgramFactory(slave=slave)
 
@@ -1785,6 +1789,11 @@ class ProgramTests(StatusTestCase):
             Status.err(LogNotExistError),
             Status.from_json(api_response.content.decode('utf-8')),
         )
+
+    def test_log_enable_post_forbidden(self):
+        api_response = self.client.post(
+            reverse('frontend:log_enable', args=[999999]))
+        self.assertEqual(403, api_response.status_code)
 
 
 class SlaveTests(StatusTestCase):
