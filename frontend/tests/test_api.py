@@ -1,3 +1,22 @@
+"""
+TESTCASES NAMEING SCHEME
+
+def test_<API>_<HTTP METHOD>_<LIST>:
+  pass
+
+<API>:
+    the name of handler method without the type information (e.g. filesystem_set -> set)
+
+<HTTP METHOD>:
+    The used http method in the test function
+
+ <LIST>:
+    forbidden -> method not allowed
+    not_exist -> the addressed object does not exist
+    offline   -> the slave is offline
+    success   -> example successfull request
+    exist     -> the request is not successfull because something exists or is running
+"""
 #  pylint: disable=C0111,C0103
 
 import json
@@ -52,6 +71,8 @@ from .factory import (
 )
 
 from .testcases import StatusTestCase
+"""
+"""
 
 
 class ScriptTest(StatusTestCase):

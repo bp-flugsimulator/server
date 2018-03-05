@@ -1,3 +1,16 @@
+"""
+TESTCASE NAMING SCHEME
+
+def test_<VIEW>_<OPTION>(self):
+    pass
+
+<VIEW>:
+    Name of the view
+<OPTION>:
+    Optional suffix for more information
+
+"""
+
 #  pylint: disable=C0111,C0103
 
 from django.test import TestCase
