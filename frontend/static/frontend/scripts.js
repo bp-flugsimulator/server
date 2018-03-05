@@ -93,15 +93,13 @@ $(document).ready(function () {
     $('.script-tab-link').click(function () {
         if (!$(this).hasClass('active')) {
             // Remove color from the old tabs
-            $('.script-tabbutton-link').each(function (idx, val) {
-                $(val).parent('li').css('background-color', 'transparent');
-            });
+	    $('.active').removeClass('active');
             // Create a change listener on all available input fields
-            $(':input').change(function(e) {
+            $(':input').on('input', function(e) {
                 unloadWarning = true;
                 removeAllChangeListener();
             });
-            $('select').change(function(e) {
+            $('select').on('input', function(e) {
                 unloadWarning = true;
                 removeAllChangeListener();
             });
@@ -111,7 +109,7 @@ $(document).ready(function () {
 
 
             // Change the color of the current tab
-            $(this).parent('li').css('background-color', '#dbdbdc');
+            $(this).parent('li').addClass('active');
         }
     });
 
@@ -220,6 +218,6 @@ $(window).on('beforeunload', function (e) {
 });
 
 function removeAllChangeListener(){
-        $(':input').off('change');
-        $('select').off('change');
+        $(':input').off('input');
+        $('select').off('input');
 }

@@ -200,6 +200,16 @@ class ProgramNotExistError(ObjectNotExistError):
         super().__init__("program", identifier)
 
 
+class LogNotExistError(ObjectNotExistError):
+    """
+    This error is thrown if a log of a program gets requested that
+    cannot have a log.
+    """
+
+    def __init__(self, identifier):
+        super().__init__("log from program", identifier)
+
+
 class QueryError(FsimError):
     """
     Base Class for Query errors

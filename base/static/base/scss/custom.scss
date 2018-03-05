@@ -723,6 +723,13 @@ footer {
     }
 }
 
+#scriptTabList{
+    .active {
+    	background-color: #dbdbdc;
+    }
+
+}
+
 @include media-breakpoint-up(xs) {
     .xs-button-set {
         button i:last-child {

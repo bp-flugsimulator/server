@@ -35,6 +35,7 @@ from .errors import (
     ProgramError,
     ProgramRunningError,
     ProgramNotRunningError,
+    LogNotExistError,
 )
 
 LOGGER = logging.getLogger("fsim.controller")
@@ -315,7 +316,7 @@ def slave_wake_on_lan(slave):
     send_magic_packet(slave.mac_address)
 
 
-def log_get(prog):
+def prog_log_get(program):
     """
     Requests a log of the program on the slave.
 
@@ -323,67 +324,73 @@ def log_get(prog):
     -------
         boolean which indicates if the Request was possible.
     """
-    ensure_type("prog", prog, ProgramModel)
+    ensure_type("program", program, ProgramModel)
 
     LOGGER.info(
         "Requesting log for program %s on slave %s",
-        prog.name,
-        prog.slave.name,
+        program.name,
+        program.slave.name,
     )
-    if prog.slave.is_online:
-        Group('client_' + str(prog.slave.id)).send({
-            'text':
-            Command(
-                method="get_log",
-                target_uuid=prog.programstatus.command_uuid).to_json()
-        })
-        return True
-    else:
-        return False
+
+    if not program.slave.is_online:
+        raise SlaveOfflineError('', '', 'get_log', program.slave.name)
+
+    if not (program.is_executed or program.is_running):
+        raise LogNotExistError(program.id)
+
+    Group('client_' + str(program.slave.id)).send({
+        'text':
+        Command(
+            method="get_log",
+            target_uuid=program.programstatus.command_uuid).to_json()
+    })
 
 
-def log_enable(prog):
-    ensure_type("prog", prog, ProgramModel)
+def prog_log_enable(program):
+    ensure_type("program", program, ProgramModel)
 
     LOGGER.info(
         "Enabling logging for program %s on slave %s",
-        prog.name,
-        prog.slave.name,
+        program.name,
+        program.slave.name,
     )
 
-    if prog.slave.is_online:
-        Group('client_' + str(prog.slave.id)).send({
-            'text':
-            Command(
-                method="enable_logging",
-                target_uuid=prog.programstatus.command_uuid,
-            ).to_json()
-        })
-        return True
-    else:
-        return False
+    if not program.slave.is_online:
+        raise SlaveOfflineError('', '', 'log_enable', program.slave.name)
+
+    if not (program.is_executed or program.is_running):
+        raise LogNotExistError(program.id)
 
 
-def log_disable(prog):
-    ensure_type("prog", prog, ProgramModel)
+    Group('client_' + str(program.slave.id)).send({
+        'text':
+        Command(
+            method="enable_logging",
+            target_uuid=program.programstatus.command_uuid,
+        ).to_json()
+    })
+
+
+def prog_log_disable(program):
+    ensure_type("program", program, ProgramModel)
 
     LOGGER.info(
         "Disabling logging for program %s on slave %s",
-        prog.name,
-        prog.slave.name,
+        program.name,
+        program.slave.name,
     )
 
-    if prog.slave.is_online:
-        Group('client_' + str(prog.slave.id)).send({
-            'text':
-            Command(
-                method="disable_logging",
-                target_uuid=prog.programstatus.command_uuid,
-            ).to_json()
-        })
-        return True
-    else:
-        return False
+    if not program.slave.is_online:
+        raise SlaveOfflineError('', '', 'log_disable', program.slave.name)
+
+
+    Group('client_' + str(program.slave.id)).send({
+        'text':
+        Command(
+            method="disable_logging",
+            target_uuid=program.programstatus.command_uuid,
+        ).to_json()
+    })
 
 
 def script_deep_copy(script):
