@@ -95,11 +95,11 @@ $(document).ready(function () {
             // Remove color from the old tabs
 	    $('.active').removeClass('active');
             // Create a change listener on all available input fields
-            $(':input').change(function(e) {
+            $(':input').on('input', function(e) {
                 unloadWarning = true;
                 removeAllChangeListener();
             });
-            $('select').change(function(e) {
+            $('select').on('input', function(e) {
                 unloadWarning = true;
                 removeAllChangeListener();
             });
@@ -218,6 +218,6 @@ $(window).on('beforeunload', function (e) {
 });
 
 function removeAllChangeListener(){
-        $(':input').off('change');
-        $('select').off('change');
+        $(':input').off('input');
+        $('select').off('input');
 }
