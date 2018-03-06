@@ -14,7 +14,8 @@ from .models import (
 
 class SlaveOfflineError(FsimError):
     """
-    Base class for slave offline Exception's.
+    This class gets raised if an `SlaveModel` is not online, but is expected to
+    be online to execute the wanted action.
     """
 
     def __init__(self, name, ty, slave, action):
@@ -29,7 +30,8 @@ class SlaveOfflineError(FsimError):
 
 class FilesystemError(FsimError):
     """
-    Base class for all FilesystemError's
+    This class is the base class for all error which are only related to the
+    `FileModel`.
     """
 
     def __init__(self, name, slave, message):
@@ -47,7 +49,8 @@ class FilesystemError(FsimError):
 
 class FilesystemMovedError(FilesystemError):
     """
-    If the filesystem is already moved.
+    This class is raised if move command on the `FilesystemModel` failed
+    because the `FilesystemModel` already moved.
     """
 
     def __init__(self, name, slave):
@@ -63,7 +66,8 @@ class FilesystemMovedError(FilesystemError):
 
 class FilesystemNotMovedError(FilesystemError):
     """
-    If the filesystem is already moved.
+    This class is raised if restore command on the `FilesystemModel` failed
+    because the `FilesystemModel` is not moved.
     """
 
     def __init__(self, name, slave):
@@ -79,7 +83,8 @@ class FilesystemNotMovedError(FilesystemError):
 
 class FilesystemDeleteError(FilesystemError):
     """
-    If the filesystem is moved then it can not be deleted.
+    This class is raised if delete command on the `FilesystemModel` failed
+    because the `FilesystemModel` is still moved.
     """
 
     def __init__(self, name, slave):
@@ -95,7 +100,8 @@ class FilesystemDeleteError(FilesystemError):
 
 class ProgramError(FsimError):
     """
-    Base class for all ProgramError's
+    This class is the base class for all error which are only related to the
+    `ProgramModel`.
     """
 
     def __init__(self, name, slave, message):
@@ -113,7 +119,8 @@ class ProgramError(FsimError):
 
 class ProgramRunningError(ProgramError):
     """
-    If the program is running but an start command was received.
+    This class is raised if a start command on the `ProgramModel` failed because
+    the `ProgramModel` is already running.
     """
 
     def __init__(self, name, slave):
@@ -129,7 +136,8 @@ class ProgramRunningError(ProgramError):
 
 class ProgramNotRunningError(ProgramError):
     """
-    If the program is not running but an stop command was received.
+    This class is raised if a stop command on the `ProgramModel` failed because
+    the `ProgramModel` was not started yet.
     """
 
     def __init__(self, name, slave):
@@ -145,7 +153,8 @@ class ProgramNotRunningError(ProgramError):
 
 class ObjectNotExistError(FsimError):
     """
-    Base class for ObjectNotExistError'S
+    This class is the base class for all error which are only related to the
+    Django error where the object could not be found in the database.
     """
 
     def __init__(self, obj_type, identifier):
@@ -162,7 +171,7 @@ class ObjectNotExistError(FsimError):
 
 class SlaveNotExistError(ObjectNotExistError):
     """
-    This error is wraps the error SlaveMode.DoesNotExist.
+    This error is wraps the error `SlaveMode.DoesNotExist`.
     """
 
     def __init__(self, error, identifier):
@@ -172,7 +181,7 @@ class SlaveNotExistError(ObjectNotExistError):
 
 class ScriptNotExistError(ObjectNotExistError):
     """
-    This error is wraps the error ScriptModel.DoesNotExist.
+    This error is wraps the error `ScriptModel.DoesNotExist`.
     """
 
     def __init__(self, error, identifier):
@@ -182,7 +191,7 @@ class ScriptNotExistError(ObjectNotExistError):
 
 class FilesystemNotExistError(ObjectNotExistError):
     """
-    This error is wraps the error FilesystemModel.DoesNotExist.
+    This error is wraps the error `FilesystemModel.DoesNotExist`.
     """
 
     def __init__(self, error, identifier):
@@ -192,7 +201,7 @@ class FilesystemNotExistError(ObjectNotExistError):
 
 class ProgramNotExistError(ObjectNotExistError):
     """
-    This error is wraps the error ProgramModel.DoesNotExist.
+    This error is wraps the error `ProgramModel.DoesNotExist`.
     """
 
     def __init__(self, error, identifier):
@@ -202,8 +211,8 @@ class ProgramNotExistError(ObjectNotExistError):
 
 class LogNotExistError(ObjectNotExistError):
     """
-    This error is thrown if a log of a program gets requested that
-    cannot have a log.
+    This class is raised if a log from a `ProgramModel` was requested but not
+    that `ProgramModel` does not have one.
     """
 
     def __init__(self, identifier):
@@ -212,7 +221,8 @@ class LogNotExistError(ObjectNotExistError):
 
 class QueryError(FsimError):
     """
-    Base Class for Query errors
+    This class is the base class for all error which are only related to the
+    errors where the query paramater are not valid.
     """
 
     def __init__(self, message):
@@ -228,7 +238,8 @@ class QueryError(FsimError):
 
 class SimultaneousQueryError(QueryError):
     """
-    This error is raised, if two queries with different types get requested at the same time
+    This class is raised if query paramaters are set at the same time, but it
+    is not suppose to.
     """
 
     def __init__(self, param1, param2):
@@ -243,7 +254,8 @@ class SimultaneousQueryError(QueryError):
 
 class ScriptError(FsimError):
     """
-    Base class for all ScriptError's
+    This class is the base class for all error which are only related to the
+    `ScriptModel`.
     """
 
     def __init__(self, script, message):
@@ -260,7 +272,8 @@ class ScriptError(FsimError):
 
 class ScriptRunningError(ScriptError):
     """
-    Script is running while trying to start it again.
+    This class is raised if a `ScriptModel` was tried to start, but a `Script`
+    is already running.
     """
 
     def __init__(self, script):
@@ -276,7 +289,8 @@ class ScriptRunningError(ScriptError):
 
 class QueryParameterError(QueryError):
     """
-    The given parameter for the query is not supported.
+    This class is raised if an query parameter has not the format of the given
+    values.
     """
 
     def __init__(self, given_type, expected_types):
@@ -292,12 +306,13 @@ class QueryParameterError(QueryError):
 
 class QueryTypeError(QueryError):
     """
-    The given parameter has not the matching type.
+    This class is raised if an query got an value which could not be
+    transformed properly.
     """
 
     def __init__(self, given, expected):
         super().__init__(
-            "Expected something that can be transformet into `{}` from `{}`.".
+            "Expected something that can be transformed into `{}` from `{}`.".
             format(
                 expected,
                 given,
@@ -305,4 +320,18 @@ class QueryTypeError(QueryError):
 
     @staticmethod
     def regex_string():
-        return "Expected something that can be transformet into `.*` from `.*`."
+        return "Expected something that can be transformed into `.*` from `.*`."
+
+class PositiveNumberError(FsimError):
+    """
+    This class is raised if an value was not zero or positive.
+    """
+    def __init__(self, given, name):
+        super().__init__(
+            "Expected zero or positive for {} (given: {})".format(name,given)
+        )
+
+    @staticmethod
+    def regex_string():
+        return "Expected zero or positive for .* (given: .*)"
+

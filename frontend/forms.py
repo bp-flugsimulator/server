@@ -1,6 +1,5 @@
 """
-This module contains all forms based on the models from the frontend
-application.
+This module contains Django `Forms`.
 """
 
 from django.forms import (
@@ -18,12 +17,12 @@ from .models import (
 
 class SlaveForm(ModelForm):
     """
-    Form based on the slave model
+    Form for `SlaveModel`.
     """
 
     class Meta:
         """
-        configures the form
+        Meta class
         """
         model = SlaveModel
         fields = ['name', 'ip_address', 'mac_address']
@@ -31,7 +30,7 @@ class SlaveForm(ModelForm):
 
 class ProgramForm(ModelForm):
     """
-    Form based on the program model
+    Form for `ProgramModel`.
     """
     slave = ModelChoiceField(
         queryset=SlaveModel.objects.all(),
@@ -40,7 +39,7 @@ class ProgramForm(ModelForm):
 
     class Meta:
         """
-        configures the form
+        Meta class
         """
         model = ProgramModel
         fields = ['name', 'path', 'arguments', 'start_time']
@@ -48,7 +47,7 @@ class ProgramForm(ModelForm):
 
 class FilesystemForm(ModelForm):
     """
-    Form based on the program model
+    Form for `FilesystemModel`.
     """
     slave = ModelChoiceField(
         queryset=SlaveModel.objects.all(),
@@ -57,7 +56,7 @@ class FilesystemForm(ModelForm):
 
     class Meta:
         """
-        configures the form
+        Meta class
         """
         model = FilesystemModel
         fields = [

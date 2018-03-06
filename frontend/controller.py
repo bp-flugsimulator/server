@@ -1,5 +1,5 @@
 """
-Controller
+This module contains functions which modify a Model.
 """
 
 import logging
@@ -43,11 +43,12 @@ LOGGER = logging.getLogger("fsim.controller")
 
 def timer_timeout_program(identifier):
     """
-    Sets the timeout flag for a program.
+    This callback function sets the timeout flag for a `ProgramModel`.
 
-    Arguments
-    ---------
-        id: Program id
+    Parameters
+    ----------
+        identifier: name or int
+            An identifier which identifies a `ProgramModel`.
     """
     ProgramStatusModel.objects.filter(program=identifier).update(
         timeouted=True)
@@ -56,12 +57,21 @@ def timer_timeout_program(identifier):
 
 def fs_move(fs):
     """
-    Moves the file on the slave.
+    This functions sends a command to slave to move the given filesystem.
+    If any filesystem is at the same place, it will be replaced and then this
+    `fs` will be moved to the destination.
 
-    Exception
-    -------
+    Parameters
+    ----------
+        fs: FilesystemModel
+            A valid `FilesystemModel`.
+
+    Raises
+    ------
         SlaveOfflineError
         FilesystemMovedError
+        TypeError:
+            If `fs` is not an `FilesystemModel`
     """
     ensure_type("fs", fs, FilesystemModel)
     slave = fs.slave
@@ -149,12 +159,20 @@ def fs_move(fs):
 
 def fs_restore(fs):
     """
-    Restores the file on the slave.
+    This functions restores a given `FilesystemModel` by sending a command to
+    the slave to undo the previously done move.
 
-    Exception
-    -------
+    Parameters
+    ----------
+        fs: FilesystemModel
+            A valid `FilesystemModel`.
+
+    Raises
+    ------
         SlaveOfflineError
         FilesystemNotMovedError
+        TypeError:
+            If `fs` is not an `FilesystemModel`
     """
     ensure_type("fs", fs, FilesystemModel)
     slave = fs.slave
@@ -192,11 +210,19 @@ def fs_restore(fs):
 
 def fs_delete(fs):
     """
-    Deletes the entry in the database.
+    This functions deletes a `FilesystemModel` only if `fs` is not moved
+    currently.
 
-    Exception
-    -------
+    Parameters
+    ----------
+        fs: FilesystemModel
+            A valid `FilesystemModel`.
+
+    Raises
+    ------
         FilesystemDeleteError
+        TypeError:
+            If `fs` is not an `FilesystemModel`
     """
     ensure_type("fs", fs, FilesystemModel)
 
@@ -208,12 +234,19 @@ def fs_delete(fs):
 
 def prog_start(prog):
     """
-    Starts the program on the slave.
+    This functions starts a `ProgramModel` by sending a command to the slave.
+    But only if the program is not started.
 
-    Exception
-    -------
+    Parameters
+    ----------
+        prog: ProgramModel
+            A valid `ProgramModel`.
+    Raises
+    ------
         SlaveOfflineError
         ProgramRunningError
+        TypeError:
+            If `prog` is not an `ProgramModel`
     """
     ensure_type("prog", prog, ProgramModel)
 
@@ -273,12 +306,20 @@ def prog_start(prog):
 
 def prog_stop(prog):
     """
-    Stops the program on the slave.
+    This function stops a `ProgramModel` by sending a command to the slave. But
+    only if `prog` is running.
+
+    Parameters
+    ----------
+        prog: ProgramModel
+            A valid `ProgramModel`.
 
     Exception
     -------
         SlaveOfflineError
         ProgramNotRunningError
+        TypeError:
+            If `prog` is not an `ProgramModel`
     """
     ensure_type("prog", prog, ProgramModel)
 
@@ -310,7 +351,18 @@ def prog_stop(prog):
 
 def slave_wake_on_lan(slave):
     """
-    Sends wake on lan package to the slave.
+    This functions starts a `SlaveModel` by sending a magic (Wake-On-Lan
+    package) to the slave.
+
+    Parameters
+    ----------
+        slave: SlaveModel
+            A valid `SlaveModel`.
+
+    Raises
+    ------
+        TypeError:
+            If `slave` is not an `SlaveModel`
     """
     ensure_type("slave", slave, SlaveModel)
     send_magic_packet(slave.mac_address)
@@ -318,11 +370,25 @@ def slave_wake_on_lan(slave):
 
 def prog_log_get(program):
     """
-    Requests a log of the program on the slave.
+    This function is asking for a log for a `ProgramModel` by sending a command
+    to the slave.
 
-        Returns
+    Parameters
+    ----------
+        program: ProgramModel
+            A valid `ProgramModel`.
+
+    Returns
     -------
-        boolean which indicates if the Request was possible.
+    boolean:
+        If the request is possible.
+
+    Raises
+    ------
+        SlaveOfflineError
+        LogNotExistError
+        TypeError:
+            If `program` is not an `ProgramModel`
     """
     ensure_type("program", program, ProgramModel)
 
@@ -347,6 +413,23 @@ def prog_log_get(program):
 
 
 def prog_log_enable(program):
+    """
+    This function is enabling the log transfer for a `ProgramModel` by sending
+    a command to the slave. But only if the slave is online and the program has
+    a log.
+
+    Parameters
+    ----------
+        program: ProgramModel
+            A valid `ProgramModel`.
+
+    Raises
+    ------
+        SlaveOfflineError
+        LogNotExistError
+        TypeError:
+            If `program` is not an `ProgramModel`
+    """
     ensure_type("program", program, ProgramModel)
 
     LOGGER.info(
@@ -372,6 +455,21 @@ def prog_log_enable(program):
 
 
 def prog_log_disable(program):
+    """
+    This function is disabling the log transfer for a `ProgramModel` by sending
+    a command to the slave. But only if the slave is online.
+
+    Parameters
+    ----------
+        program: ProgramModel
+            A valid `ProgramModel`.
+
+    Raises
+    ------
+        SlaveOfflineError
+        TypeError:
+            If `program` is not an `ProgramModel`
+    """
     ensure_type("program", program, ProgramModel)
 
     LOGGER.info(
@@ -395,11 +493,24 @@ def prog_log_disable(program):
 
 def script_deep_copy(script):
     """
-    Returns a deep copy of a script
+    This function creates a copy of a `ScriptModel` with all
+    `ScriptGraphFiles` and `ScriptGraphPrograms` by adding a `_copy` suffix
+    with a number if a copy already exists.
+
+    Parameters
+    ----------
+        slave: ScriptModel
+            A valid `ScriptModel`.
 
     Returns
     -------
-        Script
+    copy: ScriptModel
+        The copy of the `script` with a new name.
+
+    Raises
+    ------
+        TypeError:
+            If `script` is not an `ScriptModel`
     """
     ensure_type("script", script, ScriptModel)
     i = 0

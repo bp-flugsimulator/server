@@ -1,5 +1,5 @@
 """
-This module contains a scheduler which runs programs on the different clients.
+This module provides a scheudler.
 """
 
 import threading
@@ -14,32 +14,21 @@ LOGGER = logging.getLogger("fsim.scheduler")
 
 class SchedulerStatus:
     """
-    This class defines the different Scheduler states.
-
-    INIT
-    ----
-        The scheduler starts all relevant slaves
-
-    WAITING_FOR_SLAVES
-    ------------------
-        The scheduler waits for all slaves to connect to the master.
-
-    NEXT_STEP
-    ---------
-        The scheduler fetches the next index and executes the right programs.
-
-    WAITING_FOR_PROGRAMS_FILESYSTEMS
-    --------------------
-        The scheduler waits for all programs to finish.
-
-    SUCCESS
-    -------
-        The scheduler is in the end state and was successful.
-
-    ERROR
-    -----
-        The scheduler is in the end state and was NOT successful.
-
+    A state based automata which runs is used to start `ScriptModel`s.
+    The automata has the folloing states:
+        INIT: 0
+            The scheduler starts all relevant slaves.
+        WAITING_FOR_SLAVES: 1
+            The scheduler waits for all slaves to connect to the master.
+        NEXT_STEP: 2
+            The scheduler fetches the next index/stage and executes the
+            relevant programs.
+        WAITING_FOR_PROGRAMS_FILESYSTEMS: 3
+            The scheduler waits for all prevoiusly started programs to finish.
+        SUCCESS: 4
+            The scheduler is in the end state and was successful.
+        ERROR: 5
+            The scheduler is in the end state and was NOT successful.
     """
     INIT = 0
     WAITING_FOR_SLAVES = 1
@@ -68,22 +57,17 @@ class Scheduler:
         self.__index = None
         self.__script = None
 
-    def spawn(self, *args, **kwargs):
-        """
-        Forwards to self.
-        """
-        with self.lock:
-            self.loop.spawn(*args, **kwargs)
-
     def is_running(self):
         """
-        This function is thread-safe.
+        Thread-safe function.
 
-        Returns true if the underlying thread is still running.
+        Checks if the underlying task (this `Scheudler`) is still running in
+        the event loop.
 
         Returns
         -------
-            bool
+        bool:
+            If the task is still running.
         """
         with self.lock:
             if self.__task is not None:
@@ -99,13 +83,15 @@ class Scheduler:
 
     def should_stop(self):
         """
-        This function is thread-safe.
+        Thread-safe function.
 
-        Returns if the underlying thread should stop.
+        Checks if the `Scheudler` should stop. This can be set by
+        `Scheudler.stop()`.
 
         Returns
         -------
-            bool
+        bool:
+            If this `Scheduler` should stop.
         """
         with self.lock:
             stop = self.__stop
@@ -113,9 +99,9 @@ class Scheduler:
 
     def stop(self):
         """
-        This function is thread-safe.
+        Thread-safe function.
 
-        Stops the scheduler and his thread.
+        Sets the stop flag and waits for the `Scheudler` to finish.
         """
         with self.lock:
             self.__stop = True
@@ -129,25 +115,31 @@ class Scheduler:
 
     def start(self, script):
         """
-        This function is thread-safe.
+        Thread-safe function.
 
-        Starts a new thread with and execute the given script. If a thread is
-        already active this function will return False.
+        Creates a new `SafeLoop` and run self into this loop.
 
-        Arguments
-        ---------
-            script: Identifier for ScriptModel
+
+        Parameters
+        ----------
+            script: int
+                An identifier which can identifier the `ScriptModel`
+                in the database.
 
         Returns
         -------
-            Returns true if the new thread was started.
+        bool:
+            If the scheudler is not running.
         """
         if self.is_running():
             return False
         else:
             from .models import Script
             with self.lock:
-                LOGGER.debug("Adding task to scheduler event loop")
+                LOGGER.debug(
+                    "Starting Scheudler in the event loop `%s`",
+                    self.loop.ident,
+                )
 
                 self.__error_code = None
                 self.__stop = False
@@ -168,10 +160,12 @@ class Scheduler:
 
     def notify(self):
         """
-        This function is thread-safe.
+        Thread-safe function.
 
-        Notifies the scheduler that something has changed. That means the
-        scheduler will look at the data again.
+        This function is called by someone who modified the data which are
+        related to the `Scheudler`. If `notify` is called then this indicates
+        that the related data has changed and the `Scheudler` could make a
+        step.
         """
         if self.is_running():
             LOGGER.debug("Send notify to task in scheduler event loop.")
@@ -187,12 +181,15 @@ class Scheduler:
 
     def __get_next_stage(self):
         """
-        Generates the next stage and returns the number of the last stage and
-        if this stage is valid.
+        Fetches the next index/stage for the `Scheduler` and stores the value
+        into `Scheudler.__index`.
 
         Returns
-        --------
-            last index and if this stage is valid
+        -------
+        old_index: int
+            The previous index/stage.
+        all_done: bool
+            If no more indexes/stages are avialable.
 
         """
         from .models import (
@@ -225,26 +222,20 @@ class Scheduler:
             LOGGER.debug("Scheduler found next index %s", self.__index)
             all_done = False
         else:
-            LOGGER.debug("Scheduler done")
+            LOGGER.debug("Scheduler did not found any more indexes.")
             self.__index = -1
             all_done = True
 
         return (old_index, all_done)
 
-    def timer_scheduler_slave_timeout(self):
+    def slave_timeout_callback(self):
         """
-        Spawns a timer function into the event loop which will set the timeoute
-        the scheduler if there was no progress.
-
-        Arguments
-        ---------
-            scheduler: SchedulerStatus object
-            time: Amount of time to wait
+        This function is called after an amount of time. If the internal state
+        is still on `WAITING_FOR_SLAVES` then the `Scheudler` aborts.
         """
 
-        LOGGER.debug("Slave timeout call back.")
         if self.__state == SchedulerStatus.WAITING_FOR_SLAVES:
-            LOGGER.debug("Scheduler for slaves timeouted")
+            LOGGER.error("Not all salves connected within the time limit.")
             self.__error_code = 'Not all slaves connected within 5 minutes.'
             self.__state = SchedulerStatus.ERROR
             self.__event.set()
@@ -252,7 +243,7 @@ class Scheduler:
     @asyncio.coroutine
     def __run__(self):
         """
-        Function wich will be executed by the Thread.
+        This functions maps every internal state to a seperated function.
         """
 
         while True:
@@ -292,7 +283,8 @@ class Scheduler:
 
     def __state_init(self):
         """
-        In this state all slaves are started.
+        This functions handle the `INIT` state. And sending every relevant
+        slave the Wake-On-Lan package.
         """
         from .models import Script, Slave
         from .controller import slave_wake_on_lan
@@ -305,7 +297,7 @@ class Scheduler:
         self.__state = SchedulerStatus.WAITING_FOR_SLAVES
         self.__event.set()
 
-        self.loop.spawn(300, self.timer_scheduler_slave_timeout)
+        self.loop.spawn(300, self.slave_timeout_callback)
 
         notify({
             'script_status': 'waiting_for_slaves',
@@ -314,7 +306,9 @@ class Scheduler:
 
     def __state_wait_slaves(self):
         """
-        In this state the scheduler waits for all needed slaves to start.
+        This funcitons handels the `WAITING_FOR_SLAVES` state. If not all
+        slaves are connected yet this functions wait for them by waiting for
+        the `Scheduler.notify` call.
         """
         from .models import Script
 
@@ -328,7 +322,10 @@ class Scheduler:
 
     def __state_next(self):
         """
-        In this state the next index is selected and the programs are started.
+        This function handles the `NEXT_STEP` state, where all programs are
+        started and all filesystems are moved. If a program is started then it
+        will be not started again. If a filesystem is moved already then it
+        will be not moved agian.
         """
         from .controller import prog_start, fs_move
         from .errors import (
@@ -424,7 +421,10 @@ class Scheduler:
 
     def __state_wait_programs_filesystems(self):
         """
-        In this state the scheduler waits for all started programs to finish.
+        This functions handle the `WAITING_FOR_PROGRAMS_FILESYSTEMS` state
+        where it checks the database for the program and filesystem status. If
+        not all programs and filesystems are ready it will wait for the
+        `Scheudler.notify` call to proceed.
         """
         from .models import (
             ScriptGraphPrograms,
@@ -487,7 +487,8 @@ class Scheduler:
 
     def __state_success(self):
         """
-        In this state the scheduler clean up and save the results.
+        This function handles the `SUCCESS` state, where the `Scheudler`
+        finishes without an error.
         """
         from .models import Script
 
@@ -507,7 +508,8 @@ class Scheduler:
 
     def __state_error(self):
         """
-        In this state the scheduler clean up and save the results.
+        This function handles the `ERROR` state, where the `Scheudler`
+        finishes an error.
         """
         from .models import Script
 

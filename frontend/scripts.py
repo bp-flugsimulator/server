@@ -24,20 +24,23 @@ from .errors import (
     QueryParameterError,
     FilesystemNotExistError,
     ProgramNotExistError,
+    PositiveNumberError,
 )
 
 
 def get_slave(slave):
     """
-    Checks if the given object is string or integer and queries the slave from that.
+    Returns a `SlaveModel` based on the type of `slave`.
 
-    Arguments
-    ---------
-        slave: slave name (string) or slave id (int)
+    Parameters
+    ----------
+        slave: int or str
+            Identifies a `SlaveModel`
 
     Returns
     -------
-        A Slave objects
+        SlaveModel:
+            Which has the name or id of `slave` based on the type.
     """
     if isinstance(slave, str):
         try:
@@ -51,22 +54,19 @@ def get_slave(slave):
             raise SlaveNotExistError(err, slave)
 
 
-def typecheck_index(index):
-    """
-    Checks if the types are correct for an index variable.
-    """
-    ensure_type("index", index, int)
-    if index < 0:
-        raise ValueError("Only positive integers are allowed for index.")
-
-
 class Script:
     """
-    Fields
-    ------
-        name: Name of the script.
-        programs: List of ScriptEntryProgram
-        filesystems: List of ScriptGraphFiles
+    A intermediate representation for a script which comes in JSON encoded and
+    needs to be saved into the database.
+
+    Attributes
+    ----------
+        name: str
+            Name of the `Script`.
+        programs: list[ScriptEntryProgram]
+            Which programs are in this `Script`.
+        filesystems: list[ScriptEntryFilesystem]
+            Which programs are in this `Script`.
     """
 
     def __init__(self, name, programs, filesystems):
@@ -109,15 +109,24 @@ class Script:
     def from_model(cls, script_id, slaves_type, programs_type,
                    filesystem_type):
         """
-        Creates a object from a script id.
+        Creates a `Script` from a `ScriptModel` which is specified by
+        `script_id`.
 
-        Arguments
-        ---------
-            scriptId: integer (identifier)
+        Parameters
+        ----------
+            script_id: int
+                The name of a valid `ScriptModel`.
+            slaves_type: "str" or "int"
+                The type of all slave attributes in this `Script`.
+            programs_type: "str" or "int"
+                The type of all slave attributes in this `Script`.
+            filesystem_type: "str" or "int"
+                The type of all slave attributes in this `Script`.
 
         Returns
         -------
-            Script object
+        Script:
+            A `Script` which is retreived from a `ScriptModel`.
 
         """
         script = ScriptModel.objects.get(id=script_id)
@@ -137,11 +146,22 @@ class Script:
     @classmethod
     def from_json(cls, string):
         """
-        Takes a JSON encoded string and build this object.
+        Takes a JSON encoded string and build a `Script`.
+
+        Parameters
+        ----------
+            string: str
+                JSON encoded string.
 
         Returns
         -------
-            Script object
+        Script:
+            Which was paresed from the JSON encoded string.
+
+        Raises
+        ------
+            TypeError:
+                If programs and filesystems have the wrong type.
         """
         data = json.loads(string)
 
@@ -160,7 +180,8 @@ class Script:
     @transaction.atomic
     def save(self):
         """
-        Saves this object to the database.
+        This function coresspondes to the Django `Model.save` functionm,
+        which saves the model to the database.
         """
         script = ScriptModel(name=self.name)
         script.full_clean()
@@ -174,28 +195,36 @@ class Script:
 
     def to_json(self):
         """
-        Converts this object to a JSON encoded string.
+        Converts this `Script` to a JSON encoded string.
 
         Returns
         -------
-            str
+            str:
+                JSON encoded string which contains the information from this
+                `Script`.
         """
         return json.dumps(dict(self))
 
 
 class ScriptEntryFilesystem:
     """
-    Consists of the following fields
+    Represents the `FilesystemModel` for a `Script`.
 
-    Fields
-    ------
-        index: When will this script be started.
-        filesystem: The name of the filesystem
-        slave: Location of the filesystem
+    Attributes
+    ----------
+        index: int
+            The position in an ordered series
+        filesystem: "int" or "str"
+            The identifier of the filesystem
+        slave: "int" or "str"
+            Location of the filesystem
     """
 
     def __init__(self, index, filesystem, slave):
-        typecheck_index(index)
+        ensure_type("index", index, int)
+
+        if index < 0:
+            raise PositiveNumberError(index, "index")
         self.index = index
 
         ensure_type("filesystem", filesystem, str, int)
@@ -216,16 +245,22 @@ class ScriptEntryFilesystem:
     @classmethod
     def from_query(cls, query, slaves_type, programs_type):
         """
-        Retrieves values from a django query (for ScriptGraphFiles or
-        ScriptGraphPrograms).
+        Retrieves all relevent attributes from a Django SQL query.
 
         Arguments
         ----------
-            query: django query
+            query: QuerySet
+                A query which was run on the `ScriptGraphFilesModel`.
 
         Returns
         -------
-             ScriptEntryFilesystem object
+        ScriptEntryFilesystem:
+            If the query was valid.
+
+        Raises
+        ------
+            QueryParameterError:
+                If slaves_type or programs_type were not "str" or "int".
         """
         if slaves_type == "int":
             slave = query.filesystem.slave.id
@@ -256,11 +291,19 @@ class ScriptEntryFilesystem:
     @classmethod
     def from_json(cls, string):
         """
-        Takes a JSON encoded string and build this object.
+        Builds a `ScriptEntryFilesystem` from a JSON encoded string.
+
+        Parameters
+        ----------
+            string: str
+                A JSON encoded string which can be transfert into a
+                `ScriptEntryFilesystem`.
 
         Returns
         -------
-            Script object
+        ScriptEntryFilesystem:
+            If the `ScriptEntryFilesystem` could be parsed from the JSON
+            encoded string.
         """
         data = json.loads(string)
         return cls(
@@ -272,16 +315,18 @@ class ScriptEntryFilesystem:
     @transaction.atomic
     def save(self, script):
         """
-        Transforms this object into ScriptGraphFiles and saves it to the
-        database.
+        This function coresspondes to the Django `Model.save` functionm,
+        which saves the model to the database.
 
-        Arguments
-        ---------
-            script: coresponding Script
+        Parameters
+        ----------
+            script: ScriptModel
+                A valid `ScriptModel` which will be the reference for the
+                `ScriptGraphFiles`.
 
-        Returns
-        -------
-            Django model
+        Raises
+        ------
+            FilesystemNotExistError
         """
 
         slave = get_slave(self.slave)
@@ -316,11 +361,13 @@ class ScriptEntryFilesystem:
 
     def to_json(self):
         """
-        Converts this object to a JSON encoded string.
+        Converts this `ScriptEntryFilesystem` to a JSON encoded string.
 
         Returns
         -------
-            str
+            str:
+                JSON encoded string which contains the information from this
+                `ScriptEntryFilesystem`.
         """
         return json.dumps(dict(self))
 
@@ -395,22 +442,32 @@ class ScriptEntryProgram:
 
     def to_json(self):
         """
-        Converts this object to a JSON encoded string.
+        Converts this `ScriptEntryProgram` to a JSON encoded string.
 
         Returns
         -------
-            str
+            str:
+                JSON encoded string which contains the information from this
+                `ScriptEntryProgram`.
         """
         return json.dumps(dict(self))
 
     @classmethod
     def from_json(cls, string):
         """
-        Takes a JSON encoded string and build this object.
+        Builds a `ScriptEntryProgram` from a JSON encoded string.
+
+        Parameters
+        ----------
+            string: str
+                A JSON encoded string which can be transfert into a
+                `ScriptEntryProgram`.
 
         Returns
         -------
-            Script object
+        ScriptEntryFilesystem:
+            If the `ScriptEntryProgram` could be parsed from the JSON
+            encoded string.
         """
         data = json.loads(string)
         return cls(
@@ -422,16 +479,18 @@ class ScriptEntryProgram:
     @transaction.atomic
     def save(self, script):
         """
-        Transforms this object into ScriptGraphPrograms and saves it to the
-        database.
+        This function coresspondes to the Django `Model.save` functionm,
+        which saves the model to the database.
 
-        Arguments
-        ---------
-            script: coresponding Script
+        Parameters
+        ----------
+            script: ScriptModel
+                A valid `ScriptModel` which will be the reference for the
+                `ScriptGraphPrograms`.
 
-        Returns
-        -------
-            Django model
+        Raises
+        ------
+            ProgramNotExistError
         """
         slave = get_slave(self.slave)
 

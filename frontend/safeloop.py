@@ -1,87 +1,99 @@
 """
-Safe loop
+This module provides an event loop with basic functions.
 """
 
 import asyncio
 import threading
 import logging
+import uuid
 
 LOGGER = logging.getLogger("fsim.event_loop")
 
 
 class SafeLoop:
     """
-    Event loop with locks for multi threading.
+    Wraps an event loop in another thread.
     """
 
     def __init__(self):
         self.loop = asyncio.new_event_loop()
         self.thread = None
+        self.ident = uuid.uuid4().hex
 
-    def spawn(self, timer, function, *args):
+    def spawn(self, time, function, *args):
         """
-        Thread-safe function.
+        Wraps the `function` into a task and adds it to the event loop. The
+        function will be executed after the specified amount of `time` is
+        elapsed.
 
-        Creates a task and adds it to the loop.
-
-        Arguments
-        ---------
-            function: callable function
+        Parameters
+        ----------
+            time: number
+                Waits the specified amount of `time` before execution.
+            function: function
+                This `function` will be executed into the event loop.
+            args: list
+                This will be forwarded to the given `function`.
 
         """
-        LOGGER.debug("Spawned task in event loop in thread %s", self.thread)
-        self.loop.call_soon_threadsafe(self.loop.call_later, timer, function,
+        LOGGER.debug(
+            "Spawning function after %s into the event loop `%s` (in thread %s)",
+            time,
+            self.ident,
+            self.thread.ident,
+        )
+        self.loop.call_soon_threadsafe(self.loop.call_later, time, function,
                                        *args)
 
     def run(self, function, *args):
         """
-        Thread-safe function.
-
         Runs a future in the event loop without any timeout.
 
-        Arguments
+        Parameter
         ---------
-            function: callable function
-
+            function: function
+                This `function` will be executed into the event loop.
+            args: list
+                This will be forwarded to the given `function`.
         """
         LOGGER.debug(
-            "Spawn function callback into event loop without timeout.")
+            "Spawning function into the event loop `%s` (in thread %s)",
+            self.ident,
+            self.thread.ident,
+        )
         self.loop.call_soon_threadsafe(function, *args)
 
     def create_task(self, coro):
         """
-        Thread-safe function.
+        Wrapper function for the `AbstractEventLoop.create_task` which returns
+        the task handle.
 
-        Creates a task in the event loop.
-
-        Arguments
-        ---------
-            coro: Coroutine
+        Parameters
+        ----------
+            coro: function (with @async.coroutine)
+                A task which will be spawned into the event loop.
 
         Returns
         -------
-            TaskHandle
+            A task handle for the spawned task.
         """
-        LOGGER.debug("Spawn task into event loop.")
         task = self.loop.create_task(coro)
         return task
 
     def __run__(self):
         LOGGER.debug(
-            "Running  event loop %s in thread %s.",
-            self.loop,
-            self.thread,
+            "Running event loop `%s` in thread %s.",
+            self.ident,
+            self.thread.ident
         )
         self.loop.run_forever()
-        LOGGER.debug("Event loop finished.")
+        LOGGER.debug("The event loop `%s` has finished.", self.ident)
 
     def start(self):
         """
-        Thread safe function.
-
-        Starts the event loop in another thread.
+        Initilizes the whole event loop with a seperated thread, where the
+        event loop is running.
         """
-        LOGGER.debug("Starting thread %s ", self.thread)
 
         if self.thread is None:
             self.thread = threading.Thread(
@@ -90,10 +102,8 @@ class SafeLoop:
             )
 
             self.thread.start()
-
             LOGGER.debug(
-                "Thread started %s and is started %s. %s",
+                "Starting thread `%s` for event loop `%s`.",
+                self.ident,
                 self.thread.ident,
-                self.thread.is_alive(),
-                self.thread,
             )
