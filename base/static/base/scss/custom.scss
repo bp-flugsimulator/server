@@ -723,6 +723,10 @@ footer {
     }
 }
 
+* {
+   outline: 0;
+}
+
 @include media-breakpoint-up(xs) {
     .xs-button-set {
         button i:last-child {
