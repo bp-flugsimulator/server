@@ -1,27 +1,30 @@
 {% load components %}
-    <div class="row pt-4 mb-4 pb-4 fsim-box" data-state="{% if slave.has_error %}error{% elif slave.has_running %}warning{% elif slave.is_online %}success{% else %}unknown{% endif %}" id="slaveStatusContainer_{{ slave.id }}">
+    <div class="card pt-4 mb-4 pb-4 fsim-box bg-light" data-state="{% if slave.has_error %}error{% elif slave.has_running %}warning{% elif slave.is_online %}success{% else %}unknown{% endif %}" id="slaveStatusContainer_{{ slave.id }}">
         <div class="container-fluid">
             <div class="row">
                 <div class="slave-name col">
                     <h5 class="mt-2">{{ slave.name }}</h5>
+                    <span class="badge badge-dark badge-pill">
+                        <i class="mdi mdi-run"></i>{{ slave.id }}
+                        <i class="mdi mdi-alert"></i>{{ slave.id }}</span>
                 </div>
 
                 <div class="btn-toolbar col" role="toolbar">
                     <div class="btn-group mr-2 sm-button-set" role="group">
-                        <button type="button" id="slaveStartStop_{{ slave.id }}" data-slave-id="{{ slave.id }}" class="btn btn-outline-dark font-weight-light slave-action-start-stop" data-is-running="{{ slave.is_online }}">
+                        <button class="btn btn-dark font-weight-light slave-action-start-stop" type="button" id="slaveStartStop_{{ slave.id }}" data-slave-id="{{ slave.id }}"  data-is-running="{{ slave.is_online }}">
                             <i class="mdi mdi-power"></i>
                             <i class="button-status-display">
                                 {% if slave.is_online %}STOP{% else %}START{% endif %}
                             </i>
                         </button>
 
-                        <button type="button" class="btn btn-outline-dark slave-action-modify font-weight-light" data-slave-id="{{ slave.id }}" data-slave-name="{{ slave.name }}" data-slave-ip="{{ slave.ip_address }}" data-slave-mac="{{ slave.mac_address }}">
+                        <button class="btn btn-dark slave-action-modify font-weight-light" type="button" data-slave-id="{{ slave.id }}" data-slave-name="{{ slave.name }}" data-slave-ip="{{ slave.ip_address }}" data-slave-mac="{{ slave.mac_address }}">
                             <i class="mdi mdi-pencil"></i>
                             <i>EDIT</i>
                         </button>
 
-                        <button type="button" class="btn btn-outline-dark slave-action-delete font-weight-light" data-slave-id="{{ slave.id }}" data-slave-name="{{ slave.name }}">
-                            <i class="mdi mdi-delete"></i>
+                        <button class="btn btn-dark slave-action-delete font-weight-light"type="button" data-slave-id="{{ slave.id }}" data-slave-name="{{ slave.name }}">
+                            <i class="mdi mdi-server-remove"></i>
                             <i>DELETE</i>
                         </button>
                     </div>
@@ -43,46 +46,45 @@
                 </div>
             </div>
         </div>
-    </div>
+        <div class="mr-5 ml-5">
+            <ul class="nav nav-tabs row" id="slavesObjectsList{{ slave.id }}" role="tablist">
+                <li class="nav-item ">
+                    <a class="nav-link font-weight-bold active slave-program-tab bg-light" id="slavesObjectsPrograms{{ slave.id }}" data-toggle="tab"
+                        href="#slavesObjectsProgramsContent{{ slave.id }}" role="tab" data-slave-id="{{ slave.id }}">
+                        <i class="mdi mdi-widgets"></i> PROGRAMS
+                        <button type="button" class="btn program-action-add inline-add-button" data-slave-id="{{ slave.id }}">
+                            <i class="mdi mdi-plus"></i>
+                        </button>
+                    </a>
+                </li>
 
-    <ul class="nav nav-tabs row" id="slavesObjectsList{{ slave.id }}" role="tablist">
-        <li class="nav-item">
-            <a class="nav-link font-weight-bold active slave-program-tab" id="slavesObjectsPrograms{{ slave.id }}" data-toggle="tab" href="#slavesObjectsProgramsContent{{ slave.id }}" role="tab" data-slave-id="{{ slave.id }}">
-                <i class="mdi mdi-widgets"></i> PROGRAMS
-                <button type="button" class="btn program-action-add inline-add-button" data-slave-id="{{ slave.id }}">
-                    <i class="mdi mdi-plus"></i>
-                </button>
-            </a>
-        </li>
+                <li class="nav-item">
+                    <a class="nav-link font-weight-bold slave-filesystem-tab bg-light" id="slavesObjectsFilesystems{{ slave.id }}" data-toggle="tab" href="#slavesObjectsFilesystemsContent{{ slave.id }}"
+                        role="tab" data-slave-id="{{ slave.id }}">
+                        <i class="mdi mdi-file-tree"></i> FILESYSTEM
+                        <button type="button" class="btn filesystem-action-add inline-add-button" data-slave-id="{{ slave.id }}">
+                            <i class="mdi mdi-plus"></i>
+                        </button>
+                    </a>
+                </li>
+            </ul>
 
-        <li class="nav-item" >
-            <a class="nav-link font-weight-bold slave-filesystem-tab" id="slavesObjectsFilesystems{{ slave.id }}" data-toggle="tab" href="#slavesObjectsFilesystemsContent{{ slave.id }}" role="tab" data-slave-id="{{ slave.id }}">
-                <i class="mdi mdi-file-tree"></i> FILESYSTEM
-                <button type="button" class="btn filesystem-action-add inline-add-button" data-slave-id="{{ slave.id }}">
-                    <i class="mdi mdi-plus"></i>
-                </button>
-            </a>
-        </li>
-    </ul>
-
-    <div class="tab-content row pb-4 fsim-box-bottom" id="slavesObjectsConent{{ slave.id }}">
-        <div class="tab-pane fade show container-fluid mt-4 active" id="slavesObjectsProgramsContent{{ slave.id }}" role="tabpanel">
-            {% for program in programs %}
-                {% program_entry program %}
-            {% empty %}
-                <div>
-                    <span class="background-text-normal">No programs registered</span>
+            <div class="tab-content row pb-4 fsim-box-bottom bg-light" id="slavesObjectsConent{{ slave.id }}">
+                <div class="tab-pane list-group flex-column col fade show container-fluid mt-4 active" id="slavesObjectsProgramsContent{{ slave.id }}" role="tabpanel">
+                    {% for program in programs %} {% program_entry program %} {% empty %}
+                    <div>
+                        <span class="background-text-normal">No programs registered</span>
+                    </div>
+                    {% endfor %}
                 </div>
-            {% endfor %}
-        </div>
 
-        <div class="tab-pane fade show container-fluid mt-4 " id="slavesObjectsFilesystemsContent{{ slave.id }}" role="tabpanel">
-            {% for filesystem in filesystems %}
-                {% filesystem_entry filesystem %}
-            {% empty %}
-                <div>
-                    <span class="background-text-normal">No filesystems registered</span>
+                <div class="tab-pane fade show container-fluid mt-4 " id="slavesObjectsFilesystemsContent{{ slave.id }}" role="tabpanel">
+                    {% for filesystem in filesystems %} {% filesystem_entry filesystem %} {% empty %}
+                    <div>
+                        <span class="background-text-normal">No filesystems registered</span>
+                    </div>
+                    {% endfor %}
                 </div>
-            {% endfor %}
+            </div>
         </div>
     </div>

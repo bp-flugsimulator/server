@@ -25,31 +25,28 @@
 {% block content %}
 <div class="row ml-4 mr-4">
     <div class="col-12 col-sm-12 col-md-3 col-xl-2 col-lg-3 mb-4">
-        <div class="row-2 form-group">
-            <label class="client-header font-weight-bold">
-                SCRIPTS
-                <button class="btn inline-add-button script-action-add">
-                    <i class="mdi mdi-plus font-weight-bold"></i>
-                </button>
-            </label>
-        </div>
-
         <div class="row-2">
-            <ul class="nav flex-column col" id="scriptTabList" role="tablist">
-                <li class="nav-item" style="display: none;">
-                    <a class="nav-link font-weight-bold script-tab-link" id="scriptTabNew" data-toggle="tab" href="#scriptTabContentNew" role="tab">
-                    </a>
-                </li>
-
+            <div class="list-group flex-column col" id="scriptTabList" role="tablist">
+                <a class="d-flex justify-content-between align-items-center list-group-item font-weight-bold" id="scripts_list">
+                    <label for="scripts_list">
+                        <font size="4">SCRIPTS</font>
+                    </label>
+                    <button type="button" class="btn  script-action-add bg-light">
+                        <i class="mdi mdi-plus font-weight-bold"></i>
+                    </button>
+                </a>
                 {% for script in scripts %}
-                    <li class="nav-item mb-2 pt-2 pb-2 pr-4 pl-4 fsim-box" data-state="unknown">
-                        <a class="nav-link font-weight-bold script-tab-link" id="scriptTab{{ script.id }}" data-toggle="tab" href="#scriptTabContent{{ script.id }}" role="tab">
-                            <i class="mdi mdi-description"></i>
-                            {{ script.name }}
-                        </a>
-                    </li>
+                    <a class="d-flex justify-content-between align-items-center list-group-item list-group-item-action font-weight-bold fsim-box script-tab-link {% if forloop.first %} active {% endif %}"
+                    data-state="unknown"
+                        id="scriptTab{{ script.id }}" data-toggle="tab"  href="#scriptTabContent{{ script.id }}" data-script-id="{{ script.id }}">
+                        <i class="mdi mdi-description"></i>
+                        {{ script.name }}
+                        <span class="badge badge-dark badge-pill">
+                            <i class="mdi mdi-run"></i>{{ script.id }}
+                            <i class="mdi mdi-alert"></i>{{ script.id }}</span>
+                    </a>
                 {% endfor %}
-            </ul>
+                </div>
         </div>
     </div>
 

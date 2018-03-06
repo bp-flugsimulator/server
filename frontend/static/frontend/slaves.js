@@ -282,21 +282,29 @@ $(document).ready(function () {
     }());
 
     // Set color of the current selected.
-    $('.slave-tab-link.active').parent('li').css('background-color', '#dbdbdc');
+    $('.slave-tab-link.active').addClass("border-dark bg-dark text-light")
+        .children("span").removeClass("badge-dark")
+        .addClass("badge-light");
 
     // Changes the color of the clicked slave, if it was not clicked before.
     $('.slave-tab-link').click(function () {
         if (!$(this).hasClass('active')) {
             // Remove color from the old tabs
             $('.slave-tab-link').each(function (idx, val) {
-                $(val).parent('li').css('background-color', 'transparent');
+                $(val).removeClass("border-dark bg-dark text-light")
+                    .addClass("text-dark")
+                    .children("span").removeClass("badge-light")
+                    .addClass("badge-dark");
             });
 
             // Save Class when opening for every Slave
             localStorage.setItem('status', $(this).attr('href'));
 
             // Change the color of the current tab
-            $(this).parent('li').css('background-color', '#dbdbdc');
+            $(this).removeClass("text-dark")
+                .addClass("border-dark bg-dark text-light")
+                .children("span").removeClass("badge-dark")
+                .addClass("badge-light");
         }
     });
 
@@ -492,7 +500,7 @@ $(document).ready(function () {
         let name = $(this).data('filesystem-name');
         let sourcePath = $(this).data('filesystem-source_path');
         let destinationPath = $(this).data('filesystem-destination_path');
-		
+
         //modify the form for the submit button
         filesystemModal.children().find('.modal-title').text('Edit Filesystem');
         filesystemForm.attr('action', '/api/filesystem/' + id);

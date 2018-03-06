@@ -86,15 +86,32 @@ function newScript(name) {
 }
 
 $(document).ready(function () {
+    // Restores the last clicked script
+    (function () {
+        let href = localStorage.getItem('status_script');
+        if (href !== null) {
+            let iter = $('.script-tab-link').filter(function (idx, val) {
+                return val.hasAttribute('href') && val.getAttribute('href') === href;
+            });
+
+            iter.click();
+        }
+    }());
+
     // Set color of the current selected.
-    $('.script-tab-link.active').parent('li').css('background-color', '#dbdbdc');
+    $('.script-tab-link.active').addClass("border-dark bg-dark text-light")
+        .children("span").removeClass("badge-dark")
+        .addClass("badge-light");
 
     // Changes the color of the clicked slave, if it was not clicked before.
     $('.script-tab-link').click(function () {
         if (!$(this).hasClass('active')) {
             // Remove color from the old tabs
             $('.script-tabbutton-link').each(function (idx, val) {
-                $(val).parent('li').css('background-color', 'transparent');
+                $(val).removeClass("border-dark bg-dark text-light")
+                    .addClass("text-dark")
+                    .children("span").removeClass("badge-light")
+                    .addClass("badge-dark");
             });
             // Create a change listener on all available input fields
             $(':input').change(function(e) {
@@ -109,9 +126,14 @@ $(document).ready(function () {
                 unloadWarning = true;
             });
 
+            // Save Class when opening for every Slave
+            localStorage.setItem('status_script', $(this).attr('href'));
 
             // Change the color of the current tab
-            $(this).parent('li').css('background-color', '#dbdbdc');
+            $(this).removeClass("text-dark")
+                .addClass("border-dark bg-dark text-light")
+                .children("span").removeClass("badge-dark")
+                .addClass("badge-light");
         }
     });
 
