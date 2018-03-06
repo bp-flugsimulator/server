@@ -1,5 +1,5 @@
 
-<div class="row-1 mb-2 pt-2 pb-2 pl-4 pr-4 fsim-box" data-state="{% if program.is_successful %}success{% elif program.is_error %}error{% elif program.is_running %}warning{% else %}unknown{% endif %}" id="programStatusContainer_{{ program.id }}">
+<div class="row-1 mb-2 pt-2 pb-2 pl-4 pr-4 fsim-box" data-state="{{ program.data_status }}" id="programStatusContainer_{{ program.id }}">
 
     <div class="row">
         <div class="program-name col-4 mt-1 font-weight-bold">

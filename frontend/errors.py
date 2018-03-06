@@ -322,16 +322,17 @@ class QueryTypeError(QueryError):
     def regex_string():
         return "Expected something that can be transformed into `.*` from `.*`."
 
+
 class PositiveNumberError(FsimError):
     """
     This class is raised if an value was not zero or positive.
     """
+
     def __init__(self, given, name):
         super().__init__(
-            "Expected zero or positive for {} (given: {})".format(name,given)
+            "Expected zero or positive for {} (given: {})".format(name, given)
         )
 
     @staticmethod
     def regex_string():
         return "Expected zero or positive for .* (given: .*)"
-

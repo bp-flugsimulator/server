@@ -31,6 +31,7 @@ from frontend.errors import (
     ScriptNotExistError,
     QueryParameterError,
     FilesystemNotExistError,
+    PositiveNumberError,
 )
 
 
@@ -250,18 +251,16 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
         self.assertEqual(None, get_slave(None))
 
     def test_script_positive_index(self):
-        self.assertRaisesRegex(
-            ValueError,
-            "positive integer",
+        self.assertRaises(
+            PositiveNumberError,
             ScriptEntryProgram,
             -1,
             0,
             0,
         )
 
-        self.assertRaisesRegex(
-            ValueError,
-            "positive integer",
+        self.assertRaises(
+            PositiveNumberError,
             ScriptEntryFilesystem,
             -1,
             0,

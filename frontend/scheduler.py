@@ -57,6 +57,24 @@ class Scheduler:
         self.__index = None
         self.__script = None
 
+    def spawn(self, *args, **kwargs):
+        """
+        Thread-safe function.
+
+        This functions allows the task execution from the outside of the
+        `Scheudler`.
+
+        Parameters
+        ----------
+            args: list
+                This args will be forwarded to `SafeLoop.spawn`
+            kwargs: list
+                This args will be forwarded to `SafeLoop.spawn`
+        """
+        with self.lock:
+            self.loop.spawn(*args, **kwargs)
+
+
     def is_running(self):
         """
         Thread-safe function.

@@ -116,6 +116,7 @@ class Slave(Model):
             If the client has connected to the server
 
     """
+    #persistent fields
     name = CharField(unique=True, max_length=200)
     ip_address = GenericIPAddressField(unique=True)
     mac_address = CharField(
@@ -124,8 +125,16 @@ class Slave(Model):
         validators=[validate_mac_address],
     )
 
+    #non persistent fields
     command_uuid = CharField(blank=True, null=True, max_length=32, unique=True)
     online = BooleanField(unique=False, default=False)
+
+    def reset(self):
+        """
+        Resets non persistent fields to their default value.
+        """
+        self.command_uuid = None
+        self.error_code = ""
 
     @property
     def is_online(self):
@@ -204,6 +213,29 @@ class Program(Model):
         Meta class
         """
         unique_together = (('name', 'slave'), )
+
+
+    def __str__(self):
+        return str(self.name)
+
+    @property
+    def data_state(self):
+        """
+        Returns the current state of this `Filesystem` as a string.
+
+        Returns
+        -------
+            str:
+                One of "running", "error", "success" or "unknown"
+        """
+        if self.is_running:
+            "running"
+        elif self.is_error:
+            "error"
+        elif self.is_executed:
+            "success"
+        else:
+            "unknown"
 
     @property
     def is_timeouted(self):
@@ -360,6 +392,13 @@ class Filesystem(Model):
             ),
         )
 
+    def reset(self):
+        """
+        Resets non persistent fields to their default value.
+        """
+        self.command_uuid = None
+        self.error_code = ""
+
     def __str__(self):
         return self.name
 
@@ -429,13 +468,24 @@ class Script(Model):
             If the `Script` is running, then this field contains the current
             index/stage.
     """
+    #persistent fields
     name = CharField(unique=True, blank=False, max_length=200)
     last_ran = BooleanField(default=False, blank=True)
 
+    #non persistent fields
     is_initialized = BooleanField(default=False, blank=True)
     is_running = BooleanField(default=False, blank=True)
     error_code = CharField(default="", max_length=1000, blank=True)
     current_index = IntegerField(default=-1, blank=True)
+
+    def reset(self):
+        """
+        Resets non persistent fields to their default value.
+        """
+        self.is_initialized = False
+        self.is_running = False
+        self.error_code = ""
+        self.current_index = -1
 
     def __str__(self):
         return self.name

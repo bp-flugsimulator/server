@@ -384,7 +384,10 @@ class ScriptEntryProgram:
     """
 
     def __init__(self, index, program, slave):
-        typecheck_index(index)
+        ensure_type("index", index, int)
+
+        if index < 0:
+            raise PositiveNumberError(index, "index")
         self.index = index
 
         ensure_type("program", program, str, int)

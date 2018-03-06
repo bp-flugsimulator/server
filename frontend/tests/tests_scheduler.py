@@ -341,7 +341,7 @@ class SchedulerTests(TestCase):
 
         t = Timer(
             1,
-            self.sched.timer_scheduler_slave_timeout,
+            self.sched.slave_timeout_callback,
         )
 
         t.start()

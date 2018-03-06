@@ -155,7 +155,11 @@ class DatabaseTests(TestCase):  # pylint: disable=unused-variable
         slave = SlaveFactory()
 
         flush('Slave')
-        flush('UnknownModel')
+        self.assertRaises(
+            AttributeError,
+            flush,
+            'UnknownModel',
+        )
 
         self.assertFalse(SlaveModel.objects.filter(name=slave.name).exists())
 
