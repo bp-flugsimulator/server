@@ -9,7 +9,6 @@ from utils.typecheck import ensure_type
 from .errors import FsimError
 
 
-
 class StatusResponse(HttpResponse):
     """
     Override of the standard HttpResponse
@@ -95,6 +94,7 @@ def notify_err(message):
     """
     Group('notifications').send({'text': Status.err(message).to_json()})
 
+
 def notify_slave(command, slave_id):
     """
     Sending the given `message` to the notification channel. Indicating that
@@ -107,8 +107,4 @@ def notify_slave(command, slave_id):
             wrapped around.
     """
     ensure_type("command", command, Command)
-    Group('client_' + str(slave_id)).send({
-        'text':
-        command.to_json()
-    })
-
+    Group('client_' + str(slave_id)).send({'text': command.to_json()})

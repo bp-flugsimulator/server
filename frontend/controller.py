@@ -346,6 +346,8 @@ def prog_stop(prog):
             str(prog.slave.name),
             "stop",
         )
+
+
 def slave_shutdown(slave):
     """
     This functions shutsdown a `SlaveModel` by a command to the slave.
@@ -362,12 +364,10 @@ def slave_shutdown(slave):
     """
     if slave.is_online:
         notify_slave(Command(method="shutdown"), slave.id)
-        notify({
-            "message":
-            "Send shutdown Command to {}".format(slave.name)
-        })
+        notify({"message": "Send shutdown Command to {}".format(slave.name)})
     else:
         raise SlaveOfflineError('', '', 'shutdown', slave.name)
+
 
 def slave_wake_on_lan(slave):
     """
@@ -387,10 +387,7 @@ def slave_wake_on_lan(slave):
     ensure_type("slave", slave, SlaveModel)
     send_magic_packet(slave.mac_address)
 
-    notify({
-        "message":
-        "Send start command to client `{}`".format(slave.name)
-    })
+    notify({"message": "Send start command to client `{}`".format(slave.name)})
 
 
 def prog_log_get(program):
@@ -437,6 +434,7 @@ def prog_log_get(program):
         program.slave.id,
     )
 
+
 def prog_log_enable(program):
     """
     This function is enabling the log transfer for a `ProgramModel` by sending
@@ -477,6 +475,7 @@ def prog_log_enable(program):
         program.slave.id,
     )
 
+
 def prog_log_disable(program):
     """
     This function is disabling the log transfer for a `ProgramModel` by sending
@@ -511,6 +510,7 @@ def prog_log_disable(program):
         ),
         program.slave.id,
     )
+
 
 def script_deep_copy(script):
     """

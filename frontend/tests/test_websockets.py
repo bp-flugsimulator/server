@@ -56,7 +56,6 @@ from .factory import (
 
 
 class RPCWebsocketTests(TestCase):
-
     def test_connect_success(self):
         slave = SlaveFactory()
 
@@ -104,7 +103,9 @@ class RPCWebsocketTests(TestCase):
         ws_client.send_and_consume(
             'websocket.connect',
             path='/commands',
-            content={'client': [slave.ip_address, slave.mac_address]})
+            content={
+                'client': [slave.ip_address, slave.mac_address]
+            })
 
         # connect webinterface on /notifications
         webinterface = WSClient()
@@ -150,7 +151,9 @@ class RPCWebsocketTests(TestCase):
         ws_client.send_and_consume(
             'websocket.connect',
             path='/commands',
-            content={'client': [slave.ip_address, slave.mac_address]})
+            content={
+                'client': [slave.ip_address, slave.mac_address]
+            })
 
         # connect webinterface on /notifications
         webinterface = WSClient()
@@ -287,7 +290,9 @@ class RPCWebsocketTests(TestCase):
         ws_client.send_and_consume(
             'websocket.receive',
             path='/commands',
-            content={'text': error_status.to_json()})
+            content={
+                'text': error_status.to_json()
+            })
 
         self.assertFalse(SlaveModel.objects.get(id=slave.id).is_online)
 
@@ -732,7 +737,6 @@ class RPCWebsocketTests(TestCase):
 
 
 class NotificationWebsocketTests(TestCase):
-
     def test_connect_and_disconnect_success(self):
         ws_client = WSClient()
         ws_client.send_and_consume(
@@ -758,7 +762,6 @@ class NotificationWebsocketTests(TestCase):
 
 
 class LogWebsocketTests(TestCase):
-
     def test_connect_and_disconnect_success(self):
         webinterface = WSClient()
         webinterface.join_group('notifications')
@@ -778,6 +781,8 @@ class LogWebsocketTests(TestCase):
         })
 
         ws_client.send_and_consume(
-            'websocket.receive', path='/logs', content={'text': msg.to_json()})
+            'websocket.receive', path='/logs', content={
+                'text': msg.to_json()
+            })
         self.assertEqual(msg,
                          Status.from_json(json.dumps(webinterface.receive())))

@@ -81,11 +81,8 @@ class SafeLoop:
         return task
 
     def __run__(self):
-        LOGGER.debug(
-            "Running event loop `%s` in thread %s.",
-            self.ident,
-            self.thread.ident
-        )
+        LOGGER.debug("Running event loop `%s` in thread %s.", self.ident,
+                     self.thread.ident)
         self.loop.run_forever()
         LOGGER.debug("The event loop `%s` has finished.", self.ident)
 

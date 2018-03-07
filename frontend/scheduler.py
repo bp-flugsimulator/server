@@ -74,7 +74,6 @@ class Scheduler:
         with self.lock:
             self.loop.spawn(*args, **kwargs)
 
-
     def is_running(self):
         """
         Thread-safe function.

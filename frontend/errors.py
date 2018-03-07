@@ -329,9 +329,8 @@ class PositiveNumberError(FsimError):
     """
 
     def __init__(self, given, name):
-        super().__init__(
-            "Expected zero or positive for {} (given: {})".format(name, given)
-        )
+        super().__init__("Expected zero or positive for {} (given: {})".format(
+            name, given))
 
     @staticmethod
     def regex_string():

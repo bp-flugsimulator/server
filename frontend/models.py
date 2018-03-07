@@ -213,7 +213,6 @@ class Program(Model):
         """
         unique_together = (('name', 'slave'), )
 
-
     def __str__(self):
         return str(self.name)
 

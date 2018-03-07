@@ -26,6 +26,7 @@ def flush(*tables):
         except OperationalError:
             pass
 
+
 def reset(*tables):
     """
     Resets all fields for every row in the database for all given `tables`.
@@ -42,24 +43,21 @@ def reset(*tables):
         try:
             attr = getattr(models, table)
         except AttributeError:
-            raise AttributeError(
-                "The table {} does not exist.".format(table)
-            )
+            raise AttributeError("The table {} does not exist.".format(table))
         try:
             objs = getattr(models, table).objects
         except AttributeError:
             raise AttributeError(
-                "The table {} is not a Django.Model".format(table)
-            )
+                "The table {} is not a Django.Model".format(table))
         try:
             for obj in objs.all():
                 obj.reset()
         except AttributeError:
             raise AttributeError(
-                "The table {} has no function `reset(self)`.".format(table)
-            )
+                "The table {} has no function `reset(self)`.".format(table))
         except OperationalError:
             pass
+
 
 class FrontendConfig(AppConfig):
     """

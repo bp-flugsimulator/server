@@ -109,12 +109,13 @@ class SchedulerTests(TestCase):
         })
 
         expct2 = Status.ok({
-            'message': "Send start command to client `{}`".format(self.prog1.slave.name),
+            'message':
+            "Send start command to client `{}`".format(self.prog1.slave.name),
         })
 
         expct3 = Status.ok({
-            'message': "Send start command to client `{}`".format(self.prog2
-                                                                  .slave.name),
+            'message':
+            "Send start command to client `{}`".format(self.prog2.slave.name),
         })
 
         if msg1 != expct1 and msg1 != expct2 \

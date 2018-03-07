@@ -72,8 +72,6 @@ from .factory import (
 )
 
 from .testcases import StatusTestCase
-"""
-"""
 
 
 class ScriptTest(StatusTestCase):
@@ -105,8 +103,8 @@ class ScriptTest(StatusTestCase):
 
         db_script = ScriptModel.objects.get(name=script_name)
 
-        response = self.client.delete(reverse("frontend:script_entry",
-                                              args=[db_script.id]),)
+        response = self.client.delete(
+            reverse("frontend:script_entry", args=[db_script.id]), )
         self.assertEqual(response.status_code, 200)
         self.assertFalse(ScriptModel.objects.filter(name=script_name).exists())
 
@@ -115,13 +113,12 @@ class ScriptTest(StatusTestCase):
         self.assertEqual(response.status_code, 403)
 
     def test_set_post_type_error(self):
-        #TODO: fix this test
+        # TODO: fix this test
         response = self.client.post(
             reverse("frontend:script_set"),
             data='{"name": "test", "programs": [], "filesystems": [null]}',
             content_type="application/json",
         )
-
         self.assertEqual(response.status_code, 200)
 
         self.assertContains(
@@ -150,13 +147,12 @@ class ScriptTest(StatusTestCase):
         )
 
     def test_set_post_success(self):
-        #TODO: fix this test
+        # TODO: fix this test
         response = self.client.post(
             reverse("frontend:script_set"),
             data='{"name": "test", "programs": {}, "filesystems": {}}',
             content_type="application/json",
         )
-
         self.assertEqual(response.status_code, 200)
 
         self.assertContains(
@@ -186,7 +182,6 @@ class ScriptTest(StatusTestCase):
             data=json.dumps(data),
             content_type="application/text",
         )
-
         self.assertEqual(response.status_code, 200)
 
         self.assertEqual(
@@ -199,6 +194,7 @@ class ScriptTest(StatusTestCase):
             data=json.dumps(data),
             content_type="application/text",
         )
+        self.assertEqual(response.status_code, 200)
 
         self.assertEqual(
             Status.err("Script with this Name already exists."),
@@ -238,8 +234,8 @@ class ScriptTest(StatusTestCase):
             data=json.dumps(data),
             content_type="application/text",
         )
-
         self.assertEqual(response.status_code, 200)
+
         self.assertEqual(
             Status.ok(""),
             Status.from_json(response.content.decode('utf-8')),
@@ -261,8 +257,7 @@ class ScriptTest(StatusTestCase):
         db_script = ScriptModel.objects.get(name=script_name)
 
         response = self.client.get(
-            reverse("frontend:script_entry", args=[db_script.id]),
-        )
+            reverse("frontend:script_entry", args=[db_script.id]), )
         self.assertEqual(response.status_code, 200)
 
         self.assertEqual(
@@ -339,7 +334,10 @@ class ScriptTest(StatusTestCase):
         db_script = ScriptModel.objects.get(name=script_name)
 
         response = self.client.get(
-            reverse("frontend:script_entry", args=[db_script.id],),
+            reverse(
+                "frontend:script_entry",
+                args=[db_script.id],
+            ),
             {'slaves': 'int'},
         )
         self.assertEqual(response.status_code, 200)
@@ -350,7 +348,10 @@ class ScriptTest(StatusTestCase):
         )
 
         response = self.client.get(
-            reverse("frontend:script_entry", args=[db_script.id],),
+            reverse(
+                "frontend:script_entry",
+                args=[db_script.id],
+            ),
             {'slaves': 'str'},
         )
         self.assertEqual(response.status_code, 200)
@@ -382,7 +383,10 @@ class ScriptTest(StatusTestCase):
         db_script = ScriptModel.objects.get(name=script_name)
 
         response = self.client.get(
-            reverse("frontend:script_entry", args=[db_script.id],),
+            reverse(
+                "frontend:script_entry",
+                args=[db_script.id],
+            ),
             {'programs': 'int'},
         )
         self.assertEqual(response.status_code, 200)
@@ -393,7 +397,10 @@ class ScriptTest(StatusTestCase):
         )
 
         response = self.client.get(
-            reverse("frontend:script_entry", args=[db_script.id],),
+            reverse(
+                "frontend:script_entry",
+                args=[db_script.id],
+            ),
             {'programs': 'str'},
         )
         self.assertEqual(response.status_code, 200)
@@ -425,7 +432,10 @@ class ScriptTest(StatusTestCase):
         db_script = ScriptModel.objects.get(name=script_name)
 
         response = self.client.get(
-            reverse("frontend:script_entry", args=[db_script.id],),
+            reverse(
+                "frontend:script_entry",
+                args=[db_script.id],
+            ),
             {'filesystems': 'int'},
         )
         self.assertEqual(response.status_code, 200)
@@ -436,7 +446,10 @@ class ScriptTest(StatusTestCase):
         )
 
         response = self.client.get(
-            reverse("frontend:script_entry", args=[db_script.id],),
+            reverse(
+                "frontend:script_entry",
+                args=[db_script.id],
+            ),
             {'filesystems': 'str'},
         )
         self.assertEqual(response.status_code, 200)
@@ -451,12 +464,13 @@ class ScriptTest(StatusTestCase):
         sgp = SGPFactory(script=script)
         sgf = SGFFactory(script=script)
 
-        resp = self.client.get(
+        response = self.client.get(
             reverse('frontend:script_copy', args=[str(script.id)]))
+        self.assertEqual(response.status_code, 200)
 
         self.assertEqual(
             Status.ok(''),
-            Status.from_json(resp.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
         self.assertTrue(
             ScriptModel.objects.filter(name=script.name + '_copy').exists())
@@ -472,30 +486,38 @@ class ScriptTest(StatusTestCase):
         self.assertEqual(sgp.program, sgp_copy.program)
 
         for i in range(1, 10):
-            resp = self.client.get(
-                reverse('frontend:script_copy', args=[script.id]))
+            response = self.client.get(
+                reverse(
+                    'frontend:script_copy',
+                    args=[script.id],
+                ))
+            self.assertEqual(response.status_code, 200)
+
             self.assertEqual(
                 Status.ok(''),
-                Status.from_json(resp.content.decode('utf-8')),
+                Status.from_json(response.content.decode('utf-8')),
             )
             copy_name = "{}_copy_{}".format(script.name, i)
-            self.assertTrue(ScriptModel.objects.filter(name=copy_name).exists())
+            self.assertTrue(
+                ScriptModel.objects.filter(name=copy_name).exists())
 
     def test_copy_get_not_exist(self):
-        resp = self.client.get(reverse(
-            'frontend:script_copy',
-            args=[0],
-        ))
+        response = self.client.get(
+            reverse(
+                'frontend:script_copy',
+                args=[0],
+            ))
+        self.assertEqual(response.status_code, 200)
 
         self.assertStatusRegex(
             Status.err(ScriptNotExistError),
-            Status.from_json(resp.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
 
     def test_copy_delete_forbidden(self):
-        api_response = self.client.delete(
+        response = self.client.delete(
             reverse('frontend:script_copy', args=['0']))
-        self.assertEqual(403, api_response.status_code)
+        self.assertEqual(403, response.status_code)
 
     def test_entry_put_success(self):
         # send the same object to the api route
@@ -504,15 +526,15 @@ class ScriptTest(StatusTestCase):
         SGFFactory(script=script)
         script_script = Script.from_model(script.id, "str", "str", "str")
 
-        api_response = self.client.put(
+        response = self.client.put(
             reverse("frontend:script_entry", args=[script.id]),
             data=json.dumps(dict(script_script)),
         )
+        self.assertEqual(response.status_code, 200)
 
-        self.assertEqual(api_response.status_code, 200)
         self.assertEqual(
             Status.ok(""),
-            Status.from_json(api_response.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
 
         # modifiy the element and resend it
@@ -521,19 +543,21 @@ class ScriptTest(StatusTestCase):
         sgf2 = SGFFactory.build(script=script, filesystem=filesystem2)
 
         script_script.filesystems.append(
-            ScriptEntryFilesystem(sgf2.index, sgf2.filesystem.name,
-                                  sgf2.filesystem.slave.name,),
-        )
+            ScriptEntryFilesystem(
+                sgf2.index,
+                sgf2.filesystem.name,
+                sgf2.filesystem.slave.name,
+            ), )
 
-        api_response = self.client.put(
+        response = self.client.put(
             reverse("frontend:script_entry", args=[script.id]),
             data=json.dumps(dict(script_script)),
         )
+        self.assertEqual(response.status_code, 200)
 
-        self.assertEqual(api_response.status_code, 200)
         self.assertEqual(
             Status.ok(""),
-            Status.from_json(api_response.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
 
         new_script_script = Script.from_model(script.id, "str", "str", "str")
@@ -548,87 +572,84 @@ class ScriptTest(StatusTestCase):
         script_script = Script.from_model(script.id, "str", "str", "str")
 
         script_script.name = script2.name
-        api_response = self.client.put(
+        response = self.client.put(
             reverse("frontend:script_entry", args=[script.id]),
             data=json.dumps(dict(script_script)),
         )
+        self.assertEqual(response.status_code, 200)
 
-        self.assertEqual(api_response.status_code, 200)
-        self.assertContains(api_response, "UNIQUE constraint failed")
+        self.assertContains(response, "UNIQUE constraint failed")
 
 
 class FilesystemTests(StatusTestCase):
     maxDiff = None
 
     def test_entry_post_forbidden(self):
-        api_response = self.client.post(
-          reverse("frontend:filesystem_entry", args=['0']))
-        self.assertEqual(api_response.status_code, 403)
+        response = self.client.post(
+            reverse("frontend:filesystem_entry", args=['0']))
+        self.assertEqual(response.status_code, 403)
 
     def test_entry_delete_deleted_error(self):
         filesystem = FileFactory(hash_value="Some")
-        api_response = self.client.delete(
+        response = self.client.delete(
             reverse("frontend:filesystem_entry", args=[filesystem.id]))
-        self.assertEqual(api_response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
 
         self.assertStatusRegex(
             Status.err(FilesystemDeleteError),
-            Status.from_json(api_response.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
 
     def test_restore_post_forbidden(self):
-        api_response = self.client.post(
+        response = self.client.post(
             reverse("frontend:filesystem_restore", args=['0']))
-        self.assertEqual(api_response.status_code, 403)
+        self.assertEqual(response.status_code, 403)
 
     def test_move_post_forbidden(self):
-        api_response = self.client.post(
+        response = self.client.post(
             reverse("frontend:filesystem_move", args=['0']))
-        self.assertEqual(api_response.status_code, 403)
+        self.assertEqual(response.status_code, 403)
 
     def test_move_get_offline_error(self):
         filesystem = FileFactory()
 
-        api_response = self.client.get(
+        response = self.client.get(
             reverse("frontend:filesystem_move", args=[filesystem.id]))
-        self.assertEqual(api_response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
 
         self.assertStatusRegex(
             Status.err(SlaveOfflineError),
-            Status.from_json(api_response.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
 
     def test_move_get_not_exist(self):
-        api_response = self.client.get(
+        response = self.client.get(
             reverse("frontend:filesystem_move", args=['0']))
-
-        self.assertEqual(api_response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
 
         self.assertStatusRegex(
             Status.err(FilesystemNotExistError),
-            Status.from_json(api_response.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
 
     def test_restore_get_not_exist(self):
-        api_response = self.client.get(
+        response = self.client.get(
             reverse("frontend:filesystem_restore", args=['0']))
-
-        self.assertEqual(api_response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
 
         self.assertStatusRegex(
             Status.err(FilesystemNotExistError),
-            Status.from_json(api_response.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
 
     def test_entry_delete_not_exist(self):
-        api_response = self.client.delete(
+        response = self.client.delete(
             reverse("frontend:filesystem_entry", args=['0']))
-
-        self.assertEqual(api_response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
 
         self.assertStatusRegex(
             Status.err(FilesystemNotExistError),
-            Status.from_json(api_response.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
 
     def test_move_get_success(self):
@@ -639,12 +660,12 @@ class FilesystemTests(StatusTestCase):
         ws_client = WSClient()
         ws_client.join_group('client_' + str(slave.id))
 
-        api_response = self.client.get(
+        response = self.client.get(
             reverse("frontend:filesystem_move", args=[filesystem.id]))
-        self.assertEqual(api_response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
 
         self.assertEqual(
-            Status.from_json(api_response.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
             Status.ok(''),
         )
 
@@ -660,7 +681,7 @@ class FilesystemTests(StatusTestCase):
             Command.from_json(json.dumps(ws_client.receive())),
         )
 
-        #case directory
+        # case directory
         filesystem = FileFactory(
             slave=slave, source_type="dir", destination_type="dir")
 
@@ -668,12 +689,12 @@ class FilesystemTests(StatusTestCase):
         ws_client = WSClient()
         ws_client.join_group('client_' + str(slave.id))
 
-        api_response = self.client.get(
+        response = self.client.get(
             reverse("frontend:filesystem_move", args=[filesystem.id]))
-        self.assertEqual(api_response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
 
         self.assertEqual(
-            Status.from_json(api_response.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
             Status.ok(''),
         )
 
@@ -712,12 +733,12 @@ class FilesystemTests(StatusTestCase):
         ws_client = WSClient()
         ws_client.join_group('client_' + str(slave.id))
 
-        api_response = self.client.get(
+        response = self.client.get(
             reverse("frontend:filesystem_move", args=[filesystem.id]))
-        self.assertEqual(api_response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
 
         self.assertEqual(
-            Status.from_json(api_response.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
             Status.ok(''),
         )
 
@@ -755,10 +776,11 @@ class FilesystemTests(StatusTestCase):
     def test_entry_delete_success(self):
         filesystem = FileFactory()
 
-        api_response = self.client.delete(
+        response = self.client.delete(
             reverse("frontend:filesystem_entry", args=[filesystem.id]))
-        self.assertEqual(api_response.status_code, 200)
-        self.assertEquals(api_response.json()['status'], 'ok')
+        self.assertEqual(response.status_code, 200)
+
+        self.assertEquals(response.json()['status'], 'ok')
         self.assertFalse(
             FilesystemModel.objects.filter(id=filesystem.id).exists())
 
@@ -766,14 +788,22 @@ class FilesystemTests(StatusTestCase):
         filesystem = FileFactory()
         name_half = int(len(filesystem.name) / 2)
 
-        response = self.client.get(
-            reverse("frontend:filesystem_set"), args={})
+        response = self.client.get(reverse("frontend:filesystem_set"), args={})
+        self.assertEqual(response.status_code, 200)
+
         self.assertContains(response, filesystem.name)
+
         response = self.client.get(
-            reverse("frontend:filesystem_set"), args={filesystem.name[:name_half]})
+            reverse("frontend:filesystem_set"),
+            args={filesystem.name[:name_half]})
+        self.assertEqual(response.status_code, 200)
+
         self.assertContains(response, filesystem.name)
+
         response = self.client.get(
             reverse("frontend:filesystem_set"), args={filesystem.name})
+        self.assertEqual(response.status_code, 200)
+
         self.assertContains(response, filesystem.name)
 
     def test_set_post_success(self):
@@ -781,7 +811,7 @@ class FilesystemTests(StatusTestCase):
         filesystem = FileFactory.build()
 
         # add all programs
-        api_response = self.client.post(
+        response = self.client.post(
             reverse("frontend:filesystem_set"), {
                 'name': filesystem.name,
                 'source_path': filesystem.source_path,
@@ -790,12 +820,11 @@ class FilesystemTests(StatusTestCase):
                 'destination_type': filesystem.destination_type,
                 'slave': str(slave.id)
             })
-
-        self.assertEqual(api_response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
 
         self.assertEqual(
             Status.ok(''),
-            Status.from_json(api_response.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
 
         self.assertTrue(
@@ -805,7 +834,9 @@ class FilesystemTests(StatusTestCase):
                 destination_path=filesystem.destination_path,
                 slave=slave,
             ))
-#TODO merge
+
+    # TODO merge
+
     def test_set_post_value_error(self):
         slave = SlaveFactory()
         filesystem = FileFactory.build()
@@ -815,7 +846,7 @@ class FilesystemTests(StatusTestCase):
         for _ in range(2000):
             long_str += 'a'
 
-        api_response = self.client.post(
+        response = self.client.post(
             reverse("frontend:filesystem_set"), {
                 'name': long_str,
                 'source_path': filesystem.source_path,
@@ -824,22 +855,23 @@ class FilesystemTests(StatusTestCase):
                 'destination_type': filesystem.destination_type,
                 'slave': str(slave.id)
             })
+        self.assertEqual(200, response.status_code)
 
-        self.assertEqual(200, api_response.status_code)
         self.assertEqual(
             Status.err({
                 "name": [
                     "Ensure this value has at most 200 characters (it has 2000)."
                 ],
             }),
-            Status.from_json(api_response.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
-#TODO merge
+# TODO merge
+
     def test_set_post_name_error(self):
         filesystem = FileFactory()
 
         # add all programs
-        api_response = self.client.post(
+        response = self.client.post(
             reverse("frontend:filesystem_set"), {
                 'name': filesystem.name,
                 'source_path': filesystem.source_path,
@@ -848,21 +880,24 @@ class FilesystemTests(StatusTestCase):
                 'destination_type': filesystem.destination_type,
                 'slave': str(filesystem.slave.id)
             })
+        self.assertEqual(response.status_code, 200)
 
-        self.assertEqual(api_response.status_code, 200)
         self.assertEqual(
             Status.err({
                 'name':
                 ['Filesystem with this Name already exists on this Client.']
             }),
-            Status.from_json(api_response.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
-#TODO merge
+
+
+# TODO merge
+
     def test_set_post_path_error(self):
         filesystem = FileFactory()
 
         # add all programs
-        api_response = self.client.post(
+        response = self.client.post(
             reverse("frontend:filesystem_set"), {
                 'name': filesystem.name + "new",
                 'source_path': filesystem.source_path,
@@ -871,8 +906,8 @@ class FilesystemTests(StatusTestCase):
                 'destination_type': filesystem.destination_type,
                 'slave': str(filesystem.slave.id)
             })
+        self.assertEqual(response.status_code, 200)
 
-        self.assertEqual(api_response.status_code, 200)
         self.assertEqual(
             Status.err({
                 'source_path': [
@@ -882,25 +917,26 @@ class FilesystemTests(StatusTestCase):
                     'Filesystem with this source path and destination path already exists on this Client.'
                 ],
             }),
-            Status.from_json(api_response.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
-#TODO rename + reverse
+
+    # TODO rename + reverse
+
     def test_query_get_all_by_slave(self):
         filesystem = FileFactory()
 
         with_str = self.client.get(
             '/api/filesystems?slave={}&slave_str=True'.format(
                 filesystem.slave.name))
+        self.assertEqual(with_str.status_code, 200)
 
         whithout_str = self.client.get(
             '/api/filesystems?slave={}&slave_str=False'.format(
                 filesystem.slave.id))
+        self.assertEqual(whithout_str.status_code, 200)
 
         ints = self.client.get('/api/filesystems?slave={}'.format(
             filesystem.slave.id))
-
-        self.assertEqual(with_str.status_code, 200)
-        self.assertEqual(whithout_str.status_code, 200)
         self.assertEqual(ints.status_code, 200)
 
         with_str = Status.from_json(with_str.content.decode('utf-8'))
@@ -926,60 +962,62 @@ class FilesystemTests(StatusTestCase):
             ints,
             Status.ok(slaves),
         )
-#TODO rename + reverse
-    def test_query_get_all_wrong_type(self):
-        resp = self.client.get('/api/filesystems?slave=not_an_int')
 
-        self.assertEqual(resp.status_code, 200)
+    # TODO rename + reverse
+
+    def test_query_get_all_wrong_type(self):
+        response = self.client.get('/api/filesystems?slave=not_an_int')
+        self.assertEqual(response.status_code, 200)
 
         self.assertStatusRegex(
             Status.err(QueryTypeError),
-            Status.from_json(resp.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
-#TODO rename +reverse
+
+    # TODO rename +reverse
+
     def test_query_get_does_not_exist(self):
-        resp_int = self.client.get('/api/filesystems?slave=-1')
-        resp_str = self.client.get(
+        response_int = self.client.get('/api/filesystems?slave=-1')
+        self.assertEqual(response_int.status_code, 200)
+
+        response_str = self.client.get(
             '/api/filesystems?slave=none&slave_str=True')
-
-        self.assertEqual(resp_int.status_code, 200)
-        self.assertEqual(resp_str.status_code, 200)
+        self.assertEqual(response_str.status_code, 200)
 
         self.assertStatusRegex(
             Status.err(SlaveNotExistError),
-            Status.from_json(resp_int.content.decode('utf-8')),
+            Status.from_json(response_int.content.decode('utf-8')),
         )
 
         self.assertStatusRegex(
             Status.err(SlaveNotExistError),
-            Status.from_json(resp_str.content.decode('utf-8')),
+            Status.from_json(response_str.content.decode('utf-8')),
         )
-#TODO rename + reverse
+
+    # TODO rename + reverse
+
     def test_query_get_all(self):
-        resp = self.client.get('/api/filesystems')
-
-        self.assertEqual(resp.status_code, 200)
+        response = self.client.get('/api/filesystems')
+        self.assertEqual(response.status_code, 200)
 
         self.assertEqual(
             Status.ok([]),
-            Status.from_json(resp.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
 
         filesystem = FileFactory()
 
-        resp = self.client.get('/api/filesystems')
+        response = self.client.get('/api/filesystems')
+        self.assertEqual(response.status_code, 200)
+
         self.assertEqual(
             Status.ok([filesystem.name]),
-            Status.from_json(resp.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
-#TODO assert + rename + reverse
-    def test_allowed_methods(self):
-        self.client.put("/api/filesystem")
 
     def test_set_delete_forbidden(self):
-        api_response = self.client.delete(
-            reverse("frontend:filesystem_set"))
-        self.assertEqual(api_response.status_code, 403)
+        response = self.client.delete(reverse("frontend:filesystem_set"))
+        self.assertEqual(response.status_code, 403)
 
     def test_move_get_exists_error(self):
         slave = SlaveFactory(online=True)
@@ -989,18 +1027,18 @@ class FilesystemTests(StatusTestCase):
         ws_client = WSClient()
         ws_client.join_group('client_' + str(slave.id))
 
-        api_response = self.client.get(
+        response = self.client.get(
             reverse("frontend:filesystem_move", args=[filesystem.id]))
-        self.assertEqual(api_response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
 
         self.assertStatusRegex(
             Status.err(FilesystemMovedError.regex_string()),
-            Status.from_json(api_response.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
 
         self.assertIsNone(ws_client.receive())
 
-    def test_move_get_offline(self):
+    def test_restore_get_offline(self):
         slave = SlaveFactory(online=False)
         filesystem = FileFactory(slave=slave)
 
@@ -1009,19 +1047,27 @@ class FilesystemTests(StatusTestCase):
 
         restore_response = self.client.get(
             reverse("frontend:filesystem_restore", args=[filesystem.id]))
-
         self.assertEqual(restore_response.status_code, 200)
-        self.assertIsNone(ws_client.receive())
 
-        move_response = self.client.get(
-            reverse("frontend:filesystem_move", args=[filesystem.id]))
-        self.assertEqual(move_response.status_code, 200)
         self.assertIsNone(ws_client.receive())
 
         self.assertStatusRegex(
             Status.err(SlaveOfflineError),
             Status.from_json(restore_response.content.decode('utf-8')),
         )
+
+    def test_move_get_offline(self):
+        slave = SlaveFactory(online=False)
+        filesystem = FileFactory(slave=slave)
+
+        ws_client = WSClient()
+        ws_client.join_group('client_' + str(slave.id))
+
+        move_response = self.client.get(
+            reverse("frontend:filesystem_move", args=[filesystem.id]))
+        self.assertEqual(move_response.status_code, 200)
+
+        self.assertIsNone(ws_client.receive())
 
         self.assertStatusRegex(
             Status.err(SlaveOfflineError),
@@ -1036,13 +1082,13 @@ class FilesystemTests(StatusTestCase):
         ws_client = WSClient()
         ws_client.join_group('client_' + str(slave.id))
 
-        api_response = self.client.get(
+        response = self.client.get(
             reverse("frontend:filesystem_restore", args=[filesystem.id]))
-        self.assertEqual(api_response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
 
         self.assertStatusRegex(
             Status.err(FilesystemNotMovedError),
-            Status.from_json(api_response.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
 
         self.assertIsNone(ws_client.receive())
@@ -1055,12 +1101,12 @@ class FilesystemTests(StatusTestCase):
         ws_client = WSClient()
         ws_client.join_group('client_' + str(slave.id))
 
-        api_response = self.client.get(
+        response = self.client.get(
             reverse("frontend:filesystem_restore", args=[filesystem.id]))
-        self.assertEqual(api_response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
 
         self.assertEqual(
-            Status.from_json(api_response.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
             Status.ok(''),
         )
 
@@ -1078,15 +1124,15 @@ class FilesystemTests(StatusTestCase):
         )
 
     def test_entry_get_forbidden(self):
-        api_response = self.client.get(
+        response = self.client.get(
             reverse("frontend:filesystem_entry", args=['0']))
-        self.assertEqual(api_response.status_code, 403)
+        self.assertEqual(response.status_code, 403)
 
     def test_entry_put_success(self):
         filesystem = FileFactory()
         slave = filesystem.slave
 
-        api_response = self.client.put(
+        response = self.client.put(
             reverse("frontend:filesystem_entry", args=[filesystem.id]),
             data=urlencode({
                 'name': "edit_filesystem_" + str(slave.id),
@@ -1096,13 +1142,12 @@ class FilesystemTests(StatusTestCase):
                 'source_type': filesystem.source_type,
                 'destination_type': filesystem.destination_type,
             }))
+        self.assertEqual(200, response.status_code)
 
-        self.assertEqual(200, api_response.status_code)
         self.assertEqual(
             Status.ok(''),
-            Status.from_json(api_response.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
-
 
     def test_entry_put_validation_error(self):
         filesystem = FileFactory(name="", source_path="", destination_path="")
@@ -1112,7 +1157,7 @@ class FilesystemTests(StatusTestCase):
         for _ in range(2000):
             long_str += 'a'
 
-        api_response = self.client.put(
+        response = self.client.put(
             reverse("frontend:filesystem_entry", args=[filesystem.id]),
             data=urlencode({
                 'name': long_str,
@@ -1122,22 +1167,22 @@ class FilesystemTests(StatusTestCase):
                 'source_type': filesystem.source_type,
                 'destination_type': filesystem.destination_type,
             }))
+        self.assertEqual(response.status_code, 200)
 
-        self.assertEqual(api_response.status_code, 200)
         self.assertEqual(
             Status.err({
                 "name": [
                     "Ensure this value has at most 200 characters (it has 2000)."
                 ],
             }),
-            Status.from_json(api_response.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
 
     def test_entry_put_exists(self):
         filesystem_exists = FileFactory()
         filesystem_edit = FileFactory(slave=filesystem_exists.slave)
 
-        api_response = self.client.put(
+        response = self.client.put(
             reverse("frontend:filesystem_entry", args=[filesystem_edit.id]),
             data=urlencode({
                 'name':
@@ -1154,64 +1199,50 @@ class FilesystemTests(StatusTestCase):
                 filesystem_exists.destination_type,
             }))
 
-        self.assertEqual(api_response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
+
         self.assertEqual(
             Status.err({
                 "name":
                 ["Filesystem with this Name already exists on this Client."]
             }),
-            Status.from_json(api_response.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
 
 
 class ProgramTests(StatusTestCase):
-
     def test_entry_get_forbidden(self):
-        api_response = self.client.get(reverse('frontend:program_entry', args=[1234]))
-        self.assertEqual(api_response.status_code, 403)
+        response = self.client.get(
+            reverse('frontend:program_entry', args=[1234]))
+        self.assertEqual(response.status_code, 403)
 
     def test_entry_get_offline_slave(self):
         program = ProgramFactory()
-        api_response = self.client.get(
+
+        response = self.client.get(
             reverse('frontend:program_log_entry', args=[program.id]))
-        self.assertEqual(200, api_response.status_code)
+        self.assertEqual(200, response.status_code)
+
         self.assertStatusRegex(
             Status.err(SlaveOfflineError),
-            Status.from_json(api_response.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
 
     def test_entry_delete_success(self):
-        data_set = [
-            ProgramFactory(
-                name="problem solver",
-                path="/bin/rm",
-                arguments="-rf ./*",
-            ),
-            ProgramFactory(
-                name="command",
-                path="C:\Windows\System32\cmd.exe",
-                arguments="",
-            ),
-            ProgramFactory(
-                name="browser",
-                path="firefox.exe",
-                arguments="",
-            ),
-        ]
+        program = ProgramFactory()
 
-        #  make a request to delete the program entry
-        for program in data_set:
-            api_response = self.client.delete(reverse('frontend:program_entry', args=[program.id]))
-            self.assertEqual(api_response.status_code, 200)
-            self.assertEquals(api_response.json()['status'], 'ok')
-            self.assertFalse(
-                ProgramModel.objects.filter(id=program.id).exists())
+        response = self.client.delete(
+            reverse('frontend:program_entry', args=[program.id]))
+        self.assertEqual(response.status_code, 200)
+
+        self.assertEquals(response.json()['status'], 'ok')
+        self.assertFalse(ProgramModel.objects.filter(id=program.id).exists())
 
     def test_entry_put_success(self):
         program = ProgramFactory()
         slave = program.slave
 
-        api_response = self.client.put(
+        response = self.client.put(
             "/api/program/" + str(program.id),
             data=urlencode({
                 'name': "edit_program_" + str(slave.id),
@@ -1220,20 +1251,21 @@ class ProgramTests(StatusTestCase):
                 'slave': str(slave.id),
                 'start_time': -1,
             }))
+        self.assertEqual(200, response.status_code)
 
-        self.assertEqual(200, api_response.status_code)
         self.assertEqual(
             Status.ok(''),
-            Status.from_json(api_response.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
 
     def test_entry_put_not_exist(self):
-        api_response = self.client.put(
+        response = self.client.put(
             reverse('frontend:program_entry', args=['1234']))
-        self.assertEqual(200, api_response.status_code)
+        self.assertEqual(200, response.status_code)
+
         self.assertStatusRegex(
             Status.err(ProgramNotExistError),
-            Status.from_json(api_response.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
 
     def test_entry_put_value_error(self):
@@ -1244,7 +1276,8 @@ class ProgramTests(StatusTestCase):
         for _ in range(2000):
             long_str += 'a'
 
-        api_response = self.client.put(reverse('frontend:program_entry', args=[program.id]),
+        response = self.client.put(
+            reverse('frontend:program_entry', args=[program.id]),
             data=urlencode({
                 'name': long_str,
                 'path': long_str,
@@ -1252,22 +1285,23 @@ class ProgramTests(StatusTestCase):
                 'slave': str(slave.id),
                 'start_time': -1,
             }))
+        self.assertEqual(response.status_code, 200)
 
-        self.assertEqual(api_response.status_code, 200)
         self.assertEqual(
             Status.err({
                 "name": [
                     "Ensure this value has at most 1000 characters (it has 2000)."
                 ],
             }),
-            Status.from_json(api_response.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
 
     def test_entry_put_unique_error(self):
         program_exists = ProgramFactory()
         program_edit = ProgramFactory(slave=program_exists.slave)
 
-        api_response = self.client.put(reverse('frontend:program_entry', args=[program_edit.id]),
+        response = self.client.put(
+            reverse('frontend:program_entry', args=[program_edit.id]),
             data=urlencode({
                 'name': program_exists.name,
                 'path': program_exists.path,
@@ -1275,26 +1309,44 @@ class ProgramTests(StatusTestCase):
                 'slave': str(program_exists.slave.id),
                 'start_time': -1,
             }))
+        self.assertEqual(response.status_code, 200)
 
-        self.assertEqual(api_response.status_code, 200)
         self.assertEqual(
             Status.err({
                 "name":
                 ["Program with this Name already exists on this Client."]
             }),
-            Status.from_json(api_response.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
 
     def test_set_get_success(self):
         program = ProgramFactory()
 
-        with_str = self.client.get(reverse('frontend:program_set'), {'slave':str(program.slave.name), 'slave_str':True})
-        whithout_str = self.client.get(reverse('frontend:program_set'), {'slave': str(program.slave.id), 'slave_str':False})
-        ints = self.client.get(reverse('frontend:program_set'), {'slave': str(program.slave.id)})
+        with_str = self.client.get(
+            reverse('frontend:program_set'), {
+                'slave': str(program.slave.name),
+                'slave_str': True
+            })
+        self.assertEqual(with_str.status_code, 200)
 
         with_str = Status.from_json(with_str.content.decode('utf-8'))
-        ints = Status.from_json(ints.content.decode('utf-8'))
+
+        whithout_str = self.client.get(
+            reverse('frontend:program_set'), {
+                'slave': str(program.slave.id),
+                'slave_str': False
+            })
+        self.assertEqual(without_str.status_code, 200)
+
         without_str = Status.from_json(whithout_str.content.decode('utf-8'))
+
+        ints = self.client.get(
+            reverse('frontend:program_set'), {
+                'slave': str(program.slave.id)
+            })
+        self.assertEqual(ints.status_code, 200)
+
+        ints = Status.from_json(ints.content.decode('utf-8'))
 
         self.assertEqual(
             ints,
@@ -1316,80 +1368,111 @@ class ProgramTests(StatusTestCase):
             Status.ok(slaves),
         )
 
-    def test_set_get_success_query(self):
+    def test_set_get_query_success(self):
         program = ProgramFactory()
         name_half = int(len(program.name) / 2)
 
-        response = self.client.get(reverse('frontend:program_set'), {'q':''})
+        response = self.client.get(reverse('frontend:program_set'), {'q': ''})
+        self.assertEqual(response.status_code, 200)
+
         self.assertEqual(
             Status.ok([program.name]),
             Status.from_json(response.content.decode('utf-8')),
         )
 
-        response = self.client.get(reverse('frontend:program_set'), {'q':str(program.name[:name_half])})
+        response = self.client.get(
+            reverse('frontend:program_set'), {
+                'q': str(program.name[:name_half])
+            })
+        self.assertEqual(response.status_code, 200)
+
         self.assertEqual(
             Status.ok([program.name]),
             Status.from_json(response.content.decode('utf-8')),
         )
-        response = self.client.get(reverse('frontend:program_set'), {'q':str(program.name)})
+        response = self.client.get(
+            reverse('frontend:program_set'), {
+                'q': str(program.name)
+            })
+        self.assertEqual(response.status_code, 200)
+
         self.assertEqual(
             Status.ok([program.name]),
             Status.from_json(response.content.decode('utf-8')),
         )
 
-    def test_set_get_success_get_all(self):
-        resp = self.client.get(reverse('frontend:program_set'))
+    def test_set_get_success(self):
+        response = self.client.get(reverse('frontend:program_set'))
+        self.assertEqual(response.status_code, 200)
+
         self.assertEqual(
             Status.ok([]),
-            Status.from_json(resp.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
 
         program = ProgramFactory()
 
-        resp = self.client.get(reverse('frontend:program_set'))
+        response = self.client.get(reverse('frontend:program_set'))
+        self.assertEqual(response.status_code, 200)
+
         self.assertEqual(
             Status.ok([program.name]),
-            Status.from_json(resp.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
 
     def test_set_get_value_error(self):
-        resp = self.client.get(reverse('frontend:program_set'), {'slave': 'notanint', 'slave_str':False})
+        response = self.client.get(
+            reverse('frontend:program_set'), {
+                'slave': 'notanint',
+                'slave_str': False
+            })
+        self.assertEqual(response.status_code, 200)
 
         self.assertEqual(
             Status.err("Slave has to be an integer."),
-            Status.from_json(resp.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
 
     def test_set_get_not_exist(self):
-        resp_int = self.client.get(reverse('frontend:program_set'), {'slave':-1})
-        resp_str = self.client.get(reverse('frontend:program_set'), {'slave': None, 'slave_str':True})
+        response_int = self.client.get(
+            reverse('frontend:program_set'), {
+                'slave': -1
+            })
+        self.assertEqual(response_int.status_code, 200)
 
         self.assertStatusRegex(
             Status.err(SlaveNotExistError),
-            Status.from_json(resp_int.content.decode('utf-8')),
+            Status.from_json(response_int.content.decode('utf-8')),
         )
 
+        response_str = self.client.get(
+            reverse('frontend:program_set'), {
+                'slave': None,
+                'slave_str': True
+            })
+        self.assertEqual(response_str.status_code, 200)
+
         self.assertStatusRegex(
             Status.err(SlaveNotExistError),
-            Status.from_json(resp_str.content.decode('utf-8')),
+            Status.from_json(response_str.content.decode('utf-8')),
         )
 
     def test_set_post_success(self):
         slave = SlaveFactory()
-        api_response = self.client.post(
-            reverse('frontend:program_set'),
-            {
+
+        response = self.client.post(
+            reverse('frontend:program_set'), {
                 'name': 'name' + str(slave.id),
                 'path': 'path' + str(slave.id),
                 'arguments': 'arguments' + str(slave.id),
                 'slave': str(slave.id),
                 'start_time': -1,
             })
+        self.assertEqual(200, response.status_code)
 
-        self.assertEqual(200, api_response.status_code)
         self.assertEqual(
             Status.ok(''),
-            Status.from_json(api_response.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
 
         # test if all programs are in the database
@@ -1409,65 +1492,50 @@ class ProgramTests(StatusTestCase):
         for _ in range(2000):
             long_str += 'a'
 
-        api_response = self.client.post(
-            reverse('frontend:program_set'),
-            {
+        response = self.client.post(
+            reverse('frontend:program_set'), {
                 'name': long_str,
                 'path': long_str,
                 'arguments': long_str,
                 'slave': str(slave.id),
                 'start_time': -1,
             })
+        self.assertEqual(response.status_code, 200)
 
-        self.assertEqual(api_response.status_code, 200)
         self.assertEqual(
             Status.err({
                 "name": [
                     "Ensure this value has at most 1000 characters (it has 2000)."
                 ],
             }),
-            Status.from_json(api_response.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
 
     def test_set_post_value_error(self):
-        slave = SlaveFactory()
-
-        api_response = self.client.post(reverse('frontend:program_set'), {
-                'name': 'name',
-                'path': 'path',
-                'arguments': '',
-                'slave': str(slave.id),
-                'start_time': -1,
-            })
-
-        self.assertEqual(api_response.status_code, 200)
-        self.assertEqual(
-            Status.ok(''),
-            Status.from_json(api_response.content.decode('utf-8')),
-        )
+        program = ProgramFactory()
 
         # try to add program with the same name
-        api_response = self.client.post(reverse('frontend:program_set'),
-            {
-                'name': 'name',
-                'path': 'path',
-                'arguments': '',
-                'slave': str(slave.id),
-                'start_time': -1,
+        response = self.client.post(
+            reverse('frontend:program_set'), {
+                'name': program.name,
+                'path': program.path,
+                'arguments': program.arguments,
+                'slave': str(program.slave.id),
+                'start_time': program.start_time,
             })
+        self.assertEqual(response.status_code, 200)
 
-        self.assertEqual(api_response.status_code, 200)
         self.assertEqual(
             Status.err({
                 'name':
                 ['Program with this Name already exists on this Client.']
             }),
-            Status.from_json(api_response.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
 
     def test_set_delete_forbidden(self):
-        api_response = self.client.delete(reverse('frontend:program_set'))
-        self.assertEqual(api_response.status_code, 403)
+        response = self.client.delete(reverse('frontend:program_set'))
+        self.assertEqual(response.status_code, 403)
 
     def test_start_get_success(self):
         slave = SlaveOnlineFactory()
@@ -1481,13 +1549,13 @@ class ProgramTests(StatusTestCase):
         webinterface = WSClient()
         webinterface.join_group('notifications')
 
-        api_response = self.client.get(
+        response = self.client.get(
             reverse('frontend:program_start', args=[program.id]))
+        self.assertEqual(response.status_code, 200)
 
-        self.assertEqual(api_response.status_code, 200)
         self.assertEqual(
             Status.ok(''),
-            Status.from_json(api_response.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
 
         #  test if the client receives the command
@@ -1520,30 +1588,28 @@ class ProgramTests(StatusTestCase):
         program = ProgramFactory(slave=slave)
         ProgramStatusFactory(program=program, running=True)
 
-        api_response = self.client.get(
+        response = self.client.get(
             reverse('frontend:program_start', args=[program.id]))
-
-        self.assertEqual(api_response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
 
         self.assertStatusRegex(
             Status.err(ProgramRunningError),
-            Status.from_json(api_response.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
 
     def test_start_forbidden(self):
-        api_response = self.client.delete(
+        response = self.client.delete(
             reverse('frontend:program_start', args=['0']))
-        self.assertEqual(403, api_response.status_code)
+        self.assertEqual(403, response.status_code)
 
     def test_start_get_not_exist(self):
-        api_response = self.client.get(
+        response = self.client.get(
             reverse('frontend:program_start', args=[1234]))
-
-        self.assertEqual(api_response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
 
         self.assertStatusRegex(
             Status.err(ProgramNotExistError),
-            Status.from_json(api_response.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
 
     def test_start_get_offline(self):
@@ -1553,13 +1619,13 @@ class ProgramTests(StatusTestCase):
         client = WSClient()
         client.join_group("commands_" + str(slave.id))
 
-        api_response = self.client.get(
+        response = self.client.get(
             reverse('frontend:program_start', args=[program.id]))
-        self.assertEqual(api_response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
 
         self.assertStatusRegex(
             Status.err(SlaveOfflineError),
-            Status.from_json(api_response.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
 
         self.assertIsNone(client.receive())
@@ -1573,16 +1639,16 @@ class ProgramTests(StatusTestCase):
         slave_ws.join_group('client_' + str(slave.id))
 
         # test api
-        api_response = self.client.get(
-            path=reverse(
+        response = self.client.get(
+            reverse(
                 'frontend:program_stop',
                 args=[program.id],
             ))
+        self.assertEqual(response.status_code, 200)
 
-        self.assertEqual(200, api_response.status_code)
         self.assertEqual(
             Status.ok(''),
-            Status.from_json(api_response.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
 
         # test message
@@ -1600,16 +1666,16 @@ class ProgramTests(StatusTestCase):
         self.assertEqual(403, api_request.status_code)
 
     def test_stop_get_not_exist(self):
-        api_response = self.client.get(
+        response = self.client.get(
             reverse(
                 'frontend:program_stop',
                 args=[9999],
             ))
-        self.assertEqual(200, api_response.status_code)
+        self.assertEqual(response.status_code, 200)
 
         self.assertStatusRegex(
             Status.err(ProgramNotExistError),
-            Status.from_json(api_response.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
 
     def test_stop_get_not_running_error(self):
@@ -1617,26 +1683,28 @@ class ProgramTests(StatusTestCase):
         program = ProgramFactory(slave=slave)
         ProgramStatusFactory(program=program, running=False)
 
-        api_response = self.client.get(
+        response = self.client.get(
             reverse(
                 'frontend:program_stop',
                 args=[program.id],
             ))
-        self.assertEqual(200, api_response.status_code)
+        self.assertEqual(response.status_code, 200)
 
         self.assertStatusRegex(
             Status.err(ProgramNotRunningError),
-            Status.from_json(api_response.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
 
     def test_stop_get_offline(self):
         program = ProgramFactory()
 
-        api_response = self.client.get(reverse('frontend:program_stop', args=[program.id]))
-        self.assertEqual(api_response.status_code, 200)
+        response = self.client.get(
+            reverse('frontend:program_stop', args=[program.id]))
+        self.assertEqual(response.status_code, 200)
+
         self.assertStatusRegex(
             Status.err(SlaveOfflineError),
-            Status.from_json(api_response.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
 
     def test_log_entry_get_success(self):
@@ -1647,12 +1715,13 @@ class ProgramTests(StatusTestCase):
         ws_slave = WSClient()
         ws_slave.join_group('client_' + str(slave.id))
 
-        api_response = self.client.get(
+        response = self.client.get(
             reverse('frontend:program_log_entry', args=[program.id]))
-        self.assertEqual(200, api_response.status_code)
+        self.assertEqual(response.status_code, 200)
+
         self.assertEqual(
             Status.ok(''),
-            Status.from_json(api_response.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
 
         self.assertEqual(
@@ -1666,27 +1735,30 @@ class ProgramTests(StatusTestCase):
     def test_log_entry_get_not_exist_log(self):
         slave = SlaveFactory(online=True)
         program = ProgramFactory(slave=slave)
-        api_response = self.client.get(
+
+        response = self.client.get(
             reverse('frontend:program_log_entry', args=[program.id]))
-        self.assertEqual(200, api_response.status_code)
+        self.assertEqual(response.status_code, 200)
+
         self.assertStatusRegex(
             Status.err(LogNotExistError),
-            Status.from_json(api_response.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
 
     def test_log_entry_get_not_exist_program(self):
-        api_response = self.client.get(
+        response = self.client.get(
             reverse('frontend:program_log_entry', args=[999999]))
-        self.assertEqual(200, api_response.status_code)
+        self.assertEqual(response.status_code, 200)
+
         self.assertStatusRegex(
             Status.err(ProgramNotExistError),
-            Status.from_json(api_response.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
 
     def test_log_entry_post_forbidden(self):
-        api_response = self.client.post(
+        response = self.client.post(
             reverse('frontend:program_log_entry', args=[999999]))
-        self.assertEqual(403, api_response.status_code)
+        self.assertEqual(response.status_code, 403)
 
     def test_log_disable_get_success(self):
         slave = SlaveFactory(online=True)
@@ -1696,12 +1768,13 @@ class ProgramTests(StatusTestCase):
         ws_slave = WSClient()
         ws_slave.join_group('client_' + str(slave.id))
 
-        api_response = self.client.get(
+        response = self.client.get(
             reverse('frontend:program_log_disable', args=[program.id]))
-        self.assertEqual(200, api_response.status_code)
+        self.assertEqual(response.status_code, 200)
+
         self.assertEqual(
             Status.ok(''),
-            Status.from_json(api_response.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
 
         self.assertEqual(
@@ -1714,27 +1787,30 @@ class ProgramTests(StatusTestCase):
 
     def test_log_disable_get_offline(self):
         program = ProgramFactory()
-        api_response = self.client.get(
+
+        response = self.client.get(
             reverse('frontend:program_log_disable', args=[program.id]))
-        self.assertEqual(200, api_response.status_code)
+        self.assertEqual(response.status_code, 200)
+
         self.assertStatusRegex(
             Status.err(SlaveOfflineError),
-            Status.from_json(api_response.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
 
     def test_log_disable_get_not_exist(self):
-        api_response = self.client.get(
+        response = self.client.get(
             reverse('frontend:program_log_disable', args=[999999]))
-        self.assertEqual(200, api_response.status_code)
+        self.assertEqual(response.status_code, 200)
+
         self.assertStatusRegex(
             Status.err(ProgramNotExistError),
-            Status.from_json(api_response.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
 
     def test_log_disable_post_forbidden(self):
-        api_response = self.client.post(
+        response = self.client.post(
             reverse('frontend:program_log_disable', args=[999999]))
-        self.assertEqual(403, api_response.status_code)
+        self.assertEqual(response.status_code, 403)
 
     def test_log_enable_get_success(self):
         slave = SlaveFactory(online=True)
@@ -1744,12 +1820,13 @@ class ProgramTests(StatusTestCase):
         ws_slave = WSClient()
         ws_slave.join_group('client_' + str(slave.id))
 
-        api_response = self.client.get(
+        response = self.client.get(
             reverse('frontend:program_log_enable', args=[program.id]))
-        self.assertEqual(200, api_response.status_code)
+        self.assertEqual(response.status_code, 200)
+
         self.assertEqual(
             Status.ok(''),
-            Status.from_json(api_response.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
 
         self.assertEqual(
@@ -1762,46 +1839,48 @@ class ProgramTests(StatusTestCase):
 
     def test_log_enable_get_offline_error(self):
         program = ProgramFactory()
-        api_response = self.client.get(
+
+        response = self.client.get(
             reverse('frontend:program_log_enable', args=[program.id]))
-        self.assertEqual(200, api_response.status_code)
+        self.assertEqual(response.status_code, 200)
+
         self.assertStatusRegex(
             Status.err(SlaveOfflineError),
-            Status.from_json(api_response.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
 
     def test_log_enable_get_not_exist_program(self):
-        api_response = self.client.get(
+        response = self.client.get(
             reverse('frontend:program_log_enable', args=[999999]))
-        self.assertEqual(200, api_response.status_code)
+        self.assertEqual(response.status_code, 200)
+
         self.assertStatusRegex(
             Status.err(ProgramNotExistError),
-            Status.from_json(api_response.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
 
     def test_log_enable_get_not_exist_log(self):
         slave = SlaveFactory(online=True)
         prog = ProgramFactory(slave=slave)
 
-        api_response = self.client.get(
+        response = self.client.get(
             reverse('frontend:program_log_enable', args=[prog.id]))
-        self.assertEqual(200, api_response.status_code)
+        self.assertEqual(response.status_code, 200)
 
         self.assertStatusRegex(
             Status.err(LogNotExistError),
-            Status.from_json(api_response.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
 
     def test_log_enable_post_forbidden(self):
-        api_response = self.client.post(
+        response = self.client.post(
             reverse('frontend:program_log_enable', args=[999999]))
-        self.assertEqual(403, api_response.status_code)
+        self.assertEqual(response.status_code, 403)
 
 
 class SlaveTests(StatusTestCase):
-    def test_update_unknown_slave(self):
+    def test_entry_put_not_exist(self):
         res = self.client.put(reverse('frontend:slave_entry', args=['1234']))
-
         self.assertEqual(res.status_code, 200)
 
         self.assertStatusRegex(
@@ -1809,13 +1888,12 @@ class SlaveTests(StatusTestCase):
             Status.from_json(res.content.decode('utf-8')),
         )
 
-    def test_wol_no_slave(self):
+    def test_wol_get_success(self):
         #  non existent slave
-        res = self.client.get(
-            path=reverse(
-                'frontend:slave_wol',
-                args=[999999],
-            ))
+        res = self.client.get(reverse(
+            'frontend:slave_wol',
+            args=[999999],
+        ))
 
         self.assertEqual(res.status_code, 200)
 
@@ -1824,11 +1902,11 @@ class SlaveTests(StatusTestCase):
             Status.from_json(res.content.decode('utf-8')),
         )
 
-    def test_wol_not_found(self):
+    def test_wol_post_forbidden(self):
         slave = SlaveFactory()
-        #  wrong http method
+
         res = self.client.post(
-            path=reverse(
+            reverse(
                 'frontend:slave_wol',
                 args=[slave.id],
             ))
@@ -1837,101 +1915,99 @@ class SlaveTests(StatusTestCase):
 
     def test_wol_success(self):
         slave = SlaveFactory()
+
         res = self.client.get(
-            path=reverse(
+            reverse(
                 'frontend:slave_wol',
                 args=[slave.id],
             ))
-
         self.assertEqual(res.status_code, 200)
+
         self.assertEqual(
             Status.ok(""),
             Status.from_json(res.content.decode('utf-8')),
         )
 
-    def test_slave_autocomplete(self):
+    def test_set_get_query_success(self):
         slave = SlaveFactory()
         name_half = int(len(slave.name) / 2)
 
-        response = self.client.get("/api/slaves?q=")
-        self.assertContains(response, slave.name)
-        response = self.client.get(
-            "/api/slaves?q=" + str(slave.name[:name_half]))
-        self.assertContains(response, slave.name)
-        response = self.client.get("/api/slaves?q=" + str(slave.name))
+        response = self.client.get(reverse("frontend:slave_set"), {'q': ''})
+        self.assertEqual(response.status_code, 200)
         self.assertContains(response, slave.name)
 
-    def test_add_slave_success(self):
+        response = self.client.get(
+            reverse("frontend:slave_set"), {
+                'q': str(slave.name[:name_half])
+            })
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, slave.name)
+
+        response = self.client.get("/api/slaves?q=" + str(slave.name))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, slave.name)
+
+    def test_set_post_success(self):
         slave = SlaveFactory.build()
 
-        api_response = self.client.post(
+        response = self.client.post(
             reverse('frontend:slave_set'), {
                 'name': slave.name,
                 'ip_address': slave.ip_address,
                 'mac_address': slave.mac_address
             })
+        self.assertEqual(response.status_code, 200)
 
-        self.assertEqual(api_response.status_code, 200)
         self.assertEqual(
             Status.ok(''),
-            Status.from_json(api_response.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
 
-        view_response = self.client.get(reverse('frontend:slaves'))
+        self.assertTrue(SlaveModel.objects.filter(name=slave.name).exists())
 
-        self.assertContains(view_response, slave.name)
-        self.assertContains(view_response, slave.ip_address)
-        self.assertContains(view_response, slave.mac_address)
-
-    def test_add_slave_double_entry_fail(self):
+    def test_set_post_exist(self):
         slave = SlaveFactory()
 
-        api_response = self.client.post(
-            reverse('frontend:slave_set'), {
+        response = self.client.post(
+            reverse('frontend:slave_set'),
+            {
                 'name': slave.name,
                 'ip_address': slave.ip_address,
                 'mac_address': slave.mac_address
-            })
+            },
+        )
 
-        # test if the response contains a JSON object with the error
-        self.assertEqual(api_response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
         self.assertEqual(
             Status.err({
                 "name": ["Slave with this Name already exists."],
                 "ip_address": ["Slave with this Ip address already exists."],
                 "mac_address": ["Slave with this Mac address already exists."]
-            }), Status.from_json(api_response.content.decode('utf-8')))
+            }),
+            Status.from_json(response.content.decode('utf-8')),
+        )
 
-        # test if the slave is still in the database
-        self.assertTrue(
-            SlaveModel.objects.filter(
-                name=slave.name,
-                ip_address=slave.ip_address,
-                mac_address=slave.mac_address,
-            ).exists())
-
-    def test_add_slave_false_input_fail(self):
+    def test_set_post_validation_error(self):
         slave = SlaveFactory.build(mac_address="0", ip_address="0")
 
-        api_response = self.client.post(
-            reverse('frontend:slave_set'), {
+        response = self.client.post(
+            reverse('frontend:slave_set'),
+            {
                 'name': slave.name,
                 'ip_address': slave.ip_address,
                 'mac_address': slave.mac_address
-            })
-        # test if response was successfull
-        self.assertEqual(api_response.status_code, 200)
+            },
+        )
+        self.assertEqual(response.status_code, 200)
 
-        # see if message contains the error
         self.assertEqual(
             Status.err({
                 "ip_address": ["Enter a valid IPv4 or IPv6 address."],
                 "mac_address": ["Enter a valid MAC Address."]
             }),
-            Status.from_json(api_response.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
 
-        # test if the database does not contain the false slave
         self.assertFalse(
             SlaveModel.objects.filter(
                 name=slave.name,
@@ -1939,58 +2015,61 @@ class SlaveTests(StatusTestCase):
                 mac_address=slave.mac_address,
             ).exists())
 
-    def test_add_slave_no_post(self):
-        api_response = self.client.put(reverse('frontend:slave_set'))
-        self.assertEqual(api_response.status_code, 403)
+    def test_set_put_forbidden(self):
+        response = self.client.put(reverse('frontend:slave_set'))
+        self.assertEqual(response.status_code, 403)
 
-    def test_manage_slave_forbidden(self):
-        api_response = self.client.get("/api/slave/0")
-        self.assertEqual(api_response.status_code, 403)
+    def test_entry_get_forbidden(self):
+        response = self.client.get(reverse("frontend:slave_entry", args=[0]))
+        self.assertEqual(response.status_code, 403)
 
-    def test_remove_slave(self):
-        data_set = [SlaveFactory() for _ in range(0, 3)]
+    def test_entry_delete_success(self):
+        slave = SlaveFactory()
 
-        # make a request to delete the slave entry
-        for slave in data_set:
-            api_response = self.client.delete('/api/slave/' + str(slave.id))
-            self.assertEqual(api_response.status_code, 200)
-            self.assertEqual(
-                Status.ok(''),
-                Status.from_json(api_response.content.decode('utf-8')),
-            )
-            self.assertFalse(SlaveModel.objects.filter(id=slave.id).exists())
+        response = self.client.delete(
+            reverse("frontend:slave_entry",args=[slave.id],),
+        )
+        self.assertEqual(response.status_code, 200)
 
-    def test_edit_slave_success(self):
+        self.assertEqual(
+            Status.ok(''),
+            Status.from_json(response.content.decode('utf-8')),
+        )
+        self.assertFalse(SlaveModel.objects.filter(id=slave.id).exists())
+
+    def test_entry_put_success(self):
         slave = SlaveFactory()
         slave_new = SlaveFactory.build()
 
-        api_response = self.client.put(
-            "/api/slave/" + str(slave.id),
-            data=urlencode({
+        response = self.client.put(
+            reverse("frontend:slave_entry", args=[slave.id]),
+            urlencode({
                 'name': slave_new.name,
                 'mac_address': slave_new.mac_address,
                 'ip_address': slave_new.ip_address,
-            }))
-
-        self.assertEqual(api_response.status_code, 200)
-        self.assertEqual(
-            Status.ok(''),
-            Status.from_json(api_response.content.decode('utf-8')),
+            }),
         )
 
-    def test_edit_slave_already_exists(self):
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            Status.ok(''),
+            Status.from_json(response.content.decode('utf-8')),
+        )
+
+    def test_entry_put_exist(self):
         slave_exists = SlaveFactory()
         slave_edit = SlaveFactory()
 
-        api_response = self.client.put(
-            "/api/slave/" + str(slave_edit.id),
-            data=urlencode({
+        response = self.client.put(
+            reverse("frontend:slave_entry", args=[slave_edit.id]),
+            urlencode({
                 'name': slave_exists.name,
                 'ip_address': slave_exists.ip_address,
                 'mac_address': slave_exists.mac_address,
-            }))
+            }),
+        )
 
-        self.assertEqual(api_response.status_code, 200)
+        self.assertEqual(response.status_code, 200)
 
         self.assertEqual(
             Status.err({
@@ -1998,132 +2077,170 @@ class SlaveTests(StatusTestCase):
                 "ip_address": ["Slave with this Ip address already exists."],
                 "mac_address": ["Slave with this Mac address already exists."],
             }),
-            Status.from_json(api_response.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
 
-    def test_slave_shutdown(self):
+    def test_shutdown_get_success(self):
         slave = SlaveFactory(online=True)
 
-        #  connect slave to websocket
         ws_client = WSClient()
         ws_client.join_group('client_' + str(slave.id))
 
-        #  make request
-        api_response = self.client.get(
-            path=reverse(
+        response = self.client.get(
+            reverse(
                 'frontend:slave_shutdown',
                 args=[slave.id],
             ))
+        self.assertEqual(response.status_code, 200)
 
-        self.assertEqual(api_response.status_code, 200)
         self.assertEqual(
             Status.ok(''),
-            Status.from_json(api_response.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
 
-        #  test if the slave gets the shutdown request
         self.assertEqual(
             Command(method='shutdown'),
             Command.from_json(json.dumps(ws_client.receive())),
         )
 
-    def test_slave_shutdown_unknown_slave(self):
-        #  make request
-        api_response = self.client.get('/api/slave/111/shutdown')
+    def test_shutdown_get_not_exist(self):
+        response = self.client.get(
+            reverse(
+                "frontend:slave_shutdown",
+                args=[111],
+            ))
+        self.assertEqual(response.status_code, 200)
 
-        self.assertEqual(api_response.status_code, 200)
         self.assertStatusRegex(
             Status.err(SlaveNotExistError),
-            Status.from_json(api_response.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
 
-    def test_slave_shutdown_offline_slave(self):
+    def test_shutdown_get_offline(self):
         slave = SlaveFactory()
 
-        #  make request
-        api_response = self.client.get(
+        response = self.client.get(
             reverse(
                 'frontend:slave_shutdown',
                 args=[slave.id],
             ))
+        self.assertEqual(response.status_code, 200)
 
-        self.assertEqual(api_response.status_code, 200)
         self.assertStatusRegex(
             Status.err(SlaveOfflineError),
-            Status.from_json(api_response.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
 
-    def test_slave_shutdown_forbidden_function(self):
-        api_response = self.client.delete('/api/slave/1/shutdown')
-        self.assertEqual(403, api_response.status_code)
+    def test_shutdown_delete_forbidden(self):
+        response = self.client.delete(
+            reverse(
+                "frontend:slave_shutdown",
+                args=[0],
+            ))
+        self.assertEqual(response.status_code, 403)
 
-    def test_query_get_all_files(self):
-        resp = self.client.get("/api/slaves?filesystems=1")
+    def test_entry_get_query_filesystem_success(self):
+        response = self.client.get(
+            reverse("frontend:slave_set"),
+            {'filesystems': '1'},
+        )
+        self.assertEqual(response.status_code, 200)
 
         self.assertEqual(
             Status.ok([]),
-            Status.from_json(resp.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
 
-        resp = self.client.get("/api/slaves?filesystems=1")
+        response = self.client.get(
+            reverse("frontend:slave_set"),
+            {'filesystems': '1'},
+        )
+        self.assertEqual(response.status_code, 200)
 
         self.assertEqual(
             Status.ok([]),
-            Status.from_json(resp.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
 
         filesystem = FileFactory()
 
-        resp = self.client.get("/api/slaves?filesystems=1")
+        response = self.client.get(
+            reverse("frontend:slave_set"),
+            {'filesystems': '1'},
+        )
+        self.assertEqual(response.status_code, 200)
 
         self.assertEqual(
             Status.ok([filesystem.slave.name]),
-            Status.from_json(resp.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
 
-    def test_query_get_all_same(self):
-        resp = self.client.get("/api/slaves?programs=1&filesystems=1")
+    def test_set_query_simultaneous_error(self):
+        response = self.client.get(
+            reverse("frontend:slave_set"),
+            {
+                'filesystems': 1,
+                'programs': 1,
+            },
+        )
+        self.assertEqual(response.status_code, 200)
 
         self.assertStatusRegex(
             Status.err(SimultaneousQueryError),
-            Status.from_json(resp.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
 
-    def test_query_get_all_slaves(self):
-        resp = self.client.get("/api/slaves")
+    def test_entry_get_query_success(self):
+        response = self.client.get(reverse("frontend:slave_set"))
+        self.assertEqual(response.status_code, 200)
+
         self.assertEqual(
             Status.ok([]),
-            Status.from_json(resp.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
 
         slave = SlaveFactory()
 
-        resp = self.client.get("/api/slaves")
+        response = self.client.get(reverse("frontend:slave_set"))
+        self.assertEqual(response.status_code, 200)
+
         self.assertEqual(
             Status.ok([slave.name]),
-            Status.from_json(resp.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
 
-    def test_query_get_all_programs(self):
-        resp = self.client.get("/api/slaves?programs=1")
+    def test_entry_get_query_programs_success(self):
+        response = self.client.get(
+            reverse("frontend:slave_set"),
+            {'programs': '1'},
+        )
+        self.assertEqual(response.status_code, 200)
 
         self.assertEqual(
             Status.ok([]),
-            Status.from_json(resp.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
 
-        resp = self.client.get("/api/slaves?programs=1")
+        response = self.client.get(
+            reverse("frontend:slave_set"),
+            {'programs': '1'},
+        )
+        self.assertEqual(response.status_code, 200)
 
         self.assertEqual(
             Status.ok([]),
-            Status.from_json(resp.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
 
         program = ProgramFactory()
 
-        resp = self.client.get("/api/slaves?programs=1")
+        response = self.client.get(
+            reverse("frontend:slave_set"),
+            {'programs': '1'},
+        )
+        self.assertEqual(response.status_code, 200)
 
         self.assertEqual(
             Status.ok([program.slave.name]),
-            Status.from_json(resp.content.decode('utf-8')),
+            Status.from_json(response.content.decode('utf-8')),
         )
