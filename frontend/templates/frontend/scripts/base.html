@@ -23,23 +23,22 @@
 {% endblock %}
 
 {% block content %}
-<div class="row ml-4 mr-4">
-    <div class="col-12 col-sm-12 col-md-3 col-xl-2 col-lg-3 mb-4">
-        <div class="row-2">
-            <div class="list-group flex-column col" id="scriptTabList" role="tablist">
+<div class="row ml-1 mr-1">
+    <div class="col-12 col-sm-12 col-md-4 col-xl-3 col-lg-4 mb-4">
+        <div>
+            <div class="list-group" id="scriptTabList" role="tablist">
                 <a class="d-flex justify-content-between align-items-center list-group-item font-weight-bold bg-light" id="scripts_list">
                     <label for="scripts_list">
                         <font size="4">SCRIPTS</font>
                     </label>
-                    <button type="button" class="btn  script-action-add bg-dark">
+                    <button type="button" class="btn script-action-add bg-dark" >
                         <i class="mdi mdi-plus text-light"></i>
                     </button>
                 </a>
                 {% for script in scripts %}
                     <a class="d-flex justify-content-between align-items-center list-group-item list-group-item-action font-weight-bold fsim-box script-tab-link {% if forloop.first %} active {% endif %}
-                     bg-light"
-                    data-state="unknown"
-                        id="scriptTab{{ script.id }}" data-toggle="tab"  href="#scriptTabContent{{ script.id }}" data-script-id="{{ script.id }}">
+                    bg-light"
+                    data-state="unknown" id="scriptTab{{ script.id }}" data-toggle="tab"  href="#scriptTabContent{{ script.id }}" data-script-id="{{ script.id }}">
                         <i class="mdi mdi-description"></i>
                         {{ script.name }}
                         <span class="badge badge-dark badge-pill">
@@ -47,17 +46,24 @@
                             <i class="mdi mdi-alert"></i>{{ script.id }}</span>
                     </a>
                 {% endfor %}
+                <a class="d-flex justify-content-between align-items-center list-group-item bg-light" id="scriptTabNew" data-toggle="tab"
+                    href="#scriptTabContentNew" role="tab"></a>
                 </div>
         </div>
     </div>
 
     <div class="container-fluid tab-content col-12 col-sm-12 col-md-8 col-lg-8 col-xl-9">
         <div class="tab-pane fade show" role="tabpanel"  id="scriptTabContentNew">
-            <div class="btn-toolbar justify-content-end" role="toolbar">
-                <div class="btn-group" role="group">
-                    <button type="button" class="btn btn-outline-dark font-weight-light script-action-add-save" data-editor-id="new_script">
+            <div class="container-fluid bg-light list-group-item">
+                <div class="row">
+                    <div class="col-12 col-sm-12 col-md-4 col-xl-3 col-lg-4">
+                        <span class="background-text-large"><nobr>create new script</nobr></span>
+                    </div>
+                    <div class="col-12 col-sm-12 col-md-8 col-lg-8 col-xl-9 btn-toolbar justify-content-end" role="toolbar">
+                    <button type="button" class="btn btn-dark font-weight-light script-action-add-save" data-editor-id="new_script">
                         <i class="mdi mdi-check"></i> SAVE
                     </button>
+                    </div>
                 </div>
             </div>
 

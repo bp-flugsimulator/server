@@ -1,41 +1,36 @@
 {% verbatim %}
 <script id="templateEntry" type="text/x-handlebars-template">
-    <div class="list-group-item script-{{type}}-entry ">
-        <div class="justify-content-end form-group row">
-            <button class="btn script-{{type}}-remove inline-add-button" type="button">
-                    <i class="mdi mdi-delete"></i>
-                    <i class="font-weight-light">DELETE</i>
-            </button>
-        </div>
-
-        <div class="form-group row">
-            <label class="col-2 text-uppercase">Index</label>
-            <div class="col">
+    <div class="list-group-item flex-column align-items-start script-{{type}}-entry bg-light">
+        <div class="d-flex w-100 justify-content-between">
+            <div class="form-group d-flex slave-choice">
+                <button class="btn btn-outline-light text-dark text-uppercase disabled">Client</button>
+                <div>
+                    <select class="form-control script-{{type}}-slave" type="text" required>
+                        {{#each slaves}}
+                        <option {{#ifEq ../currentSlave this}}selected{{/ifEq}}>{{this}}</option>
+                        {{/each}}
+                    </select>
+                </div>
+            </div>
+            <div class="form-group d-flex slave-choice">
+                <button class="btn btn-outline-light text-dark text-uppercase disabled">Index</button>
                 <input class="form-control script-{{type}}-index" type="number" value="{{#if index}}{{index}}{{else}}0{{/if}}" required/>
             </div>
+            <button class="btn script-{{type}}-remove btn-dark h-75" type="button">
+                <i class="mdi mdi-delete"></i>
+            </button>
         </div>
-
-        <div class="form-group row slave-choice">
-            <label class="col-2 text-uppercase">Client</label>
-            <div class="col">
-                <select class="form-control script-{{type}}-slave" type="text" required>
-                    {{#each slaves}}
-                    <option {{#ifEq ../currentSlave this}}selected{{/ifEq}}>{{this}}</option>
-                    {{/each}}
-                </select>
-            </div>
-        </div>
-
-        <div class="form-group row {{type}}-choice">
-            <label class="col-2 text-uppercase">
-                {{type}}
-            </label>
-            <div class="col">
-                <select class="form-control script-{{type}}-{{type}}" type="text" name="script-{{type}}" data-selected="{{#if currentSelects}}{{ currentSelects }}{{/if}}" required>
-                    {{#each selects}}
-                    <option>{{this}}</option>
-                    {{/each}}
-                </select>
+        <div class="d-flex w-100 justify-content-start">
+            <div class="form-group d-flex {{type}}-choice">
+                <button class="btn btn-outline-light text-dark text-uppercase disabled">{{type}}</button>
+                <div>
+                    <select class="form-control script-{{type}}-{{type}}" type="text" name="script-{{type}}" data-selected="{{#if currentSelects}}{{ currentSelects }}{{/if}}"
+                        required>
+                        {{#each selects}}
+                        <option>{{this}}</option>
+                        {{/each}}
+                    </select>
+                </div>
             </div>
         </div>
     </div>
@@ -48,33 +43,44 @@
 </script>
 
 <script id="templateContainer" type="text/x-handlebars-template">
-    <div class="row">
-        <label class="text-uppercase font-weight-bold">Script Name</label>
-    </div>
+    <div class="container-fluid list-group-item bg-light list-group-flush">
+        <div class="row rounded mb-4 pt-2">
+            <div class="col-sm mb-4">
+                <span class="text-uppercase font-weight-bold">edit script name</span>
+                <input class="form-control script-name bg-white" placeholder="Script Name" type="text" {{#if name}}value="{{name}}"{{/if}} required/>
+                <div class="invalid-feedback text-uppercase">Script name is required.</div>
+            </div>
+        </div>
 
-    <div class="row mb-4">
-        <input class="form-control script-name" type="text" {{#if name}}value="{{name}}"{{/if}} required/>
-        <div class="invalid-feedback text-uppercase">Script name is required.</div>
-    </div>
+        <div class="row">
+            <div class="d-flex w-100 justify-content-between pl-2 pr-2 pt-2 pb-2 mb-1">
+                <button type="button" class="btn btn-dark btn-sm script-program-add mr-2">
+                    <i class="mdi mdi-plus"></i>
+                </button>
+                <font size="4" class="text-uppercase font-weight-bold">Programs</font>
+                <button type="button" class="btn btn-dark btn-sm script-program-hide mr-2 disabled">
+                    <i class="mdi mdi-chevron-up"></i>
+                </button>
+            </div>
+        </div>
 
-    <div class="row">
-        <label class="text-uppercase font-weight-bold">Programs</label>
-        <button type="button" class="btn script-program-add  inline-add-button">
-            <i class="mdi mdi-plus"></i>
-        </button>
-    </div>
+        <div class="script-program-content row list-group mb-4">
+        </div>
 
-    <div class="script-program-content row list-group mb-4">
-    </div>
+        <div class="row">
+            <div class="d-flex w-100 justify-content-between pl-2 pr-2 pt-2 pb-2 mb-1">
+                <button type="button" class="btn btn-dark btn-sm script-filesystem-add mr-2">
+                    <i class="mdi mdi-plus"></i>
+                </button>
+                <font size="4" class="text-uppercase font-weight-bold">Files</font>
+                <button type="button" class="btn btn-dark btn-sm script-filesystem-hide mr-2 disabled">
+                    <i class="mdi mdi-chevron-up"></i>
+                </button>
+            </div>
+        </div>
 
-    <div class="row">
-        <label class="text-uppercase font-weight-bold">Files</label>
-        <button type="button" class="btn script-filesystem-add inline-add-button">
-            <i class="mdi mdi-plus"></i>
-        </button>
-    </div>
-
-    <div class="script-filesystem-content row list-group">
+        <div class="script-filesystem-content row list-group">
+        </div>
     </div>
 </script>
 {% endverbatim %}
