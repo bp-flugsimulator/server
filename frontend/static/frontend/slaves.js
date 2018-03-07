@@ -1,5 +1,5 @@
 /* eslint-env browser*/
-/* eslint no-use-before-define: ["error", { "functions": false }] */
+/* eslint no-use-before-define: ['error', { 'functions': false }] */
 /* global $, getCookie, modalDeleteAction, handleFormStatus, clearErrorMessages, Status,
  fsimWebsocket, notify, swapText, styleSlaveByStatus, basicRequest */
 
@@ -282,61 +282,61 @@ $(document).ready(function () {
     }());
 
     // Select
-    $('.slave-content-tab.active').removeClass("text-dark bg-light")
-        .addClass("text-light bg-dark")
-        .children("button").removeClass("btn-dark")
-        .addClass("btn-light");
+    $('.slave-content-tab.active').removeClass('text-dark bg-light')
+        .addClass('text-light bg-dark')
+        .children('button').removeClass('btn-dark')
+        .addClass('btn-light');
 
     $('.slave-content-tab').click(function () {
         if (!$(this).hasClass('active')) {
             // Remove color from the old tabs
             $('.slave-content-tab').each(function (idx, val) {
-                $(val).removeClass("bg-dark text-light")
-                    .addClass("text-dark")
-                    .children("button").removeClass("btn-light")
-                    .addClass("btn-dark");
+                $(val).removeClass('bg-dark text-light')
+                    .addClass('text-dark')
+                    .children('button').removeClass('btn-light')
+                    .addClass('btn-dark');
             });
 
             // Save Class when opening for every Slave
             localStorage.setItem('status-tabs', $(this).attr('href'));
 
             // Change the color of the current tab
-            $(this).removeClass("text-dark")
-                .addClass("bg-dark text-light")
-                .children("button").removeClass("btn-dark")
-                .addClass("btn-light");
+            $(this).removeClass('text-dark')
+                .addClass('bg-dark text-light')
+                .children('button').removeClass('btn-dark')
+                .addClass('btn-light');
         }
     });
 
     // Set color of the current selected.
-    $('.slave-tab-link.active').addClass("border-dark bg-dark text-light")
-        .children("span").removeClass("badge-dark")
-        .addClass("badge-light");
+    $('.slave-tab-link.active').addClass('border-dark bg-dark text-light')
+        .children('span').removeClass('badge-dark')
+        .addClass('badge-light');
 
     // Changes the color of the clicked slave, if it was not clicked before.
     $('.slave-tab-link').click(function () {
         if (!$(this).hasClass('active')) {
             // Remove color from the old tabs
             $('.slave-tab-link').each(function (idx, val) {
-                $(val).removeClass("border-dark bg-dark text-light")
-                    .addClass("text-dark")
-                    .children("span").removeClass("badge-light")
-                    .addClass("badge-dark");
+                $(val).removeClass('border-dark bg-dark text-light')
+                    .addClass('text-dark')
+                    .children('span').removeClass('badge-light')
+                    .addClass('badge-dark');
             });
 
             // Save Class when opening for every Slave
             localStorage.setItem('status', $(this).attr('href'));
 
             // Change the color of the current tab
-            $(this).removeClass("text-dark")
-                .addClass("border-dark bg-dark text-light")
-                .children("span").removeClass("badge-dark")
-                .addClass("badge-light");
+            $(this).removeClass('text-dark')
+                .addClass('border-dark bg-dark text-light')
+                .children('span').removeClass('badge-dark')
+                .addClass('badge-light');
         }
-        $('.slave-content-tab.active').removeClass("text-dark bg-light")
-            .addClass("text-light bg-dark")
-            .children("button").removeClass("btn-dark")
-            .addClass("btn-light");
+        $('.slave-content-tab.active').removeClass('text-dark bg-light')
+            .addClass('text-light bg-dark')
+            .children('button').removeClass('btn-dark')
+            .addClass('btn-light');
     });
 
     $('.slave-filesystem-tab').click(function () {

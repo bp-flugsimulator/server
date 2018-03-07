@@ -1,5 +1,5 @@
 /* eslint-env browser */
-/* eslint no-use-before-define: ["error", { "functions": false }] */
+/* eslint no-use-before-define: ['error', { 'functions': false }] */
 /* global $, JsonForm, getCookie, Status, modalDeleteAction, notify */
 /* exported loadScript, newScript */
 
@@ -99,19 +99,19 @@ $(document).ready(function () {
     }());
 
     // Set color of the current selected.
-    $('.script-tab-link.active').addClass("border-dark bg-dark text-light")
-        .children("span").removeClass("badge-dark")
-        .addClass("badge-light");
+    $('.script-tab-link.active').addClass('border-dark bg-dark text-light')
+        .children('span').removeClass('badge-dark')
+        .addClass('badge-light');
 
     // Changes the color of the clicked slave, if it was not clicked before.
     $('.script-tab-link').click(function () {
         if (!$(this).hasClass('active')) {
             // Remove color from the old tabs
             $('.script-tab-link').each(function (idx, val) {
-                $(val).removeClass("border-dark bg-dark text-light")
-                    .addClass("text-dark")
-                    .children("span").removeClass("badge-light")
-                    .addClass("badge-dark");
+                $(val).removeClass('border-dark bg-dark text-light')
+                    .addClass('text-dark')
+                    .children('span').removeClass('badge-light')
+                    .addClass('badge-dark');
             });
             // Create a change listener on all available input fields
             $(':input').change(function(e) {
@@ -130,10 +130,10 @@ $(document).ready(function () {
             localStorage.setItem('status_script', $(this).attr('href'));
 
             // Change the color of the current tab
-            $(this).removeClass("text-dark")
-                .addClass("border-dark bg-dark text-light")
-                .children("span").removeClass("badge-dark")
-                .addClass("badge-light");
+            $(this).removeClass('text-dark')
+                .addClass('border-dark bg-dark text-light')
+                .children('span').removeClass('badge-dark')
+                .addClass('badge-light');
         }
     });
 
