@@ -142,7 +142,7 @@ $(document).ready(function () {
     });
 
     $('.script-action-add').click(function () {
-        $('#scriptTabNew').click();
+        $('#scriptTabContentNew').tab('show');
     });
 
     $('.script-action-copy').click(function () {
