@@ -9,7 +9,7 @@
                     <button type="button" class="close" data-dismiss="modal">&times;</button>
                 </div>
 
-                <div class="modal-body">
+                <div class="modal-body bg-light">
                     {% csrf_token %}
                     {% for hidden_field in form.hidden_fields %}
                         {{ hidden_field }}
@@ -18,9 +18,9 @@
                     <div class="form-group">
                         {{ field.label_tag }}
                         {% if form.is_bound %}
-                            {% render_field field class="form-control is-valid" %}
+                            {% render_field field class="inset-shadow bg-white form-control is-valid" %}
                         {% else %}
-                            {% render_field field class="form-control" %}
+                            {% render_field field class="inset-shadow bg-white form-control" %}
                         {% endif %}
                         {% if field.help_text %}
                             <small class="form-text text-muted">{{ field.help_text }}</small>

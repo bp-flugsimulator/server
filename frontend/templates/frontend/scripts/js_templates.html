@@ -3,7 +3,7 @@
     <div class="list-group-item flex-column align-items-start script-{{type}}-entry bg-light">
         <div class="d-flex w-100 justify-content-between">
             <div class="form-group d-flex slave-choice">
-                <button class="btn btn-outline-light text-dark text-uppercase disabled">Client</button>
+                <button class="btn btn-outline-light text-dark text-uppercase">Client</button>
                 <div>
                     <select class="form-control script-{{type}}-slave" type="text" required>
                         {{#each slaves}}
@@ -13,18 +13,20 @@
                 </div>
             </div>
             <div class="form-group d-flex slave-choice">
-                <button class="btn btn-outline-light text-dark text-uppercase disabled">Index</button>
-                <input class="form-control script-{{type}}-index" type="number" value="{{#if index}}{{index}}{{else}}0{{/if}}" required/>
+                <button class="btn btn-outline-light text-dark text-uppercase">Index</button>
+                <input class="inset-shadow form-control script-{{type}}-index" type="number"
+                value="{{#if index}}{{index}}{{else}}0{{/if}}" required/>
             </div>
-            <button class="btn script-{{type}}-remove btn-dark h-75" type="button">
-                <i class="mdi mdi-delete"></i>
+            <button class="btn script-{{type}}-remove btn-danger h-75" type="button">
+                <i class="mdi mdi-delete text-light"></i>
             </button>
         </div>
         <div class="d-flex w-100 justify-content-start">
             <div class="form-group d-flex {{type}}-choice">
-                <button class="btn btn-outline-light text-dark text-uppercase disabled">{{type}}</button>
+                <button class="btn btn-outline-light text-dark text-uppercase">{{type}}</button>
                 <div>
-                    <select class="form-control script-{{type}}-{{type}}" type="text" name="script-{{type}}" data-selected="{{#if currentSelects}}{{ currentSelects }}{{/if}}"
+                    <select class="form-control script-{{type}}-{{type}}" type="text"
+                    name="script-{{type}}" data-selected="{{#if currentSelects}}{{ currentSelects }}{{/if}}"
                         required>
                         {{#each selects}}
                         <option>{{this}}</option>
@@ -47,7 +49,7 @@
         <div class="mb-4 pt-2">
             <div class="mb-4">
                 <span class="text-uppercase font-weight-bold">edit script name</span>
-                <input class="form-control script-name bg-white" placeholder="Script Name" type="text" {{#if name}}value="{{name}}"{{/if}} required/>
+                <input class="inset-shadow form-control script-name" placeholder="Script Name" type="text" {{#if name}}value="{{name}}"{{/if}} required/>
                 <div class="invalid-feedback text-uppercase">Script name is required.</div>
             </div>
         </div>
