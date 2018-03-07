@@ -107,7 +107,7 @@ $(document).ready(function () {
     $('.script-tab-link').click(function () {
         if (!$(this).hasClass('active')) {
             // Remove color from the old tabs
-            $('.script-tabbutton-link').each(function (idx, val) {
+            $('.script-tab-link').each(function (idx, val) {
                 $(val).removeClass("border-dark bg-dark text-light")
                     .addClass("text-dark")
                     .children("span").removeClass("badge-light")

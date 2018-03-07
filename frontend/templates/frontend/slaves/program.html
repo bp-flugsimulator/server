@@ -1,35 +1,37 @@
-
-<div class="justify-content-between align-items-center list-group-item pt-2 pb-2 pl-4 pr-4 fsim-box"
-data-state="{% if program.is_successful %}success{% elif program.is_error %}error{% elif program.is_running %}warning{% else %}unknown{% endif %}" id="programStatusContainer_{{ program.id }}">
-    <div class="row">
-        <div class="program-name col-4 mt-1 font-weight-bold">
-            <i class="fsim-program-status-icon align-middle" id="programStatusIcon_{{ program.id }}">
-            </i>
+<div class="justify-content-between align-items-center list-group-item pt-2 pb-2 pl-4 pr-4 fsim-box" style="border: none" data-state="{% if program.is_successful %}success{% elif program.is_error %}error{% elif program.is_running %}warning{% else %}unknown{% endif %}" id="programStatusContainer_{{ program.id }}">
+    <div class="d-flex w-100 justify-content-between">
+        <div class="program-name mt-1 font-weight-bold">
+            <i class="fsim-program-status-icon align-middle" id="programStatusIcon_{{ program.id }}"></i>
             <span class="align-middle">{{ program.name }}</span>
         </div>
 
-        <div class="btn-toolbar col d-flex justify-content-end" role="toolbar">
+        <div class="btn-toolbar d-flex justify-content-end" role="toolbar">
             <div class="btn-group xs-button-set" role="group">
-                <button type="button" id="programStartStop_{{ program.id }}" class="btn btn-dark font-weight-light program-action-start-stop" data-program-id="{{ program.id }}" data-is-running="{{ program.is_running }}">
+                <button type="button" id="programStartStop_{{ program.id }}" class="btn btn-dark font-weight-light program-action-start-stop"
+                data-program-id="{{ program.id }}" data-is-running="{{ program.is_running }}">
                     <i class="mdi mdi-power"></i>
-                    <i class="button-status-display">
+                    <span class="button-status-display">
                         {% if program.is_running %}STOP{% else %}START{% endif %}
-                    </i>
+                    </span>
                 </button>
 
-                <button type="button" class="btn btn-dark program-action-modify font-weight-light" data-program-id="{{ program.id }}" data-program-name="{{ program.name }}" data-slave-id="{{ program.slave.id }}" data-program-path="{{ program.path }}" data-program-arguments="{{ program.arguments }}" data-program-start-time="{{ program.start_time }}">
+                <button type="button" class="btn btn-dark program-action-modify font-weight-light" data-program-id="{{ program.id }}"
+                data-program-name="{{ program.name }}" data-slave-id="{{ program.slave.id }}" data-program-path="{{ program.path }}"
+                data-program-arguments="{{ program.arguments }}" data-program-start-time="{{ program.start_time }}">
                     <i class="mdi mdi-pencil"></i>
-                    <i>EDIT</i>
+                    EDIT
                 </button>
 
-                <button type="button" class="btn btn-dark program-action-delete font-weight-light" data-program-id="{{ program.id }}" data-slave-id="{{ program.slave.id }}" data-program-name="{{ program.name }}">
+                <button type="button" class="btn btn-dark program-action-delete font-weight-light" data-program-id="{{ program.id }}"
+                data-slave-id="{{ program.slave.id }}" data-program-name="{{ program.name }}">
                     <i class="mdi mdi-delete"></i>
-                    <i>DELETE</i>
+                    DELETE
                 </button>
 
-                <button class="btn btn-dark font-weight-light program-action-handle-logging" data-program-id="{{ program.id }}" id="programCardButton_{{ program.id }}" type="button" data-toggle="collapse" data-target="#programCard_{{ program.id }}" {% if not program.is_running and not program.is_executed %} disabled {% endif %}>
+                <button class="btn btn-dark font-weight-light program-action-handle-logging" data-program-id="{{ program.id }}" id="programCardButton_{{ program.id }}" type="button"
+                data-toggle="collapse" data-target="#programCard_{{ program.id }}" {% if not program.is_running and not program.is_executed %} disabled {% endif %}>
                     <i class="mdi mdi-clipboard-text"></i>
-                    <i>LOG</i>
+                    LOG
                 </button>
             </div>
         </div>

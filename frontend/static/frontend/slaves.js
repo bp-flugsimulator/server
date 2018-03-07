@@ -281,6 +281,33 @@ $(document).ready(function () {
         }
     }());
 
+    // Select
+    $('.slave-content-tab.active').removeClass("text-dark bg-light")
+        .addClass("text-light bg-dark")
+        .children("button").removeClass("btn-dark")
+        .addClass("btn-light");
+
+    $('.slave-content-tab').click(function () {
+        if (!$(this).hasClass('active')) {
+            // Remove color from the old tabs
+            $('.slave-content-tab').each(function (idx, val) {
+                $(val).removeClass("bg-dark text-light")
+                    .addClass("text-dark")
+                    .children("button").removeClass("btn-light")
+                    .addClass("btn-dark");
+            });
+
+            // Save Class when opening for every Slave
+            localStorage.setItem('status-tabs', $(this).attr('href'));
+
+            // Change the color of the current tab
+            $(this).removeClass("text-dark")
+                .addClass("bg-dark text-light")
+                .children("button").removeClass("btn-dark")
+                .addClass("btn-light");
+        }
+    });
+
     // Set color of the current selected.
     $('.slave-tab-link.active').addClass("border-dark bg-dark text-light")
         .children("span").removeClass("badge-dark")
@@ -306,6 +333,10 @@ $(document).ready(function () {
                 .children("span").removeClass("badge-dark")
                 .addClass("badge-light");
         }
+        $('.slave-content-tab.active').removeClass("text-dark bg-light")
+            .addClass("text-light bg-dark")
+            .children("button").removeClass("btn-dark")
+            .addClass("btn-light");
     });
 
     $('.slave-filesystem-tab').click(function () {
@@ -694,7 +725,7 @@ $(document).ready(function () {
     });
     }
 
-    $('#keepParentModal').click(function(e) {
+    $('.keepParentModal').click(function(e) {
         let parentModal = $('#unsafedChangesWarning').data('parentModal');
         $('#unsafedChangesWarning').modal('toggle');
         $('#' + parentModal).modal('toggle');

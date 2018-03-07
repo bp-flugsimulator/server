@@ -1,9 +1,9 @@
 <div class="container-fluid bg-light list-group-item">
-    <div class="row">
-        <div class="col-12 col-sm-12 col-md-4 col-xl-3 col-lg-4">
-            <label class="background-text-large" size="3"><nobr>{{ script.name }}</nobr></label>
+    <div class="d-flex w-100 justify-content-between">
+        <div >
+            <h5 class="mt-2"><nobr>{{ script.name }}</nobr></h5>
         </div>
-        <div class="col-12 col-sm-12 col-md-8 col-lg-8 col-xl-9 btn-toolbar justify-content-end" role="toolbar">
+        <div class="btn-toolbar justify-content-end" role="toolbar">
             <div class="btn-group" role="group">
                 <button type="button" class="btn btn-dark font-weight-light script-action-copy" data-script-id="{{ script.id }}" data-script-name="{{ script.name }}">
                     <i class="mdi mdi-content-copy"></i> COPY
@@ -22,7 +22,7 @@
     </div>
 </div>
 
-<div id="jsoneditor_{{ script.id }}">
+<div id="jsoneditor_{{ script.id }}" class="list-group-item bg-light">
     <script>
         loadScript({{ script.id }});
     </script>
