@@ -22,7 +22,6 @@ from django.db.models import (
 
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
-from channels import Group
 from wakeonlan import send_magic_packet
 from utils import Command
 from server.utils import notify

@@ -10,7 +10,6 @@ from django.core.exceptions import ValidationError
 from django.db.utils import IntegrityError
 from django.db.models import Count
 
-from channels import Group
 from utils import Status, Command
 import utils.path as up
 
@@ -41,6 +40,9 @@ from .errors import (
     ScriptNotExistError,
     QueryTypeError,
 )
+
+from frontend import controller
+
 from .controller import (
     prog_start,
     prog_stop,
@@ -94,17 +96,31 @@ def script_put_post(data, script_id):
 
 def slave_set(request):
     """
-    Process POST requests which adds a new SlaveModel and GET requests to query
-    for SlaveModel which contains the query string.
+    Process requests on a set of `SlaveModel`s.
+
+    HTTP Methods
+    ------------
+        POST:
+            Adds a new `SlaveModel` to the database.
+        GET: query with (?q=None)
+            Searches for the name which is like ".*q.*"
+        GET: query with (?programs=False)
+            If this is True, then all `SlaveModel`s are returned which have a
+            `ProgramModel`.
+        GET: query with (?filesystems=False)
+            If this is True, then all `SlaveModel`s are returned which have a
+            `FilesystemModel`.
 
     Parameters
     ----------
         request: HttpRequest
+            The request which should be processed.
 
     Returns
     -------
-        A StatusResponse or HttpResponseForbidden if the request method was
-        other than GET.
+        HttpResponse:
+            If the HTTP method is not supported, then an `HttpResponseForbidden` is
+            returned.
     """
     if request.method == 'POST':
         form = SlaveForm(request.POST)
@@ -160,17 +176,25 @@ def slave_set(request):
 
 def slave_entry(request, slave_id):
     """
-    Process DELETE, PUT and POST requests for the SlaveModel ressource.
+    Process requests for a single `SlaveModel`s.
+
+    HTTP Methods
+    ------------
+        DELETE:
+            Removes the specified entry (in the URL) from the database.
+        PUT:
+            Updates the specified entry (in the URL) in the database.
 
     Parameters
     ----------
         request: HttpRequest
-        slave_id: Unique identifier of a slave
+            The request which should be processed.
 
     Returns
     -------
-        A StatusResponse or HttpResponseForbidden if the request method was
-        other than GET.
+        HttpResponse:
+            If the HTTP method is not supported, then an `HttpResponseForbidden` is
+            returned.
     """
     if request.method == 'DELETE':
         # i can't find any exceptions that can be thrown in our case
@@ -198,34 +222,33 @@ def slave_entry(request, slave_id):
 
 def slave_shutdown(request, slave_id):
     """
-    Process GET requests which will shutdown a slave.
+    Processes an method invocation (shutdown) for an `SlaveModel`.(see
+    @frontend.controller.slave_shutdown)
+
+    HTTP Methods
+    ------------
+        GET:
+            Invokes the method for the `SlaveModel` (which is
+            specified in the URL).
 
     Parameters
     ----------
         request: HttpRequest
-        slave_id: Unique identifier of a slave
+            The request which should be processed.
 
     Returns
     -------
-        A StatusResponse or HttpResponseForbidden if the request method was
-        other than GET.
+        HttpResponse:
+            If the HTTP method is not supported, then an `HttpResponseForbidden` is
+            returned.
     """
     if request.method == 'GET':
         try:
             slave = SlaveModel.objects.get(id=slave_id)
-            if slave.is_online:
-                Group('client_' + str(slave_id)).send({
-                    'text':
-                    Command(method="shutdown").to_json()
-                })
-                notify({
-                    "message":
-                    "Send shutdown Command to {}".format(slave.name)
-                })
-                return StatusResponse.ok('')
-            else:
-                return StatusResponse(
-                    SlaveOfflineError('', '', 'shutdown', slave.name))
+            controller.slave_shutdown(slave)
+            return StatusResponse.ok('')
+        except FsimError as err:
+            return StatusResponse(err)
         except SlaveModel.DoesNotExist as err:
             return StatusResponse(SlaveNotExistError(err, slave_id))
 
@@ -235,29 +258,33 @@ def slave_shutdown(request, slave_id):
 
 def slave_wol(request, slave_id):
     """
-    Process GET requests which will start a Slave via Wake-On-Lan.
+    Processes an method invocation (wol) for an `SlaveModel`. (see
+    @frontend.controller.slave_wake_on_lan)
+
+    HTTP Methods
+    ------------
+        GET:
+            Invokes the method for the `SlaveModel` (which is
+            specified in the URL).
 
     Parameters
     ----------
         request: HttpRequest
-        slave_id: Unique identifier of a slave
+            The request which should be processed.
 
     Returns
     -------
-        A StatusResponse or HttpResponseForbidden if the request method was
-        other than GET.
+        HttpResponse:
+            If the HTTP method is not supported, then an `HttpResponseForbidden` is
+            returned.
     """
     if request.method == 'GET':
         try:
             slave = SlaveModel.objects.get(id=slave_id)
             slave_wake_on_lan(slave)
-
-            notify({
-                "message":
-                "Send start command to client `{}`".format(slave.name)
-            })
-
             return StatusResponse.ok('')
+        except FsimError as err:
+            return StatusResponse(err)
         except SlaveModel.DoesNotExist as err:
             return StatusResponse(SlaveNotExistError(err, slave_id))
     else:
@@ -266,17 +293,29 @@ def slave_wol(request, slave_id):
 
 def program_set(request):
     """
-    Process POST requests which adds new ProgramModel and GET requests to query
-    for ProgramModel which contains the query string.
+    Process requests on a set of `ProgramModel`s.
+
+    HTTP Methods
+    ------------
+        POST:
+            Adds a new `ProgramModel` to the database.
+        GET: query with (?q=None)
+            Searches for the name which is like ".*q.*"
+        GET: query with (?slave=None&slave_str=False)
+            Searches for all `ProgramModel`s which belong to the given `slave`.
+            Where `slave_str` specifies if the given `slave` is an unique name or
+            and unique index.
 
     Parameters
     ----------
         request: HttpRequest
+            The request which should be processed.
 
     Returns
     -------
-        A StatusResponse or HttpResponseForbidden if the request method was
-        other than GET.
+        HttpResponse:
+            If the HTTP method is not supported, then an `HttpResponseForbidden` is
+            returned.
     """
     if request.method == 'POST':
         form = ProgramForm(request.POST or None)
@@ -344,17 +383,25 @@ def program_set(request):
 
 def program_entry(request, program_id):
     """
-    Process DELETE, PUT and POST requests for the ProgramModel ressource.
+    Process requests for a single `ProgramModel`s.
+
+    HTTP Methods
+    ------------
+        DELETE:
+            Removes the specified entry (in the URL) from the database.
+        PUT:
+            Updates the specified entry (in the URL) in the database.
 
     Parameters
     ----------
         request: HttpRequest
-        program_id: Unique identifier of a program
+            The request which should be processed.
 
     Returns
     -------
-        A StatusResponse or HttpResponseForbidden if the request method was
-        other than GET.
+        HttpResponse:
+            If the HTTP method is not supported, then an `HttpResponseForbidden` is
+            returned.
     """
     if request.method == 'DELETE':
         ProgramModel.objects.filter(id=program_id).delete()
@@ -389,17 +436,25 @@ def program_entry(request, program_id):
 
 def program_start(request, program_id):
     """
-    Process GET requests which will start a programm on a slave.
+    Processes an method invocation (start) for an `ProgramModel`.(see
+    @frontend.controller.prog_start)
+
+    HTTP Methods
+    ------------
+        GET:
+            Invokes the method for the `ProgramModel` (which is
+            specified in the URL).
 
     Parameters
     ----------
         request: HttpRequest
-        program_id: Unique identifier of a program
+            The request which should be processed.
 
     Returns
     -------
-        A StatusResponse or HttpResponseForbidden if the request method was
-        other than GET.
+        HttpResponse:
+            If the HTTP method is not supported, then an `HttpResponseForbidden` is
+            returned.
     """
     if request.method == 'GET':
         try:
@@ -416,17 +471,25 @@ def program_start(request, program_id):
 
 def program_stop(request, program_id):
     """
-    Process GET requests which will stop a running programm on a slave.
+    Processes an method invocation (stop) for an `ProgramModel`. (see
+    @frontend.controller.prog_stop)
+
+    HTTP Methods
+    ------------
+        GET:
+            Invokes the method for the `ProgramModel` (which is
+            specified in the URL).
 
     Parameters
     ----------
         request: HttpRequest
-        program_id: Unique identifier of a program
+            The request which should be processed.
 
     Returns
     -------
-        A StatusResponse or HttpResponseForbidden if the request method was
-        other than GET.
+        HttpResponse:
+            If the HTTP method is not supported, then an `HttpResponseForbidden` is
+            returned.
     """
     if request.method == 'GET':
         try:
@@ -442,19 +505,25 @@ def program_stop(request, program_id):
         return HttpResponseForbidden()
 
 
-def log_entry(request, program_id):
+def program_log_entry(request, program_id):
     """
-    Process GET requests which will request a log from a programm on a slave.
+    Process requests for a single `ProgramModel`s for the log attribute.
+
+    HTTP Methods
+    ------------
+        GET:
+            Fetches the log entry from the related `SlaveModel`.
 
     Parameters
     ----------
         request: HttpRequest
-        program_id: Unique identifier of a program
+            The request which should be processed.
 
     Returns
     -------
-        A StatusResponse or HttpResponseForbidden if the request method was
-        other than GET.
+        HttpResponse:
+            If the HTTP method is not supported, then an `HttpResponseForbidden` is
+            returned.
     """
     if request.method == 'GET':
         try:
@@ -469,19 +538,26 @@ def log_entry(request, program_id):
         return HttpResponseForbidden()
 
 
-def log_enable(request, program_id):
+def program_log_enable(request, program_id):
     """
-    Process GET requests which will enable remote logging on a slave.
+    Processes an method invocation (log_enable) for an `ProgramModel`. (see
+    @frontend.controller.prog_log_enable)
+
+    HTTP Methods
+    ------------
+        GET:
+            Notifies the `SlaveModel` to send logs for this `ProgramModel`.
 
     Parameters
     ----------
         request: HttpRequest
-        program_id: Unique identifier of a program
+            The request which should be processed.
 
     Returns
     -------
-        A StatusResponse or HttpResponseForbidden if the request method was
-        other than GET.
+        HttpResponse:
+            If the HTTP method is not supported, then an `HttpResponseForbidden` is
+            returned.
     """
     if request.method == 'GET':
         try:
@@ -496,19 +572,27 @@ def log_enable(request, program_id):
         return HttpResponseForbidden()
 
 
-def log_disable(request, program_id):
+def program_log_disable(request, program_id):
     """
-    Process GET requests which will disable remote logging on a slave.
+    Processes an method invocation (log_disable) for an `ProgramModel`. (see
+    @frontend.controller.prog_log_disable)
+
+    HTTP Methods
+    ------------
+        GET:
+            Notifies the `SlaveModel` to stop the sending process for logs
+            for this `ProgramModel`.
 
     Parameters
     ----------
         request: HttpRequest
-        program_id: Unique identifier of a program
+            The request which should be processed.
 
     Returns
     -------
-        A StatusResponse or HttpResponseForbidden if the request method was
-        other than GET.
+        HttpResponse:
+            If the HTTP method is not supported, then an `HttpResponseForbidden` is
+            returned.
     """
     if request.method == 'GET':
         try:
@@ -525,16 +609,23 @@ def log_disable(request, program_id):
 
 def script_set(request):
     """
-    Process POST requests which adds new SlaveModel.
+    Process requests on a set of `ScriptModel`s.
+
+    HTTP Methods
+    ------------
+        POST:
+            Adds a new `ScriptModel` to the database.
 
     Parameters
     ----------
         request: HttpRequest
+            The request which should be processed.
 
     Returns
     -------
-        A StatusResponse or HttpResponseForbidden if the request method was
-        other than GET.
+        HttpResponse:
+            If the HTTP method is not supported, then an `HttpResponseForbidden` is
+            returned.
     """
     if request.method == 'POST':
         return script_put_post(request.body.decode('utf-8'), None)
@@ -544,17 +635,29 @@ def script_set(request):
 
 def script_entry(request, script_id):
     """
-    Process GET, DELETE requests for the ScriptModel ressource.
+    Process requests for a single `ScriptEntry`s.
+
+    HTTP Methods
+    ------------
+        GET: query (with ?slaves=int&programs=int&filesystem=int)
+            Returns this `ScriptModel` as a JSON encoded string where
+            `SlavesModel`, `ProgramModel` and `FilesystemModel` encoded as str
+            or int (specified by &slaves=str, &programs=str, &filesystem=str).
+        DELETE:
+            Removes the specified entry (in the URL) from the database.
+        PUT:
+            Updates the specified entry (in the URL) in the database.
 
     Parameters
     ----------
         request: HttpRequest
-        script_id: Unique identifier of script
+            The request which should be processed.
 
     Returns
     -------
-        A StatusResponse or HttpResponseForbidden if the request method was
-        other than GET.
+        HttpResponse:
+            If the HTTP method is not supported, then an `HttpResponseForbidden` is
+            returned.
     """
     if request.method == 'GET':
         try:
@@ -584,17 +687,25 @@ def script_entry(request, script_id):
 
 def script_copy(request, script_id):
     """
-    Process GET request which constructs a deep copy of a script.
+    Processes an method invocation (copy) for an `ScriptModel`. (see
+    @frontend.controller.script_copy)
+
+    HTTP Methods
+    ------------
+        GET:
+            Invokes the method for the `ScriptModel` (which is
+            specified in the URL).
 
     Parameters
     ----------
         request: HttpRequest
-        script_id: Unique identifier of script
+            The request which should be processed.
 
     Returns
     -------
-        A StatusResponse or HttpResponseForbidden if the request method was
-        other than GET.
+        HttpResponse:
+            If the HTTP method is not supported, then an `HttpResponseForbidden` is
+            returned.
     """
     if request.method == 'GET':
         try:
@@ -609,17 +720,25 @@ def script_copy(request, script_id):
 
 def script_run(request, script_id):
     """
-    Process GET requests for the ScriptModel ressource.
+    Processes an method invocation (run) for an `ScriptModel`. (see
+    @frontend.controller.script_run)
+
+    HTTP Methods
+    ------------
+        GET:
+            Invokes the method for the `ScriptModel` (which is
+            specified in the URL).
 
     Parameters
     ----------
         request: HttpRequest
-        script_id: Unique identifier of script
+            The request which should be processed.
 
     Returns
     -------
-        A StatusResponse or HttpResponseForbidden if the request method was
-        other than GET.
+        HttpResponse:
+            If the HTTP method is not supported, then an `HttpResponseForbidden` is
+            returned.
     """
 
     if request.method == 'GET':
@@ -640,17 +759,29 @@ def script_run(request, script_id):
 
 def filesystem_set(request):
     """
-    Process POST requests which adds new FilesystemModel and GET requests to query
-    for FilesystemModel which contains the query string.
+    Process requests on a set of `FilesystemModel`s.
+
+    HTTP Methods
+    ------------
+        POST:
+            Adds a new `FilesystemModel` to the database.
+        GET: query with (?q=None)
+            Searches for the name which is like ".*q.*"
+        GET: query with (?slave=None&slave_str=False)
+            Searches for all `FilesystemModel`s which belong to the given `slave`.
+            Where `slave_str` specifies if the given `slave` is an unique name or
+            and unique index.
 
     Parameters
     ----------
         request: HttpRequest
+            The request which should be processed.
 
     Returns
     -------
-        A StatusResponse or HttpResponseForbidden if the request method was
-        other than GET.
+        HttpResponse:
+            If the HTTP method is not supported, then an `HttpResponseForbidden` is
+            returned.
     """
     if request.method == 'POST':
         form = FilesystemForm(request.POST or None)
@@ -743,17 +874,25 @@ def filesystem_set(request):
 
 def filesystem_move(request, filesystem_id):
     """
-    Process GET requests for the FilesystemModel(move) ressource.
+    Processes an method invocation (move) for an `FilesystemModel`. (see
+    @frontend.controller.filesystem_move)
+
+    HTTP Methods
+    ------------
+        GET:
+            Invokes the method for the `FilesystemModel` (which is
+            specified in the URL).
 
     Parameters
     ----------
         request: HttpRequest
-        filesystemId: Unique identifier of a filesystem
+            The request which should be processed.
 
     Returns
     -------
-        A StatusResponse or HttpResponseForbidden if the request method was
-        other than GET.
+        HttpResponse:
+            If the HTTP method is not supported, then an `HttpResponseForbidden` is
+            returned.
     """
     if request.method == 'GET':
         try:
@@ -771,17 +910,25 @@ def filesystem_move(request, filesystem_id):
 
 def filesystem_restore(request, filesystem_id):
     """
-    Process GET requests for the FilesystemModel(restore) ressource.
+    Processes an method invocation (restore) for an `FilesystemModel`. (see
+    @frontend.controller.filesystem_restore)
+
+    HTTP Methods
+    ------------
+        GET:
+            Invokes the method for the `FilesystemModel` (which is
+            specified in the URL).
 
     Parameters
     ----------
         request: HttpRequest
-        fileId: Unique identifier of a filesystem
+            The request which should be processed.
 
     Returns
     -------
-        A StatusResponse or HttpResponseForbidden if the request method was
-        other than GET.
+        HttpResponse:
+            If the HTTP method is not supported, then an `HttpResponseForbidden` is
+            returned.
     """
     if request.method == 'GET':
         try:
@@ -799,17 +946,25 @@ def filesystem_restore(request, filesystem_id):
 
 def filesystem_entry(request, filesystem_id):
     """
-    Process DELETE and PUT requests for the FilesystemModel ressource.
+    Process requests for a single `FilesystemModel`s.
+
+    HTTP Methods
+    ------------
+        DELETE:
+            Removes the specified entry (in the URL) from the database.
+        PUT:
+            Updates the specified entry (in the URL) in the database.
 
     Parameters
     ----------
         request: HttpRequest
-        fileId: Unique identifier of a filesystem
+            The request which should be processed.
 
     Returns
     -------
-        A StatusResponse or HttpResponseForbidden if the request method was
-        other than DELETE or PUT.
+        HttpResponse:
+            If the HTTP method is not supported, then an `HttpResponseForbidden` is
+            returned.
     """
 
     if request.method == 'DELETE':

@@ -1173,7 +1173,7 @@ class ProgramTests(StatusTestCase):
     def test_entry_get_offline_slave(self):
         program = ProgramFactory()
         api_response = self.client.get(
-            reverse('frontend:log_entry', args=[program.id]))
+            reverse('frontend:program_log_entry', args=[program.id]))
         self.assertEqual(200, api_response.status_code)
         self.assertStatusRegex(
             Status.err(SlaveOfflineError),
@@ -1648,7 +1648,7 @@ class ProgramTests(StatusTestCase):
         ws_slave.join_group('client_' + str(slave.id))
 
         api_response = self.client.get(
-            reverse('frontend:log_entry', args=[program.id]))
+            reverse('frontend:program_log_entry', args=[program.id]))
         self.assertEqual(200, api_response.status_code)
         self.assertEqual(
             Status.ok(''),
@@ -1667,7 +1667,7 @@ class ProgramTests(StatusTestCase):
         slave = SlaveFactory(online=True)
         program = ProgramFactory(slave=slave)
         api_response = self.client.get(
-            reverse('frontend:log_entry', args=[program.id]))
+            reverse('frontend:program_log_entry', args=[program.id]))
         self.assertEqual(200, api_response.status_code)
         self.assertStatusRegex(
             Status.err(LogNotExistError),
@@ -1676,7 +1676,7 @@ class ProgramTests(StatusTestCase):
 
     def test_log_entry_get_not_exist_program(self):
         api_response = self.client.get(
-            reverse('frontend:log_entry', args=[999999]))
+            reverse('frontend:program_log_entry', args=[999999]))
         self.assertEqual(200, api_response.status_code)
         self.assertStatusRegex(
             Status.err(ProgramNotExistError),
@@ -1685,7 +1685,7 @@ class ProgramTests(StatusTestCase):
 
     def test_log_entry_post_forbidden(self):
         api_response = self.client.post(
-            reverse('frontend:log_entry', args=[999999]))
+            reverse('frontend:program_log_entry', args=[999999]))
         self.assertEqual(403, api_response.status_code)
 
     def test_log_disable_get_success(self):
@@ -1697,7 +1697,7 @@ class ProgramTests(StatusTestCase):
         ws_slave.join_group('client_' + str(slave.id))
 
         api_response = self.client.get(
-            reverse('frontend:log_disable', args=[program.id]))
+            reverse('frontend:program_log_disable', args=[program.id]))
         self.assertEqual(200, api_response.status_code)
         self.assertEqual(
             Status.ok(''),
@@ -1715,7 +1715,7 @@ class ProgramTests(StatusTestCase):
     def test_log_disable_get_offline(self):
         program = ProgramFactory()
         api_response = self.client.get(
-            reverse('frontend:log_disable', args=[program.id]))
+            reverse('frontend:program_log_disable', args=[program.id]))
         self.assertEqual(200, api_response.status_code)
         self.assertStatusRegex(
             Status.err(SlaveOfflineError),
@@ -1724,7 +1724,7 @@ class ProgramTests(StatusTestCase):
 
     def test_log_disable_get_not_exist(self):
         api_response = self.client.get(
-            reverse('frontend:log_disable', args=[999999]))
+            reverse('frontend:program_log_disable', args=[999999]))
         self.assertEqual(200, api_response.status_code)
         self.assertStatusRegex(
             Status.err(ProgramNotExistError),
@@ -1733,7 +1733,7 @@ class ProgramTests(StatusTestCase):
 
     def test_log_disable_post_forbidden(self):
         api_response = self.client.post(
-            reverse('frontend:log_disable', args=[999999]))
+            reverse('frontend:program_log_disable', args=[999999]))
         self.assertEqual(403, api_response.status_code)
 
     def test_log_enable_get_success(self):
@@ -1745,7 +1745,7 @@ class ProgramTests(StatusTestCase):
         ws_slave.join_group('client_' + str(slave.id))
 
         api_response = self.client.get(
-            reverse('frontend:log_enable', args=[program.id]))
+            reverse('frontend:program_log_enable', args=[program.id]))
         self.assertEqual(200, api_response.status_code)
         self.assertEqual(
             Status.ok(''),
@@ -1763,7 +1763,7 @@ class ProgramTests(StatusTestCase):
     def test_log_enable_get_offline_error(self):
         program = ProgramFactory()
         api_response = self.client.get(
-            reverse('frontend:log_enable', args=[program.id]))
+            reverse('frontend:program_log_enable', args=[program.id]))
         self.assertEqual(200, api_response.status_code)
         self.assertStatusRegex(
             Status.err(SlaveOfflineError),
@@ -1772,7 +1772,7 @@ class ProgramTests(StatusTestCase):
 
     def test_log_enable_get_not_exist_program(self):
         api_response = self.client.get(
-            reverse('frontend:log_enable', args=[999999]))
+            reverse('frontend:program_log_enable', args=[999999]))
         self.assertEqual(200, api_response.status_code)
         self.assertStatusRegex(
             Status.err(ProgramNotExistError),
@@ -1784,7 +1784,7 @@ class ProgramTests(StatusTestCase):
         prog = ProgramFactory(slave=slave)
 
         api_response = self.client.get(
-            reverse('frontend:log_enable', args=[prog.id]))
+            reverse('frontend:program_log_enable', args=[prog.id]))
         self.assertEqual(200, api_response.status_code)
 
         self.assertStatusRegex(
@@ -1794,7 +1794,7 @@ class ProgramTests(StatusTestCase):
 
     def test_log_enable_post_forbidden(self):
         api_response = self.client.post(
-            reverse('frontend:log_enable', args=[999999]))
+            reverse('frontend:program_log_enable', args=[999999]))
         self.assertEqual(403, api_response.status_code)
 
 

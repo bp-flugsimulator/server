@@ -72,10 +72,6 @@ class RPCWebsocketTests(TestCase):
             Command.from_json(json.dumps(ws_client.receive())),
         )
 
-        #  test if the client is now part of the right groups
-        Group('clients').send({'text': 'ok'}, immediately=True)
-        self.assertEqual(ws_client.receive(json=False), 'ok')
-
         Group('client_{}'.format(slave.id)).send(
             {
                 'text': 'ok'
@@ -123,10 +119,6 @@ class RPCWebsocketTests(TestCase):
 
         #  test if SlaveStatus was to offline
         self.assertFalse(SlaveModel.objects.get(id=slave.id).is_online)
-
-        #  test if the client was removed from the correct groups
-        Group('clients').send({'text': 'ok'}, immediately=True)
-        self.assertIsNone(ws_client.receive())
 
         Group('client_{}'.format(slave.id)).send(
             {

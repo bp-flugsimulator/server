@@ -99,13 +99,33 @@ class SchedulerTests(TestCase):
             SchedulerStatus.WAITING_FOR_SLAVES,
         )
 
-        self.assertEqual(
-            Status.ok({
-                'script_status': 'waiting_for_slaves',
-                'script_id': self.script.id,
-            }),
-            Status.from_json(json.dumps(webinterface.receive())),
-        )
+        msg1 = Status.from_json(json.dumps(webinterface.receive()))
+        msg2 = Status.from_json(json.dumps(webinterface.receive()))
+        msg3 = Status.from_json(json.dumps(webinterface.receive()))
+
+        expct1 = Status.ok({
+            'script_status': 'waiting_for_slaves',
+            'script_id': self.script.id,
+        })
+
+        expct2 = Status.ok({
+            'message': "Send start command to client `{}`".format(self.prog1.slave.name),
+        })
+
+        expct3 = Status.ok({
+            'message': "Send start command to client `{}`".format(self.prog2
+                                                                  .slave.name),
+        })
+
+        if msg1 != expct1 and msg1 != expct2 \
+            and msg1 != expct3 :
+            raise ValueError(msg1, expct1, expct2, expct3)
+
+        if msg2 != expct1 and msg2 != expct2 and msg2 != expct3:
+            raise ValueError(msg2, expct1, expct2, expct3)
+
+        if msg3 != expct1 and msg3 != expct2 and msg3 != expct3:
+            raise ValueError(msg3, expct1, expct2, expct3)
 
     def test_state_next(self):
         webinterface = WSClient()

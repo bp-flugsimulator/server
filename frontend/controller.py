@@ -9,10 +9,9 @@ from uuid import uuid4
 
 from django.db.models import Q
 
-from channels import Group
 from wakeonlan import send_magic_packet
 from utils import Command
-from server.utils import notify
+from server.utils import notify, notify_slave
 
 from utils.typecheck import ensure_type
 
@@ -147,7 +146,7 @@ def fs_move(fs):
             fs.save()
 
         # send command to the client
-        Group('client_' + str(slave.id)).send({'text': cmd.to_json()})
+        notify_slave(cmd, slave.id)
     else:
         raise SlaveOfflineError(
             str(fs.name),
@@ -195,7 +194,7 @@ def fs_restore(fs):
         )
 
         # send command to the client
-        Group('client_' + str(slave.id)).send({'text': cmd.to_json()})
+        notify_slave(cmd, slave.id)
 
         fs.command_uuid = cmd.uuid
         fs.save()
@@ -271,7 +270,7 @@ def prog_start(prog):
         )
 
         # send command to the client
-        Group('client_' + str(prog.slave.id)).send({'text': cmd.to_json()})
+        notify_slave(cmd, prog.slave.id)
 
         # tell webinterface that the program has started
         notify({
@@ -333,13 +332,13 @@ def prog_stop(prog):
             prog.slave.name,
         )
 
-        Group('client_' + str(prog.slave.id)).send({
-            'text':
+        notify_slave(
             Command(
                 method="execute",
                 uuid=prog.programstatus.command_uuid,
-            ).to_json()
-        })
+            ),
+            prog.slave.id,
+        )
     else:
         raise SlaveOfflineError(
             str(prog.name),
@@ -347,7 +346,28 @@ def prog_stop(prog):
             str(prog.slave.name),
             "stop",
         )
+def slave_shutdown(slave):
+    """
+    This functions shutsdown a `SlaveModel` by a command to the slave.
 
+    Parameters
+    ----------
+        slave: SlaveModel
+            A valid `SlaveModel`.
+
+    Raises
+    ------
+        TypeError:
+            If `slave` is not an `SlaveModel`
+    """
+    if slave.is_online:
+        notify_slave(Command(method="shutdown"), slave.id)
+        notify({
+            "message":
+            "Send shutdown Command to {}".format(slave.name)
+        })
+    else:
+        raise SlaveOfflineError('', '', 'shutdown', slave.name)
 
 def slave_wake_on_lan(slave):
     """
@@ -367,6 +387,11 @@ def slave_wake_on_lan(slave):
     ensure_type("slave", slave, SlaveModel)
     send_magic_packet(slave.mac_address)
 
+    notify({
+        "message":
+        "Send start command to client `{}`".format(slave.name)
+    })
+
 
 def prog_log_get(program):
     """
@@ -380,8 +405,8 @@ def prog_log_get(program):
 
     Returns
     -------
-    boolean:
-        If the request is possible.
+        boolean:
+            If the request is possible.
 
     Raises
     ------
@@ -404,13 +429,13 @@ def prog_log_get(program):
     if not (program.is_executed or program.is_running):
         raise LogNotExistError(program.id)
 
-    Group('client_' + str(program.slave.id)).send({
-        'text':
+    notify_slave(
         Command(
             method="get_log",
-            target_uuid=program.programstatus.command_uuid).to_json()
-    })
-
+            target_uuid=program.programstatus.command_uuid,
+        ),
+        program.slave.id,
+    )
 
 def prog_log_enable(program):
     """
@@ -444,15 +469,13 @@ def prog_log_enable(program):
     if not (program.is_executed or program.is_running):
         raise LogNotExistError(program.id)
 
-
-    Group('client_' + str(program.slave.id)).send({
-        'text':
+    notify_slave(
         Command(
             method="enable_logging",
             target_uuid=program.programstatus.command_uuid,
-        ).to_json()
-    })
-
+        ),
+        program.slave.id,
+    )
 
 def prog_log_disable(program):
     """
@@ -481,15 +504,13 @@ def prog_log_disable(program):
     if not program.slave.is_online:
         raise SlaveOfflineError('', '', 'log_disable', program.slave.name)
 
-
-    Group('client_' + str(program.slave.id)).send({
-        'text':
+    notify_slave(
         Command(
             method="disable_logging",
             target_uuid=program.programstatus.command_uuid,
-        ).to_json()
-    })
-
+        ),
+        program.slave.id,
+    )
 
 def script_deep_copy(script):
     """
@@ -504,8 +525,8 @@ def script_deep_copy(script):
 
     Returns
     -------
-    copy: ScriptModel
-        The copy of the `script` with a new name.
+        copy: ScriptModel
+            The copy of the `script` with a new name.
 
     Raises
     ------

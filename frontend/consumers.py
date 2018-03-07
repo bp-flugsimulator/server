@@ -339,7 +339,6 @@ def ws_rpc_connect(message):
         )
 
         # Add to the command group
-        Group('clients').add(message.reply_channel)
         Group('client_{}'.format(slave.id)).add(message.reply_channel)
         LOGGER.debug('Added client to command group client_%s', slave.id)
 
@@ -410,7 +409,6 @@ def ws_rpc_disconnect(message):
         slave = SlaveModel.objects.get(
             ip_address=message.channel_session['ip_address'])
 
-        Group('clients').discard(message.reply_channel)
         Group('client_{}'.format(slave.id)).discard(message.reply_channel)
 
         slave.online = False
