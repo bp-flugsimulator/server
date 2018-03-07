@@ -34,15 +34,14 @@
                     <i class="mdi mdi-plus text-light"></i>
                 </button>
             </a>
+            <a style="display: none;" class="nav-link font-weight-bold script-tab-link" id="scriptTabNew" data-toggle="tab" href="#scriptTabContentNew" role="tab">
+            </a>
             {% for script in scripts %}
-                <a class="d-flex justify-content-between align-items-center list-group-item list-group-item-action font-weight-bold script-tab-link {% if forloop.first %} active {% endif %}
+                <a class="d-flex justify-content-start align-items-center list-group-item list-group-item-action font-weight-bold script-tab-link
                 bg-light"
                 data-state="unknown" id="scriptTab{{ script.id }}" data-toggle="tab"  href="#scriptTabContent{{ script.id }}" data-script-id="{{ script.id }}">
                     <i class="mdi mdi-description"></i>
                     {{ script.name }}
-                    <span class="badge badge-dark badge-pill">
-                        <i class="mdi mdi-run"></i>{{ script.id }}
-                        <i class="mdi mdi-alert"></i>{{ script.id }}</span>
                 </a>
             {% endfor %}
         </div>
