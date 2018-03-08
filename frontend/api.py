@@ -8,13 +8,15 @@ from django.http import HttpResponseForbidden
 from django.http.request import QueryDict
 from django.core.exceptions import ValidationError
 from django.db.utils import IntegrityError
-from django.db.models import Count
+from django.db.models import Count, Model
 
 from utils import Status, Command
+from utils.typecheck import ensure_type
 import utils.path as up
 
-from server.utils import StatusResponse
 from django.db.models import Q
+
+from server.utils import StatusResponse
 
 from .models import (
     Slave as SlaveModel,
@@ -93,6 +95,27 @@ def script_put_post(data, script_id):
     except IntegrityError as err:
         return StatusResponse.err(str(err))
 
+def convert_str_to_bool(string):
+    """
+    Converts a string into a boolean by checking comming patterns.
+    If no pattern is matching the default is returend (False).
+
+    Arguments
+    ---------
+        string: str
+            The string which should be converted.
+    Returns
+    -------
+        bool:
+            If one of the patterns was found in the string.
+
+    Raises
+    ------
+        TypeError:
+            If string is not a str instance.
+    """
+    ensure_type("string", string, str)
+    return string.lower() in ('yes', 'true', '1', 't', 'y')
 
 def slave_set(request):
     """
@@ -129,15 +152,13 @@ def slave_set(request):
             return StatusResponse.ok('')
         return StatusResponse.err(form.errors)
     elif request.method == 'GET':
-        # the URL takes an argument with ?q=<string>
-        # e.g. /slaves?q=test
         query = request.GET.get('q', None)
 
         programs = request.GET.get('programs', '')
-        filesystems = request.GET.get('filesystems', '')
+        programs = convert_str_to_bool(programs)
 
-        programs = programs.lower() in ('yes', 'true', '1', 't', 'y')
-        filesystems = filesystems.lower() in ('yes', 'true', '1', 't', 'y')
+        filesystems = request.GET.get('filesystems', '')
+        filesystems = convert_str_to_bool(filesystems)
 
         if query is not None:
             slaves = SlaveModel.objects.filter(
@@ -145,30 +166,18 @@ def slave_set(request):
                     "name",
                     flat=True,
                 )
-        else:
+        elif programs or filesystems:
             if programs and filesystems:
-                return StatusResponse(
-                    SimultaneousQueryError('filesystems', 'programs'))
+                return StatusResponse(SimultaneousQueryError('filesystems', 'programs'))
             elif programs:
-                slaves = SlaveModel.objects.all().annotate(
-                    prog_count=Count('program__pk')).filter(
-                        prog_count__gt=0).values_list(
-                            'name',
-                            flat=True,
-                        )
+                slaves = SlaveModel.with_programs()
             elif filesystems:
-                slaves = SlaveModel.objects.all().annotate(
-                    filesystem_count=Count('filesystem__pk')).filter(
-                        filesystem_count__gt=0).values_list(
-                            'name',
-                            flat=True,
-                        )
-            else:
-                slaves = SlaveModel.objects.all().values_list(
-                    'name',
-                    flat=True,
-                )
-
+                slaves = SlaveModel.with_filesystems()
+        else:
+            slaves = SlaveModel.objects.all().values_list(
+                'name',
+                flat=True,
+            )
         return StatusResponse.ok(list(slaves))
     else:
         return HttpResponseForbidden()
@@ -283,8 +292,6 @@ def slave_wol(request, slave_id):
             slave = SlaveModel.objects.get(id=slave_id)
             slave_wake_on_lan(slave)
             return StatusResponse.ok('')
-        except FsimError as err:
-            return StatusResponse(err)
         except SlaveModel.DoesNotExist as err:
             return StatusResponse(SlaveNotExistError(err, slave_id))
     else:
@@ -301,9 +308,9 @@ def program_set(request):
             Adds a new `ProgramModel` to the database.
         GET: query with (?q=None)
             Searches for the name which is like ".*q.*"
-        GET: query with (?slave=None&slave_str=False)
+        GET: query with (?slave=None&is_string=False)
             Searches for all `ProgramModel`s which belong to the given `slave`.
-            Where `slave_str` specifies if the given `slave` is an unique name or
+            Where `is_string` specifies if the given `slave` is an unique name or
             and unique index.
 
     Parameters
@@ -336,14 +343,10 @@ def program_set(request):
         else:
             return StatusResponse.err(form.errors)
     elif request.method == 'GET':
-        # the URL takes an argument with ?q=<string>
-        # e.g. /programs?q=test
         query = request.GET.get('q', None)
-        slave = request.GET.get('slave', None)
-        slave_str = request.GET.get('slave_str', False)
 
-        if slave_str:
-            slave_str = slave_str.lower() in ('true', 't', 'y', 'yes', '1')
+        slave = request.GET.get('slave', None)
+        slave_str = request.GET.get('is_string', False)
 
         if query is not None:
             progs = ProgramModel.objects.filter(
@@ -352,16 +355,13 @@ def program_set(request):
                     flat=True,
                 )
         elif slave is not None:
+            if slave_str:
+                slave_str = convert_str_to_bool(slave_str)
 
             try:
-                if slave_str:
-                    slave = SlaveModel.objects.get(name=slave)
-                else:
-                    try:
-                        slave = SlaveModel.objects.get(id=int(slave))
-                    except ValueError:
-                        return StatusResponse(
-                            Status.err("Slave has to be an integer."))  # TODO
+                slave = SlaveModel.from_identifier(slave, slave_str)
+            except FsimError as err:
+                return StatusResponse(err)
             except SlaveModel.DoesNotExist as err:
                 return StatusResponse(SlaveNotExistError(err, slave))
 
@@ -767,9 +767,9 @@ def filesystem_set(request):
             Adds a new `FilesystemModel` to the database.
         GET: query with (?q=None)
             Searches for the name which is like ".*q.*"
-        GET: query with (?slave=None&slave_str=False)
+        GET: query with (?slave=None&is_string=False)
             Searches for all `FilesystemModel`s which belong to the given `slave`.
-            Where `slave_str` specifies if the given `slave` is an unique name or
+            Where `is_string` specifies if the given `slave` is an unique name or
             and unique index.
 
     Parameters
@@ -827,14 +827,10 @@ def filesystem_set(request):
             return StatusResponse.err(form.errors)
 
     elif request.method == 'GET':
-        # the URL takes an argument with ?q=<string>
-        # e.g. /filesystems?q=test
         query = request.GET.get('q', None)
-        slave = request.GET.get('slave', None)
-        slave_str = request.GET.get('slave_str', False)
 
-        if slave_str:
-            slave_str = slave_str.lower() in ('true', 't', 'y', 'yes', '1')
+        slave = request.GET.get('slave', None)
+        slave_str = request.GET.get('is_string', False)
 
         if query is not None:
             filesystems = FilesystemModel.objects.filter(
@@ -843,24 +839,21 @@ def filesystem_set(request):
                     flat=True,
                 )
         elif slave is not None:
-            try:
-                if slave_str:
-                    slave = SlaveModel.objects.get(name=slave)
-                else:
-                    try:
-                        slave = int(slave)
-                    except ValueError as err:
-                        return StatusResponse(QueryTypeError(slave, "int"))
+            if slave_str:
+                slave_str = convert_str_to_bool(slave_str)
 
-                    slave = SlaveModel.objects.get(id=slave)
+            try:
+                slave = SlaveModel.from_identifier(slave, slave_str)
+            except FsimError as err:
+                return StatusResponse(err)
             except SlaveModel.DoesNotExist as err:
                 return StatusResponse(SlaveNotExistError(err, slave))
 
-            filesystems = FilesystemModel.objects.filter(
-                slave=slave).values_list(
-                    "name",
-                    flat=True,
-                )
+            filesystems = FilesystemModel.objects.filter(slave=slave).values_list(
+                "name",
+                flat=True,
+            )
+
         else:
             filesystems = FilesystemModel.objects.all().values_list(
                 "name",

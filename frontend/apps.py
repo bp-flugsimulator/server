@@ -45,7 +45,7 @@ def reset(*tables):
         except AttributeError:
             raise AttributeError("The table {} does not exist.".format(table))
         try:
-            objs = getattr(models, table).objects
+            objs = attr.objects
         except AttributeError:
             raise AttributeError(
                 "The table {} is not a Django.Model".format(table))

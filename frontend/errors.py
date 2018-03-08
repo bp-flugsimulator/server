@@ -4,13 +4,7 @@ This module holds all error classes which are used in the frontend.
 from server.errors import FsimError
 from utils.typecheck import ensure_type
 
-from .models import (
-    Slave as SlaveModel,
-    Script as ScriptModel,
-    Filesystem as FilesystemModel,
-    Program as ProgramModel,
-)
-
+from frontend import models
 
 class SlaveOfflineError(FsimError):
     """
@@ -175,7 +169,7 @@ class SlaveNotExistError(ObjectNotExistError):
     """
 
     def __init__(self, error, identifier):
-        ensure_type("error", error, SlaveModel.DoesNotExist)
+        ensure_type("error", error, models.Slave.DoesNotExist)
         super().__init__("client", identifier)
 
 
@@ -185,7 +179,7 @@ class ScriptNotExistError(ObjectNotExistError):
     """
 
     def __init__(self, error, identifier):
-        ensure_type("error", error, ScriptModel.DoesNotExist)
+        ensure_type("error", error, models.Script.DoesNotExist)
         super().__init__("script", identifier)
 
 
@@ -195,7 +189,7 @@ class FilesystemNotExistError(ObjectNotExistError):
     """
 
     def __init__(self, error, identifier):
-        ensure_type("error", error, FilesystemModel.DoesNotExist)
+        ensure_type("error", error, models.Filesystem.DoesNotExist)
         super().__init__("filesystem", identifier)
 
 
@@ -205,7 +199,7 @@ class ProgramNotExistError(ObjectNotExistError):
     """
 
     def __init__(self, error, identifier):
-        ensure_type("error", error, ProgramModel.DoesNotExist)
+        ensure_type("error", error, models.Program.DoesNotExist)
         super().__init__("program", identifier)
 
 
@@ -334,4 +328,18 @@ class PositiveNumberError(FsimError):
 
     @staticmethod
     def regex_string():
-        return "Expected zero or positive for .* (given: .*)"
+        return "Expected zero or positive for .* \(given: .*\)"
+
+class IdentifierError(FsimError):
+    """
+    This class is raised if an identifier could not be used as intended.
+    """
+    def __init__(self, name, ty, given):
+        super().__init__(
+            "The given type `{}` for `{}` is not compatible. (given value: `{}`)".format(
+            ty, name, given))
+
+    @staticmethod
+    def regex_string():
+        return "The given type `.*` for `.*` is not compatible. \(given value: `.*`\)"
+

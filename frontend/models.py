@@ -6,6 +6,8 @@ import logging
 from shlex import split
 from uuid import uuid4
 
+from utils.typecheck import ensure_type
+
 from django.db.models import (
     Model,
     CharField,
@@ -25,6 +27,8 @@ from django.utils.translation import gettext_lazy as _
 from wakeonlan import send_magic_packet
 from utils import Command
 from server.utils import notify
+
+from .errors import IdentifierError
 
 LOGGER = logging.getLogger("fsim.models")
 FILE_BACKUP_ENDING = "_BACK"
@@ -135,6 +139,8 @@ class Slave(Model):
         self.command_uuid = None
         self.error_code = ""
 
+        self.save()
+
     @property
     def is_online(self):
         """
@@ -178,6 +184,81 @@ class Slave(Model):
                 If the slave has running programs.
         """
         return self.program_set.filter(programstatus__running=True).exists()
+
+    @staticmethod
+    def from_identifier(identifier, is_string):
+        """
+        Returns an slave based on the given `identifier` which can be an index or
+        a name.
+
+        Parameters
+        ----------
+            identifier: str
+                Which is a `name` or `index` form the `Slave` model.
+            is_string: bool
+                If the `identifier` should be interpreted as a `name` or `index`.
+
+        Returns
+        -------
+            Slave:
+                If the type was correct and the slave exist.
+
+        Raises
+        ------
+            Slave.DoesNotExist:
+                If no slave with the given `identifier` exist.
+            TypeError:
+                If `identifier` and `is_string` have not the correct type.
+            IdentifierError:
+                If `is_string` is False and the `identifier` can not be
+                transformed into an int.
+        """
+        ensure_type("identifier", identifier, str)
+        ensure_type("is_string", is_string, bool)
+
+        if is_string:
+            return Slave.objects.get(name=identifier)
+        else:
+            try:
+                return Slave.objects.get(id=int(identifier))
+            except ValueError:
+                raise IdentifierError("slave", "int", identifier)
+
+    @staticmethod
+    def with_programs():
+        """
+        Returns all `Slave`s witch have at least one program.
+
+        Returns
+        -------
+            list of str:
+                The list contains the name of every `Slave` which fulfil the
+                condition.
+        """
+        return Slave.objects.all().annotate(
+            prog_count=Count('program__pk')).filter(
+                prog_count__gt=0).values_list(
+                    'name',
+                    flat=True,
+                )
+
+    @staticmethod
+    def with_filesystems():
+        """
+        Returns all `Slave`s witch have at least one filesystem.
+
+        Returns
+        -------
+            list of str:
+                The list contains the name of every `Slave` which fulfil the
+                condition.
+        """
+        return Slave.objects.all().annotate(
+            filesystem_count=Count('filesystem__pk')).filter(
+                filesystem_count__gt=0).values_list(
+                    'name',
+                    flat=True,
+                )
 
 
 class Program(Model):
@@ -227,13 +308,13 @@ class Program(Model):
                 One of "running", "error", "success" or "unknown"
         """
         if self.is_running:
-            "running"
+            return "running"
         elif self.is_error:
-            "error"
+            return "error"
         elif self.is_executed:
-            "success"
+            return "success"
         else:
-            "unknown"
+            return "unknown"
 
     @property
     def is_timeouted(self):
@@ -397,6 +478,8 @@ class Filesystem(Model):
         self.command_uuid = None
         self.error_code = ""
 
+        self.save()
+
     def __str__(self):
         return self.name
 
@@ -484,6 +567,8 @@ class Script(Model):
         self.is_running = False
         self.error_code = ""
         self.current_index = -1
+
+        self.save()
 
     def __str__(self):
         return self.name
