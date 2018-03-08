@@ -227,7 +227,7 @@ def slave_shutdown(request, slave_id):
 
     HTTP Methods
     ------------
-        GET:
+        POST:
             Invokes the method for the `SlaveModel` (which is
             specified in the URL).
 
@@ -242,7 +242,7 @@ def slave_shutdown(request, slave_id):
             If the HTTP method is not supported, then an `HttpResponseForbidden` is
             returned.
     """
-    if request.method == 'GET':
+    if request.method == 'POST':
         try:
             slave = SlaveModel.objects.get(id=slave_id)
             controller.slave_shutdown(slave)
@@ -263,7 +263,7 @@ def slave_wol(request, slave_id):
 
     HTTP Methods
     ------------
-        GET:
+        POST:
             Invokes the method for the `SlaveModel` (which is
             specified in the URL).
 
@@ -278,7 +278,7 @@ def slave_wol(request, slave_id):
             If the HTTP method is not supported, then an `HttpResponseForbidden` is
             returned.
     """
-    if request.method == 'GET':
+    if request.method == 'POST':
         try:
             slave = SlaveModel.objects.get(id=slave_id)
             slave_wake_on_lan(slave)
@@ -441,7 +441,7 @@ def program_start(request, program_id):
 
     HTTP Methods
     ------------
-        GET:
+        POST:
             Invokes the method for the `ProgramModel` (which is
             specified in the URL).
 
@@ -456,7 +456,7 @@ def program_start(request, program_id):
             If the HTTP method is not supported, then an `HttpResponseForbidden` is
             returned.
     """
-    if request.method == 'GET':
+    if request.method == 'POST':
         try:
             program = ProgramModel.objects.get(id=program_id)
             prog_start(program)
@@ -476,7 +476,7 @@ def program_stop(request, program_id):
 
     HTTP Methods
     ------------
-        GET:
+        POST:
             Invokes the method for the `ProgramModel` (which is
             specified in the URL).
 
@@ -491,7 +491,7 @@ def program_stop(request, program_id):
             If the HTTP method is not supported, then an `HttpResponseForbidden` is
             returned.
     """
-    if request.method == 'GET':
+    if request.method == 'POST':
         try:
             program = ProgramModel.objects.get(id=program_id)
             try:
@@ -545,7 +545,7 @@ def program_log_enable(request, program_id):
 
     HTTP Methods
     ------------
-        GET:
+        POST:
             Notifies the `SlaveModel` to send logs for this `ProgramModel`.
 
     Parameters
@@ -559,7 +559,7 @@ def program_log_enable(request, program_id):
             If the HTTP method is not supported, then an `HttpResponseForbidden` is
             returned.
     """
-    if request.method == 'GET':
+    if request.method == 'POST':
         try:
             program = ProgramModel.objects.get(id=program_id)
             prog_log_enable(program)
@@ -579,7 +579,7 @@ def program_log_disable(request, program_id):
 
     HTTP Methods
     ------------
-        GET:
+        POST:
             Notifies the `SlaveModel` to stop the sending process for logs
             for this `ProgramModel`.
 
@@ -594,7 +594,7 @@ def program_log_disable(request, program_id):
             If the HTTP method is not supported, then an `HttpResponseForbidden` is
             returned.
     """
-    if request.method == 'GET':
+    if request.method == 'POST':
         try:
             program = ProgramModel.objects.get(id=program_id)
             prog_log_disable(program)
@@ -692,7 +692,7 @@ def script_copy(request, script_id):
 
     HTTP Methods
     ------------
-        GET:
+        POST:
             Invokes the method for the `ScriptModel` (which is
             specified in the URL).
 
@@ -707,7 +707,7 @@ def script_copy(request, script_id):
             If the HTTP method is not supported, then an `HttpResponseForbidden` is
             returned.
     """
-    if request.method == 'GET':
+    if request.method == 'POST':
         try:
             script = ScriptModel.objects.get(id=script_id)
             script_deep_copy(script)
@@ -725,7 +725,7 @@ def script_run(request, script_id):
 
     HTTP Methods
     ------------
-        GET:
+        POST:
             Invokes the method for the `ScriptModel` (which is
             specified in the URL).
 
@@ -741,7 +741,7 @@ def script_run(request, script_id):
             returned.
     """
 
-    if request.method == 'GET':
+    if request.method == 'POST':
         try:
             script = ScriptModel.objects.get(id=script_id)
             # only allow the start of a script if the old one is finished
@@ -879,7 +879,7 @@ def filesystem_move(request, filesystem_id):
 
     HTTP Methods
     ------------
-        GET:
+        POST:
             Invokes the method for the `FilesystemModel` (which is
             specified in the URL).
 
@@ -894,7 +894,7 @@ def filesystem_move(request, filesystem_id):
             If the HTTP method is not supported, then an `HttpResponseForbidden` is
             returned.
     """
-    if request.method == 'GET':
+    if request.method == 'POST':
         try:
             filesystem = FilesystemModel.objects.get(id=filesystem_id)
             try:
@@ -915,7 +915,7 @@ def filesystem_restore(request, filesystem_id):
 
     HTTP Methods
     ------------
-        GET:
+        POST:
             Invokes the method for the `FilesystemModel` (which is
             specified in the URL).
 
@@ -930,7 +930,7 @@ def filesystem_restore(request, filesystem_id):
             If the HTTP method is not supported, then an `HttpResponseForbidden` is
             returned.
     """
-    if request.method == 'GET':
+    if request.method == 'POST':
         try:
             filesystem = FilesystemModel.objects.get(id=filesystem_id)
             try:
