@@ -513,6 +513,10 @@ $mdi-font-path: "../../node/mdi/fonts";
   box-shadow: 0 4px 6px 0 hsla(0, 0%, 0%, 0.2);
 }
 
+.popover {
+    box-shadow: 0 4px 6px 0 hsla(0, 0%, 0%, 0.25);
+}
+
 .inset-shadow {
   box-shadow: inset 0 2px 4px 0 hsla(0, 0%, 0%, 0.08);
 }

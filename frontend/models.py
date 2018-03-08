@@ -256,8 +256,8 @@ class Filesystem(Model):
     """
 
     CHOICES_SET_SOURCE = [
-        ('file', 'Source is a file'),
-        ('dir', 'Source is a directory'),
+        ('file', 'File'),
+        ('dir', 'Directory'),
     ]
     CHOICES_SET_DESTINATION = [
         ('file', 'Replace with'),

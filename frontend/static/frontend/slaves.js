@@ -281,7 +281,7 @@ $(document).ready(function () {
         }
     }());
 
-    // Select
+    // Select color after reload
     $('.slave-content-tab.active').removeClass('text-dark bg-light')
         .addClass('text-light bg-dark')
         .children('button').removeClass('btn-dark')
@@ -500,7 +500,7 @@ $(document).ready(function () {
     //opens the fileModal to add a new program
     $('.filesystem-action-add').click(function () {
         let filesystemModal = $('#filesystemModal');
-        filesystemModal.children().find('.modal-title').text('Add filesystem');
+        filesystemModal.children().find('.modal-title').text('Add Filesystem');
 
         //modify the form for the submit button
         let filesystemForm = filesystemModal.children().find('#filesystemForm');
@@ -730,6 +730,12 @@ $(document).ready(function () {
         $('#unsafedChangesWarning').modal('toggle');
         $('#' + parentModal).modal('toggle');
     });
+
+    // start popover annotations for info boxes
+    $('[data-toggle="popover"]').popover({
+        html: true,
+        placement: 'left',
+        trigger: 'hover'});
 
 });
 
