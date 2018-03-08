@@ -246,4 +246,11 @@ $(document).ready(function () {
             exit: 'animated fadeOutRight'
         },
     });
+
+    // start popover annotations for info boxes
+    $('[data-toggle="popover"]').popover({
+        html: true,
+        placement: 'left',
+        trigger: 'hover'
+    });
 });

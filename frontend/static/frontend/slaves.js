@@ -731,11 +731,6 @@ $(document).ready(function () {
         $('#' + parentModal).modal('toggle');
     });
 
-    // start popover annotations for info boxes
-    $('[data-toggle="popover"]').popover({
-        html: true,
-        placement: 'left',
-        trigger: 'hover'});
 
 });
 

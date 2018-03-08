@@ -80,16 +80,16 @@ class FilesystemForm(ModelForm):
         ]
         help_texts = {
             'name':
-            'Name of the filesystem, has to be unique on one client',
+            'Name of the filesystem, has to be unique on one client.',
             'source_path':
-            'Path to the file or directory',
+            'Path to the file or directory.',
             'source_type':
             "<b>File:</b> Source is a file (should end with a filename extension) <br>\
-            <b>Directory:</b> Source is a directory and its contents will be moved",
+            <b>Directory:</b> Source is a directory and its contents will be moved.",
             'destination_path':
-            'Path to the file or directory the source will be moved to',
+            'Path to the file or directory the source will be moved to.',
             'destination_type':
             "<b>Replace with:</b> Source will be moved and renamed to destination <br>\
             <b>Insert into:</b> Destination has to be a folder and source \
-            will be placed inside the destination"
+            will be placed inside the destination."
         }

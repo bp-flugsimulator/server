@@ -17,10 +17,10 @@
                     {% for field in form.visible_fields %}
                     <div class="form-group">
                         <div class="d-flex w-100 justify-content-between">
-                            <span class="font-weight-light"> {{ field.label_tag }}</span>
-                            <div class="float-left field-help-text-{{field.name}}"></div>
+                            <span class="font-weight-light">{{ field.label_tag }}</span>
                             {% if field.help_text %}
-                            <a class="field-btn text-info mr-2" data-toggle="popover" data-container="body" data-content="{{ field.help_text|safe }}"><i class="mdi mdi-information"></i>
+                            <a class="text-info mr-2" data-toggle="popover" data-container="body" data-content="{{ field.help_text|safe }}">
+                                <i class="mdi mdi-information"></i>
                             </a>
                             {% endif %}
                         </div>
