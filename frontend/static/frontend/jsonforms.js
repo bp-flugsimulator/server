@@ -80,17 +80,12 @@ const JsonForm = {
         $(container).find('.script-filesystem-add').on('click', function () {
             addTypeEntry(container, 'filesystem', options.querySlavesFiles, options.queryFilesystems);
         });
-
-        $('.script-program-hide').click(function () {
-            $(this).parent().next().toggle();
-            $(this).prev().toggleClass('disabled');
-            $(this).children('i').toggleClass('mdi-chevron-up mdi-chevron-down');
-        });
-        // start popover annotations for info boxes
-        $('[data-toggle="popover"]').popover({
-            html: true,
-            placement: 'left',
-            trigger: 'hover'
+        $(document).ready(function () {
+            $(document).on('click', '.script-program-hide', function () {
+                $(this).parent().next().toggle();
+                $(this).prev().toggleClass('disabled');
+                $(this).children('i').toggleClass('mdi-chevron-up mdi-chevron-down');
+            });
         });
     },
     /**

@@ -247,6 +247,8 @@ $(document).ready(function () {
         },
     });
 
+
+
     // start popover annotations for info boxes
     $('[data-toggle="popover"]').popover({
         html: true,
