@@ -4,7 +4,12 @@
         <div class="d-flex w-100">
             <div class="form-group slave-choice col-xl-10 col-lg-10 col-md-10 col-sm-10">
                 <div>
-                    <span class="font-weight-light">Client:</span>
+                    <div class="d-flex w-100 justify-content-between">
+                        <span class="font-weight-light">Clients:</span>
+                        <a class="text-info mr-2" data-toggle="popover" data-container="body" data-content="Client">
+                            <i class="mdi mdi-information"></i>
+                        </a>
+                    </div>
                     <select class="form-control script-{{type}}-slave" type="text" required>
                         {{#each slaves}}
                         <option {{#ifEq ../currentSlave this}}selected{{/ifEq}}>{{this}}</option>
@@ -46,27 +51,27 @@
 
 <script id="templateContainer" type="text/x-handlebars-template">
     <div class="container-fluid list-group-flush">
-        <div class="mb-4 mt-2">
+        <div class="mt-2">
             <span class="text-uppercase font-weight-bold">edit script name</span>
             <input class="inset-shadow form-control script-name" placeholder="Script Name" type="text" {{#if name}}value="{{name}}"{{/if}} required/>
             <div class="invalid-feedback text-uppercase">Script name is required.</div>
         </div>
 
-        <div class="d-flex w-100 justify-content-between align-items-center pl-2 pr-2 pt-2 pb-2 mb-1">
+        <div class="d-flex w-100 justify-content-between align-items-center pl-2 pr-2 pt-2 pb-2 mb-1 mt-4">
             <i class="mdi mdi-widgets mr-1"></i>
             <span class="text-uppercase font-weight-bold">programs</span>
             <button type="button" class="btn btn-dark btn-sm script-program-add ml-2 unload-warning">
                 <i class="mdi mdi-plus"></i>
             </button>
-            <button type="button" class="btn btn-dark btn-sm script-program-hide ml-auto">
+            <button type="button" class="btn btn-dark btn-sm ml-auto script-program-hide">
                 <i class="mdi mdi-chevron-up"></i>
             </button>
         </div>
 
-        <div class="script-program-content row list-group mb-4">
+        <div class="script-program-content row list-group">
         </div>
 
-        <div class="d-flex w-100 justify-content-between align-items-center pl-2 pr-2 pt-2 pb-2 mb-1">
+        <div class="d-flex w-100 justify-content-between align-items-center pl-2 pr-2 pt-2 pb-2 mb-1 mt-4">
             <i class="mdi mdi-file-tree mr-1"></i>
             <span class="text-uppercase font-weight-bold">filesystems</span>
             <button type="button" class="btn btn-dark btn-sm script-filesystem-add ml-2 unload-warning">

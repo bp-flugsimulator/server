@@ -226,16 +226,11 @@ $(document).ready(function () {
 
     $('.delete-btn').click(function () {
         $('.script-tab-link').first().click();
-    })
+    });
 
     $('.unload-warning').click(function() {
         unloadWarning = true;
     });
-
-    $('.script-program-hide').click(function () {
-        $(this).parent().next().children().toggle();
-        $(this).children('i').toggleClass('mdi-chevron-up mdi-chevron-down');
-    })
 });
 
 
