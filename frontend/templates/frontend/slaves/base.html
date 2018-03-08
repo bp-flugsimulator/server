@@ -65,7 +65,8 @@
             bg-light"
             data-state="{% if slave.has_error %}error{% elif slave.has_running %}warning{% elif slave.is_online %}success{% else %}unknown{% endif %}"
             id="slaveTab{{ slave.id }}" data-toggle="tab" href="#slaveTabContent{{ slave.id }}" data-slave-id="{{ slave.id }}">
-                <i class="mdi mdi-desktop-classic"></i> {{ slave.name }}
+                <i class="mdi mdi-cards-variant"></i>
+                <div>{{ slave.name }}</div>
                 <span class="badge badge-dark badge-pill"><i class="mdi mdi-run"></i>{{ slave.id }} <i class="mdi mdi-alert"></i>{{ slave.id }}</span>
             </a>
             {% endfor %}

@@ -100,8 +100,7 @@ $(document).ready(function () {
 
     // Set color of the current selected.
     $('.script-tab-link.active').addClass('border-dark bg-dark text-light')
-        .children('span').removeClass('badge-dark')
-        .addClass('badge-light');
+        .children('span').addClass('text-dark')    ;
 
     // Changes the color of the clicked slave, if it was not clicked before.
     $('.script-tab-link').click(function () {
@@ -110,8 +109,7 @@ $(document).ready(function () {
             $('.script-tab-link').each(function (idx, val) {
                 $(val).removeClass('border-dark bg-dark text-light')
                     .addClass('text-dark')
-                    .children('span').removeClass('badge-light')
-                    .addClass('badge-dark');
+                    .children('span').removeClass('text-dark');
             });
             // Create a change listener on all available input fields
             $(':input').change(function(e) {
@@ -132,8 +130,7 @@ $(document).ready(function () {
             // Change the color of the current tab
             $(this).removeClass('text-dark')
                 .addClass('border-dark bg-dark text-light')
-                .children('span').removeClass('badge-dark')
-                .addClass('badge-light');
+                .children('span').addClass('text-dark');
         }
     });
 
