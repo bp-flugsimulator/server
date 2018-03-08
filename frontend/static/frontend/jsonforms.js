@@ -67,6 +67,12 @@ function addTypeEntry(container, type, querySlaves, queryType, context = {}) {
             });
 
             box.find('.script-' + type + '-slave').trigger('change');
+
+            entryContainer.find('[data-toggle="popover"]').popover({
+                html: true,
+                placement: 'left',
+                trigger: 'hover'
+            });
         }
     });
 }
@@ -81,17 +87,19 @@ const JsonForm = {
             addTypeEntry(container, 'filesystem', options.querySlavesFiles, options.queryFilesystems);
         });
 
-        $('.script-program-hide').click(function () {
+        $(container).find('.script-program-hide').on('click', function () {
             $(this).parent().next().toggle();
             $(this).prev().toggleClass('disabled');
             $(this).children('i').toggleClass('mdi-chevron-up mdi-chevron-down');
         });
-        // start popover annotations for info boxes
-        $('[data-toggle="popover"]').popover({
-            html: true,
-            placement: 'left',
-            trigger: 'hover'
+
+        $(container).find('.script-filesystem-hide').on('click', function () {
+            $(this).parent().next().toggle();
+            $(this).prev().toggleClass('disabled');
+            $(this).children('i').toggleClass('mdi-chevron-up mdi-chevron-down');
         });
+
+        console.log(container);
     },
     /**
      * Creates a form from a JSON object.
