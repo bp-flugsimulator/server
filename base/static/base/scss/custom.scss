@@ -532,6 +532,12 @@ footer {
     bottom: 0;
 }
 
+input, textarea, select, button {
+    outline: none;
+    box-shadow:none !important;
+    border:1px solid #ccc !important;
+}
+
 [data-notify="container"] {
     background-color: $body-bg;
 	border-width: 0px;
