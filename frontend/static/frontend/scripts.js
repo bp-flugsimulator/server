@@ -148,7 +148,7 @@ $(document).ready(function () {
     });
 
     $('.script-action-add-save').click(function () {
-	window.unloadWarning = false;
+	    window.unloadWarning = false;
 
         let id = $(this).attr('data-editor-id');
         let editor = JsonForm.dumps($('#jsoneditor_' + id));
@@ -179,6 +179,8 @@ $(document).ready(function () {
     });
 
     $('.script-action-save').click(function () {
+        window.unloadWarning = false;
+
         let id = $(this).attr('data-editor-id');
         let editor = JsonForm.dumps($('#jsoneditor_' + id));
         let string = JSON.stringify(editor);
@@ -222,7 +224,11 @@ $(document).ready(function () {
         deleteWarning.modal('toggle');
     });
 
-    $('.inline-add-button').on('click', function(e) {
+    $('.delete-btn').click(function () {
+        $('.script-tab-link').first().click();
+    })
+
+    $('.unload-warning').click(function() {
         unloadWarning = true;
     });
 });
