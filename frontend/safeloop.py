@@ -20,6 +20,9 @@ class SafeLoop:
         self.thread = None
         self.ident = uuid.uuid4().hex
 
+        self.__stop = asyncio.Event(loop=self.loop)
+        self.__stop_lock = threading.Lock()
+
     def spawn(self, time, function, *args):
         """
         Wraps the `function` into a task and adds it to the event loop. The
@@ -61,6 +64,7 @@ class SafeLoop:
             self.ident,
             self.thread.ident,
         )
+
         self.loop.call_soon_threadsafe(function, *args)
 
     def create_task(self, coro):
@@ -83,7 +87,9 @@ class SafeLoop:
     def __run__(self):
         LOGGER.debug("Running event loop `%s` in thread %s.", self.ident,
                      self.thread.ident)
-        self.loop.run_forever()
+        with self.__stop_lock:
+            self.loop.run_until_complete(self.__stop.wait())
+
 
     def start(self):
         """
@@ -103,3 +109,32 @@ class SafeLoop:
                 self.ident,
                 self.thread.ident,
             )
+
+    def close(self, timeout=5):
+        """
+        Closes the thread and the eventloop. With an timeout of default five
+        secoends.
+
+        Parameters
+        ----------
+            timeout: int
+                The seconds which needs to elapse before the thread is closed
+                if it is not finished before.
+        """
+        self.run(self.__stop.set)
+
+        with self.__stop_lock:
+            LOGGER.info("Canceling pending tasks.")
+            for task in asyncio.Task.all_tasks(loop=self.loop):
+                LOGGER.error(task)
+                task.cancel()
+
+            LOGGER.info("Closing event loop.")
+            self.loop.stop()
+            self.loop.close()
+            self.loop = None
+
+        LOGGER.info("Waiting for thread.")
+        self.thread.join(timeout=timeout)
+        self.thread = None
+

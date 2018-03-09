@@ -126,9 +126,9 @@ class Scheduler:
         self.notify()
 
         with self.lock:
-            if self.__task is not None:
-                self.__task.cancel()
-                self.__task = None
+            if self.loop is not None:
+                self.loop.close()
+                self.loop = None
 
     def start(self, script):
         """
