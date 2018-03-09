@@ -13,6 +13,8 @@ from django.test import TestCase
 from frontend.errors import (
     FilesystemError,
     ProgramError,
+    QueryError,
+    ScriptError,
 )
 
 
@@ -41,4 +43,30 @@ class BaseErrorTests(TestCase):  # pylint: disable=unused-variable
         self.assertRegex(
             str(error),
             ProgramError.regex_string(),
+        )
+
+    def test_script_base(self):
+        error = ScriptError(None, None)
+
+        self.assertEqual(
+            str(error),
+            "An error ocurred in the Script model.",
+        )
+
+        self.assertRegex(
+            str(error),
+            ScriptError.regex_string(),
+        )
+
+    def test_query_base(self):
+        error = QueryError(None)
+
+        self.assertEqual(
+            str(error),
+            "There was an error in your query.",
+        )
+
+        self.assertRegex(
+            str(error),
+            QueryError.regex_string(),
         )

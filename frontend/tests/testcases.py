@@ -76,10 +76,16 @@ class SchedulerTestCase(unittest.TestCase):
 
         self.assertTrue(len(first), len(second))
 
+        no_fit = []
+
         for x in first:
             if x in second:
                 second.remove(x)
+            else:
+                no_fit.append(x)
 
         if len(second) > 0:
-            raise AssertionError(first, second)
+            raise AssertionError(
+                ("The elements {} does not have an"
+                 "counterpart. Leftovers: {}").format(no_fit, second))
 

@@ -755,10 +755,12 @@ def script_run(request, script_id):
         try:
             script = ScriptModel.objects.get(id=script_id)
             # only allow the start of a script if the old one is finished
-            if FSIM_CURRENT_SCHEDULER.start(script.id):
+            script_running = ScriptModel.objects.filter(is_running=True, is_initialized=True).exists()
+
+            if not script_running:
+                FSIM_CURRENT_SCHEDULER.start(script.id)
                 FSIM_CURRENT_SCHEDULER.notify()
-                return StatusResponse.ok("Started script {}".format(
-                    script.name))
+                return StatusResponse.ok('')
             else:
                 return StatusResponse(ScriptRunningError(str(script.name)))
         except ScriptModel.DoesNotExist as err:

@@ -223,7 +223,7 @@ class QueryError(FsimError):
         if message:
             super().__init__(message)
         else:
-            super().__init__("There was an error while querying.")
+            super().__init__("There was an error in your query.")
 
     @staticmethod
     def regex_string():

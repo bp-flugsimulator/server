@@ -56,6 +56,7 @@ from frontend.errors import (
     SimultaneousQueryError,
     LogNotExistError,
     ScriptNotExistError,
+    ScriptRunningError,
     IdentifierError,
     PositiveNumberError,
     QueryParameterError,
@@ -682,6 +683,17 @@ class ScriptTest(StatusTestCase):
     def test_run_put_forbidden(self):
         response = self.client.put(reverse("frontend:script_run", args=[0]))
         self.assertEqual(response.status_code, 403)
+
+    def test_run_post_running_error(self):
+        script = ScriptFactory(is_running=True, is_initialized=True)
+        response = self.client.post(reverse("frontend:script_run",
+                                            args=[script.id]))
+        self.assertEqual(response.status_code, 200)
+
+        self.assertStatusRegex(
+            Status.err(ScriptRunningError),
+            Status.from_json(response.content.decode('utf-8')),
+        )
 
     def test_run_post_not_exist(self):
         response = self.client.post(reverse("frontend:script_run", args=[0]))

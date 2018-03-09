@@ -65,7 +65,7 @@ class ProgramFactory(DjangoModelFactory):
     path = FuzzyText(length=40)
     arguments = FuzzyText(length=200)
     slave = SubFactory(SlaveFactory)
-    start_time = FuzzyInteger(0)
+    start_time = FuzzyInteger(-1, 1)
 
 
 class ProgramStatusFactory(DjangoModelFactory):
