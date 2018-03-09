@@ -231,6 +231,10 @@ $(document).ready(function () {
     $('.unload-warning').click(function() {
         unloadWarning = true;
     });
+
+    $('.form-control[required]').keyup(function () {
+        $('.script-action-add-save').prop('disabled', this.value == "" ? true : false);
+    })
 });
 
 

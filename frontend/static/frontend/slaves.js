@@ -90,6 +90,16 @@ function handleLogging(id, method, async = true) {
     });
 }
 
+function check_form_required(elem) {
+    let req_is_empty = false;
+    $(elem).parent().parent().find('.form-control').each(function (i, val) {
+        if (val.value == "" && $(val).attr('required')) {
+            req_is_empty = true;
+        }
+    });
+    $('.submit-btn').prop('disabled', req_is_empty);
+}
+
 let terminals = {};
 
 const socketEventHandler = {
@@ -731,6 +741,11 @@ $(document).ready(function () {
         $('#' + parentModal).modal('toggle');
     });
 
+    // Disable Modal Submit Button if nothing changed or a field is empty
+    $('.submit-btn').prop('disabled', true);
+    $('.form-control').on('change keyup', function () {
+        check_form_required(this);
+    })
 
 });
 
