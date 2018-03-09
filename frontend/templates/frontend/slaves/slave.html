@@ -6,7 +6,7 @@
             </div>
             <div class="btn-toolbar" role="toolbar">
                 <div class="btn-group sm-button-set" role="group">
-                    <button class="btn btn-dark font-weight-light slave-action-start-stop" type="button" id="slaveStartStop_{{ slave.id }}" data-slave-id="{{ slave.id }}"  data-is-running="{{ slave.is_online }}">
+                    <button class="btn btn-dark font-weight-light slave-action-start-stop short-disable" type="button" id="slaveStartStop_{{ slave.id }}" data-slave-id="{{ slave.id }}"  data-is-running="{{ slave.is_online }}">
                         <i class="mdi mdi-power"></i>
                         <span class="button-status-display">
                             {% if slave.is_online %}STOP{% else %}START{% endif %}

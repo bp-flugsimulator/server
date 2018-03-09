@@ -247,7 +247,15 @@ $(document).ready(function () {
         },
     });
 
+    var enableSubmit = function (ele) {
+        $(ele).removeAttr("disabled");
+    }
 
+    $(".short-disable").click(function () {
+        var that = this;
+        $(this).attr("disabled", true);
+        setTimeout(function () { enableSubmit(that) }, 1000);
+    });
 
     // start popover annotations for info boxes
     $('[data-toggle="popover"]').popover({

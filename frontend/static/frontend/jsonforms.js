@@ -67,6 +67,12 @@ function addTypeEntry(container, type, querySlaves, queryType, context = {}) {
             });
 
             box.find('.script-' + type + '-slave').trigger('change');
+
+            entryContainer.find('[data-toggle="popover"]').popover({
+                html: true,
+                placement: 'left',
+                trigger: 'hover'
+            });
         }
     });
 }
@@ -80,12 +86,23 @@ const JsonForm = {
         $(container).find('.script-filesystem-add').on('click', function () {
             addTypeEntry(container, 'filesystem', options.querySlavesFiles, options.queryFilesystems);
         });
-        $(document).ready(function () {
-            $(document).on('click', '.script-program-hide', function () {
-                $(this).parent().next().toggle();
-                $(this).prev().toggleClass('disabled');
+
+        $(container).find('.script-program-hide').on('click', function () {
+            hide_container = $(this).parent().next();
+            if ($.trim($(hide_container).html())) {
+                hide_container.toggle();
+                $(this).prev().attr('disabled', function (_, attr) { return !attr });
                 $(this).children('i').toggleClass('mdi-chevron-up mdi-chevron-down');
-            });
+            }
+        });
+
+        $(container).find('.script-filesystem-hide').on('click', function () {
+            hide_container = $(this).parent().next();
+            if ($.trim($(hide_container).html())) {
+                hide_container.toggle();
+                $(this).prev().attr('disabled', function (_, attr) { return !attr });
+                $(this).children('i').toggleClass('mdi-chevron-up mdi-chevron-down');
+            }
         });
     },
     /**
