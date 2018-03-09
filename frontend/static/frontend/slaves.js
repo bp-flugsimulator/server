@@ -472,7 +472,7 @@ $(document).ready(function () {
         programModal.children().find('.modal-title').text('Edit Program');
         programForm.attr('action', '/api/program/' + id);
         programForm.attr('method', 'PUT');
-        programForm.children().find('.submit-btn').text('Edit');
+        programForm.children().find('.submit-btn').text('Apply');
 
         //clear input fields
         programForm.find('[name="name"]').val(name);
@@ -546,7 +546,7 @@ $(document).ready(function () {
         filesystemModal.children().find('.modal-title').text('Edit Filesystem');
         filesystemForm.attr('action', '/api/filesystem/' + id);
         filesystemForm.attr('method', 'PUT');
-        filesystemForm.children().find('.submit-btn').text('Edit');
+        filesystemForm.children().find('.submit-btn').text('Apply');
 
         //set values into input fields
         filesystemForm.find('[name="name"]').val(name);
@@ -688,7 +688,7 @@ $(document).ready(function () {
         let slaveForm = slaveModal.children().find('#slaveForm');
         slaveForm.attr('action', '/api/slave/' + id);
         slaveForm.attr('method', 'PUT');
-        slaveForm.children().find('.submit-btn').text('Edit');
+        slaveForm.children().find('.submit-btn').text('Apply');
 
         //insert values into input field
         slaveForm.find('[name="name"]').val(name);
