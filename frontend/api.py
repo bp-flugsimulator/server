@@ -40,7 +40,6 @@ from .errors import (
     SlaveOfflineError,
     ScriptRunningError,
     ScriptNotExistError,
-    QueryTypeError,
 )
 
 from frontend import controller
@@ -206,9 +205,11 @@ def slave_entry(request, slave_id):
             returned.
     """
     if request.method == 'DELETE':
-        # i can't find any exceptions that can be thrown in our case
-        SlaveModel.objects.filter(id=slave_id).delete()
-        return StatusResponse.ok('')
+        try:
+            SlaveModel.objects.get(id=slave_id).delete()
+            return StatusResponse.ok('')
+        except SlaveModel.DoesNotExist as err:
+            return StatusResponse(SlaveNotExistError(err, slave_id))
 
     elif request.method == 'PUT':
         try:
@@ -404,14 +405,18 @@ def program_entry(request, program_id):
             returned.
     """
     if request.method == 'DELETE':
-        ProgramModel.objects.filter(id=program_id).delete()
-        return StatusResponse.ok('')
+        try:
+            ProgramModel.objects.get(id=program_id).delete()
+            return StatusResponse.ok('')
+        except ProgramModel.DoesNotExist as err:
+            return StatusResponse(ProgramNotExistError(err, program_id))
     elif request.method == 'PUT':
         # create form from a new QueryDict made from the request body
         # (request.PUT is unsupported) as an update (instance) of the
         # existing slave
         try:
             model = ProgramModel.objects.get(id=program_id)
+
             form = ProgramForm(QueryDict(request.body), instance=model)
             if form.is_valid():
                 program = form.save(commit=False)
@@ -674,13 +679,18 @@ def script_entry(request, script_id):
                 filesystem_key,
             )
             return StatusResponse.ok(dict(script))
+        except FsimError as err:
+            return StatusResponse(err)
         except ScriptModel.DoesNotExist as err:
             return StatusResponse(ScriptNotExistError(err, script_id))
     elif request.method == 'PUT':
         return script_put_post(request.body.decode('utf-8'), int(script_id))
     elif request.method == 'DELETE':
-        ScriptModel.objects.filter(id=script_id).delete()
-        return StatusResponse.ok('')
+        try:
+            ScriptModel.objects.get(id=script_id).delete()
+            return StatusResponse.ok('')
+        except ScriptModel.DoesNotExist as err:
+            return StatusResponse(ScriptNotExistError(err, script_id))
     else:
         return HttpResponseForbidden()
 

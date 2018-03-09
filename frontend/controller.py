@@ -281,7 +281,7 @@ def prog_start(prog):
         # create status entry
         ProgramStatusModel(program=prog, command_uuid=cmd.uuid).save()
 
-        if prog.start_time >= 0:
+        if prog.start_time > 0:
             LOGGER.debug(
                 'started timeout on %s, for %d seconds',
                 prog.name,
@@ -293,6 +293,8 @@ def prog_start(prog):
                 timer_timeout_program,
                 prog.id,
             )
+        elif prog.start_time == 0:
+            timer_timeout_program(prog.id)
 
     else:
         raise SlaveOfflineError(

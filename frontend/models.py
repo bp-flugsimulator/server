@@ -137,7 +137,7 @@ class Slave(Model):
         Resets non persistent fields to their default value.
         """
         self.command_uuid = None
-        self.error_code = ""
+        self.online = False
 
         self.save()
 
@@ -415,6 +415,8 @@ class Filesystem(Model):
             equal to the hash value of the corresponding file or directory
             (`source_path`).
 
+        command_uuid: CharField
+            An UUID which identifies the send command.
         error_code: str
             The error code which is raised by the slave.
     """

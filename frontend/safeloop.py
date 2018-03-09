@@ -84,7 +84,6 @@ class SafeLoop:
         LOGGER.debug("Running event loop `%s` in thread %s.", self.ident,
                      self.thread.ident)
         self.loop.run_forever()
-        LOGGER.debug("The event loop `%s` has finished.", self.ident)
 
     def start(self):
         """

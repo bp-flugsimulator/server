@@ -298,25 +298,6 @@ class QueryParameterError(QueryError):
         return "Expected one of `.*` but got `.*` instead."
 
 
-class QueryTypeError(QueryError):
-    """
-    This class is raised if an query got an value which could not be
-    transformed properly.
-    """
-
-    def __init__(self, given, expected):
-        super().__init__(
-            "Expected something that can be transformed into `{}` from `{}`.".
-            format(
-                expected,
-                given,
-            ), )
-
-    @staticmethod
-    def regex_string():
-        return "Expected something that can be transformed into `.*` from `.*`."
-
-
 class PositiveNumberError(FsimError):
     """
     This class is raised if an value was not zero or positive.

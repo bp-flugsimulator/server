@@ -167,7 +167,7 @@ LOGGING = {
         },
     },
     'loggers': {
-        '': {
+        'fsim': {
             'handlers': ['console'],
             'level': 'DEBUG'
         },
