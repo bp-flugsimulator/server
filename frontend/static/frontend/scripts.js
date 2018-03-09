@@ -233,8 +233,8 @@ $(document).ready(function () {
     });
 
     $('.form-control[required]').keyup(function () {
-        $('.script-action-add-save').prop('disabled', this.value == "" ? true : false);
-    })
+        $('.script-action-add-save').prop('disabled', this.value === '' ? true : false);
+    });
 });
 
 
