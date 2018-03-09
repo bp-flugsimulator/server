@@ -3,8 +3,8 @@ This module holds all error classes which are used in the frontend.
 """
 from server.errors import FsimError
 from utils.typecheck import ensure_type
+import frontend.models
 
-from frontend import models
 
 class SlaveOfflineError(FsimError):
     """
@@ -169,7 +169,7 @@ class SlaveNotExistError(ObjectNotExistError):
     """
 
     def __init__(self, error, identifier):
-        ensure_type("error", error, models.Slave.DoesNotExist)
+        ensure_type("error", error, frontend.models.Slave.DoesNotExist)
         super().__init__("client", identifier)
 
 
@@ -179,7 +179,7 @@ class ScriptNotExistError(ObjectNotExistError):
     """
 
     def __init__(self, error, identifier):
-        ensure_type("error", error, models.Script.DoesNotExist)
+        ensure_type("error", error, frontend.models.Script.DoesNotExist)
         super().__init__("script", identifier)
 
 
@@ -189,7 +189,7 @@ class FilesystemNotExistError(ObjectNotExistError):
     """
 
     def __init__(self, error, identifier):
-        ensure_type("error", error, models.Filesystem.DoesNotExist)
+        ensure_type("error", error, frontend.models.Filesystem.DoesNotExist)
         super().__init__("filesystem", identifier)
 
 
@@ -199,7 +199,7 @@ class ProgramNotExistError(ObjectNotExistError):
     """
 
     def __init__(self, error, identifier):
-        ensure_type("error", error, models.Program.DoesNotExist)
+        ensure_type("error", error, frontend.models.Program.DoesNotExist)
         super().__init__("program", identifier)
 
 
