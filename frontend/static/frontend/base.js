@@ -248,13 +248,13 @@ $(document).ready(function () {
     });
 
     var enableSubmit = function (ele) {
-        $(ele).removeAttr("disabled");
-    }
+        $(ele).removeAttr('disabled');
+    };
 
-    $(".short-disable").click(function () {
+    $('.short-disable').click(function () {
         var that = this;
-        $(this).attr("disabled", true);
-        setTimeout(function () { enableSubmit(that) }, 1000);
+        $(this).attr('disabled', true);
+        setTimeout(function () { enableSubmit(that); }, 1000);
     });
 
     // start popover annotations for info boxes

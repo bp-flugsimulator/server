@@ -88,19 +88,19 @@ const JsonForm = {
         });
 
         $(container).find('.script-program-hide').on('click', function () {
-            hide_container = $(this).parent().next();
+            let hide_container = $(this).parent().next();
             if ($.trim($(hide_container).html())) {
                 hide_container.toggle();
-                $(this).prev().attr('disabled', function (_, attr) { return !attr });
+                $(this).prev().attr('disabled', function (_, attr) { return !attr; });
                 $(this).children('i').toggleClass('mdi-chevron-up mdi-chevron-down');
             }
         });
 
         $(container).find('.script-filesystem-hide').on('click', function () {
-            hide_container = $(this).parent().next();
+            let hide_container = $(this).parent().next();
             if ($.trim($(hide_container).html())) {
                 hide_container.toggle();
-                $(this).prev().attr('disabled', function (_, attr) { return !attr });
+                $(this).prev().attr('disabled', function (_, attr) { return !attr; });
                 $(this).children('i').toggleClass('mdi-chevron-up mdi-chevron-down');
             }
         });

@@ -148,7 +148,7 @@ $(document).ready(function () {
     });
 
     $('.script-action-add-save').click(function () {
-	    window.unloadWarning = false;
+        window.unloadWarning = false;
 
         let id = $(this).attr('data-editor-id');
         let editor = JsonForm.dumps($('#jsoneditor_' + id));
