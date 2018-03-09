@@ -56,11 +56,24 @@ class SchedulerTests(SchedulerTestCase):
         self.fs1 = fs1
 
     def tearDown(self):
+        # NOTICE: this is important because the test of each state function
+        # will spawn functions into the event loop FSIM_CURRENT_SCHEDULER,
+        # because the program start function gets called which places a timeout
+        # into the event loop. If the function timeouts it will probably raise
+        # a database lock error.
+        FSIM_CURRENT_SCHEDULER.loop.clear_tasks()
+
+        # removes the created scheduler
         self.sched.stop()
 
-        self.script.delete()
-        self.slave1.delete()
-        self.slave2.delete()
+        try:
+            self.script.delete()
+            self.slave1.delete()
+            self.slave2.delete()
+        except:
+            # This part should never interrupt the execution.
+            # If the test function deletes an object in the database.
+            pass
 
         self.assertFalse(ScriptModel.objects.all().exists())
         self.assertFalse(SlaveModel.objects.all().exists())

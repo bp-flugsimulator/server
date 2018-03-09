@@ -90,7 +90,6 @@ class SafeLoop:
         with self.__stop_lock:
             self.loop.run_until_complete(self.__stop.wait())
 
-
     def start(self):
         """
         Initilizes the whole event loop with a seperated thread, where the
@@ -109,6 +108,14 @@ class SafeLoop:
                 self.ident,
                 self.thread.ident,
             )
+    def clear_tasks(self):
+        """
+        Remove all current tasks from the event loop.
+        """
+        LOGGER.info("Removing tasks from event loop `%s` (on thread `%s`)",
+                    self.ident, self.thread.ident)
+        for task in asyncio.Task.all_tasks(loop=self.loop):
+            task.cancel()
 
     def close(self, timeout=5):
         """
