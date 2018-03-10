@@ -221,13 +221,13 @@ class DatabaseTests(TestCase):
         )
 
     def test_mac_validator_upper(self):
-        validate_mac_address("00:AA:BB:CC:DD:EE")
+        self.assertIsNone(validate_mac_address("00:AA:BB:CC:DD:EE"))
 
     def test_mac_validator_lower(self):
-        validate_mac_address("00:aa:bb:cc:dd:ee")
+        self.assertIsNone(validate_mac_address("00:aa:bb:cc:dd:ee"))
 
     def test_mac_validator_mixed(self):
-        validate_mac_address("00:Aa:Bb:cC:dD:EE")
+        self.assertIsNone(validate_mac_address("00:Aa:Bb:cC:dD:EE"))
 
     def test_mac_validator_too_short(self):
         self.assertRaises(

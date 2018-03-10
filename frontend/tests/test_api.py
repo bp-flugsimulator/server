@@ -1659,7 +1659,6 @@ class ProgramTests(StatusTestCase):
 
     def test_entry_put_validation_error(self):
         program = ProgramFactory()
-        slave = program.slave
 
         long_str = ''
         for _ in range(2000):

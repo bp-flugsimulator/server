@@ -1,7 +1,7 @@
 """
 Test file for scheduler.py module.
 """
-# pylint: disable=missing-docstring,too-many-public-methods
+# pylint: disable=missing-docstring,too-many-public-methods,protected-access
 
 import json
 import asyncio
@@ -9,6 +9,7 @@ from uuid import uuid4
 
 from utils import Status
 from channels.test import WSClient
+import django.db
 
 from frontend.models import (
     Slave as SlaveModel,
@@ -73,11 +74,12 @@ class SchedulerTests(SchedulerTestCase):
         # removes the created scheduler
         self.sched.stop()
 
+        # pylint: disable=bare-except
         try:
             self.script.delete()
             self.slave1.delete()
             self.slave2.delete()
-        except: # pylint: disable=bare-except
+        except django.db.Error:
             # This part should never interrupt the execution.
             # If the test function deletes an object in the database.
             pass
@@ -675,13 +677,13 @@ class SchedulerTests(SchedulerTestCase):
         self.sched._Scheduler__script = self.script.id
         self.sched._Scheduler__state = SchedulerStatus.WAITING_FOR_SLAVES
 
-        t = Timer(
+        timer = Timer(
             1,
             self.sched.slave_timeout_callback,
         )
 
-        t.start()
-        t.join()
+        timer.start()
+        timer.join()
 
         self.assertEqual(
             self.sched._Scheduler__state,
