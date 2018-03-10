@@ -36,12 +36,12 @@ def select_method(status):
     LOGGER.error(dict(status))
 
     function_handle_table = {
-        'online': handle_online_answer,
-        'execute': handle_execute_answer,
+        'online': handle_online,
+        'execute': handle_execute,
         'filesystem_move': handle_filesystem_moved,
         'filesystem_restore': handle_filesystem_restored,
         'chain_execution': handle_chain_execution,
-        'get_log': handle_get_log_answer,
+        'get_log': handle_get_log,
     }
 
     if status.payload['method'] in function_handle_table:
@@ -178,7 +178,7 @@ def handle_filesystem_moved(status):
         })
 
 
-def handle_execute_answer(status):
+def handle_execute(status):
     """
     Handles an incoming message on '/notification' that
     is an answer to an 'execute' request on a slave
@@ -232,7 +232,7 @@ def handle_execute_answer(status):
     })
 
 
-def handle_online_answer(status):
+def handle_online(status):
     """
     Handles an incoming message on '/notification' that
     is an answer to an 'online' request on a slave
@@ -274,7 +274,7 @@ def handle_online_answer(status):
         )
 
 
-def handle_get_log_answer(status):
+def handle_get_log(status):
 
     if status.is_ok():
         try:
@@ -339,7 +339,6 @@ def ws_rpc_connect(message):
         )
 
         # Add to the command group
-        Group('clients').add(message.reply_channel)
         Group('client_{}'.format(slave.id)).add(message.reply_channel)
         LOGGER.debug('Added client to command group client_%s', slave.id)
 
@@ -375,26 +374,13 @@ def ws_rpc_receive(message):
     """
     try:
         try:
-            from json.decoder import JSONDecodeError
-            try:
-                status = Status.from_json(message.content['text'])
-            except JSONDecodeError as err:
-                LOGGER.error(
-                    "Error while parsing json. (cause: %s)",
-                    str(err),
-                )
-                return
-
-        except ImportError:
-            try:
-                status = Status.from_json(message.content['text'])
-            except ValueError as err:
-                LOGGER.error(
-                    "Error while parsing json. (cause: %s)",
-                    str(err),
-                )
-                return
-
+            status = Status.from_json(message.content['text'])
+        except ValueError as err:
+            LOGGER.error(
+                "Error while parsing json. (cause: %s)",
+                str(err),
+            )
+            return
         select_method(status)
     except FormatError as err:
         LOGGER.error(
@@ -423,7 +409,6 @@ def ws_rpc_disconnect(message):
         slave = SlaveModel.objects.get(
             ip_address=message.channel_session['ip_address'])
 
-        Group('clients').discard(message.reply_channel)
         Group('client_{}'.format(slave.id)).discard(message.reply_channel)
 
         slave.online = False

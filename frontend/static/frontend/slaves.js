@@ -1,7 +1,7 @@
 /* eslint-env browser*/
 /* eslint no-use-before-define: ["error", { "functions": false }] */
 /* global $, getCookie, modalDeleteAction, handleFormStatus, clearErrorMessages, Status,
- fsimWebsocket, notify, swapText, styleSlaveByStatus, basicRequest */
+ fsimWebsocket, notify, swapText, styleSlaveByStatus, basicRequest, AnsiTerm */
 
 /**
  * Sets the given text for all '.button-status-display' in a container.
@@ -25,8 +25,8 @@ function onFormSubmit(id) {
         //Stop form from submitting normally
         event.preventDefault();
 
-	//remove the unload-Hook
-	window.unloadPrompt = false;
+        //remove the unload-Hook
+        window.unloadPrompt = false;
 
         //send request to given url and with given method
         //data field contains information about the slave
@@ -359,7 +359,7 @@ $(document).ready(function () {
         if ($(this).attr('data-is-running') === 'True') {
             apiRequest('/api/program/' + id + '/stop', 'GET');
         } else if ($(this).attr('data-is-running') === 'False') {
-            apiRequest('/api/program/' + id, 'POST');
+            apiRequest('/api/program/' + id + '/start', 'GET');
         }
     });
 
@@ -492,7 +492,7 @@ $(document).ready(function () {
         let name = $(this).data('filesystem-name');
         let sourcePath = $(this).data('filesystem-source_path');
         let destinationPath = $(this).data('filesystem-destination_path');
-		
+
         //modify the form for the submit button
         filesystemModal.children().find('.modal-title').text('Edit Filesystem');
         filesystemForm.attr('action', '/api/filesystem/' + id);
@@ -675,18 +675,29 @@ $(document).ready(function () {
 
     //register load and unload hooks for modals
     let hookModals = ['programModal', 'slaveModal', 'filesystemModal'];
-    for (let modal of hookModals){
-        $('#'+modal).on('show.bs.modal', function(e) {
-            window.unloadPrompt = true;
+    for (let modal of hookModals) {
+        $('#'+modal).on('show.bs.modal', function() {
+            $(':input').on('input', function() {
+                window.unloadPrompt = true;
+                removeAllChangeListener();
+            });
+
+            $('select').on('input', function() {
+                window.unloadPrompt = true;
+                removeAllChangeListener();
+            });
         });
+
         $('#'+modal).on('hidden.bs.modal', function(e) {
+            if (window.unloadPrompt) {
                 $('#unsafedChangesWarning').data('parentModal', e.target.id);
                 $('#unsafedChangesWarning').modal('toggle');
-                window.unloadPrompt = false;
-    });
+            }
+            window.unloadPrompt = false;
+        });
     }
 
-    $('#keepParentModal').click(function(e) {
+    $('#keepParentModal').click(function() {
         let parentModal = $('#unsafedChangesWarning').data('parentModal');
         $('#unsafedChangesWarning').modal('toggle');
         $('#' + parentModal).modal('toggle');
@@ -694,8 +705,7 @@ $(document).ready(function () {
 
 });
 
-// global variable which determines the usage of the
-// unload prompt
+// global variable which determines the usage of the unload prompt
 var unloadPrompt = false;
 
 // if the site gets reloaded/closed all logging activity gets stopped
@@ -719,7 +729,7 @@ $(window).on('beforeunload', function (e) {
 });
 
 // if the site gets reloaded/closed all logging activity gets stopped
-$(window).on('unload', function (e) {
+$(window).on('unload', function () {
     $('.program-action-handle-logging').each(function () {
         if ($(this).data('enabled')) {
             let id = $(this).data('program-id');
@@ -729,3 +739,7 @@ $(window).on('unload', function (e) {
     });
 });
 
+function removeAllChangeListener(){
+    $(':input').off('input');
+    $('select').off('input');
+}
