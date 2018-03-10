@@ -2,19 +2,15 @@
 This module contains all functions that handle requests on the REST api.
 """
 import logging
-import os
 
 from django.http import HttpResponseForbidden
 from django.http.request import QueryDict
 from django.core.exceptions import ValidationError
 from django.db.utils import IntegrityError
-from django.db.models import Count, Model
 
-from utils import Status, Command
+from utils import Status
 from utils.typecheck import ensure_type
 import utils.path as up
-
-from django.db.models import Q
 
 from server.utils import StatusResponse
 
@@ -29,7 +25,6 @@ from .models import (
 
 from .scripts import Script
 from .forms import SlaveForm, ProgramForm, FilesystemForm
-from .consumers import notify
 
 from .errors import (
     FsimError,
@@ -37,7 +32,6 @@ from .errors import (
     ProgramNotExistError,
     FilesystemNotExistError,
     SimultaneousQueryError,
-    SlaveOfflineError,
     ScriptRunningError,
     ScriptNotExistError,
 )
@@ -143,8 +137,8 @@ def slave_set(request):
     Returns
     -------
         HttpResponse:
-            If the HTTP method is not supported, then an `HttpResponseForbidden` is
-            returned.
+            If the HTTP method is not supported, then an `HttpResponseForbidden`
+            is returned.
     """
     if request.method == 'POST':
         form = SlaveForm(request.POST)
@@ -204,8 +198,8 @@ def slave_entry(request, slave_id):
     Returns
     -------
         HttpResponse:
-            If the HTTP method is not supported, then an `HttpResponseForbidden` is
-            returned.
+            If the HTTP method is not supported, then an `HttpResponseForbidden`
+            is returned.
     """
     if request.method == 'DELETE':
         try:
@@ -252,8 +246,8 @@ def slave_shutdown(request, slave_id):
     Returns
     -------
         HttpResponse:
-            If the HTTP method is not supported, then an `HttpResponseForbidden` is
-            returned.
+            If the HTTP method is not supported, then an `HttpResponseForbidden`
+            is returned.
     """
     if request.method == 'POST':
         try:
@@ -288,8 +282,8 @@ def slave_wol(request, slave_id):
     Returns
     -------
         HttpResponse:
-            If the HTTP method is not supported, then an `HttpResponseForbidden` is
-            returned.
+            If the HTTP method is not supported, then an `HttpResponseForbidden`
+            is returned.
     """
     if request.method == 'POST':
         try:
@@ -314,8 +308,8 @@ def program_set(request):
             Searches for the name which is like ".*q.*"
         GET: query with (?slave=None&is_string=False)
             Searches for all `ProgramModel`s which belong to the given `slave`.
-            Where `is_string` specifies if the given `slave` is an unique name or
-            and unique index.
+            Where `is_string` specifies if the given `slave` is an unique name
+            or and unique index.
 
     Parameters
     ----------
@@ -325,8 +319,8 @@ def program_set(request):
     Returns
     -------
         HttpResponse:
-            If the HTTP method is not supported, then an `HttpResponseForbidden` is
-            returned.
+            If the HTTP method is not supported, then an `HttpResponseForbidden`
+            is returned.
     """
     if request.method == 'POST':
         form = ProgramForm(request.POST or None)
@@ -404,8 +398,8 @@ def program_entry(request, program_id):
     Returns
     -------
         HttpResponse:
-            If the HTTP method is not supported, then an `HttpResponseForbidden` is
-            returned.
+            If the HTTP method is not supported, then an `HttpResponseForbidden`
+            is returned.
     """
     if request.method == 'DELETE':
         try:
@@ -461,8 +455,8 @@ def program_start(request, program_id):
     Returns
     -------
         HttpResponse:
-            If the HTTP method is not supported, then an `HttpResponseForbidden` is
-            returned.
+            If the HTTP method is not supported, then an `HttpResponseForbidden`
+            is returned.
     """
     if request.method == 'POST':
         try:
@@ -496,8 +490,8 @@ def program_stop(request, program_id):
     Returns
     -------
         HttpResponse:
-            If the HTTP method is not supported, then an `HttpResponseForbidden` is
-            returned.
+            If the HTTP method is not supported, then an `HttpResponseForbidden`
+            is returned.
     """
     if request.method == 'POST':
         try:
@@ -530,8 +524,8 @@ def program_log_entry(request, program_id):
     Returns
     -------
         HttpResponse:
-            If the HTTP method is not supported, then an `HttpResponseForbidden` is
-            returned.
+            If the HTTP method is not supported, then an `HttpResponseForbidden`
+            is returned.
     """
     if request.method == 'GET':
         try:
@@ -564,8 +558,8 @@ def program_log_enable(request, program_id):
     Returns
     -------
         HttpResponse:
-            If the HTTP method is not supported, then an `HttpResponseForbidden` is
-            returned.
+            If the HTTP method is not supported, then an `HttpResponseForbidden`
+            is returned.
     """
     if request.method == 'POST':
         try:
@@ -599,8 +593,8 @@ def program_log_disable(request, program_id):
     Returns
     -------
         HttpResponse:
-            If the HTTP method is not supported, then an `HttpResponseForbidden` is
-            returned.
+            If the HTTP method is not supported, then an `HttpResponseForbidden`
+            is returned.
     """
     if request.method == 'POST':
         try:
@@ -632,8 +626,8 @@ def script_set(request):
     Returns
     -------
         HttpResponse:
-            If the HTTP method is not supported, then an `HttpResponseForbidden` is
-            returned.
+            If the HTTP method is not supported, then an `HttpResponseForbidden`
+            is returned.
     """
     if request.method == 'POST':
         return script_put_post(request.body.decode('utf-8'), None)
@@ -664,8 +658,8 @@ def script_entry(request, script_id):
     Returns
     -------
         HttpResponse:
-            If the HTTP method is not supported, then an `HttpResponseForbidden` is
-            returned.
+            If the HTTP method is not supported, then an `HttpResponseForbidden`
+            is returned.
     """
     if request.method == 'GET':
         try:
@@ -717,8 +711,8 @@ def script_copy(request, script_id):
     Returns
     -------
         HttpResponse:
-            If the HTTP method is not supported, then an `HttpResponseForbidden` is
-            returned.
+            If the HTTP method is not supported, then an `HttpResponseForbidden`
+            is returned.
     """
     if request.method == 'POST':
         try:
@@ -750,8 +744,8 @@ def script_run(request, script_id):
     Returns
     -------
         HttpResponse:
-            If the HTTP method is not supported, then an `HttpResponseForbidden` is
-            returned.
+            If the HTTP method is not supported, then an `HttpResponseForbidden`
+            is returned.
     """
 
     if request.method == 'POST':
@@ -796,8 +790,8 @@ def filesystem_set(request):
     Returns
     -------
         HttpResponse:
-            If the HTTP method is not supported, then an `HttpResponseForbidden` is
-            returned.
+            If the HTTP method is not supported, then an `HttpResponseForbidden`
+            is returned.
     """
     if request.method == 'POST':
         form = FilesystemForm(request.POST or None)
@@ -808,8 +802,8 @@ def filesystem_set(request):
 
             try:
                 filesystem.full_clean()
-                # IMPORTANT: remove trailing path seperator (if not the query will not
-                # work [the query in filesystem_move])
+                # IMPORTANT: remove trailing path seperator (if not the query
+                # will not work [the query in filesystem_move])
                 filesystem.destination_path = up.remove_trailing_path_seperator(
                     filesystem.destination_path)
                 filesystem.source_path = up.remove_trailing_path_seperator(
@@ -901,8 +895,8 @@ def filesystem_move(request, filesystem_id):
     Returns
     -------
         HttpResponse:
-            If the HTTP method is not supported, then an `HttpResponseForbidden` is
-            returned.
+            If the HTTP method is not supported, then an `HttpResponseForbidden`
+            is returned.
     """
     if request.method == 'POST':
         try:
@@ -937,8 +931,8 @@ def filesystem_restore(request, filesystem_id):
     Returns
     -------
         HttpResponse:
-            If the HTTP method is not supported, then an `HttpResponseForbidden` is
-            returned.
+            If the HTTP method is not supported, then an `HttpResponseForbidden`
+            is returned.
     """
     if request.method == 'POST':
         try:
@@ -973,8 +967,8 @@ def filesystem_entry(request, filesystem_id):
     Returns
     -------
         HttpResponse:
-            If the HTTP method is not supported, then an `HttpResponseForbidden` is
-            returned.
+            If the HTTP method is not supported, then an `HttpResponseForbidden`
+            is returned.
     """
 
     if request.method == 'DELETE':

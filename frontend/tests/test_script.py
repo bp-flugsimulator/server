@@ -1,8 +1,9 @@
-#  pylint: disable=C0111,C0103
+"""
+Test cases for the script.py module.
+"""
+# pylint: disable=missing-docstring,too-many-public-methods
 
 from django.test import TestCase
-from django.db.utils import IntegrityError
-
 from django.core.exceptions import ValidationError
 
 from frontend.scripts import (
@@ -18,6 +19,14 @@ from frontend.models import (
     ScriptGraphFiles as SGF,
 )
 
+from frontend.errors import (
+    SlaveNotExistError,
+    ProgramNotExistError,
+    QueryParameterError,
+    FilesystemNotExistError,
+    PositiveNumberError,
+)
+
 from .factory import (
     SlaveFactory,
     ScriptFactory,
@@ -25,20 +34,13 @@ from .factory import (
     FileFactory,
 )
 
-from frontend.errors import (
-    SlaveNotExistError,
-    ProgramNotExistError,
-    ScriptNotExistError,
-    QueryParameterError,
-    FilesystemNotExistError,
-    PositiveNumberError,
-)
 
+class ScriptTests(TestCase):
+    def test_get_slave_none(self):
+        self.assertEqual(None, get_slave(None))
 
-class ScriptTests(TestCase):  # pylint: disable=unused-variable
     def test_get_slave_int(self):
         slave = SlaveFactory()
-
         self.assertEqual(get_slave(slave.id), slave)
 
     def test_get_slave_str(self):
@@ -60,9 +62,10 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
             -1,
         )
 
-    def test_script_json(self):
-        string = '{"name": "test", "filesystems": [{"index": 0, "slave": 0, "filesystem": "no name"}],\
-            "programs": [{"index": 0, "slave": 0, "program": "no name"}]}'
+    def test_from_json(self):
+        string = '{"name": "test", "filesystems": [{"index": 0, "slave": 0, "filesystem": \
+            "no name"}], "programs": [{"index": 0, "slave": 0, \
+            "program": "no name"}]}'
 
         script = Script(
             "test",
@@ -73,7 +76,7 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
         self.assertEqual(Script.from_json(string), script)
         self.assertEqual(Script.from_json(script.to_json()), script)
 
-    def test_script_entry_program_json(self):
+    def test_from_json_program(self):
         string = '{"index": 0, "slave": 0, "program": "no name"}'
 
         script = ScriptEntryProgram(0, "no name", 0)
@@ -84,7 +87,7 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
             script,
         )
 
-    def test_script_entry_file_json(self):
+    def test_from_json_file(self):
         string = '{"index": 0, "slave": 0, "filesystem": "no name"}'
 
         script = ScriptEntryFilesystem(0, "no name", 0)
@@ -93,13 +96,13 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
         self.assertEqual(
             ScriptEntryFilesystem.from_json(script.to_json()), script)
 
-    def test_script_name_eq(self):
+    def test_name_not_equal(self):
         self.assertNotEqual(
             Script("test", [ScriptEntryProgram(0, 0, 0)], []),
             Script("test2", [ScriptEntryProgram(0, 0, 0)], []),
         )
 
-    def test_model_support_strings(self):
+    def test_string_identifiers(self):
         slave = SlaveFactory()
         program = ProgramFactory(slave=slave)
         filesystem = FileFactory(slave=slave)
@@ -128,7 +131,7 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
                 filesystem=filesystem,
             ).exists())
 
-    def test_model_support_ids(self):
+    def test_integer_identifiers(self):
         slave = SlaveFactory()
         program = ProgramFactory(slave=slave)
         filesystem = FileFactory(slave=slave)
@@ -150,7 +153,7 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
                 program=program,
             ).exists())
 
-    def test_model_support_error_in_entry(self):
+    def test_program_not_exist(self):
         program = ProgramFactory()
         slave = program.slave
         script_name = ScriptFactory.build().name
@@ -172,7 +175,7 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
         self.assertFalse(ScriptModel.objects.filter(name=script_name).exists())
         self.assertTrue(len(SGP.objects.all()) == 0)
 
-    def test_from_model_file_id_eq_str(self):
+    def test_model_references_same_str(self):
         filesystem = FileFactory()
         slave = filesystem.slave
         script = ScriptFactory()
@@ -182,7 +185,7 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
 
         self.assertRaises(ValidationError, b.save, script)
 
-    def test_from_model_program_id_eq_str(self):
+    def test_model_references_same_int(self):
         program = ProgramFactory()
         slave = program.slave
         script = ScriptFactory()
@@ -246,11 +249,8 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
             "not str",
         )
 
-    def test_script_get_slave(self):
-        from frontend.scripts import get_slave
-        self.assertEqual(None, get_slave(None))
 
-    def test_script_positive_index(self):
+    def test_positive_index_error(self):
         self.assertRaises(
             PositiveNumberError,
             ScriptEntryProgram,
@@ -267,7 +267,7 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
             0,
         )
 
-    def test_script_programs_missing_slave(self):
+    def test_program_slave_not_exist_error(self):
         slave = SlaveFactory()
         script = ScriptFactory()
 
@@ -303,7 +303,7 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
             script,
         )
 
-    def test_script_file_missing_slave(self):
+    def test_file_slave_not_exist_error(self):
         slave = SlaveFactory()
         script = ScriptFactory()
 

@@ -26,8 +26,7 @@ def test_<Websocket Function>(self):
         ignore
         error
 """
-
-#  pylint: disable=C0111,C0103
+# pylint: disable=missing-docstring,too-many-public-methods
 
 import json
 import string

@@ -1,18 +1,17 @@
 """
-Test file for scheduler.py
+Test file for scheduler.py module.
 """
+# pylint: disable=missing-docstring,too-many-public-methods
+
 import json
 import asyncio
 from uuid import uuid4
 
 from utils import Status
-from .testcases import SchedulerTestCase
-
 from channels.test import WSClient
 
 from frontend.models import (
     Slave as SlaveModel,
-    Program as ProgramModel,
     ProgramStatus as ProgramStatusModel,
     ScriptGraphPrograms as SGP,
     ScriptGraphFiles as SGF,
@@ -21,12 +20,15 @@ from frontend.models import (
 
 from frontend.scheduler import Scheduler, SchedulerStatus
 from frontend.errors import SlaveOfflineError
+
 from .factory import (
     SlaveFactory,
     SchedulerProgramFactory as ProgramFactory,
     FileFactory,
     ScriptFactory,
 )
+
+from .testcases import SchedulerTestCase
 
 
 class SchedulerTests(SchedulerTestCase):
@@ -75,7 +77,7 @@ class SchedulerTests(SchedulerTestCase):
             self.script.delete()
             self.slave1.delete()
             self.slave2.delete()
-        except:
+        except: # pylint: disable=bare-except
             # This part should never interrupt the execution.
             # If the test function deletes an object in the database.
             pass

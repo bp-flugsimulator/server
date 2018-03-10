@@ -7,6 +7,7 @@ def test_<NAME>(self):
 <NAME>:
     error name with `_base` suffix if it is a base error.
 """
+# pylint: disable=missing-docstring,too-many-public-methods
 
 from django.test import TestCase
 
@@ -18,7 +19,7 @@ from frontend.errors import (
 )
 
 
-class BaseErrorTests(TestCase):  # pylint: disable=unused-variable
+class BaseErrorTests(TestCase):
     def test_filesystem_base(self):
         error = FilesystemError(None, None, None)
 

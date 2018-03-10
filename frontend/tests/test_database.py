@@ -11,6 +11,7 @@ def test_<MODEL>_<OPERATION/ERROR>:
     If there is no error then use the operation name
     else use the error.
 """
+# pylint: disable=missing-docstring,too-many-public-methods
 
 from django.test import TestCase
 from django.core.exceptions import ValidationError
@@ -23,7 +24,6 @@ from frontend.models import (
     Filesystem as FilesystemModel,
     Program as ProgramModel,
     ProgramStatus as ProgramStatusModel,
-    ScriptGraphPrograms as SGPModel,
     validate_mac_address,
     validate_argument_list,
 )

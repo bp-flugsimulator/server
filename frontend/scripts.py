@@ -20,7 +20,6 @@ from .models import (
 
 from .errors import (
     SlaveNotExistError,
-    ScriptNotExistError,
     QueryParameterError,
     FilesystemNotExistError,
     ProgramNotExistError,

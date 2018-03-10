@@ -5,19 +5,22 @@ def test_<API>_<HTTP METHOD>_<LIST>:
   pass
 
 <API>:
-    the name of handler method without the type information (e.g. filesystem_set -> set)
+    the name of handler method without the type information (e.g.
+    filesystem_set -> set)
 
 <HTTP METHOD>:
     The used http method in the test function
 
  <LIST>:
-    forbidden -> method not allowed
-    not_exist -> the addressed object does not exist
-    offline   -> the slave is offline
-    success   -> example successfull request
-    exist     -> the request is not successfull because something exists or is running
+    forbidden       -> method not allowed
+    not_exist       -> the addressed object does not exist
+    offline         -> the slave is offline
+    success         -> example successfull request
+    exist           -> the request is not successfull because something exists
+                       or is running
+    <ERROR>_error   -> any kind of error that is raised and catched in the API
 """
-#  pylint: disable=C0111,C0103
+# pylint: disable=missing-docstring,too-many-public-methods
 
 import json
 import os
@@ -25,7 +28,6 @@ import os
 from urllib.parse import urlencode
 from shlex import split
 
-from django.test import TestCase
 from django.urls import reverse
 from channels.test import WSClient
 
@@ -422,12 +424,6 @@ class ScriptTest(StatusTestCase):
         )
         script_int.save()
 
-        script_str = Script(
-            script_name,
-            [ScriptEntryProgram(0, program.id, slave.name)],
-            [ScriptEntryFilesystem(0, filesystem.id, slave.name)],
-        )
-
         db_script = ScriptModel.objects.get(name=script_name)
 
         response = self.client.get(
@@ -738,8 +734,6 @@ class FilesystemTests(StatusTestCase):
                 slave=slave,
             ))
 
-    # TODO merge
-
     def test_set_post_value_error(self):
         slave = SlaveFactory()
         filesystem = FileFactory.build()
@@ -768,9 +762,6 @@ class FilesystemTests(StatusTestCase):
             }),
             Status.from_json(response.content.decode('utf-8')),
         )
-
-
-# TODO merge
 
     def test_set_post_name_error(self):
         filesystem = FileFactory()
