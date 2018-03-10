@@ -1,7 +1,7 @@
 /* eslint-env browser */
-/* eslint no-use-before-define: ['error', { 'functions': false }] */
-/* global $, JsonForm, getCookie, Status, modalDeleteAction, notify */
-/* exported loadScript, newScript */
+/* eslint no-use-before-define: ["error", { "functions": false }] */
+/* global $, JsonForm, getCookie, Status, modalDeleteAction, notify, basicRequest, Promise */
+/* exported loadScript, newScript, unloadWarning */
 
 // global variable, which indicates whether
 // an unload warning should be triggered
@@ -112,15 +112,17 @@ $(document).ready(function () {
                     .children('span').removeClass('text-dark');
             });
             // Create a change listener on all available input fields
-            $(':input').change(function(e) {
+            $(':input').on('input', function() {
                 unloadWarning = true;
                 removeAllChangeListener();
             });
-            $('select').change(function(e) {
+
+            $('select').on('input', function() {
                 unloadWarning = true;
                 removeAllChangeListener();
             });
-            $('.inline-add-button').on('click', function(e) {
+
+            $('.inline-add-button').on('click', function() {
                 unloadWarning = true;
             });
 
@@ -180,7 +182,6 @@ $(document).ready(function () {
 
     $('.script-action-save').click(function () {
         window.unloadWarning = false;
-
         let id = $(this).attr('data-editor-id');
         let editor = JsonForm.dumps($('#jsoneditor_' + id));
         let string = JSON.stringify(editor);
@@ -239,14 +240,14 @@ $(document).ready(function () {
 
 
 $(window).on('beforeunload', function (e) {
-	if (this.unloadWarning) {
-            let returnText = 'Are you sure you want to leave?';
-            e.returnValue = returnText;
-            return returnText;
-	}
+    if (this.unloadWarning) {
+        let returnText = 'Are you sure you want to leave?';
+        e.returnValue = returnText;
+        return returnText;
+    }
 });
 
 function removeAllChangeListener(){
-        $(':input').off('change');
-        $('select').off('change');
+    $(':input').off('input');
+    $('select').off('input');
 }

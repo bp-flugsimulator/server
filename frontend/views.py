@@ -1,5 +1,5 @@
 """
-This module contains all views of the frontend application
+This module contains all views of the frontend application.
 """
 
 from django.views.generic import TemplateView, ListView
@@ -23,7 +23,7 @@ class WelcomeView(TemplateView):
 
 class RunScriptView(ListView):
     """
-    generates view for /scripts/run
+    The site the user will navigate to, if he wants to run a script.
     """
     template_name = "frontend/scripts/run.html"
     model = ScriptModel
@@ -37,7 +37,7 @@ class RunScriptView(ListView):
 
 class ScriptsView(ListView):
     """
-    generates view for /scripts
+    The site the user will navigate to, if he wants add/remove/edit a script.
     """
     template_name = "frontend/scripts/base.html"
     model = ScriptModel
@@ -51,7 +51,8 @@ class ScriptsView(ListView):
 
 class SlavesView(ListView):
     """
-    generates view for /slaves
+    The site the user will navigate to, if he wants interact with differnt
+    slaves.
     """
     template_name = "frontend/slaves/base.html"
     model = SlaveModel
@@ -68,7 +69,7 @@ class SlavesView(ListView):
 
 class DownloadView(TemplateView):
     """
-    generates view for /downloads
+    The site the user will navigate to, if he wants to download a file.
     """
     template_name = "frontend/downloads/base.html"
 
