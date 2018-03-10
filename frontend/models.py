@@ -235,12 +235,11 @@ class Slave(Model):
                 The list contains the name of every `Slave` which fulfil the
                 condition.
         """
-        return Slave.objects.all().annotate(
-            prog_count=Count('program__pk')).filter(
-                prog_count__gt=0).values_list(
-                    'name',
-                    flat=True,
-                )
+        return Slave.objects.all().annotate(prog_count=Count(
+            'program__pk')).filter(prog_count__gt=0).values_list(
+                'name',
+                flat=True,
+            )
 
     @staticmethod
     def with_filesystems():
@@ -253,12 +252,11 @@ class Slave(Model):
                 The list contains the name of every `Slave` which fulfil the
                 condition.
         """
-        return Slave.objects.all().annotate(
-            filesystem_count=Count('filesystem__pk')).filter(
-                filesystem_count__gt=0).values_list(
-                    'name',
-                    flat=True,
-                )
+        return Slave.objects.all().annotate(filesystem_count=Count(
+            'filesystem__pk')).filter(filesystem_count__gt=0).values_list(
+                'name',
+                flat=True,
+            )
 
 
 class Program(Model):

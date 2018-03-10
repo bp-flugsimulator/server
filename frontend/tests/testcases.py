@@ -9,6 +9,7 @@ from server.errors import FsimError
 from utils import Status
 from utils.typecheck import ensure_type
 
+
 def assertStatusRegex(self, regex_status, status_object):
     """
     Asserts that status_object.payload matches the regex_status.payload and that both
@@ -42,12 +43,14 @@ def assertStatusRegex(self, regex_status, status_object):
     self.assertEqual(regex_status.status, status_object.status)
     self.assertRegex(status_object.payload, regex_string)
 
+
 class StatusTestCase(TestCase):
     """
     Provides functions to compare status objects.
     """
 
     assertStatusRegex = assertStatusRegex
+
 
 class SchedulerTestCase(unittest.TestCase):
     """
@@ -85,7 +88,6 @@ class SchedulerTestCase(unittest.TestCase):
                 no_fit.append(x)
 
         if len(second) > 0:
-            raise AssertionError(
-                ("The elements {} does not have an"
-                 "counterpart. Leftovers: {}").format(no_fit, second))
-
+            raise AssertionError(("The elements {} does not have an"
+                                  "counterpart. Leftovers: {}").format(
+                                      no_fit, second))

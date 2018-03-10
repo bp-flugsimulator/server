@@ -65,7 +65,18 @@ class ProgramFactory(DjangoModelFactory):
     path = FuzzyText(length=40)
     arguments = FuzzyText(length=200)
     slave = SubFactory(SlaveFactory)
-    start_time = FuzzyInteger(-1, 1)
+    start_time = -1  # IMPORTANT: To not start any program in the Scheduler.
+
+
+class SchedulerProgramFactory(DjangoModelFactory):
+    class Meta:
+        model = ProgramModel
+
+    name = FuzzyText(length=20, prefix="program_")
+    path = FuzzyText(length=40)
+    arguments = FuzzyText(length=200)
+    slave = SubFactory(SlaveFactory)
+    start_time = FuzzyInteger(-1, 3, 1)
 
 
 class ProgramStatusFactory(DjangoModelFactory):

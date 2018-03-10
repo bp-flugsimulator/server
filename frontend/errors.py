@@ -311,16 +311,17 @@ class PositiveNumberError(FsimError):
     def regex_string():
         return "Expected zero or positive for .* \(given: .*\)"
 
+
 class IdentifierError(FsimError):
     """
     This class is raised if an identifier could not be used as intended.
     """
+
     def __init__(self, name, ty, given):
         super().__init__(
-            "The given type `{}` for `{}` is not compatible. (given value: `{}`)".format(
-            ty, name, given))
+            "The given type `{}` for `{}` is not compatible. (given value: `{}`)".
+            format(ty, name, given))
 
     @staticmethod
     def regex_string():
         return "The given type `.*` for `.*` is not compatible. \(given value: `.*`\)"
-

@@ -21,7 +21,12 @@ from frontend.models import (
 
 from frontend.scheduler import Scheduler, SchedulerStatus
 from frontend.errors import SlaveOfflineError
-from .factory import SlaveFactory, ProgramFactory, FileFactory, ScriptFactory
+from .factory import (
+    SlaveFactory,
+    SchedulerProgramFactory as ProgramFactory,
+    FileFactory,
+    ScriptFactory,
+)
 
 
 class SchedulerTests(SchedulerTestCase):
@@ -275,13 +280,10 @@ class SchedulerTests(SchedulerTestCase):
             'script_id': self.script.id,
         })
 
-        self.assertStatusSet(
-            [msg1],
-            [expct1]
-        )
+        self.assertStatusSet([msg1], [expct1])
 
-        ProgramStatusModel.objects.create(program=self.prog2, code='0',
-                                          command_uuid='1')
+        ProgramStatusModel.objects.create(
+            program=self.prog2, code='0', command_uuid='1')
 
         self.sched._Scheduler__state = SchedulerStatus.NEXT_STEP
         self.sched._Scheduler__state_next()
@@ -306,10 +308,7 @@ class SchedulerTests(SchedulerTestCase):
             'script_id': self.script.id,
         })
 
-        self.assertStatusSet(
-            [msg1],
-            [expct1]
-        )
+        self.assertStatusSet([msg1], [expct1])
 
         self.sched._Scheduler__state = SchedulerStatus.NEXT_STEP
         self.sched._Scheduler__state_next()
@@ -339,15 +338,14 @@ class SchedulerTests(SchedulerTestCase):
         self.slave2.online = True
         self.slave2.save()
 
-        ProgramStatusModel.objects.create(program=self.prog1, code='0',
-                                          command_uuid='0')
+        ProgramStatusModel.objects.create(
+            program=self.prog1, code='0', command_uuid='0')
 
         self.sched._Scheduler__index = -1
         self.sched._Scheduler__event = asyncio.Event(loop=self.sched.loop)
         self.sched._Scheduler__script = self.script.id
         self.sched._Scheduler__state = SchedulerStatus.NEXT_STEP
         self.sched._Scheduler__state_next()
-
 
         self.assertEqual(
             self.sched._Scheduler__state,
@@ -369,13 +367,10 @@ class SchedulerTests(SchedulerTestCase):
             'script_id': self.script.id,
         })
 
-        self.assertStatusSet(
-            [msg1],
-            [expct1]
-        )
+        self.assertStatusSet([msg1], [expct1])
 
-        ProgramStatusModel.objects.create(program=self.prog2, code='0',
-                                          command_uuid='1')
+        ProgramStatusModel.objects.create(
+            program=self.prog2, code='0', command_uuid='1')
 
         self.sched._Scheduler__state = SchedulerStatus.NEXT_STEP
         self.sched._Scheduler__state_next()
@@ -400,10 +395,7 @@ class SchedulerTests(SchedulerTestCase):
             'script_id': self.script.id,
         })
 
-        self.assertStatusSet(
-            [msg1],
-            [expct1]
-        )
+        self.assertStatusSet([msg1], [expct1])
 
         self.sched._Scheduler__state = SchedulerStatus.NEXT_STEP
         self.sched._Scheduler__state_next()
@@ -439,7 +431,6 @@ class SchedulerTests(SchedulerTestCase):
         self.sched._Scheduler__state = SchedulerStatus.NEXT_STEP
         self.sched._Scheduler__state_next()
 
-
         self.assertEqual(
             self.sched._Scheduler__state,
             SchedulerStatus.WAITING_FOR_PROGRAMS_FILESYSTEMS,
@@ -466,10 +457,7 @@ class SchedulerTests(SchedulerTestCase):
             'pid': self.prog1.id,
         })
 
-        self.assertStatusSet(
-            [msg1, msg2],
-            [expct1, expct2]
-        )
+        self.assertStatusSet([msg1, msg2], [expct1, expct2])
 
         self.sched._Scheduler__state = SchedulerStatus.NEXT_STEP
         self.sched._Scheduler__state_next()
@@ -500,10 +488,7 @@ class SchedulerTests(SchedulerTestCase):
             'pid': self.prog2.id,
         })
 
-        self.assertStatusSet(
-            [msg1, msg2],
-            [expct1, expct2]
-        )
+        self.assertStatusSet([msg1, msg2], [expct1, expct2])
 
         self.sched._Scheduler__state = SchedulerStatus.NEXT_STEP
         self.sched._Scheduler__state_next()
@@ -547,6 +532,7 @@ class SchedulerTests(SchedulerTestCase):
             self.sched._Scheduler__error_code,
             "Filesystem {} has an error.".format(self.fs1.name),
         )
+
     def test_state_waiting_programs_error(self):
         self.slave1.online = True
         self.slave1.save()
@@ -631,7 +617,6 @@ class SchedulerTests(SchedulerTestCase):
             self.sched._Scheduler__state,
             SchedulerStatus.NEXT_STEP,
         )
-
 
     def test_state_success(self):
         webinterface = WSClient()

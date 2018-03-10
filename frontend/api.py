@@ -94,6 +94,7 @@ def script_put_post(data, script_id):
     except IntegrityError as err:
         return StatusResponse.err(str(err))
 
+
 def convert_str_to_bool(string):
     """
     Converts a string into a boolean by checking comming patterns.
@@ -115,6 +116,7 @@ def convert_str_to_bool(string):
     """
     ensure_type("string", string, str)
     return string.lower() in ('yes', 'true', '1', 't', 'y')
+
 
 def slave_set(request):
     """
@@ -167,7 +169,8 @@ def slave_set(request):
                 )
         elif programs or filesystems:
             if programs and filesystems:
-                return StatusResponse(SimultaneousQueryError('filesystems', 'programs'))
+                return StatusResponse(
+                    SimultaneousQueryError('filesystems', 'programs'))
             elif programs:
                 slaves = SlaveModel.with_programs()
             elif filesystems:
@@ -755,7 +758,8 @@ def script_run(request, script_id):
         try:
             script = ScriptModel.objects.get(id=script_id)
             # only allow the start of a script if the old one is finished
-            script_running = ScriptModel.objects.filter(is_running=True, is_initialized=True).exists()
+            script_running = ScriptModel.objects.filter(
+                is_running=True, is_initialized=True).exists()
 
             if not script_running:
                 FSIM_CURRENT_SCHEDULER.start(script.id)
@@ -861,10 +865,11 @@ def filesystem_set(request):
             except SlaveModel.DoesNotExist as err:
                 return StatusResponse(SlaveNotExistError(err, slave))
 
-            filesystems = FilesystemModel.objects.filter(slave=slave).values_list(
-                "name",
-                flat=True,
-            )
+            filesystems = FilesystemModel.objects.filter(
+                slave=slave).values_list(
+                    "name",
+                    flat=True,
+                )
 
         else:
             filesystems = FilesystemModel.objects.all().values_list(

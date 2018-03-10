@@ -147,8 +147,7 @@ class ScriptTest(StatusTestCase):
         script = ScriptFactory.build()
 
         data = {
-            "name":
-            script.name,
+            "name": script.name,
             "programs": [{
                 "slave": -1,
                 "program": program.id,
@@ -686,8 +685,8 @@ class ScriptTest(StatusTestCase):
 
     def test_run_post_running_error(self):
         script = ScriptFactory(is_running=True, is_initialized=True)
-        response = self.client.post(reverse("frontend:script_run",
-                                            args=[script.id]))
+        response = self.client.post(
+            reverse("frontend:script_run", args=[script.id]))
         self.assertEqual(response.status_code, 200)
 
         self.assertStatusRegex(
@@ -709,7 +708,6 @@ class FilesystemTests(StatusTestCase):
     def test_set_delete_forbidden(self):
         response = self.client.delete(reverse("frontend:filesystem_set"))
         self.assertEqual(response.status_code, 403)
-
 
     def test_set_post_success(self):
         slave = SlaveFactory()
@@ -891,8 +889,9 @@ class FilesystemTests(StatusTestCase):
         name_half = int(len(filesystem.name) / 2)
 
         response = self.client.get(
-            reverse("frontend:filesystem_set"),
-            {'q': filesystem.name[:name_half]})
+            reverse("frontend:filesystem_set"), {
+                'q': filesystem.name[:name_half]
+            })
         self.assertEqual(response.status_code, 200)
 
         self.assertEqual(
@@ -901,7 +900,9 @@ class FilesystemTests(StatusTestCase):
         )
 
         response = self.client.get(
-            reverse("frontend:filesystem_set"), {'q': filesystem.name})
+            reverse("frontend:filesystem_set"), {
+                'q': filesystem.name
+            })
         self.assertEqual(response.status_code, 200)
 
         self.assertEqual(
@@ -1089,6 +1090,7 @@ class FilesystemTests(StatusTestCase):
             }),
             Status.from_json(response.content.decode('utf-8')),
         )
+
     def test_entry_put_not_exist(self):
         response = self.client.put(
             reverse("frontend:filesystem_entry", args=[0]))
@@ -1421,8 +1423,9 @@ class ProgramTests(StatusTestCase):
         name_half = int(len(program.name) / 2)
 
         response = self.client.get(
-            reverse("frontend:program_set"),
-            {'q': program.name[:name_half]})
+            reverse("frontend:program_set"), {
+                'q': program.name[:name_half]
+            })
 
         self.assertEqual(response.status_code, 200)
 
@@ -1432,7 +1435,9 @@ class ProgramTests(StatusTestCase):
         )
 
         response = self.client.get(
-            reverse("frontend:program_set"), {'q': program.name})
+            reverse("frontend:program_set"), {
+                'q': program.name
+            })
         self.assertEqual(response.status_code, 200)
 
         self.assertEqual(
@@ -1638,7 +1643,8 @@ class ProgramTests(StatusTestCase):
             Status.from_json(response.content.decode('utf-8')),
         )
 
-        self.assertFalse(ProgramModel.objects.filter(name=program.name).exists())
+        self.assertFalse(
+            ProgramModel.objects.filter(name=program.name).exists())
 
     def test_entry_put_success(self):
         program = ProgramFactory()
@@ -1689,8 +1695,7 @@ class ProgramTests(StatusTestCase):
         )
 
     def test_entry_put_not_exist(self):
-        response = self.client.put(
-            reverse("frontend:program_entry", args=[0]))
+        response = self.client.put(reverse("frontend:program_entry", args=[0]))
 
         self.assertEqual(response.status_code, 200)
 
@@ -2128,7 +2133,10 @@ class SlaveTests(StatusTestCase):
             Status.from_json(response.content.decode('utf-8')),
         )
 
-        response = self.client.get(reverse("frontend:slave_set"), {'q': 'any'},)
+        response = self.client.get(
+            reverse("frontend:slave_set"),
+            {'q': 'any'},
+        )
         self.assertEqual(response.status_code, 200)
 
         self.assertEqual(
@@ -2148,7 +2156,7 @@ class SlaveTests(StatusTestCase):
 
         response = self.client.get(
             reverse("frontend:slave_set"),
-            {'q': slave.name[:int(len(slave.name)/2)]},
+            {'q': slave.name[:int(len(slave.name) / 2)]},
         )
         self.assertEqual(response.status_code, 200)
 
@@ -2355,10 +2363,11 @@ class SlaveTests(StatusTestCase):
 
     def test_wol_post_success(self):
         slave = SlaveFactory()
-        res = self.client.post(reverse(
-            'frontend:slave_wol',
-            args=[slave.id],
-        ))
+        res = self.client.post(
+            reverse(
+                'frontend:slave_wol',
+                args=[slave.id],
+            ))
         self.assertEqual(res.status_code, 200)
 
         self.assertEqual(

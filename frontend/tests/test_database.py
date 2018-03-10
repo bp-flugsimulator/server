@@ -24,7 +24,6 @@ from frontend.models import (
     Program as ProgramModel,
     ProgramStatus as ProgramStatusModel,
     ScriptGraphPrograms as SGPModel,
-
     validate_mac_address,
     validate_argument_list,
 )
@@ -111,7 +110,6 @@ class DatabaseTests(TestCase):
     def test_slave_insert_invalid_mac(self):
         self.assertRaises(
             ValidationError, SlaveModel(mac_address='my_cool_mac').full_clean)
-
 
     def test_program_is_timeouted(self):
         status = ProgramStatusFactory(running=True, timeouted=True)
@@ -274,8 +272,8 @@ class DatabaseTests(TestCase):
         self.assertFalse(ScriptModel.objects.get(id=script.id).is_running)
         self.assertFalse(ScriptModel.objects.get(id=script.id).is_initialized)
         self.assertEqual(ScriptModel.objects.get(id=script.id).error_code, "")
-        self.assertEqual(ScriptModel.objects.get(id=script.id).current_index,
-                         -1)
+        self.assertEqual(
+            ScriptModel.objects.get(id=script.id).current_index, -1)
 
         self.assertEqual(FilesystemModel.objects.get(id=fs.id).error_code, "")
         self.assertIsNone(FilesystemModel.objects.get(id=fs.id).command_uuid)
@@ -303,4 +301,3 @@ class DatabaseTests(TestCase):
         )
 
         self.assertFalse(SlaveModel.objects.filter(name=slave.name).exists())
-

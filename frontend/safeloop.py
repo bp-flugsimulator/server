@@ -108,6 +108,7 @@ class SafeLoop:
                 self.ident,
                 self.thread.ident,
             )
+
     def clear_tasks(self):
         """
         Remove all current tasks from the event loop.
@@ -144,4 +145,3 @@ class SafeLoop:
         LOGGER.info("Waiting for thread.")
         self.thread.join(timeout=timeout)
         self.thread = None
-
