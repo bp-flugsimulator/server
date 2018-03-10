@@ -1,7 +1,7 @@
 /* eslint-env browser*/
 /* eslint no-use-before-define: ["error", { "functions": false }] */
 /* global $, Handlebars*/
-/* exported JsonFrom */
+/* exported JsonForm */
 
 Handlebars.registerHelper('ifEq', function (v1, v2, options) {
     if (v1 === v2) {

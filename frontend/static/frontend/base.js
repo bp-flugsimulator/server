@@ -185,18 +185,19 @@ function notify(title, message, type) {
     $.notify({
         title,
         message,
-    }, {
-            type,
-            template: '<div data-notify="container" class="col-11 col-sm-3 alert" role="alert" data-notify-type="{0}">' +
-                '<button type="button" aria-hidden="true" class="close" data-notify="dismiss">×</button>' +
-                '<div class="col">' +
-                '<span class="row" data-notify="title">' +
-                '<strong>{1}</strong>' +
-                '</span>' +
-                '<span class="row text-justify" data-notify="message">{2}</span>' +
-                '</div>' +
-                '</div>'
-        });
+    },
+    {
+        type,
+        template: '<div data-notify="container" class="col-11 col-sm-3 alert" role="alert" data-notify-type="{0}">' +
+            '<button type="button" aria-hidden="true" class="close" data-notify="dismiss">×</button>' +
+            '<div class="col">' +
+            '<span class="row" data-notify="title">' +
+            '<strong>{1}</strong>' +
+            '</span>' +
+            '<span class="row text-justify" data-notify="message">{2}</span>' +
+            '</div>' +
+            '</div>'
+    });
 }
 
 /**
