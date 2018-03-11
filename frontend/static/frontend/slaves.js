@@ -1,7 +1,8 @@
 /* eslint-env browser*/
 /* eslint no-use-before-define: ['error', { 'functions': false }] */
-/* global $, getCookie, modalDeleteAction, handleFormStatus, clearErrorMessages, Status,
- fsimWebsocket, notify, swapText, styleSlaveByStatus, basicRequest, AnsiTerm */
+/* global $, modalDeleteAction, clearErrorMessages, fsimWebsocket, swapText,
+ styleSlaveByStatus, basicRequest, AnsiTerm */
+/* exported unloadPrompt */
 
 /**
  * Sets the given text for all '.button-status-display' in a container.
@@ -30,21 +31,23 @@ function onFormSubmit(id) {
 
         //send request to given url and with given method
         //data field contains information about the slave
-        $.ajax({
+        basicRequest({
             type: $(this).attr('method'),
             url: $(this).attr('action'),
             data: $(this).serialize(),
-            converters: {
-                'text json': Status.from_json
+            onSuccess() {
+                window.location.reload();
             },
-            beforeSend(xhr) {
-                xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
-            },
-            success(status) {
-                handleFormStatus($('#' + id), status);
-            },
-            error(xhr, errorString, errorCode) {
-                notify('Could deliver', 'Could not send data to server.' + errorCode + ')', 'danger');
+            onError(payload) {
+                let form = $('#' + id);
+                clearErrorMessages(form);
+
+                // insert new feedback
+                $.each(payload, function (id, msg) {
+                    let node = form.find('[name=' + id + ']');
+                    node.addClass('is-invalid');
+                    node.parent().append('<div class="invalid-feedback">' + msg + '</div>');
+                });
             }
         });
     };
@@ -68,25 +71,11 @@ function restoreSlaveInnerTab(slaveId) {
     }
 }
 
-function handleLogging(id, method, async = true) {
-    $.ajax({
-        type: 'GET',
+function handleLogging(id, method) {
+    basicRequest({
+        type: 'POST',
         url: '/api/program/' + id + '/log/' + method,
-        async: async,
-        beforeSend(xhr) {
-            xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
-        },
-        converters: {
-            'text json': Status.from_json
-        },
-        success(status) {
-            if (status.is_err()) {
-                notify('Error while handeling a log', 'Could not handle log. (' + JSON.stringify(status.payload) + ')', 'danger');
-            }
-        },
-        error(xhr, errorString, errorCode) {
-            notify('Could deliver', 'Could not deliver request `GET` to server.' + errorCode + ')', 'danger');
-        }
+        action: method + ' log',
     });
 }
 
@@ -162,7 +151,7 @@ const socketEventHandler = {
             return false;
         });
 
-        styleSlaveByStatus(sid);
+        styleSlaveByStatus(sid, false, false, true, true);
 
         startstopButton.children('[data-text-swap]').each(function (idx, val) {
             swapText($(val));
@@ -175,7 +164,10 @@ const socketEventHandler = {
         let cardButton = $('#programCardButton_' + payload.pid);
         cardButton.prop('disabled', false);
 
+        let error = false;
+
         if (payload.code !== 0 && payload.code !== '0') {
+            error = true;
             statusContainer.attr('data-state', 'error');
         } else {
             statusContainer.attr('data-state', 'success');
@@ -192,7 +184,7 @@ const socketEventHandler = {
             return false;
         });
 
-        styleSlaveByStatus(sid);
+        styleSlaveByStatus(sid, error, error, true, false);
 
         startstopButton.children('[data-text-swap]').each(function (idx, val) {
             swapText($(val));
@@ -219,15 +211,6 @@ const socketEventHandler = {
         // Use Python notation !!!
         moveRestoreButton.attr('data-is-moved', 'True');
         changeStatusDisplayText(moveRestoreButton, 'RESTORE');
-
-        let sid = null;
-
-        statusContainer.find('button[data-slave-id]').each(function (idx, val) {
-            sid = $(val).data('slave-id');
-            return false;
-        });
-
-        styleSlaveByStatus(sid);
     },
     filesystemRestored(payload) {
         let statusContainer = $('#filesystemStatusContainer_' + payload.fid);
@@ -240,15 +223,6 @@ const socketEventHandler = {
         // Use Python notation !!!
         moveRestoreButton.attr('data-is-moved', 'False');
         changeStatusDisplayText(moveRestoreButton, 'MOVE');
-
-        let sid = null;
-
-        statusContainer.find('button[data-slave-id]').each(function (idx, val) {
-            sid = $(val).data('slave-id');
-            return false;
-        });
-
-        styleSlaveByStatus(sid);
     },
     filesystemError(payload) {
         let statusContainer = $('#filesystemStatusContainer_' + payload.fid);
@@ -266,7 +240,7 @@ const socketEventHandler = {
             return false;
         });
 
-        styleSlaveByStatus(sid);
+        styleSlaveByStatus(sid, true, true, false, false);
     },
 };
 
@@ -379,24 +353,11 @@ $(document).ready(function () {
 
 
     $('.program-action-start-stop').click(function () {
-        let apiRequest = function (url, type) {
-            $.ajax({
-                type,
-                url,
-                beforeSend(xhr) {
-                    xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
-                },
-                converters: {
-                    'text json': Status.from_json
-                },
-                success(status) {
-                    if (status.is_err()) {
-                        notify('Error while starting program', 'Could not start program. (' + JSON.stringify(status.payload) + ')', 'danger');
-                    }
-                },
-                error(xhr, errorString, errorCode) {
-                    notify('Could deliver', 'Could not deliver request `' + type + '` to server.' + errorCode + ')', 'danger');
-                }
+        let apiRequest = function (url, type, action) {
+            basicRequest({
+                type: type,
+                url: url,
+                action: action,
             });
         };
 
@@ -406,9 +367,9 @@ $(document).ready(function () {
         cardButton.prop('disabled', false);
 
         if ($(this).attr('data-is-running') === 'True') {
-            apiRequest('/api/program/' + id + '/stop', 'GET');
+            apiRequest('/api/program/' + id + '/stop', 'POST', 'stop program');
         } else if ($(this).attr('data-is-running') === 'False') {
-            apiRequest('/api/program/' + id + '/start', 'GET');
+            apiRequest('/api/program/' + id + '/start', 'POST', 'start program');
         }
     });
 
@@ -577,9 +538,17 @@ $(document).ready(function () {
         let id = $(this).data('filesystem-id');
 
         if ($(this).attr('data-is-moved') === 'True') {
-            basicRequest('/api/filesystem/' + id + '/restore', 'GET', 'restore entry in filesystem');
+            basicRequest({
+                url: '/api/filesystem/' + id + '/restore',
+                type: 'POST',
+                action: 'restore entry in filesystem',
+            });
         } else if ($(this).attr('data-is-moved') === 'False') {
-            basicRequest('/api/filesystem/' + id + '/move', 'GET', 'move entry in filesystem');
+            basicRequest({
+                url: '/api/filesystem/' + id + '/move',
+                type: 'POST',
+                action: 'move entry in filesystem'
+            });
         }
     });
 
@@ -594,60 +563,33 @@ $(document).ready(function () {
         if ($(this).attr('data-is-running') === 'True') {
             let id = $(this).data('slave-id');
             let el = $(this);
-
-            $.ajax({
-                type: 'GET',
+            basicRequest({
+                type: 'POST',
                 url: '/api/slave/' + id + '/shutdown',
-                beforeSend(xhr) {
-                    xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
+                action: 'stop client',
+                onSuccess() {
+                    el.addClass('animated pulse');
+                    el.one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend', function () {
+                        el.removeClass('animated pulse');
+                    });
                 },
-                converters: {
-                    'text json': Status.from_json
-                },
-                success(status) {
-                    if (status.is_ok()) {
-                        el.addClass('animated pulse');
-                        el.one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend', function () {
-                            el.removeClass('animated pulse');
-                        });
-                    } else {
-                        notify('Could not stop client', 'The client could not be stopped. (' + JSON.stringify(status.payload) + ')', 'danger');
-                    }
-                },
-                error(xhr, errorString, errorCode) {
-                    notify('Could deliver', 'The stop command could not been send. (' + errorCode + ')', 'danger');
-                }
             });
 
         } else {
             let id = $(this).data('slave-id');
             let el = $(this);
 
-            $.ajax({
-                type: 'GET',
+            basicRequest({
+                type: 'POST',
                 url: '/api/slave/' + id + '/wol',
-                beforeSend(xhr) {
-                    xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
+                action: 'start client',
+                onSuccess() {
+                    el.addClass('animated pulse');
+                    el.one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend', function () {
+                        el.removeClass('animated pulse');
+                    });
                 },
-                converters: {
-                    'text json': Status.from_json
-                },
-                success(status) {
-                    if (status.is_ok()) {
-                        el.addClass('animated pulse');
-                        el.one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend', function () {
-                            el.removeClass('animated pulse');
-                        });
-                    } else {
-                        notify('Error while starting', 'Could not start client. (' + JSON.stringify(status.payload) + ')', 'danger');
-                    }
-
-                },
-                error(xhr, errorString, errorCode) {
-                    notify('Could deliver', 'The start command could not been send. (' + errorCode + ')', 'danger');
-                }
             });
-
         }
     });
 
@@ -746,7 +688,7 @@ $(document).ready(function () {
         });
     }
 
-    $('.keepParentModal').click(function(e) {
+    $('.keepParentModal').click(function() {
         let parentModal = $('#unsafedChangesWarning').data('parentModal');
         $('#unsafedChangesWarning').modal('toggle');
         $('#' + parentModal).modal('toggle');

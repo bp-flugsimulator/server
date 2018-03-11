@@ -21,7 +21,7 @@ const templateNoElement = Handlebars.compile($('#templateNoElement').html(), { s
  * @param {Function} querySlaves A function which returns a Promise which queries a query set.
  * @param {Function} queryType A function which is called every time the choice changes.
  */
-function addTypeEntry(container, type, querySlaves, queryType, context = {}) {
+function addTypeEntry(container, type, querySlaves, queryType, context) {
     querySlaves().then(function (slaves) {
         $(container).find('.slave-no-elements').remove();
         let entryContainer = $(container).find('.script-' + type + '-content').first();
@@ -30,7 +30,12 @@ function addTypeEntry(container, type, querySlaves, queryType, context = {}) {
             let html = templateNoElement({ type });
             entryContainer.append(html);
         } else {
-            let templateContext = Object.assign({}, { slaves, type }, context);
+
+            let templateContext = {slaves: slaves, type: type};
+            for (let attr in context) {
+                templateContext[attr] = context[attr];
+            }
+
             // add html template element
             let html = templateEntry(templateContext);
             entryContainer.prepend(html);

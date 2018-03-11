@@ -510,7 +510,7 @@ $mdi-font-path: "../../node/mdi/fonts";
 @import "node_modules/mdi/scss/materialdesignicons";
 
 .shadow {
-  box-shadow: 0 4px 6px 0 hsla(0, 0%, 0%, 0.2);
+    box-shadow: 0 4px 6px 0 hsla(0, 0%, 0%, 0.2);
 }
 
 .popover {
@@ -518,7 +518,7 @@ $mdi-font-path: "../../node/mdi/fonts";
 }
 
 .inset-shadow {
-  box-shadow: inset 0 2px 4px 0 hsla(0, 0%, 0%, 0.08);
+    box-shadow: inset 0 2px 4px 0 hsla(0, 0%, 0%, 0.08);
 }
 
 html, body {
@@ -547,37 +547,41 @@ input, textarea, select {
     border:1px solid #ccc !important;
 }
 
-[data-notify="container"] {
+div[data-notify="container"] {
     background-color: $body-bg;
-	border-width: 0px;
-	border-left: 5px solid $blue;
-	border-radius: 0px;
-	box-shadow: 0px 0px 5px rgba(51, 51, 51, 0.3);
-	font-family: 'Old Standard TT', serif;
-	letter-spacing: 1px;
+    border-width: 0px;
+    border-left: 5px solid $blue;
+    border-radius: 0px;
+    box-shadow: 0px 0px 5px rgba(51, 51, 51, 0.3);
+    font-family: 'Old Standard TT', serif;
+    letter-spacing: 1px;
 }
 
-[data-notify="container"][data-notify-type="info"] {
-	border-left-color: $blue;
+div[data-notify="container"][data-notify-type="info"] {
+    border-left-color: $blue;
 }
 
-[data-notify="container"][data-notify-type="danger"] {
-	border-left-color: $red;
+div[data-notify="container"][data-notify-type="danger"] {
+    border-left-color: $red;
 }
 
-[data-notify="container"][data-notify-type="warning"] {
-	border-left-color: $yellow;
+div[data-notify="container"][data-notify-type="warning"] {
+    border-left-color: $yellow;
 }
 
-[data-notify="container"] > [data-notify="title"] {
-	color: $gray-800;
-	display: block;
-	font-weight: 700;
-	margin-bottom: 5px;
+div[data-notify="container"] > [data-notify="title"] {
+    color: $gray-800;
+    display: block;
+    font-weight: 700;
+    margin-bottom: 5px;
 }
 
-[data-notify="container"] > [data-notify="message"] {
-	font-weight: 400;
+div[data-notify="container"] > [data-notify="message"] {
+    font-weight: 400;
+}
+
+a[data-state=success] i.mdi-checkbox-blank-circle {
+    color: $teal;
 }
 
 .program-name,
@@ -585,32 +589,6 @@ input, textarea, select {
     @extend .font-weight-bold;
     font-size: 16px;
 }
-
-.fsim-box, .fsim-box[data-state=restored]  {
-    border-bottom: 1px solid $gray-400;
-    border-right: 1px solid $gray-400;
-    border-top: 1px solid $gray-400;
-
-    background: linear-gradient(to right, $gray-100 0, $gray-100 5px, transparent 5px, transparent 100%) no-repeat;
-}
-
-.fsim-box[data-state=error] {
-    background: linear-gradient(to right, $red 0, $red 5px, transparent 5px, transparent 100%) no-repeat;
-}
-
-.fsim-box[data-state=success], .fsim-box[data-state=moved] {
-    background: linear-gradient(to right, $green 0, $green 5px, transparent 5px, transparent 100%) no-repeat;
-}
-
-.fsim-box[data-state=warning] {
-    background: linear-gradient(to right, $yellow 0, $yellow 5px, transparent 5px, transparent 100%) no-repeat;
-
-}
-
-.fsim-box[data-state=teal] {
-    background: linear-gradient(to right, $teal 0, $teal 5px, transparent 5px, transparent 100%) no-repeat;
-}
-
 
 .fsim-script-status-icon[data-state=none] {
     @extend .mdi;
@@ -630,6 +608,29 @@ input, textarea, select {
 .fsim-script-status-icon[data-state=waiting] {
     @extend .mdi;
     @extend .mdi-clock;
+}
+
+.fsim-box, .fsim-box[data-state=restored]  {
+    border: none;
+    margin-top: 5px;
+    margin-bottom: 10px;
+    box-shadow: 0 4px 6px 0 rgba(0, 0, 0, 0.2);
+}
+
+.fsim-box[data-state=error] {
+    box-shadow: 0 4px 6px $red;
+}
+
+.fsim-box[data-state=success], .fsim-box[data-state=moved] {
+    box-shadow: 0 4px 6px $green;
+}
+
+.fsim-box[data-state=warning] {
+    box-shadow: 0 4px 6px $yellow;
+}
+
+.fsim-box[data-state=teal] {
+    box-shadow: 0 4px 6px $teal;
 }
 
 .fsim-box .fsim-slave-status-icon {
@@ -694,8 +695,8 @@ input, textarea, select {
 }
 
 .inline-add-button:focus, .inline-add-button:active {
-  outline: none !important;
-  box-shadow: none !important;
+    outline: none !important;
+    box-shadow: none !important;
 }
 
 .inline-add-button {
@@ -746,9 +747,17 @@ input, textarea, select {
     }
 }
 
-* {
-   outline: 0;
+.status-badge[data-value] {
+    font-size: 120%;
+
+    &:after {
+        content: attr(data-value);
+    }
 }
+
+// * {
+// outline: 0;
+// }
 
 @include media-breakpoint-up(xs) {
     .xs-button-set {

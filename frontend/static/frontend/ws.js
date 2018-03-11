@@ -4,18 +4,21 @@
 /* global Status, notify */
 /* exported fsimWebsocket */
 
-function fsimWebsocket(partialSocketEventHandler) {
+/**
+ *  Only class the given function if it exist in the object.
+ *
+ *  @param {Object} obj Where the function should called from.
+ *  @param {String} fun Function name
+ *  @param {Object} argument One argument for the function call
+ */
+function callMaybe(obj, fun, arg) {
+    if (typeof(obj[fun]) !== 'undefined') {
+        obj[fun].call(obj, arg);
+    }
+}
+
+function fsimWebsocket(socketEventHandler) {
     let socket = new WebSocket('ws://' + window.location.host + '/notifications');
-
-    let handler = {
-        get(target, name) {
-            return name in target ?
-                target[name] :
-                function () { };
-        }
-    };
-
-    let socketEventHandler = new Proxy(partialSocketEventHandler, handler);
 
     socket.onopen = function () {
         console.log('Websocket open');
@@ -38,10 +41,10 @@ function fsimWebsocket(partialSocketEventHandler) {
                 // handle slave status updates
                 switch (status.payload.slave_status) {
                     case 'connected':
-                        socketEventHandler.slaveConnect(status.payload);
+                        callMaybe(socketEventHandler, 'slaveConnect', status.payload);
                         break;
                     case 'disconnected':
-                        socketEventHandler.slaveDisconnect(status.payload);
+                        callMaybe(socketEventHandler, 'slaveDisconnect', status.payload);
                         break;
                     default:
                         notify('Warning message', 'Unknown slave_status received (' + JSON.stringify(status.payload.message) + ')', 'info');
@@ -50,10 +53,10 @@ function fsimWebsocket(partialSocketEventHandler) {
                 // handle program status updates
                 switch (status.payload.program_status) {
                     case 'started':
-                        socketEventHandler.programStarted(status.payload);
+                        callMaybe(socketEventHandler, 'programStarted', status.payload);
                         break;
                     case 'finished':
-                        socketEventHandler.programStopped(status.payload);
+                        callMaybe(socketEventHandler, 'programStopped', status.payload);
                         break;
                     default:
                         notify('Warning message', 'Unknown program_status received (' + JSON.stringify(status.payload.message) + ')', 'info');
@@ -62,16 +65,16 @@ function fsimWebsocket(partialSocketEventHandler) {
                 // handle slave status updates
                 switch (status.payload.script_status) {
                     case 'waiting_for_slaves':
-                        socketEventHandler.scriptWaitForSlaves(status.payload);
+                        callMaybe(socketEventHandler, 'scriptWaitForSlaves', status.payload);
                         break;
                     case 'next_step':
-                        socketEventHandler.scriptNextStep(status.payload);
+                        callMaybe(socketEventHandler, 'scriptNextStep', status.payload);
                         break;
                     case 'success':
-                        socketEventHandler.scriptSuccess(status.payload);
+                        callMaybe(socketEventHandler, 'scriptSuccess', status.payload);
                         break;
                     case 'error':
-                        socketEventHandler.scriptError(status.payload);
+                        callMaybe(socketEventHandler, 'scriptError', status.payload);
                         break;
                     default:
                         notify('Unknown message', 'Unknown script_status received (' + JSON.stringify(status.payload.message) + ')', 'info');
@@ -82,13 +85,13 @@ function fsimWebsocket(partialSocketEventHandler) {
             } else if (status.payload.filesystem_status != null) {
                 switch (status.payload.filesystem_status) {
                     case 'moved':
-                        socketEventHandler.filesystemMoved(status.payload);
+                        callMaybe(socketEventHandler, 'filesystemMoved', status.payload);
                         break;
                     case 'restored':
-                        socketEventHandler.filesystemRestored(status.payload);
+                        callMaybe(socketEventHandler, 'filesystemRestored', status.payload);
                         break;
                     case 'error':
-                        socketEventHandler.filesystemError(status.payload);
+                        callMaybe(socketEventHandler, 'filesystemError', status.payload);
                         break;
                     default:
                         notify('Unknown message', 'Unknown filesystem_status received (' + JSON.stringify(status.payload.message) + ')', 'info');

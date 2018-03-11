@@ -14,8 +14,12 @@ from .models import (
     Filesystem as FilesystemModel,
 )
 
+class BaseModelForm(ModelForm):
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault('label_suffix', '')
+        super(BaseModelForm, self).__init__(*args, **kwargs)
 
-class SlaveForm(ModelForm):
+class SlaveForm(BaseModelForm):
     """
     Form for `SlaveModel`.
     """
@@ -28,21 +32,27 @@ class SlaveForm(ModelForm):
         fields = ['name', 'ip_address', 'mac_address']
         help_texts = {
             'name':
-            r"""Name of the Client, has to be unique
+            r"""<b>Description</b><br>
+            Name of the client, has to be unique
             <hr>
-            <code>Simulation Server<code/>""",
+            <b>Example</b><br>
+            <code>Simulation Server</code>""",
             'ip_address':
-            r"""IP-Address used by the Client, has to be unique
+            r"""<b>Description</b><br>
+            IP-Address used by the client, has to be unique
             <hr>
-            <code>123.456.789.101<code/>""",
+            <b>Example</b><br>
+            <code>123.456.789.101</code>""",
             'mac_address':
-            r"""MAC-Address of the Client, has to be unique
+            r"""<b>Description</b><br>
+            MAC-Address of the client, has to be unique
             <hr>
-            <code>01:c2:b3:a4:05:06<code/>"""
+            <b>Example</b><br>
+            <code>01:c2:b3:a4:05:06</code>"""
         }
 
 
-class ProgramForm(ModelForm):
+class ProgramForm(BaseModelForm):
     """
     Form for `ProgramModel`.
     """
@@ -59,25 +69,39 @@ class ProgramForm(ModelForm):
         fields = ['name', 'path', 'arguments', 'start_time']
         help_texts = {
             'name':
-            r"""Name of the program, has to be unique on one client
+            r"""<b>Description</b><br>
+            Name of the program, has to be unique on one client.
             <hr>
-            <code>Start Command Line<code/>"""                                                                    ,
+            <b>Example</b><br>
+            <code>Start Command Line</code>""",
             'path':
-            r"""Path to the program or other executable.
+            r"""<b>Description</b><br>
+            Path to the program or other executable.
             <hr>
-            <code>C:\Windows\System32\cmd.exe<code/>"""                                                                                                       ,
+            <b>Example</b><br>
+            <i>Windows</i>: <code>C:\Windows\System32\cmd.exe</code><br>
+            <i>Unix</i>: <code>/home/user/apps/terminal</code>""",
             'arguments':
-            r"""Runs this program with the specified arguments
+            r"""<b>Description</b><br>
+            Runs this program with the specified arguments.
             <hr>
-            <code>/Q<code/> (Turn echo off)"""                                                                                      ,
+            <b>Example</b><br>
+            <i>Windows</i>: <code>/Q</code> (Turn echo off)<br>
+            <i>Unix</i>: <code>-c echo</code> (Runs command on terminal)""",
             'start_time':
-            r"""Time the program needs to start
+            r"""<b>Description</b><br>
+            This amount specifies the behavior for the program in a script
+            execution.<br>
+            <code>time >  0</code> Wait for specified seconds<br>
+            <code>time == 0</code> Program is finished immediately<br>
+            <code>time <  0</code> Wait for the program to stop<br>
             <hr>
-            <code>2<code/>"""
+            <b>Example</b><br>
+            <code>2</code>"""
         }
 
 
-class FilesystemForm(ModelForm):
+class FilesystemForm(BaseModelForm):
     """
     Form for `FilesystemModel`.
     """
@@ -100,26 +124,41 @@ class FilesystemForm(ModelForm):
         ]
         help_texts = {
             'name':
-            r"""Name of the filesystem, has to be unique on one client.
+            r"""<b>Description</b><br>
+            Name of the filesystem, has to be unique on one client.
             <hr>
-            <code>Move Desktop File<code/>""",
+            <code>Move Desktop File</code>""",
             'source_path':
-            r"""Path to the file or directory.
+            r"""<b>Description</b><br>
+            Path to a file or directory on the client.
             <hr>
-            <code>C:\Users\Username\Desktop\settings_me.txt<code/>""",
+            <b>Example</b><br>
+            <i>Windows</i>: <code>C:\Users\Username\Desktop\settings_me.txt</code><br>
+            <i>Unix</i>: <code>/home/user/README.txt</code><br>""",
             'source_type':
-            r"""<b>File:</b> Source is a file (should end with a filename extension) <br>
-            <b>Directory:</b> Source is a directory and its contents will be moved.
+            r"""<b>Description</b><br>
+            <ins>File:</ins> Source path is a file. <br>
+            <ins>Directory:</ins> Source path is a directory and the whole
+            folder will be moved.
             <hr>
-            <code>File<code/>""",
+            <b>Example</b><br>
+            <code>File</code>""",
             'destination_path':
-            r"""Path to the file or directory the source will be moved to.
+            r"""<b>Description</b><br>
+            A path on the client where the file or directory (specified by
+            source path) will be moved to.
             <hr>
-            <code>C:\Users\Username\Desktop\Config\settings.txt<code/>""",
+            <b>Example</b><br>
+            <i>Windows</i>: <code>C:\Users\Username\Desktop\MOVED_settings_me.txt</code><br>
+            <i>Unix</i>: <code>/home/user/MOVED_README.txt</code><br>""",
             'destination_type':
-            r"""<b>Replace with:</b> Source will be moved and renamed to destination <br>
-            <b>Insert into:</b> Destination has to be a folder and source
-            will be placed inside the destination.
+            r"""<b>Description</b><br>
+            <ins>Replace with:</ins> Source path will be moved and renamed to
+            destination. <br>
+            <ins>Insert into:</ins> Destination path has to be a folder and
+            the file or directory will be placed inside the destination
+            directory.
             <hr>
-            <code>Replace with<code/>"""
+            <b>Example</b><br>
+            <code>Replace with</code>"""
         }

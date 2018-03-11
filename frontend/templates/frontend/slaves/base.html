@@ -32,9 +32,9 @@
                 <button type="button" class="close keepParentModal">&times;</button>
             </div>
             <div class="modal-body bg-light">
-            You have unsaved changes!
-            <br>
-            Changes you made may not be saved.
+                You have unsaved changes!
+                <br>
+                Changes you made may not be saved.
             </div>
             <div class="modal-footer">
                 <button type='button' class='btn btn-danger' data-dismiss='modal'>Leave</button>
@@ -62,12 +62,13 @@
             </a>
             {% for slave in slaves %}
             <a class="d-flex justify-content-between align-items-center list-group-item list-group-item-action font-weight-bold slave-tab-link {% if forloop.first %} active {% endif %}
-            bg-light"
-            data-state="{% if slave.has_error %}error{% elif slave.has_running %}warning{% elif slave.is_online %}success{% else %}unknown{% endif %}"
-            id="slaveTab{{ slave.id }}" data-toggle="tab" href="#slaveTabContent{{ slave.id }}" data-slave-id="{{ slave.id }}">
-                <i class="mdi mdi-cards-variant"></i>
+                bg-light" data-state="{{ slave.data_state }}" id="slaveTab{{ slave.id }}" data-toggle="tab" href="#slaveTabContent{{ slave.id }}" data-slave-id="{{ slave.id }}">
+                <i class="mdi mdi-checkbox-blank-circle"></i>
                 <div>{{ slave.name }}</div>
-                <span class="badge badge-dark badge-pill"><i class="mdi mdi-run"></i>{{ slave.id }} <i class="mdi mdi-alert"></i>{{ slave.id }}</span>
+                <span class="badge badge-dark badge-pill">
+                    <i class="mdi mdi-run status-badge" name="status-badge-running" data-value="{{ slave.current_running }}"></i>
+                    <i class="mdi mdi-alert status-badge"name="status-badge-errored" data-value="{{ slave.current_errored }}"></i>
+                </span>
             </a>
             {% endfor %}
         </div>
@@ -86,7 +87,8 @@
     </div>
 </div>
 {% endblock %}
+
 {% block script %}
-    <script src="{% static 'frontend/ansi_term.js'%}"></script>
-    <script src="{% static 'frontend/slaves.js'%}"></script>
+<script src="{% static 'frontend/ansi_term.js'%}"></script>
+<script src="{% static 'frontend/slaves.js'%}"></script>
 {% endblock %}

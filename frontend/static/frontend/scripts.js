@@ -1,6 +1,6 @@
 /* eslint-env browser */
 /* eslint no-use-before-define: ["error", { "functions": false }] */
-/* global $, JsonForm, getCookie, Status, modalDeleteAction, notify, basicRequest, Promise */
+/* global $, JsonForm, modalDeleteAction, notify, basicRequest, Promise */
 /* exported loadScript, newScript, unloadWarning */
 
 // global variable, which indicates whether
@@ -9,24 +9,15 @@ var unloadWarning = false;
 
 function promiseQuery(url) {
     return new Promise(function (resolve, reject) {
-        $.ajax({
-            url,
-            beforeSend(xhr) {
-                xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
+        basicRequest({
+            type: 'GET',
+            url: url,
+            action: 'query',
+            onSuccess(payload) {
+                resolve(payload);
             },
-            converters: {
-                'text json': Status.from_json
-            },
-            success(status) {
-                if (status.is_ok()) {
-                    resolve(status.payload);
-                } else {
-                    notify('Autocomplete query', 'Error while querying for autocomplete: ' + JSON.stringify(status.payload));
-                    reject();
-                }
-            },
-            error(xhr, errorString, errorCode) {
-                notify('Autocomplete query', 'Error while querying for autocomplete: ' + errorCode + '(' + errorString + ')');
+            onError(payload) {
+                notify('Autocomplete query', 'Error while querying for autocomplete: ' + JSON.stringify(payload));
                 reject();
             }
         });
@@ -38,13 +29,13 @@ const options = {
         return promiseQuery('/api/slaves?programs=True');
     },
     queryPrograms(slave) {
-        return promiseQuery('/api/programs?slave_str=true&slave=' + slave);
+        return promiseQuery('/api/programs?is_string=true&slave=' + slave);
     },
     querySlavesFiles() {
         return promiseQuery('/api/slaves?filesystems=True');
     },
     queryFilesystems(slave) {
-        return promiseQuery('/api/filesystems?slave_str=true&slave=' + slave);
+        return promiseQuery('/api/filesystems?is_string=true&slave=' + slave);
     },
 };
 
@@ -54,23 +45,15 @@ var createEditor = function (json, id) {
 };
 
 function loadScript(id) {
-    $.ajax({
+    basicRequest({
+        type: 'GET',
         url: '/api/script/' + id + '?programs=str&filesystems=str&slaves=str',
-        beforeSend(xhr) {
-            xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
+        action: 'loading script',
+        onSuccess(payload) {
+            createEditor(payload, id);
         },
-        converters: {
-            'text json': Status.from_json
-        },
-        success(status) {
-            if (status.is_ok()) {
-                createEditor(status.payload, id);
-            } else {
-                notify('Loading script', 'Error while loading script: ' + JSON.stringify(status.payload));
-            }
-        },
-        error(xhr, errorString, errorCode) {
-            notify('Loading script', 'Error while loading script: ' + errorCode + '(' + errorString + ')');
+        onError(payload) {
+            notify('Loading script', 'Error while loading script: ' + JSON.stringify(payload));
         }
     });
 }
@@ -146,7 +129,15 @@ $(document).ready(function () {
 
     $('.script-action-copy').click(function () {
         let id = $(this).attr('data-script-id');
-        basicRequest('/api/script/' + id + '/copy', 'GET', 'copy script', {} ,() => {window.location.reload();});
+
+        basicRequest({
+            url: '/api/script/' + id + '/copy',
+            type: 'POST',
+            action: 'copy script',
+            onSuccess: function() {
+                window.location.reload();
+            }
+        });
     });
 
     $('.script-action-add-save').click(function () {
@@ -156,27 +147,14 @@ $(document).ready(function () {
         let editor = JsonForm.dumps($('#jsoneditor_' + id));
         let string = JSON.stringify(editor);
 
-        $.ajax({
-            method: 'POST',
+        basicRequest({
+            type: 'POST',
             url: '/api/scripts',
-            contentType: 'application/json',
+            action: 'adding new script',
             data: string,
-            beforeSend(xhr) {
-                xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
+            onSuccess() {
+                window.location.reload();
             },
-            converters: {
-                'text json': Status.from_json
-            },
-            success(status) {
-                if (status.is_err()) {
-                    notify('Could not save script', JSON.stringify(status.payload), 'danger');
-                } else {
-                    window.location.reload();
-                }
-            },
-            error(xhr, errorString, errorCode) {
-                notify('Connection error', 'Could not deliver script add request. (' + errorCode + ')', 'danger');
-            }
         });
     });
 
@@ -186,27 +164,14 @@ $(document).ready(function () {
         let editor = JsonForm.dumps($('#jsoneditor_' + id));
         let string = JSON.stringify(editor);
 
-        $.ajax({
-            method: 'PUT',
+        basicRequest({
+            type: 'PUT',
             url: '/api/script/' + id,
-            contentType: 'application/json',
+            action: 'saving changes for script',
             data: string,
-            beforeSend(xhr) {
-                xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
+            onSuccess() {
+                window.location.reload();
             },
-            converters: {
-                'text json': Status.from_json
-            },
-            success(status) {
-                if (status.is_err()) {
-                    notify('Could not save script', JSON.stringify(status.payload), 'danger');
-                } else {
-                    window.location.reload();
-                }
-            },
-            error(xhr, errorString, errorCode) {
-                notify('Connection error', 'Could not deliver script add request. (' + errorCode + ')', 'danger');
-            }
         });
     });
 
