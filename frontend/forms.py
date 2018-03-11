@@ -28,6 +28,7 @@ class SlaveForm(BaseModelForm):
         """
         Meta class
         """
+        labels = {'name': 'Display Name'}
         model = SlaveModel
         fields = ['name', 'ip_address', 'mac_address']
         help_texts = {
@@ -65,6 +66,7 @@ class ProgramForm(BaseModelForm):
         """
         Meta class
         """
+        labels = {'name': 'Display Name', 'path': 'Path to executable'}
         model = ProgramModel
         fields = ['name', 'path', 'arguments', 'start_time']
         help_texts = {
@@ -105,6 +107,7 @@ class FilesystemForm(BaseModelForm):
     """
     Form for `FilesystemModel`.
     """
+    labels = {'name': 'Display Name'}
     slave = ModelChoiceField(
         queryset=SlaveModel.objects.all(),
         widget=HiddenInput(),

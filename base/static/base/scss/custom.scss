@@ -675,7 +675,7 @@ a[data-state=success] i.mdi-checkbox-blank-circle {
 
 .fsim-box[data-state=unknown] .fsim-program-status-icon {
     @extend .mdi;
-    @extend .mdi-all-inclusive;
+    @extend .mdi-help;
 }
 
 .fsim-box[data-state=warning] .fsim-program-status-icon {
@@ -686,7 +686,6 @@ a[data-state=success] i.mdi-checkbox-blank-circle {
 .fsim-box-bottom {
     border-bottom: 1px solid $gray-100;
 }
-
 
 .client-header,
 .script-header {
@@ -754,10 +753,6 @@ a[data-state=success] i.mdi-checkbox-blank-circle {
         content: attr(data-value);
     }
 }
-
-// * {
-// outline: 0;
-// }
 
 @include media-breakpoint-up(xs) {
     .xs-button-set {

@@ -102,7 +102,7 @@ const socketEventHandler = {
 
         // Use Python notation !!!
         startstopButton.attr('data-is-running', 'True');
-        changeStatusDisplayText(startstopButton, 'STOP');
+        changeStatusDisplayText(startstopButton, 'SWITCH OFF');
 
         // set tooltip to Stop
         startstopButton.children('[data-text-swap]').each(function (idx, val) {
@@ -125,7 +125,7 @@ const socketEventHandler = {
 
         // Use Python notation !!!
         startstopButton.attr('data-is-running', 'False');
-        changeStatusDisplayText(startstopButton, 'START');
+        changeStatusDisplayText(startstopButton, 'SWITCH ON');
 
         // set tooltip to Start
         startstopButton.children('[data-text-swap]').each(function (idx, val) {
@@ -562,33 +562,20 @@ $(document).ready(function () {
     $('.slave-action-start-stop').click(function () {
         if ($(this).attr('data-is-running') === 'True') {
             let id = $(this).data('slave-id');
-            let el = $(this);
+
             basicRequest({
                 type: 'POST',
                 url: '/api/slave/' + id + '/shutdown',
-                action: 'stop client',
-                onSuccess() {
-                    el.addClass('animated pulse');
-                    el.one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend', function () {
-                        el.removeClass('animated pulse');
-                    });
-                },
+                action: 'stop client'
             });
 
         } else {
             let id = $(this).data('slave-id');
-            let el = $(this);
 
             basicRequest({
                 type: 'POST',
                 url: '/api/slave/' + id + '/wol',
-                action: 'start client',
-                onSuccess() {
-                    el.addClass('animated pulse');
-                    el.one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend', function () {
-                        el.removeClass('animated pulse');
-                    });
-                },
+                action: 'start client'
             });
         }
     });
