@@ -130,6 +130,7 @@ class FilesystemForm(BaseModelForm):
             r"""<b>Description</b><br>
             Name of the filesystem, has to be unique on one client.
             <hr>
+            <b>Example</b><br>
             <code>Move Desktop File</code>""",
             'source_path':
             r"""<b>Description</b><br>
