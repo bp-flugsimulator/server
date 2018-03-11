@@ -617,6 +617,23 @@ class Script(Model):
 
     def __str__(self):
         return self.name
+    
+    @staticmethod
+    def latest():
+        """
+        Returns the latest `Script`.
+
+        Returns
+        -------
+            Script or None:
+
+        """
+        query = Script.objects.filter(is_initialized=True)
+
+        if query:
+            return query.first() 
+        else:
+            return None
 
     @property
     def indexes(self):
@@ -652,6 +669,23 @@ class Script(Model):
                 If this `Script` had an error.
         """
         return self.error_code != ''
+
+    @staticmethod
+    def set_selected(script):
+        """
+        Selects the given `Script` for the `Scheduler`.
+
+        Parameters
+        ----------
+            script: int
+                Which identifies the `Script` which is now running.
+        """
+        Script.objects.all().update(is_initialized=False, is_running=False)
+        Script.objects.filter(id=script).update(
+            is_running=True,
+            is_initialized=True,
+            current_index=-1,
+        )
 
     @staticmethod
     def set_last_started(script):

@@ -127,6 +127,19 @@ $(document).ready(function () {
         $('#scriptTabNew').click();
     });
 
+    $('.script-action-run').click(function () {
+        let id = $(this).attr('data-script-id');
+
+        basicRequest({
+            type: 'POST',
+            url: '/api/script/' + id + '/run',
+            action: 'start script',
+            onSuccess: function() {
+                window.location.href = '/scripts/run';
+            }
+        });
+    });
+
     $('.script-action-copy').click(function () {
         let id = $(this).attr('data-script-id');
 

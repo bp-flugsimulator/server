@@ -37,18 +37,9 @@ var socketEventHandler = {
 var socket = fsimWebsocket(socketEventHandler);
 
 $(document).ready(function () {
-    $('.script-action-run').click(function (event) {
-        event.preventDefault();
-        let id = $(this).attr('data-script-id');
-        $('#scriptTabContent' + id + ' [data-state]').attr('data-state', 'none');
+    $('.script-action-stop').click(function (event) {
+        alert("unimplemented!");
 
-        basicRequest({
-            type: 'POST',
-            url: '/api/script/' + id + '/run',
-            action: 'start script',
-            onError(payload) {
-                notify('Error while starting', 'Could not start script. (' + JSON.stringify(payload) + ')', 'danger');
-            }
-        });
+        let id = $(this).attr('data-script-id');
     });
 });

@@ -21,17 +21,16 @@ class WelcomeView(TemplateView):
     template_name = 'frontend/welcome.html'
 
 
-class RunScriptView(ListView):
+class RunScriptView(TemplateView):
     """
     The site the user will navigate to, if he wants to run a script.
     """
     template_name = "frontend/scripts/run.html"
-    model = ScriptModel
-    context_object_name = "scripts"
 
     def get_context_data(self, **kwargs):  # pylint: disable=w0221
         context = super().get_context_data(**kwargs)
         context['navbar_link'] = "scripts_run"
+        context['script'] = ScriptModel.latest()
         return context
 
 
