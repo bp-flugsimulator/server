@@ -38,7 +38,7 @@ var socket = fsimWebsocket(socketEventHandler);
 
 $(document).ready(function () {
     $('.script-action-stop').click(function (event) {
-        alert("unimplemented!");
+        alert('unimplemented!');
 
         let id = $(this).attr('data-script-id');
     });

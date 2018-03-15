@@ -617,7 +617,7 @@ class Script(Model):
 
     def __str__(self):
         return self.name
-    
+
     @staticmethod
     def latest():
         """
@@ -631,7 +631,7 @@ class Script(Model):
         query = Script.objects.filter(is_initialized=True)
 
         if query:
-            return query.first() 
+            return query.first()
         else:
             return None
 

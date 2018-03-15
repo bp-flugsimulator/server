@@ -112,8 +112,8 @@ function styleSlaveByStatus(sid, error, e_up, success, s_up) {
     let statusTab = $('#slaveTab' + sid);
 
     let style = function(boolean) {
-        return function (idx, raw_element) {
-            let element = $(raw_element);
+        return function (idx, elem) {
+            let element = $(elem);
 
             let attr = element.attr('data-value');
             let num = parseInt(attr, 10);

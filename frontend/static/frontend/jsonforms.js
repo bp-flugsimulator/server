@@ -33,7 +33,9 @@ function addTypeEntry(container, type, querySlaves, queryType, context) {
 
             let templateContext = {slaves: slaves, type: type};
             for (let attr in context) {
-                templateContext[attr] = context[attr];
+                if ({}.hasOwnProperty.call(context, attr)) {
+                    templateContext[attr] = context[attr];
+                }
             }
 
             // add html template element
