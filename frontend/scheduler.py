@@ -96,7 +96,10 @@ class Scheduler:
             else:
                 done = True
 
-        return not done
+            from .models import Script
+            exist = Script.objects.filter(is_running=True).exists()
+
+        return not done or exist
 
     def should_stop(self):
         """
@@ -130,6 +133,9 @@ class Scheduler:
                 self.loop.close()
                 self.loop = None
 
+                from .models import Script
+                Script.objects.filter(id=self.__script,).update(is_running=False)
+
     def start(self, script):
         """
         Thread-safe function.
@@ -152,6 +158,7 @@ class Scheduler:
             return False
         else:
             from .models import Script
+
             with self.lock:
                 LOGGER.debug(
                     "Starting Scheudler in the event loop `%s`",
@@ -167,11 +174,7 @@ class Scheduler:
 
                 self.__task = self.loop.create_task(self.__run__())
 
-                Script.objects.filter(id=self.__script).update(
-                    is_running=True,
-                    is_initialized=True,
-                    current_index=-1,
-                )
+                Script.set_selected(self.__script)
 
             return True
 

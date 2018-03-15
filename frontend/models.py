@@ -4,7 +4,6 @@ This module contains all database models from the `frontend` application.
 
 import logging
 from shlex import split
-from uuid import uuid4
 
 from utils.typecheck import ensure_type
 
@@ -24,9 +23,6 @@ from django.db.models import (
 
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
-from wakeonlan import send_magic_packet
-from utils import Command
-from server.utils import notify
 
 from .errors import IdentifierError
 
@@ -119,7 +115,7 @@ class Slave(Model):
             If the client has connected to the server
 
     """
-    #persistent fields
+    # persistent fields
     name = CharField(unique=True, max_length=200)
     ip_address = GenericIPAddressField(unique=True)
     mac_address = CharField(
@@ -128,7 +124,7 @@ class Slave(Model):
         validators=[validate_mac_address],
     )
 
-    #non persistent fields
+    # non persistent fields
     command_uuid = CharField(blank=True, null=True, max_length=32, unique=True)
     online = BooleanField(unique=False, default=False)
 
@@ -140,6 +136,54 @@ class Slave(Model):
         self.online = False
 
         self.save()
+
+    @property
+    def data_state(self):
+        """
+        Returns the current state of this `Slave` as a string.
+
+        Returns
+        -------
+            str:
+                One of "success" or "unknown"
+        """
+        if self.is_online:
+            return "success"
+        else:
+            return "unknown"
+
+    @property
+    def current_errored(self):
+        """
+        Counts the amount of errored `Filesystem`s and `Program`s.
+
+        Returns
+        -------
+        int:
+            The amount of `Program`s and `Filesystem`s where an error occured.
+        """
+        progs = ProgramStatus.objects.filter(~Q(code="0"),
+                                             running=False,
+                                             program__slave=self,).count()
+        filesystems = Filesystem.objects.filter(~Q(error_code="0"),
+                                                ~Q(error_code=""),
+                                                 slave=self,).count()
+
+        return progs + filesystems
+
+    @property
+    def current_running(self):
+        """
+        Counts the amount of `Program`s which are currently running.
+
+        Returns
+        ------
+            int:
+                The amount of `Program`s which are running.
+        """
+        return ProgramStatus.objects.filter(running=True,
+                                            program__slave=self,
+                                            ).count()
 
     @property
     def is_online(self):
@@ -188,15 +232,16 @@ class Slave(Model):
     @staticmethod
     def from_identifier(identifier, is_string):
         """
-        Returns an slave based on the given `identifier` which can be an index or
-        a name.
+        Returns an slave based on the given `identifier` which can be an index
+        or a name.
 
         Parameters
         ----------
             identifier: str
                 Which is a `name` or `index` form the `Slave` model.
             is_string: bool
-                If the `identifier` should be interpreted as a `name` or `index`.
+                If the `identifier` should be interpreted as a `name` or `
+                index`.
 
         Returns
         -------
@@ -420,8 +465,8 @@ class Filesystem(Model):
     """
 
     CHOICES_SET_SOURCE = [
-        ('file', 'Source is a file'),
-        ('dir', 'Source is a directory'),
+        ('file', 'File'),
+        ('dir', 'Directory'),
     ]
     CHOICES_SET_DESTINATION = [
         ('file', 'Replace with'),
@@ -549,11 +594,11 @@ class Script(Model):
             If the `Script` is running, then this field contains the current
             index/stage.
     """
-    #persistent fields
+    # persistent fields
     name = CharField(unique=True, blank=False, max_length=200)
     last_ran = BooleanField(default=False, blank=True)
 
-    #non persistent fields
+    # non persistent fields
     is_initialized = BooleanField(default=False, blank=True)
     is_running = BooleanField(default=False, blank=True)
     error_code = CharField(default="", max_length=1000, blank=True)
@@ -572,6 +617,23 @@ class Script(Model):
 
     def __str__(self):
         return self.name
+
+    @staticmethod
+    def latest():
+        """
+        Returns the latest `Script`.
+
+        Returns
+        -------
+            Script or None:
+
+        """
+        query = Script.objects.filter(is_initialized=True)
+
+        if query:
+            return query.first()
+        else:
+            return None
 
     @property
     def indexes(self):
@@ -607,6 +669,23 @@ class Script(Model):
                 If this `Script` had an error.
         """
         return self.error_code != ''
+
+    @staticmethod
+    def set_selected(script):
+        """
+        Selects the given `Script` for the `Scheduler`.
+
+        Parameters
+        ----------
+            script: int
+                Which identifies the `Script` which is now running.
+        """
+        Script.objects.all().update(is_initialized=False, is_running=False)
+        Script.objects.filter(id=script).update(
+            is_running=True,
+            is_initialized=True,
+            current_index=-1,
+        )
 
     @staticmethod
     def set_last_started(script):

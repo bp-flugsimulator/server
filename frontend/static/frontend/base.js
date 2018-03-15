@@ -1,7 +1,7 @@
 /* eslint-env browser */
 /* eslint no-use-before-define: ["error", { "functions": false }] */
 /* global $, jQuery, Status */
-/* exported  getCookie, modalDeleteAction, handleFormStatus, clearErrorMessages,swapText, styleSlaveByStatus, notify, basicRequest */
+/* exported  getCookie, modalDeleteAction, clearErrorMessages,swapText, styleSlaveByStatus, notify, basicRequest */
 
 /**
  * Clears the error fields of a given form
@@ -86,29 +86,6 @@ function modalDeleteAction(form, route) {
 }
 
 /**
- * Handles the incoming status from a form request. The page will be reloaded or
- * the errors will be marked in the input field.
- *
- * @param {HTMLElement} form
- * @param {Status} status
- *
- */
-function handleFormStatus(form, status) {
-    if (status.is_ok()) {
-        window.location.reload();
-    } else {
-        clearErrorMessages(form);
-
-        // insert new feedback
-        $.each(status.payload, function (id, msg) {
-            let node = form.find('[name=' + id + ']');
-            node.addClass('is-invalid');
-            node.parent().append('<div class="invalid-feedback">' + msg + '</div>');
-        });
-    }
-}
-
-/**
  * Swaps the text with the data-text-swap field.
  *
  * @param {HTMLElement} form
@@ -126,49 +103,41 @@ function swapText(element) {
 
 /**
  * Styles a slave tab and container by the status of their programs.
- * @param {Integer} sid
+ * @param {Integer} sid slave id
+ * @param {Boolean} error If it is error related.
+ * @param {Boolean} up Count up or down.
  */
-function styleSlaveByStatus(sid) {
+function styleSlaveByStatus(sid, error, e_up, success, s_up) {
     let statusContainer = $('#slaveStatusContainer_' + sid);
     let statusTab = $('#slaveTab' + sid);
-    let status = 0;
 
-    $('#slavesObjectsProgramsContent' + sid)
-        .find('.fsim-box[data-state]')
-        .each(function (idx, val) {
-            switch ($(val).attr('data-state')) {
-                case 'error':
-                    status = 2;
-                    return false;
-                case 'warning':
-                    status = 1;
-                    break;
-                default:
-                    break;
+    let style = function(boolean) {
+        return function (idx, elem) {
+            let element = $(elem);
+
+            let attr = element.attr('data-value');
+            let num = parseInt(attr, 10);
+            if (boolean) {
+                num += 1;
+            } else {
+                num -= 1;
             }
-        });
+            element.attr('data-value', num);
+        };
+    };
 
-    $('#slavesObjectsFilesystemContent' + sid)
-        .find('.fsim-box[data-state]')
-        .each(function (idx, val) {
-            switch ($(val).attr('data-state')) {
-                case 'error':
-                    status = 2;
-                    return false;
-                default:
-                    break;
-            }
-        });
+    if (success === undefined) {
+        success = false;
+    }
 
-    if (status === 1) {
-        statusContainer.attr('data-state', 'warning');
-        statusTab.attr('data-state', 'warning');
-    } else if (status === 2) {
-        statusContainer.attr('data-state', 'error');
-        statusTab.attr('data-state', 'error');
-    } else {
-        statusContainer.attr('data-state', 'success');
-        statusTab.attr('data-state', 'success');
+    if (error) {
+        statusContainer.find('[name=status-badge-errored][data-value]').each(style(e_up));
+        statusTab.find('[name=status-badge-errored][data-value]').each(style(e_up));
+    }
+
+    if (success) {
+        statusContainer.find('[name=status-badge-running][data-value]').each(style(s_up));
+        statusTab.find('[name=status-badge-running][data-value]').each(style(s_up));
     }
 }
 
@@ -202,32 +171,43 @@ function notify(title, message, type) {
 
 /**
  * Performs a basic request which does not need a direct response.
- * @param {*} url URL path to the server
- * @param {*} type  HTTP request type
- * @param {*} action Determines the kind of action which this request performs
- * @param {*} data HTTP data (e.g. POST request)
- * @param {*} onSuccess function that gets called on success
+ * @param {String} url URL path to the server
+ * @param {String} type  HTTP request type
+ * @param {String} action Determines the kind of action which this request performs
+ * @param {Object} data HTTP data (e.g. POST request)
+ * @param {Function(payload)} onSuccess function that gets called on success
+ * @param {Function(payload)} onError function that gets called if  an error occurs
  */
-function basicRequest(url, type, action, data = {}, onSuccess=$.noop) {
+function basicRequest(options) {
+    if (options.data === undefined) {
+        options.data = {};
+    }
+
     $.ajax({
-        type,
-        url,
-        data,
+        type: options.type,
+        url: options.url,
+        data: options.data,
         beforeSend(xhr) {
             xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
         },
         converters: {
             'text json': Status.from_json
         },
-        success(status) {
+        success: function(status) {
             if (status.is_ok()) {
-                onSuccess();
+                if (options.onSuccess !== undefined) {
+                    options.onSuccess(status.payload);
+                }
             } else {
-                notify('Error while' + action, 'Could not ' + action + '.\nReason:\n' + JSON.stringify(status.payload), 'danger');
+                if (options.onError !== undefined) {
+                    options.onError(status.payload);
+                } else {
+                    notify('Error while' + options.action, JSON.stringify(status.payload), 'danger');
+                }
             }
         },
-        error(xhr, errorString, errorCode) {
-            notify('HTTP request error', 'Could not deliver request `' + action + '` to the server.\nReason:\n' + errorCode + ')', 'danger');
+        error: function(xhr, errorString, errorCode) {
+            notify('HTTP request error', 'Could not deliver request `' + options.action + '` to the server.\nReason:\n' + errorCode + ')', 'danger');
         }
     });
 }
@@ -246,5 +226,22 @@ $(document).ready(function () {
             enter: 'animated fadeInRight',
             exit: 'animated fadeOutRight'
         },
+    });
+
+    var enableSubmit = function (ele) {
+        $(ele).removeAttr('disabled');
+    };
+
+    $('.short-disable').click(function () {
+        var that = this;
+        $(this).attr('disabled', true);
+        setTimeout(function () { enableSubmit(that); }, 1000);
+    });
+
+    // start popover annotations for info boxes
+    $('[data-toggle="popover"]').popover({
+        html: true,
+        placement: 'left',
+        trigger: 'hover'
     });
 });

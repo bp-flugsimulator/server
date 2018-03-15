@@ -1,6 +1,6 @@
 /* eslint-env browser */
 /* eslint no-use-before-define: ["error", { "functions": false }] */
-/* global $, JsonForm, getCookie, Status, modalDeleteAction, notify, basicRequest, Promise */
+/* global $, JsonForm, modalDeleteAction, notify, basicRequest, Promise */
 /* exported loadScript, newScript, unloadWarning */
 
 // global variable, which indicates whether
@@ -9,24 +9,15 @@ var unloadWarning = false;
 
 function promiseQuery(url) {
     return new Promise(function (resolve, reject) {
-        $.ajax({
-            url,
-            beforeSend(xhr) {
-                xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
+        basicRequest({
+            type: 'GET',
+            url: url,
+            action: 'query',
+            onSuccess(payload) {
+                resolve(payload);
             },
-            converters: {
-                'text json': Status.from_json
-            },
-            success(status) {
-                if (status.is_ok()) {
-                    resolve(status.payload);
-                } else {
-                    notify('Autocomplete query', 'Error while querying for autocomplete: ' + JSON.stringify(status.payload));
-                    reject();
-                }
-            },
-            error(xhr, errorString, errorCode) {
-                notify('Autocomplete query', 'Error while querying for autocomplete: ' + errorCode + '(' + errorString + ')');
+            onError(payload) {
+                notify('Autocomplete query', 'Error while querying for autocomplete: ' + JSON.stringify(payload));
                 reject();
             }
         });
@@ -38,13 +29,13 @@ const options = {
         return promiseQuery('/api/slaves?programs=True');
     },
     queryPrograms(slave) {
-        return promiseQuery('/api/programs?slave_str=true&slave=' + slave);
+        return promiseQuery('/api/programs?is_string=true&slave=' + slave);
     },
     querySlavesFiles() {
         return promiseQuery('/api/slaves?filesystems=True');
     },
     queryFilesystems(slave) {
-        return promiseQuery('/api/filesystems?slave_str=true&slave=' + slave);
+        return promiseQuery('/api/filesystems?is_string=true&slave=' + slave);
     },
 };
 
@@ -54,23 +45,15 @@ var createEditor = function (json, id) {
 };
 
 function loadScript(id) {
-    $.ajax({
+    basicRequest({
+        type: 'GET',
         url: '/api/script/' + id + '?programs=str&filesystems=str&slaves=str',
-        beforeSend(xhr) {
-            xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
+        action: 'loading script',
+        onSuccess(payload) {
+            createEditor(payload, id);
         },
-        converters: {
-            'text json': Status.from_json
-        },
-        success(status) {
-            if (status.is_ok()) {
-                createEditor(status.payload, id);
-            } else {
-                notify('Loading script', 'Error while loading script: ' + JSON.stringify(status.payload));
-            }
-        },
-        error(xhr, errorString, errorCode) {
-            notify('Loading script', 'Error while loading script: ' + errorCode + '(' + errorString + ')');
+        onError(payload) {
+            notify('Loading script', 'Error while loading script: ' + JSON.stringify(payload));
         }
     });
 }
@@ -86,14 +69,31 @@ function newScript(name) {
 }
 
 $(document).ready(function () {
+    // Restores the last clicked script
+    (function () {
+        let href = localStorage.getItem('status_script');
+        if (href !== null) {
+            let iter = $('.script-tab-link').filter(function (idx, val) {
+                return val.hasAttribute('href') && val.getAttribute('href') === href;
+            });
+
+            iter.click();
+        }
+    }());
+
     // Set color of the current selected.
-    $('.script-tab-link.active').parent('li').css('background-color', '#dbdbdc');
+    $('.script-tab-link.active').addClass('border-dark bg-dark text-light')
+        .children('span').addClass('text-dark')    ;
 
     // Changes the color of the clicked slave, if it was not clicked before.
     $('.script-tab-link').click(function () {
         if (!$(this).hasClass('active')) {
             // Remove color from the old tabs
-            $('.active').removeClass('active');
+            $('.script-tab-link').each(function (idx, val) {
+                $(val).removeClass('border-dark bg-dark text-light')
+                    .addClass('text-dark')
+                    .children('span').removeClass('text-dark');
+            });
             // Create a change listener on all available input fields
             $(':input').on('input', function() {
                 unloadWarning = true;
@@ -109,8 +109,13 @@ $(document).ready(function () {
                 unloadWarning = true;
             });
 
+            // Save Class when opening for every Slave
+            localStorage.setItem('status_script', $(this).attr('href'));
+
             // Change the color of the current tab
-            $(this).parent('li').addClass('active');
+            $(this).removeClass('text-dark')
+                .addClass('border-dark bg-dark text-light')
+                .children('span').addClass('text-dark');
         }
     });
 
@@ -122,9 +127,30 @@ $(document).ready(function () {
         $('#scriptTabNew').click();
     });
 
+    $('.script-action-run').click(function () {
+        let id = $(this).attr('data-script-id');
+
+        basicRequest({
+            type: 'POST',
+            url: '/api/script/' + id + '/run',
+            action: 'start script',
+            onSuccess: function() {
+                window.location.href = '/scripts/run';
+            }
+        });
+    });
+
     $('.script-action-copy').click(function () {
         let id = $(this).attr('data-script-id');
-        basicRequest('/api/script/' + id + '/copy', 'GET', 'copy script', {} ,() => {window.location.reload();});
+
+        basicRequest({
+            url: '/api/script/' + id + '/copy',
+            type: 'POST',
+            action: 'copy script',
+            onSuccess: function() {
+                window.location.reload();
+            }
+        });
     });
 
     $('.script-action-add-save').click(function () {
@@ -134,27 +160,14 @@ $(document).ready(function () {
         let editor = JsonForm.dumps($('#jsoneditor_' + id));
         let string = JSON.stringify(editor);
 
-        $.ajax({
-            method: 'POST',
+        basicRequest({
+            type: 'POST',
             url: '/api/scripts',
-            contentType: 'application/json',
+            action: 'adding new script',
             data: string,
-            beforeSend(xhr) {
-                xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
+            onSuccess() {
+                window.location.reload();
             },
-            converters: {
-                'text json': Status.from_json
-            },
-            success(status) {
-                if (status.is_err()) {
-                    notify('Could not save script', JSON.stringify(status.payload), 'danger');
-                } else {
-                    window.location.reload();
-                }
-            },
-            error(xhr, errorString, errorCode) {
-                notify('Connection error', 'Could not deliver script add request. (' + errorCode + ')', 'danger');
-            }
         });
     });
 
@@ -164,27 +177,14 @@ $(document).ready(function () {
         let editor = JsonForm.dumps($('#jsoneditor_' + id));
         let string = JSON.stringify(editor);
 
-        $.ajax({
-            method: 'PUT',
+        basicRequest({
+            type: 'PUT',
             url: '/api/script/' + id,
-            contentType: 'application/json',
+            action: 'saving changes for script',
             data: string,
-            beforeSend(xhr) {
-                xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
+            onSuccess() {
+                window.location.reload();
             },
-            converters: {
-                'text json': Status.from_json
-            },
-            success(status) {
-                if (status.is_err()) {
-                    notify('Could not save script', JSON.stringify(status.payload), 'danger');
-                } else {
-                    window.location.reload();
-                }
-            },
-            error(xhr, errorString, errorCode) {
-                notify('Connection error', 'Could not deliver script add request. (' + errorCode + ')', 'danger');
-            }
         });
     });
 
@@ -203,8 +203,16 @@ $(document).ready(function () {
         deleteWarning.modal('toggle');
     });
 
-    $('.inline-add-button').on('click', function() {
+    $('.delete-btn').click(function () {
+        $('.script-tab-link').first().click();
+    });
+
+    $('.unload-warning').click(function() {
         unloadWarning = true;
+    });
+
+    $('.form-control[required]').keyup(function () {
+        $('.script-action-add-save').prop('disabled', this.value === '' ? true : false);
     });
 });
 

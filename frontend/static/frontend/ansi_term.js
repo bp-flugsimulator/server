@@ -281,7 +281,7 @@ class AnsiTerm {
 
                     // currently ignored Codes
                     if ((matches = rest.match(/^\u001B\[((\d*)(((;+)(\d*))*))m/)) ||
-                        (matches = rest.match(/^\u001B\[\?((\d*)(((;+)(\d*))*))[hl]/)) || 
+                        (matches = rest.match(/^\u001B\[\?((\d*)(((;+)(\d*))*))[hl]/)) ||
                         (matches = rest.match(/^\u001B\(B/)) ||
                         (matches = rest.match(/^\u001B\[((\d*)(((;+)(\d*))*))[trl]/)) ||
                         (matches = rest.match(/^\u001B\[(\d*)[Xd]/)) ||

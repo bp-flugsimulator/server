@@ -21,7 +21,7 @@ const templateNoElement = Handlebars.compile($('#templateNoElement').html(), { s
  * @param {Function} querySlaves A function which returns a Promise which queries a query set.
  * @param {Function} queryType A function which is called every time the choice changes.
  */
-function addTypeEntry(container, type, querySlaves, queryType, context = {}) {
+function addTypeEntry(container, type, querySlaves, queryType, context) {
     querySlaves().then(function (slaves) {
         $(container).find('.slave-no-elements').remove();
         let entryContainer = $(container).find('.script-' + type + '-content').first();
@@ -30,7 +30,14 @@ function addTypeEntry(container, type, querySlaves, queryType, context = {}) {
             let html = templateNoElement({ type });
             entryContainer.append(html);
         } else {
-            let templateContext = Object.assign({}, { slaves, type }, context);
+
+            let templateContext = {slaves: slaves, type: type};
+            for (let attr in context) {
+                if ({}.hasOwnProperty.call(context, attr)) {
+                    templateContext[attr] = context[attr];
+                }
+            }
+
             // add html template element
             let html = templateEntry(templateContext);
             entryContainer.prepend(html);
@@ -67,6 +74,12 @@ function addTypeEntry(container, type, querySlaves, queryType, context = {}) {
             });
 
             box.find('.script-' + type + '-slave').trigger('change');
+
+            entryContainer.find('[data-toggle="popover"]').popover({
+                html: true,
+                placement: 'left',
+                trigger: 'hover'
+            });
         }
     });
 }
@@ -79,6 +92,24 @@ const JsonForm = {
 
         $(container).find('.script-filesystem-add').on('click', function () {
             addTypeEntry(container, 'filesystem', options.querySlavesFiles, options.queryFilesystems);
+        });
+
+        $(container).find('.script-program-hide').on('click', function () {
+            let hideContainer = $(this).parent().next();
+            if ($.trim($(hideContainer).html())) {
+                hideContainer.toggle();
+                $(this).prev().attr('disabled', function (_, attr) { return !attr; });
+                $(this).children('i').toggleClass('mdi-chevron-up mdi-chevron-down');
+            }
+        });
+
+        $(container).find('.script-filesystem-hide').on('click', function () {
+            let hideContainer = $(this).parent().next();
+            if ($.trim($(hideContainer).html())) {
+                hideContainer.toggle();
+                $(this).prev().attr('disabled', function (_, attr) { return !attr; });
+                $(this).children('i').toggleClass('mdi-chevron-up mdi-chevron-down');
+            }
         });
     },
     /**

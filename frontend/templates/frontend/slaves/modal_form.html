@@ -5,33 +5,37 @@
         <form id="{{ prefix }}Form">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="modal-title"></h4>
+                    <h4 class="modal-title text-uppercase"></h4>
                     <button type="button" class="close" data-dismiss="modal">&times;</button>
                 </div>
 
-                <div class="modal-body">
+                <div class="modal-body bg-light">
                     {% csrf_token %}
                     {% for hidden_field in form.hidden_fields %}
                         {{ hidden_field }}
                     {% endfor %}
                     {% for field in form.visible_fields %}
                     <div class="form-group">
-                        {{ field.label_tag }}
+                        <div class="d-flex w-100 justify-content-between">
+                            <span class="font-weight-light text-uppercase">{{ field.label_tag }}</span>
+                            {% if field.help_text %}
+                            <a class="text-info mr-2" data-toggle="popover" data-container="body" data-content="{{ field.help_text|safe }}">
+                                <i class="mdi mdi-information"></i>
+                            </a>
+                            {% endif %}
+                        </div>
                         {% if form.is_bound %}
-                            {% render_field field class="form-control is-valid" %}
+                            {% render_field field class="inset-shadow bg-white form-control is-valid" %}
                         {% else %}
-                            {% render_field field class="form-control" %}
-                        {% endif %}
-                        {% if field.help_text %}
-                            <small class="form-text text-muted">{{ field.help_text }}</small>
+                            {% render_field field class="inset-shadow bg-white form-control" %}
                         {% endif %}
                     </div>
                     {% endfor %}
                 </div>
 
                 <div class="modal-footer">
-                    <button type="submit" class="btn btn-info submit-btn"></button>
-                    <button type="reset" class="btn btn-danger" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary submit-btn text-uppercase"></button>
+                    <button type="reset" class="btn btn-dark text-uppercase" data-dismiss="modal">Cancel</button>
                 </div>
             </div>
         </form>

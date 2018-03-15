@@ -1,31 +1,37 @@
-<div class="row-1 mb-2 pt-2 pb-2 pl-4 pr-4 fsim-box" data-state="{{ filesystem.data_state }}" id="filesystemStatusContainer_{{ filesystem.id }}">
-    <div class="row">
-        <div class="filesystem-name col mt-1 font-weight-bold">
+<div class="align-items-center list-group-item fsim-box" data-state="{{ filesystem.data_state }}" id="filesystemStatusContainer_{{ filesystem.id }}">
+    <div class="d-xl-flex d-lg-flex d-md-flex d-sm-flex w-100 justify-content-between">
+        <div class="filesystem-name mt-1 font-weight-bold">
             <i class="fsim-filesystem-status-icon align-middle" id="fileStatusIcon_{{ filesystem.id }}"></i>
             <span class="align-middle">{{ filesystem.name }}</span>
         </div>
 
-        <div class="btn-toolbar col d-flex justify-content-end" role="toolbar">
-            <div class="btn-group mr-2" role="group">
-                <button type="button" id="filesystemMoveRestore_{{ filesystem.id }}" class="btn btn-outline-dark font-weight-light filesystem-action-move"
+        <div class="btn-toolbar d-flex justify-content-end" role="toolbar">
+            <div class="btn-group xs-button-set" role="group">
+                <button type="button" id="filesystemMoveRestore_{{ filesystem.id }}" class="btn btn-primary font-weight-light filesystem-action-move short-disable"
                     data-filesystem-id="{{ filesystem.id }}" data-is-moved="{{ filesystem.is_moved }}">
                     <i class="mdi mdi-swap-horizontal"></i>
-                    <i class="button-status-display">
+                    <span class="button-status-display">
                         {% if filesystem.is_moved %}RESTORE{% else %}MOVE{% endif %}
-                    </i>
+                    </span>
                 </button>
 
-                <button type="button" class="btn btn-outline-dark filesystem-action-modify font-weight-light" data-slave-id ="{{ filesystem.slave.id }}" data-filesystem-id="{{ filesystem.id }}" data-filesystem-name="{{ filesystem.name }}" data-filesystem-source_path="{{ filesystem.source_path }}" data-filesystem-destination_path="{{ filesystem.destination_path }}">
-                    <i class="mdi mdi-pencil"></i> EDIT
+                <button type="button" class="btn btn-dark filesystem-action-modify font-weight-light" data-slave-id ="{{ filesystem.slave.id }}"
+                    data-filesystem-id="{{ filesystem.id }}" data-filesystem-name="{{ filesystem.name }}" data-filesystem-source_path="{{ filesystem.source_path }}"
+                    data-filesystem-destination_path="{{ filesystem.destination_path }}">
+                    <i class="mdi mdi-pencil"></i>
+                    EDIT
                 </button>
 
-                <button type="button" class="btn btn-outline-dark filesystem-action-delete font-weight-light" data-filesystem-id="{{ filesystem.id }}" data-filesystem-name="{{ filesystem.name }}">
-                    <i class="mdi mdi-delete"></i> DELETE
+                <button type="button" class="btn btn-dark filesystem-action-delete font-weight-light" data-filesystem-id="{{ filesystem.id }}"
+                    data-filesystem-name="{{ filesystem.name }}">
+                    <i class="mdi mdi-delete"></i>
+                    DELETE
                 </button>
 
-                <button class="btn btn-outline-dark font-weight-light" id="filesystemCardButton_{{ filesystem.id }}" type="button" data-toggle="collapse" data-target="#filesystemCard_{{ filesystem.id }}" {% if not filesystem.is_error %} disabled {% endif %}>
+                <button class="btn btn-dark font-weight-light" id="filesystemCardButton_{{ filesystem.id }}" type="button" data-toggle="collapse"
+                    data-target="#filesystemCard_{{ filesystem.id }}" {% if not filesystem.is_error %} disabled {% endif %}>
                     <i class="mdi mdi-dots-vertical"></i>
-                    <i>MORE</i>
+                    MORE
                 </button>
             </div>
         </div>
@@ -33,7 +39,7 @@
 
     <div class="collapse pl-4 pr-4 mt-2 row" id="filesystemCard_{{ filesystem.id }}">
         {% if filesystem.is_error %}
-            {{ filesystem.error_code }}
+        {{ filesystem.error_code }}
         {% endif %}
     </div>
 </div>

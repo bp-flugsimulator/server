@@ -1,6 +1,6 @@
 /* eslint-env browser*/
 /* eslint no-use-before-define: ["error", { "functions": false }] */
-/* global $, getCookie, Status, fsimWebsocket, notify*/
+/* global $, fsimWebsocket, notify, basicRequest */
 /* exported socket */
 
 var socketEventHandler = {
@@ -37,28 +37,9 @@ var socketEventHandler = {
 var socket = fsimWebsocket(socketEventHandler);
 
 $(document).ready(function () {
-    $('.script-action-run').click(function (event) {
-        event.preventDefault();
-        let id = $(this).attr('data-script-id');
-        $('#scriptTabContent' + id + ' [data-state]').attr('data-state', 'none');
+    $('.script-action-stop').click(function (event) {
+        alert('unimplemented!');
 
-        $.ajax({
-            type: 'GET',
-            url: '/api/script/' + id + '/run',
-            beforeSend(xhr) {
-                xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
-            },
-            converters: {
-                'text json': Status.from_json
-            },
-            success(status) {
-                if (status.is_err()) {
-                    notify('Error while starting', 'Could not start script. (' + JSON.stringify(status.payload) + ')', 'danger');
-                }
-            },
-            error(xhr, errorString, errorCode) {
-                notify('Error while transport', errorCode, 'danger');
-            }
-        });
+        let id = $(this).attr('data-script-id');
     });
 });
