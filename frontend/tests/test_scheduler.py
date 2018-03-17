@@ -99,12 +99,12 @@ class SchedulerTests(SchedulerTestCase):
         self.assertTrue(self.sched.should_stop())
         self.assertFalse(self.sched.is_running())
 
-    def test_stop_loop(self):
+    def test_stop(self):
         self.sched.start(self.script.id)
-        self.assertTrue(self.sched.stop_loop())
+        self.sched.stop()
 
         self.assertFalse(self.sched.is_running())
-        self.assertFalse(self.sched.stop_loop())
+        self.assertFalse(self.sched.stop())
 
     def test_state_waiting_slaves(self):
         webinterface = WSClient()

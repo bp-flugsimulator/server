@@ -790,7 +790,7 @@ def script_stop(request):
     """
 
     if request.method == 'POST':
-        FSIM_CURRENT_SCHEDULER.stop_loop()
+        FSIM_CURRENT_SCHEDULER.stop()
         FSIM_CURRENT_SCHEDULER.notify()
         return StatusResponse.ok('')
     else:

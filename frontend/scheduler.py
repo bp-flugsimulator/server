@@ -136,6 +136,17 @@ class Scheduler:
                 from .models import Script
                 Script.objects.filter(id=self.__script,).update(is_running=False)
 
+                Script.set_selected(None)
+                self.loop = SafeLoop()
+                self.loop.start()
+
+                self.__event = None
+                self.__task = None
+                self.__error_code = None
+                self.__state = SchedulerStatus.INIT
+                self.__index = None
+                self.__script = None
+
     def start(self, script):
         """
         Thread-safe function.
@@ -160,6 +171,8 @@ class Scheduler:
             from .models import Script
 
             with self.lock:
+                self.loop = SafeLoop()
+                self.loop.start()
                 LOGGER.debug(
                     "Starting Scheduler in the event loop `%s`",
                     self.loop.ident,
@@ -177,42 +190,6 @@ class Scheduler:
                 Script.set_selected(self.__script)
 
             return True
-
-    def stop_loop(self):
-        """
-        Thread-safe function.
-
-        Destroys the running `SafeLoop` .
-
-        Returns
-        -------
-        bool:
-            If the scheudler is not running.
-        """
-        if self.is_running():
-            from .models import Script
-
-            with self.lock:
-                LOGGER.debug(
-                    "Stopping Scheduler in the event loop `%s`",
-                    self.loop.ident,
-                )
-
-                self.loop = SafeLoop()
-                self.loop.start()
-
-                self.__event = None
-                self.__task = None
-                self.__error_code = None
-                self.__stop = False
-                self.__state = SchedulerStatus.INIT
-                self.__index = None
-                self.__script = None
-
-                Script.set_selected(self.__script)
-        else:
-            return False
-        return True
 
     def notify(self):
         """
