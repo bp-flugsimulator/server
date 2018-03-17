@@ -13,6 +13,9 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='filesystem',
             name='source_type',
-            field=models.CharField(choices=[('file', 'File'), ('dir', 'Directory')], default='file', max_length=4),
+            field=models.CharField(
+                choices=[('file', 'File'), ('dir', 'Directory')],
+                default='file',
+                max_length=4),
         ),
     ]

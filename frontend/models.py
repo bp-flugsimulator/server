@@ -162,12 +162,16 @@ class Slave(Model):
         int:
             The amount of `Program`s and `Filesystem`s where an error occured.
         """
-        progs = ProgramStatus.objects.filter(~Q(code="0"),
-                                             running=False,
-                                             program__slave=self,).count()
-        filesystems = Filesystem.objects.filter(~Q(error_code="0"),
-                                                ~Q(error_code=""),
-                                                 slave=self,).count()
+        progs = ProgramStatus.objects.filter(
+            ~Q(code="0"),
+            running=False,
+            program__slave=self,
+        ).count()
+        filesystems = Filesystem.objects.filter(
+            ~Q(error_code="0"),
+            ~Q(error_code=""),
+            slave=self,
+        ).count()
 
         return progs + filesystems
 
@@ -181,9 +185,10 @@ class Slave(Model):
             int:
                 The amount of `Program`s which are running.
         """
-        return ProgramStatus.objects.filter(running=True,
-                                            program__slave=self,
-                                            ).count()
+        return ProgramStatus.objects.filter(
+            running=True,
+            program__slave=self,
+        ).count()
 
     @property
     def is_online(self):
@@ -297,11 +302,12 @@ class Slave(Model):
                 The list contains the name of every `Slave` which fulfil the
                 condition.
         """
-        return Slave.objects.all().annotate(filesystem_count=Count(
-            'filesystem__pk')).filter(filesystem_count__gt=0).values_list(
-                'name',
-                flat=True,
-            )
+        return Slave.objects.all().annotate(
+            filesystem_count=Count('filesystem__pk')).filter(
+                filesystem_count__gt=0).values_list(
+                    'name',
+                    flat=True,
+                )
 
 
 class Program(Model):
@@ -636,6 +642,18 @@ class Script(Model):
             return None
 
     @property
+    def stages(self):
+        stages = list()
+
+        for i in self.indexes:
+            programs = Program.objects.filter(scriptgraphprograms__index__exact=i).distinct()
+            filesystems = Filesystem.objects.filter(scriptgraphfiles__index__exact=i).distinct()
+            stages.append({'index': i, 'programs': programs, 'filesystems': filesystems})
+
+        print(stages)
+        return stages
+
+    @property
     def indexes(self):
         """
         Returns all indexes which are used in this `Script`.
@@ -733,12 +751,9 @@ class Script(Model):
             list of `Slave`s:
                 With all `Slave`s that are used in this `Script`.
         """
-        return Program.objects.filter(
-            scriptgraphprograms__script=script).annotate(
-                dcount=Count('slave')).values_list(
-                    'slave',
-                    flat=True,
-                )
+        return Slave.objects.filter(
+            Q(program__scriptgraphprograms__script=script)
+            | Q(filesystem__scriptgraphfiles__script=script)).distinct()
 
 
 class ScriptGraphPrograms(Model):

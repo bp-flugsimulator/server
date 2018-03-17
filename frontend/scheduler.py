@@ -134,7 +134,8 @@ class Scheduler:
                 self.loop = None
 
                 from .models import Script
-                Script.objects.filter(id=self.__script,).update(is_running=False)
+                Script.objects.filter(
+                    id=self.__script, ).update(is_running=False)
 
     def start(self, script):
         """
@@ -309,8 +310,7 @@ class Scheduler:
         from .models import Script, Slave
         from .controller import slave_wake_on_lan
 
-        for slave_id in Script.get_involved_slaves(self.__script):
-            slave = Slave.objects.get(id=slave_id)
+        for slave in Script.get_involved_slaves(self.__script):
             LOGGER.debug("Send WOL to the slave `%s`.", slave.name)
             slave_wake_on_lan(slave)
 

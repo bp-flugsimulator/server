@@ -14,10 +14,12 @@ from .models import (
     Filesystem as FilesystemModel,
 )
 
+
 class BaseModelForm(ModelForm):
     def __init__(self, *args, **kwargs):
         kwargs.setdefault('label_suffix', '')
         super(BaseModelForm, self).__init__(*args, **kwargs)
+
 
 class SlaveForm(BaseModelForm):
     """

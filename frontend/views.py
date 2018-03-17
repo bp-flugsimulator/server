@@ -31,6 +31,8 @@ class RunScriptView(TemplateView):
         context = super().get_context_data(**kwargs)
         context['navbar_link'] = "scripts_run"
         context['script'] = ScriptModel.latest()
+        context['involved_slaves'] = ScriptModel.get_involved_slaves(
+            context['script'])
         return context
 
 
@@ -50,7 +52,7 @@ class ScriptsView(ListView):
 
 class SlavesView(ListView):
     """
-    The site the user will navigate to, if he wants interact with differnt
+    The site the user will navigate to, if he wants interact with different
     slaves.
     """
     template_name = "frontend/slaves/base.html"

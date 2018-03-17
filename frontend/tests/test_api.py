@@ -880,9 +880,8 @@ class FilesystemTests(StatusTestCase):
         name_half = int(len(filesystem.name) / 2)
 
         response = self.client.get(
-            reverse("frontend:filesystem_set"), {
-                'q': filesystem.name[:name_half]
-            })
+            reverse("frontend:filesystem_set"),
+            {'q': filesystem.name[:name_half]})
         self.assertEqual(response.status_code, 200)
 
         self.assertEqual(
@@ -891,9 +890,7 @@ class FilesystemTests(StatusTestCase):
         )
 
         response = self.client.get(
-            reverse("frontend:filesystem_set"), {
-                'q': filesystem.name
-            })
+            reverse("frontend:filesystem_set"), {'q': filesystem.name})
         self.assertEqual(response.status_code, 200)
 
         self.assertEqual(
@@ -916,15 +913,19 @@ class FilesystemTests(StatusTestCase):
 
         with_str = self.client.get(
             reverse('frontend:filesystem_set'),
-            {'slave': filesystem.slave.name,
-             'is_string': 'True'},
+            {
+                'slave': filesystem.slave.name,
+                'is_string': 'True'
+            },
         )
         self.assertEqual(with_str.status_code, 200)
 
         without_str = self.client.get(
             reverse('frontend:filesystem_set'),
-            {'slave': filesystem.slave.id,
-             'is_string': 'False'},
+            {
+                'slave': filesystem.slave.id,
+                'is_string': 'False'
+            },
         )
         self.assertEqual(without_str.status_code, 200)
 
@@ -985,8 +986,10 @@ class FilesystemTests(StatusTestCase):
 
         response_str = self.client.get(
             reverse("frontend:filesystem_set"),
-            {'slave': "none",
-             'is_string': 'True'},
+            {
+                'slave': "none",
+                'is_string': 'True'
+            },
         )
         self.assertEqual(response_str.status_code, 200)
 
@@ -1414,9 +1417,7 @@ class ProgramTests(StatusTestCase):
         name_half = int(len(program.name) / 2)
 
         response = self.client.get(
-            reverse("frontend:program_set"), {
-                'q': program.name[:name_half]
-            })
+            reverse("frontend:program_set"), {'q': program.name[:name_half]})
 
         self.assertEqual(response.status_code, 200)
 
@@ -1426,9 +1427,7 @@ class ProgramTests(StatusTestCase):
         )
 
         response = self.client.get(
-            reverse("frontend:program_set"), {
-                'q': program.name
-            })
+            reverse("frontend:program_set"), {'q': program.name})
         self.assertEqual(response.status_code, 200)
 
         self.assertEqual(
@@ -1452,15 +1451,19 @@ class ProgramTests(StatusTestCase):
 
         with_str = self.client.get(
             reverse('frontend:program_set'),
-            {'slave': program.slave.name,
-             'is_string': 'True'},
+            {
+                'slave': program.slave.name,
+                'is_string': 'True'
+            },
         )
         self.assertEqual(with_str.status_code, 200)
 
         without_str = self.client.get(
             reverse('frontend:program_set'),
-            {'slave': program.slave.id,
-             'is_string': 'False'},
+            {
+                'slave': program.slave.id,
+                'is_string': 'False'
+            },
         )
         self.assertEqual(without_str.status_code, 200)
 
@@ -1521,8 +1524,10 @@ class ProgramTests(StatusTestCase):
 
         response_str = self.client.get(
             reverse("frontend:program_set"),
-            {'slave': "none",
-             'is_string': 'True'},
+            {
+                'slave': "none",
+                'is_string': 'True'
+            },
         )
         self.assertEqual(response_str.status_code, 200)
 
