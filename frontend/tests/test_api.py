@@ -704,7 +704,6 @@ class ScriptTest(StatusTestCase):
         self.assertEqual(403, response.status_code)
 
     def test_stop_post_success(self):
-        script = ScriptFactory(is_running=False, is_initialized=False)
         response = self.client.post(
             reverse("frontend:script_stop"))
         self.assertEqual(response.status_code, 200)

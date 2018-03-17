@@ -768,13 +768,13 @@ def script_run(request, script_id):
 
 def script_stop(request):
     """
-    Processes an method invocation (stop) for a `ScriptModel` (see 
+    Processes an method invocation (stop) for a `ScriptModel` (see
     @frontend.sheduler.stop_loop)
 
     HTTP Methods
     ------------
         POST:
-            Invokes the method for the `ScriptModel` (which is 
+            Invokes the method for the `ScriptModel` (which is
             specified in the URL).
 
     Parameters
@@ -793,7 +793,7 @@ def script_stop(request):
         FSIM_CURRENT_SCHEDULER.stop_loop()
         FSIM_CURRENT_SCHEDULER.notify()
         return StatusResponse.ok('')
-    else:    
+    else:
         return HttpResponseForbidden()
 
 def filesystem_set(request):
