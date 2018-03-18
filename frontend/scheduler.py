@@ -62,7 +62,7 @@ class Scheduler:
         Thread-safe function.
 
         This functions allows the task execution from the outside of the
-        `Scheudler`.
+        `Scheduler`.
 
         Parameters
         ----------
@@ -78,7 +78,7 @@ class Scheduler:
         """
         Thread-safe function.
 
-        Checks if the underlying task (this `Scheudler`) is still running in
+        Checks if the underlying task (this `Scheduler`) is still running in
         the event loop.
 
         Returns
@@ -105,8 +105,8 @@ class Scheduler:
         """
         Thread-safe function.
 
-        Checks if the `Scheudler` should stop. This can be set by
-        `Scheudler.stop()`.
+        Checks if the `Scheduler` should stop. This can be set by
+        `Scheduler.stop()`.
 
         Returns
         -------
@@ -121,7 +121,7 @@ class Scheduler:
         """
         Thread-safe function.
 
-        Sets the stop flag and waits for the `Scheudler` to finish.
+        Sets the stop flag and waits for the `Scheduler` to finish.
         """
         with self.lock:
             self.__stop = True
@@ -135,6 +135,17 @@ class Scheduler:
 
                 from .models import Script
                 Script.objects.filter(id=self.__script,).update(is_running=False)
+
+                Script.set_selected(None)
+                self.loop = SafeLoop()
+                self.loop.start()
+
+                self.__event = None
+                self.__task = None
+                self.__error_code = None
+                self.__state = SchedulerStatus.INIT
+                self.__index = None
+                self.__script = None
 
     def start(self, script):
         """
@@ -160,8 +171,10 @@ class Scheduler:
             from .models import Script
 
             with self.lock:
+                self.loop = SafeLoop()
+                self.loop.start()
                 LOGGER.debug(
-                    "Starting Scheudler in the event loop `%s`",
+                    "Starting Scheduler in the event loop `%s`",
                     self.loop.ident,
                 )
 

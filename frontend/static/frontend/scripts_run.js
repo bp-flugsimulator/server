@@ -38,8 +38,14 @@ var socket = fsimWebsocket(socketEventHandler);
 
 $(document).ready(function () {
     $('.script-action-stop').click(function (event) {
-        alert('unimplemented!');
-
-        let id = $(this).attr('data-script-id');
+        //let id = $(this).attr('data-script-id'); Not important
+        basicRequest({
+            type: 'POST',
+            url: '/api/script/stop',
+            action: 'stop script',
+            onSuccess() {
+                window.location.reload();
+            },
+        });
     });
 });

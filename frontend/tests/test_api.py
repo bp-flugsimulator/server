@@ -699,6 +699,19 @@ class ScriptTest(StatusTestCase):
             Status.from_json(response.content.decode('utf-8')),
         )
 
+    def test_stop_put_forbidden(self):
+        response = self.client.put(reverse('frontend:script_stop'))
+        self.assertEqual(403, response.status_code)
+
+    def test_stop_post_success(self):
+        script = ScriptFactory(is_running=False, is_initialized=True)
+        response = self.client.post(
+            reverse("frontend:script_run", args=[script.id]))
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.post(
+            reverse("frontend:script_stop"))
+        self.assertEqual(response.status_code, 200)
 
 class FilesystemTests(StatusTestCase):
     def test_set_delete_forbidden(self):

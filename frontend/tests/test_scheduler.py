@@ -99,6 +99,13 @@ class SchedulerTests(SchedulerTestCase):
         self.assertTrue(self.sched.should_stop())
         self.assertFalse(self.sched.is_running())
 
+    def test_stop(self):
+        self.sched.start(self.script.id)
+        self.sched.stop()
+
+        self.assertFalse(self.sched.is_running())
+        self.assertFalse(self.sched.stop())
+
     def test_state_waiting_slaves(self):
         webinterface = WSClient()
         webinterface.join_group('notifications')

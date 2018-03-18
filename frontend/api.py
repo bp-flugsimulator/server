@@ -766,6 +766,35 @@ def script_run(request, script_id):
     else:
         return HttpResponseForbidden()
 
+def script_stop(request):
+    """
+    Processes an method invocation (stop) for a `ScriptModel` (see
+    @frontend.sheduler.stop_loop)
+
+    HTTP Methods
+    ------------
+        POST:
+            Invokes the method for the `ScriptModel` (which is
+            specified in the URL).
+
+    Parameters
+    ----------
+        request: HttpRequest
+            The request which should be processed.
+
+    Returns
+    -------
+        HttpResponse:
+            If the HTTP method is not supported, then an `HttpResponseForbidden`
+            is returned.
+    """
+
+    if request.method == 'POST':
+        FSIM_CURRENT_SCHEDULER.stop()
+        FSIM_CURRENT_SCHEDULER.notify()
+        return StatusResponse.ok('')
+    else:
+        return HttpResponseForbidden()
 
 def filesystem_set(request):
     """
