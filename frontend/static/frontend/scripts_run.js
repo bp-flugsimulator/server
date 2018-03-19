@@ -48,4 +48,31 @@ $(document).ready(function () {
             },
         });
     });
+
+    var countdownCurrent = 30;
+    var interval = setInterval(function() {
+        countdownCurrent -= 1;
+
+        $('.countdown-value[data-value]').each(function(idx, val) {
+            console.log(val);
+            val.setAttribute('data-value', countdownCurrent);
+        });
+
+        if (countdownCurrent === 0) {
+            clearInterval(interval);
+
+            basicRequest({
+                type: 'POST',
+                url: '/api/script/' + id + '/run',
+                action: 'start script',
+                onSuccess: function() {
+                    window.location.href = '/scripts/run';
+                }
+            });
+        }
+    }, 1000);
+
+    $('.countdown-abort').on('click', function() {
+        clearInterval(interval);
+    });
 });

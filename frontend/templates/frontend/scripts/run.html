@@ -12,7 +12,12 @@
     <div>
         <span class="background-text-large">No scripts running</span>
         <br>
+        {% if ran %}
+        <span class="background-text-large">Starting script {{ ran.name }} in <i class="countdown-value" data-value="30"></i> seconds.</span>
+        <button type="button" class="countdown-abort">Abort countdown</button>
+        {% else %}
         <span class="background-text-normal">click run on a <a class="text-info" href="/scripts">script</a></span>
+        {% endif %}
     </div>
     {% else %}
     <div>
@@ -39,7 +44,6 @@
                 <i class="mdi"></i>
                 <i class="fsim-progress-name">Finished</i>
             </li>
-
         </ul>
 
         <button type="button" class="container-fluid btn btn-danger navbar-btn short-disable text-uppercase script-action-stop" data-script-id="{{ script.id }}" {% if script.is_initialized and not script.is_running and not script.has_error %}disabled{% elif script.has_error %}disabled{% else %}{% endif %}>
