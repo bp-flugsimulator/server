@@ -53,19 +53,24 @@ $(document).ready(function () {
     var interval = setInterval(function() {
         countdownCurrent -= 1;
 
-        $('.countdown-value[data-value]').each(function(idx, val) {
+        $('.countdown-value[data-value][data-script]').each(function(idx, val) {
             console.log(val);
             val.setAttribute('data-value', countdownCurrent);
         });
+
+        let script = $('.countdown-value[data-value][data-script]').first().attr('data-script');
 
         if (countdownCurrent === 0) {
             clearInterval(interval);
 
             basicRequest({
                 type: 'POST',
-                url: '/api/script/' + id + '/run',
+                url: '/api/script/' + script + '/run',
                 action: 'start script',
                 onSuccess: function() {
+                    window.location.href = '/scripts/run';
+                },
+                onError: function() {
                     window.location.href = '/scripts/run';
                 }
             });
