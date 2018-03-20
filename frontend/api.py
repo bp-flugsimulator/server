@@ -1037,3 +1037,36 @@ def filesystem_entry(request, filesystem_id):
             return StatusResponse(FilesystemNotExistError(err, filesystem_id))
     else:
         return HttpResponseForbidden()
+
+def filesystem_restore_all(request):
+    """
+    Process requests to reset all moved `FilesystemModel`s.
+
+    HTTP Methods
+    ------------
+        POST: 
+            Resets all moved `FilesystemModel`s
+    Parameters
+    ----------
+        request: HttpRequest
+            The request which should be processed.
+
+    Returns
+    -------
+        HttpResponse:
+            If the HTTP method is not supported, then an `HttpResponseForbidden`
+            is returned.
+    """
+    if request.method == 'POST':
+        query = request.GET.get('q', None)
+
+        filesystems = FilesystemModel.objects.all()
+        filesystems = filter(lambda x: x.is_moved, filesystems)
+        try:
+            for filesystem in list(filesystems):
+                fs_restore(filesystem)
+        except FsimError as err:
+            return StatusResponse(err)
+        return StatusResponse.ok("")
+    else:
+        return HttpResponseForbidden()
