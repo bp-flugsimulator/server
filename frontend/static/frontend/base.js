@@ -251,8 +251,8 @@ $(document).ready(function () {
                 type: 'POST',
                 url: '/api/filesystems/restore',
                 action: 'query',
-                onSuccess(payload) {
-                    resolve(payload);
+                onSuccess() {
+                    window.location.reload();
                 },
             });
         });

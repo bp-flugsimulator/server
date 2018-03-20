@@ -3,7 +3,7 @@ This module contains all functions that handle requests on the REST api.
 """
 import logging
 
-from django.http import HttpResponseForbidden
+from django.http import HttpResponseForbidden, HttpRequest
 from django.http.request import QueryDict
 from django.core.exceptions import ValidationError
 from django.db.utils import IntegrityError
@@ -1058,6 +1058,13 @@ def filesystem_restore_all(request):
             is returned.
     """
     if request.method == 'POST':
+        stopScriptRequest = HttpRequest()
+        stopScriptRequest.method = 'POST'
+        stopScriptRequest.url = '/frontend/script/stop'
+        stopScriptRequest.action = 'query'
+        
+        script_stop(stopScriptRequest)
+
         query = request.GET.get('q', None)
 
         filesystems = FilesystemModel.objects.all()
@@ -1067,6 +1074,7 @@ def filesystem_restore_all(request):
                 fs_restore(filesystem)
         except FsimError as err:
             return StatusResponse(err)
+
         return StatusResponse.ok("")
     else:
         return HttpResponseForbidden()
