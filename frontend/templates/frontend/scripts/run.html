@@ -10,12 +10,12 @@
 <div class="ml-4 mr-4">
     {% if not script %}
     <div>
+        {% if ran %}
+        <span class="background-text-large">
+            The script {{ ran.name }} will start in <i class="countdown-value" data-script="{{ ran.id }}" data-value="30"></i> seconds. <br> To cancel this click <a href="#" class="countdown-abort">Abort</a>.</span>
+        {% else %}
         <span class="background-text-large">No scripts running</span>
         <br>
-        {% if ran %}
-        <span class="background-text-large">Starting script {{ ran.name }} in <i class="countdown-value" data-script="{{ ran.id }}" data-value="30"></i> seconds.</span>
-        <button type="button" class="countdown-abort">Abort countdown</button>
-        {% else %}
         <span class="background-text-normal">click run on a <a class="text-info" href="/scripts">script</a></span>
         {% endif %}
     </div>
