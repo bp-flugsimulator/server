@@ -1422,7 +1422,7 @@ class FilesystemTests(StatusTestCase):
     def test_restore_all_post_success(self):
         slave = SlaveFactory(online=True)
         slave2 = SlaveFactory(online=True)
-        filesystem = MovedFileFactory(slave=slave)
+        MovedFileFactory(slave=slave)
         MovedFileFactory(slave=slave2)
 
         # connect slave to websocket
@@ -1437,7 +1437,7 @@ class FilesystemTests(StatusTestCase):
             Status.from_json(response.content.decode('utf-8')),
             Status.ok(''),
         )
-    
+
     def test_restore_all_put_forbidden(self):
         response = self.client.put(
             reverse("frontend:filesystem_restore_all"))
