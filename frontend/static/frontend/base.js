@@ -246,15 +246,24 @@ $(document).ready(function () {
     });
 
     $('.restore-filesystem-navbar').click(function() {
-        let slavePromise = new Promise(function(resolve){
-            basicRequest({
-                type: 'POST',
-                url: '/api/filesystems/restore',
-                action: 'query',
-                onSuccess() {
-                    window.location.reload();
-                },
-            });
+        basicRequest({
+            type: 'POST',
+            url: '/api/filesystems/restore',
+            action: 'query',
+            onSuccess() {
+                window.location.reload();
+            },
         });
+    });
+
+    $('.stop-programs-navbar').click(function() {
+        basicRequest({
+            type: 'POST',
+            url: '/api/programs/stop',
+            action: 'query',
+            onSuccess() {
+                window.location.reload();
+            }
+        })
     });
 });
