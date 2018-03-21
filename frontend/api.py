@@ -1044,7 +1044,7 @@ def filesystem_restore_all(request):
 
     HTTP Methods
     ------------
-        POST: 
+        POST:
             Resets all moved `FilesystemModel`s
     Parameters
     ----------
@@ -1062,10 +1062,8 @@ def filesystem_restore_all(request):
         stopScriptRequest.method = 'POST'
         stopScriptRequest.url = '/frontend/script/stop'
         stopScriptRequest.action = 'query'
-        
-        script_stop(stopScriptRequest)
 
-        query = request.GET.get('q', None)
+        script_stop(stopScriptRequest)
 
         filesystems = FilesystemModel.objects.all()
         filesystems = filter(lambda x: x.is_moved, filesystems)

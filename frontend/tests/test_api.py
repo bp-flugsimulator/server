@@ -1404,8 +1404,8 @@ class FilesystemTests(StatusTestCase):
 
     def test_restore_all_post_offline_error(self):
         slave = SlaveFactory(online=False)
-        filesystem = MovedFileFactory(slave=slave)
-        
+        MovedFileFactory(slave=slave)
+
         # connect slave to websocket
         ws_client = WSClient()
         ws_client.join_group('client_' + str(slave.id))
@@ -1423,7 +1423,7 @@ class FilesystemTests(StatusTestCase):
         slave = SlaveFactory(online=True)
         slave2 = SlaveFactory(online=True)
         filesystem = MovedFileFactory(slave=slave)
-        filesystem2 = MovedFileFactory(slave=slave2)
+        MovedFileFactory(slave=slave2)
 
         # connect slave to websocket
         ws_client = WSClient()

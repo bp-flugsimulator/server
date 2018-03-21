@@ -56,7 +56,7 @@ urlpatterns = [  # pylint: disable=C0103
     url(r'^api/filesystem/([0-9]+)/restore$',
         api.filesystem_restore,
         name='filesystem_restore',),
-    url(r'^api/filesystems/restore', 
-        api.filesystem_restore_all, 
+    url(r'^api/filesystems/restore',
+        api.filesystem_restore_all,
         name='filesystem_restore_all'),
 ]
