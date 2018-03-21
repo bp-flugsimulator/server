@@ -55,7 +55,6 @@ $(document).ready(function () {
             countdownCurrent -= 1;
 
             $('.countdown-value[data-value][data-script]').each(function(idx, val) {
-                console.log(val);
                 val.setAttribute('data-value', countdownCurrent);
             });
 
@@ -63,7 +62,6 @@ $(document).ready(function () {
 
             if (countdownCurrent === 0) {
                 clearInterval(interval);
-
                 basicRequest({
                     type: 'POST',
                     url: '/api/script/' + script + '/run',
