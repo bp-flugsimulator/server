@@ -1310,7 +1310,6 @@ class FilesystemTests(StatusTestCase):
         filesystem.source_path = "/" + filesystem.source_path
         filesystem.destination_path = "/test/" + filesystem.destination_path
         filesystem.save()
-
         (path, _) = os.path.split(filesystem.destination_path)
 
         conflict = FileFactory(
@@ -1402,6 +1401,47 @@ class FilesystemTests(StatusTestCase):
             Status.err(SlaveOfflineError),
             Status.from_json(move_response.content.decode('utf-8')),
         )
+
+    def test_restore_all_post_offline_error(self):
+        slave = SlaveFactory(online=False)
+        MovedFileFactory(slave=slave)
+
+        # connect slave to websocket
+        ws_client = WSClient()
+        ws_client.join_group('client_' + str(slave.id))
+
+        response = self.client.post(
+            reverse("frontend:filesystem_restore_all"))
+        self.assertEqual(response.status_code, 200)
+
+        self.assertStatusRegex(
+            Status.err(SlaveOfflineError),
+            Status.from_json(response.content.decode('utf-8')),
+        )
+
+    def test_restore_all_post_success(self):
+        slave = SlaveFactory(online=True)
+        slave2 = SlaveFactory(online=True)
+        MovedFileFactory(slave=slave)
+        MovedFileFactory(slave=slave2)
+
+        # connect slave to websocket
+        ws_client = WSClient()
+        ws_client.join_group('client_' + str(slave.id))
+
+        response = self.client.post(
+            reverse("frontend:filesystem_restore_all"))
+        self.assertEqual(response.status_code, 200)
+
+        self.assertEqual(
+            Status.from_json(response.content.decode('utf-8')),
+            Status.ok(''),
+        )
+
+    def test_restore_all_put_forbidden(self):
+        response = self.client.put(
+            reverse("frontend:filesystem_restore_all"))
+        self.assertEqual(response.status_code, 403)
 
 
 class ProgramTests(StatusTestCase):

@@ -3,7 +3,7 @@ This module contains all functions that handle requests on the REST api.
 """
 import logging
 
-from django.http import HttpResponseForbidden
+from django.http import HttpResponseForbidden, HttpRequest
 from django.http.request import QueryDict
 from django.core.exceptions import ValidationError
 from django.db.utils import IntegrityError
@@ -1035,5 +1035,44 @@ def filesystem_entry(request, filesystem_id):
                 return StatusResponse(Status.err(form.errors))
         except FilesystemModel.DoesNotExist as err:
             return StatusResponse(FilesystemNotExistError(err, filesystem_id))
+    else:
+        return HttpResponseForbidden()
+
+def filesystem_restore_all(request):
+    """
+    Process requests to reset all moved `FilesystemModel`s.
+
+    HTTP Methods
+    ------------
+        POST:
+            Resets all moved `FilesystemModel`s
+    Parameters
+    ----------
+        request: HttpRequest
+            The request which should be processed.
+
+    Returns
+    -------
+        HttpResponse:
+            If the HTTP method is not supported, then an `HttpResponseForbidden`
+            is returned.
+    """
+    if request.method == 'POST':
+        stopScriptRequest = HttpRequest()
+        stopScriptRequest.method = 'POST'
+        stopScriptRequest.url = '/frontend/script/stop'
+        stopScriptRequest.action = 'query'
+
+        script_stop(stopScriptRequest)
+
+        filesystems = FilesystemModel.objects.all()
+        filesystems = filter(lambda x: x.is_moved, filesystems)
+        try:
+            for filesystem in list(filesystems):
+                fs_restore(filesystem)
+        except FsimError as err:
+            return StatusResponse(err)
+
+        return StatusResponse.ok("")
     else:
         return HttpResponseForbidden()
