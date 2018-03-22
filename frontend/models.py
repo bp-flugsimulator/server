@@ -357,7 +357,7 @@ class Program(Model):
                 One of "running", "error", "success" or "unknown"
         """
         if self.is_running:
-            return "warning" # is running
+            return "warning" # == running
         elif self.is_error:
             return "error"
         elif self.is_executed:
@@ -646,8 +646,8 @@ class Script(Model):
         stages = list()
 
         for i in self.indexes:
-            programs = Program.objects.filter(scriptgraphprograms__index=i, scriptgraphprograms__script= self).distinct()
-            filesystems = Filesystem.objects.filter(scriptgraphfiles__index=i, scriptgraphfiles__script= self).distinct()
+            programs = Program.objects.filter(scriptgraphprograms__index=i, scriptgraphprograms__script=self).distinct()
+            filesystems = Filesystem.objects.filter(scriptgraphfiles__index=i, scriptgraphfiles__script=self).distinct()
             stages.append({'index': i, 'programs': programs, 'filesystems': filesystems})
 
         return stages

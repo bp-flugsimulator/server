@@ -18,7 +18,7 @@
     <div>
         <h4 class="font-weight-bold text-uppercase">CURRENT STATUS</h4>
         <ul class="list-group">
-            <li class="list-group-item fsim-progress" id="runInit{{ script.id }}" data-state="{% if script.is_initialized %}done{% else %}none{% endif %}">
+            <li class="btn list-group-item fsim-progress" id="runInit{{ script.id }}" data-state="{% if script.is_initialized %}done{% else %}none{% endif %}">
                 <i class="mdi"></i>
                 <i class="fsim-progress-name">Initial</i>
             </li>
@@ -33,16 +33,12 @@
                     <div class="list-group rounded shadow" id="slaveTabList" role="tablist">
 
                     {% for slave in involved_slaves %}
-                        <a class="d-flex justify-content-between align-items-center list-group-item font-weight-bold bg-light text-dark list-group-flush fade active show " data-state="{{ slave.data_state }}" id="slaveTab{{ slave.id }}" data-toggle="tab" href="#slaveTabContent{{ slave.id }}" data-slave-id="{{ slave.id }}">
+                        <a class="d-flex  list-group-item font-weight-bold bg-light text-dark list-group-flush fade active show " data-state="{{ slave.data_state }}" id="slaveTab{{ slave.id }}" data-toggle="tab" href="#slaveTabContent{{ slave.id }}" data-slave-id="{{ slave.id }}">
                             <i>
                                 <i class="mdi mdi-checkbox-blank-circle"></i>
                                 <i class="fsim-slave-status-icon"></i>
                             </i>
-                            <div>{{ slave.name }}</div>
-                            <span class="badge badge-dark badge-pill">
-                                <i class="mdi mdi-run status-badge" name="status-badge-running" data-value="{{ slave.current_running }}"></i>
-                                <i class="mdi mdi-alert status-badge"name="status-badge-errored" data-value="{{ slave.current_errored }}"></i>
-                            </span>
+                            <span>{{ slave.name }}</span>
                         </a>
                     {% endfor %}
                     </div>
@@ -79,7 +75,7 @@
                     </div>
                 </li>
             {% endfor %}
-            <li class="list-group-item fsim-progress" id="runDone{{ script.id }}" data-state="{% if script.is_initialized and not script.is_running and not script.has_error %}done{% elif script.has_error %}error{% else %}none{% endif %}">
+            <li class="btn list-group-item fsim-progress" id="runDone{{ script.id }}" data-state="{% if script.is_initialized and not script.is_running and not script.has_error %}done{% elif script.has_error %}error{% else %}none{% endif %}">
                 <i class="mdi"></i>
                 <i class="fsim-progress-name">Finished</i>
             </li>
