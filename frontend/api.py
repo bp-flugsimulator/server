@@ -295,6 +295,10 @@ def slave_wol(request, slave_id):
     else:
         return HttpResponseForbidden()
 
+def slave_shutdown_all(request):
+    print("got request")
+    return StatusResponse.ok("")
+
 
 def program_set(request):
     """

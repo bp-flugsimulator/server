@@ -26,12 +26,13 @@ urlpatterns = [  # pylint: disable=C0103
     url(r'^api/script/stop$', api.script_stop, name='script_stop'),
     url(r'^api/script/([0-9]+)/copy$', api.script_copy, name='script_copy'),
     # Slaves
-    url(r'^api/slaves', api.slave_set, name='slave_set'),
+    url(r'^api/slaves$', api.slave_set, name='slave_set'),
     url(r'^api/slave/([0-9]+)$', api.slave_entry, name='slave_entry'),
     url(r'^api/slave/([0-9]+)/wol$', api.slave_wol, name='slave_wol'),
     url(r'^api/slave/([0-9]+)/shutdown$',
         api.slave_shutdown,
         name='slave_shutdown',),
+    url(r'^api/slaves/shutdown', api.slave_shutdown_all, name='slave_shutdown_all'),
     # Programs
     url(r'^api/programs$', api.program_set, name='program_set'),
     url(r'^api/program/([0-9]+)$', api.program_entry, name='program_entry'),
