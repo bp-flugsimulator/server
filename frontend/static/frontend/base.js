@@ -268,6 +268,7 @@ $(document).ready(function () {
     });
 
     $('#shutdown-clients-navbar').click(function() {
+        window.location.reload();
         basicRequest({
             type: 'POST',
             url: '/api/slaves/shutdown',
@@ -275,22 +276,17 @@ $(document).ready(function () {
             data: {
                 shutdown_master: false,
             },
-            onSuccess() {
-                window.location.reload();
-            },
         });
     });
 
     $('#shutdown-navbar').click(function () {
+        window.location.reload();
         basicRequest({
             type: 'POST',
             url: '/api/slaves/shutdown',
             action: 'query',
             data: {
                 shutdown_master: true,
-            },
-            onSuccess() {
-                window.location.reload();
             },
         });
     });
