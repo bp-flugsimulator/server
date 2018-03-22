@@ -267,6 +267,27 @@ $(document).ready(function () {
         });
     });
 
+    $('#restoreAllButton').click(function () {
+        $('#warningBody').html('Are you sure you want to restore all files and directories?');
+        $('#warningButton').html('Restore Files');
+        $('#warningModal').modal('toggle');
+    });
+    $('#stopAllButton').click(function () {
+        $('#warningBody').html('Are you sure you want to stop all programs?');
+        $('#warningButton').html('Stop Programs');
+        $('#warningModal').modal('toggle');
+    });
+    $('#shutdownClientsButton').click(function () {
+        $('#warningBody').html('Are you sure you want to shutdown all Clients?');
+        $('#warningButton').html('Shutdown Clients');
+        $('#warningModal').modal('toggle');
+    });
+    $('#shutdownAllButton').click(function () {
+        $('#warningBody').html('Are you sure you want to shutdown the simulator?');
+        $('#warningButton').html('Shutdown');
+        $('#warningModal').modal('toggle');
+    });
+
     $('.shutdown-navbar').click(function() {
         basicRequest({
             type: 'POST',
