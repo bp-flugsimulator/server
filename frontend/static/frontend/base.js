@@ -263,7 +263,7 @@ $(document).ready(function () {
             action: 'query',
             onSuccess() {
                 window.location.reload();
-            }
-        })
+            },
+        });
     });
 });
