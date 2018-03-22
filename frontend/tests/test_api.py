@@ -709,9 +709,9 @@ class ScriptTest(StatusTestCase):
             reverse("frontend:script_run", args=[script.id]))
         self.assertEqual(response.status_code, 200)
 
-        response = self.client.post(
-            reverse("frontend:script_stop"))
+        response = self.client.post(reverse("frontend:script_stop"))
         self.assertEqual(response.status_code, 200)
+
 
 class FilesystemTests(StatusTestCase):
     def test_set_delete_forbidden(self):
@@ -1413,8 +1413,7 @@ class FilesystemTests(StatusTestCase):
         ws_client = WSClient()
         ws_client.join_group('client_' + str(slave.id))
 
-        response = self.client.post(
-            reverse("frontend:filesystem_restore_all"))
+        response = self.client.post(reverse("frontend:filesystem_restore_all"))
         self.assertEqual(response.status_code, 200)
 
         self.assertStatusRegex(
@@ -1432,8 +1431,7 @@ class FilesystemTests(StatusTestCase):
         ws_client = WSClient()
         ws_client.join_group('client_' + str(slave.id))
 
-        response = self.client.post(
-            reverse("frontend:filesystem_restore_all"))
+        response = self.client.post(reverse("frontend:filesystem_restore_all"))
         self.assertEqual(response.status_code, 200)
 
         self.assertEqual(
@@ -1442,8 +1440,7 @@ class FilesystemTests(StatusTestCase):
         )
 
     def test_restore_all_put_forbidden(self):
-        response = self.client.put(
-            reverse("frontend:filesystem_restore_all"))
+        response = self.client.put(reverse("frontend:filesystem_restore_all"))
         self.assertEqual(response.status_code, 403)
 
 
@@ -2121,8 +2118,7 @@ class ProgramTests(StatusTestCase):
         ws_client = WSClient()
         ws_client.join_group('client_' + str(slave.id))
 
-        response = self.client.post(
-            reverse("frontend:program_stop_all"))
+        response = self.client.post(reverse("frontend:program_stop_all"))
         self.assertEqual(response.status_code, 200)
 
         self.assertStatusRegex(
@@ -2140,8 +2136,7 @@ class ProgramTests(StatusTestCase):
         ws_client = WSClient()
         ws_client.join_group('client_' + str(slave.id))
 
-        response = self.client.post(
-            reverse("frontend:program_stop_all"))
+        response = self.client.post(reverse("frontend:program_stop_all"))
         self.assertEqual(response.status_code, 200)
 
         self.assertEqual(
@@ -2150,8 +2145,7 @@ class ProgramTests(StatusTestCase):
         )
 
     def test_stop_all_put_forbidden(self):
-        response = self.client.put(
-            reverse("frontend:program_stop_all"))
+        response = self.client.put(reverse("frontend:program_stop_all"))
         self.assertEqual(response.status_code, 403)
 
 

@@ -17,7 +17,6 @@ from django.test import TestCase
 from django.core.exceptions import ValidationError
 from django.db.models.query import QuerySet
 
-
 from frontend.apps import flush
 
 from frontend.models import (
@@ -74,11 +73,17 @@ class DatabaseTests(TestCase):
         script = ScriptFactory()
         program_node = SGPFactory(script=script, index=0)
         filesystem_node = SGFFactory(script=script, index=0)
-        print([{'index':0, 'programs':QuerySet(program_node.program), 'filesystems':QuerySet(filesystem_node.filesystem)}])
+        print([{
+            'index': 0,
+            'programs': QuerySet(program_node.program),
+            'filesystems': QuerySet(filesystem_node.filesystem)
+        }])
         print(script.stages)
 
-        self.assertEqual({program_node.program}, set(script.stages[0]['programs']))
-        self.assertEqual({filesystem_node.filesystem}, set(script.stages[0]['filesystems']))
+        self.assertEqual({program_node.program},
+                         set(script.stages[0]['programs']))
+        self.assertEqual({filesystem_node.filesystem},
+                         set(script.stages[0]['filesystems']))
         self.assertEqual(0, script.stages[0]['index'])
 
     def test_script_check_online(self):
@@ -111,7 +116,6 @@ class DatabaseTests(TestCase):
         self.assertEqual('unknown', offline_slave.data_state)
         online_slave = SlaveFactory(online=True)
         self.assertEqual('success', online_slave.data_state)
-
 
     def test_slave_has_err(self):
         slave = SlaveFactory()
