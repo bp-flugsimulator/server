@@ -245,7 +245,7 @@ $(document).ready(function () {
         trigger: 'hover'
     });
 
-    $('.restore-filesystem-navbar').click(function() {
+    $('#restore-filesystem-navbar').click(function() {
         basicRequest({
             type: 'POST',
             url: '/api/filesystems/restore',
@@ -256,7 +256,7 @@ $(document).ready(function () {
         });
     });
 
-    $('.stop-programs-navbar').click(function() {
+    $('#stop-programs-navbar').click(function() {
         basicRequest({
             type: 'POST',
             url: '/api/programs/stop',
@@ -267,7 +267,7 @@ $(document).ready(function () {
         });
     });
 
-    $('.shutdown-clients-navbar').click(function() {
+    $('#shutdown-clients-navbar').click(function() {
         basicRequest({
             type: 'POST',
             url: '/api/slaves/shutdown',
@@ -278,7 +278,7 @@ $(document).ready(function () {
         });
     });
 
-    $('.shutdown-navbar').click(function () {
+    $('#shutdown-navbar').click(function () {
         basicRequest({
             type: 'POST',
             url: '/api/slaves/shutdown',
@@ -291,30 +291,26 @@ $(document).ready(function () {
 
     $('#restoreAllButton').click(function () {
         $('#warningBody').html('Are you sure you want to restore all files and directories?');
-        $('#warningButton').html('Restore Files')
-            .removeClass()
-            .addClass('restore-filesystem-navbar');
+        $('.modal-button').hide();
+        $('#restore-filesystem-navbar').show()
         $('#warningModal').modal('toggle');
     });
     $('#stopAllButton').click(function () {
         $('#warningBody').html('Are you sure you want to stop all programs?');
-        $('#warningButton').html('Stop Programs')
-            .removeClass()
-            .addClass('stop-programs-navbar');
+        $('.modal-button').hide();
+        $('#stop-programs-navbar').show()
         $('#warningModal').modal('toggle');
     });
     $('#shutdownClientsButton').click(function () {
         $('#warningBody').html('Are you sure you want to shutdown all Clients?');
-        $('#warningButton').html('Shutdown Clients')
-            .removeClass()
-            .addClass('shutdown-clients-navbar');
+        $('.modal-button').hide();
+        $('#shutdown-clients-navbar').show()
         $('#warningModal').modal('toggle');
     });
     $('#shutdownAllButton').click(function () {
         $('#warningBody').html('Are you sure you want to shutdown the simulator?');
-        $('#warningButton').html('Shutdown')
-            .removeClass()
-            .addClass('shutdown-navbar');
+        $('.modal-button').hide();
+        $('#shutdown-navbar').show()
         $('#warningModal').modal('toggle');
     });
 });

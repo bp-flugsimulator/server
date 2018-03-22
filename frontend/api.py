@@ -315,10 +315,10 @@ def slave_shutdown_all(request):
             is returned.
     """
     if request.method == 'POST':
-        
-        
-        
-        
+
+
+
+
         if request.POST["shutdown_master"]):
             print("master is shutting down")
     return StatusResponse.ok("")
