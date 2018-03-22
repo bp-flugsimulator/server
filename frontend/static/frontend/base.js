@@ -274,7 +274,10 @@ $(document).ready(function () {
             action: 'query',
             data: {
                 shutdown_master: false,
-            }
+            },
+            onSuccess() {
+                window.location.reload();
+            },
         });
     });
 
@@ -285,7 +288,10 @@ $(document).ready(function () {
             action: 'query',
             data: {
                 shutdown_master: true,
-            }
+            },
+            onSuccess() {
+                window.location.reload();
+            },
         });
     });
 
