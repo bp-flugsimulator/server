@@ -2,6 +2,8 @@
 This module contains all functions that handle requests on the REST api.
 """
 import logging
+import time
+import os
 
 from django.http import HttpResponseForbidden, HttpRequest
 from django.http.request import QueryDict
@@ -316,12 +318,41 @@ def slave_shutdown_all(request):
     """
     if request.method == 'POST':
 
+        print("clients are going to shutdown in 2 minutes")
+        stopProgramsRequest = HttpRequest()
+        stopProgramsRequest.method = 'POST'
+        stopProgramsRequest.url = '/frontend/program_stop_all/stop'
+        stopProgramsRequest.action = 'query'
+        program_stop_all(stopProgramsRequest)
 
+        restoreFilesystemsRequest = HttpRequest()
+        restoreFilesystemsRequest.method = 'POST'
+        restoreFilesystemsRequest.url = '/frontend/script/stop'
+        restoreFilesystemsRequest.action = 'query'
+        filesystem_restore_all(restoreFilesystemsRequest)
 
+        time.sleep(120)
 
-        if request.POST["shutdown_master"]):
-            print("master is shutting down")
-    return StatusResponse.ok("")
+        slaves = SlaveModel.objects.all()
+        slaves = filter(lambda x: x.is_online, slaves)
+        try:
+            for slave in list(slaves):
+                controller.slave_shutdown(slave)
+        except FsimError as err:
+            return StatusResponse(err)
+
+        try:
+            if request.POST["shutdown_master"]:
+                print("master is shutting down in a minute")
+                time.sleep(60)
+                os.shutdown()
+        except KeyError:
+            return StatusResponse(ValueError("shutdown_master field is missing"))
+
+        return StatusResponse.ok("")
+
+    else:
+        return HttpResponseForbidden()
 
 
 def program_set(request):
