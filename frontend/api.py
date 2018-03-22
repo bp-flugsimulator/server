@@ -319,7 +319,7 @@ def slave_shutdown_all(request):
     """
     if request.method == 'POST':
 
-        print("clients are going to shutdown in 2 minutes")
+        print("clients are going to shutdown in 30 seconds")
         stopProgramsRequest = HttpRequest()
         stopProgramsRequest.method = 'POST'
         stopProgramsRequest.url = '/frontend/program_stop_all/stop'
@@ -332,10 +332,11 @@ def slave_shutdown_all(request):
         restoreFilesystemsRequest.action = 'query'
         filesystem_restore_all(restoreFilesystemsRequest)
 
-        time.sleep(120)
+        time.sleep(30)
 
         slaves = SlaveModel.objects.all()
         slaves = filter(lambda x: x.is_online, slaves)
+        print("shutting down slaves")
         try:
             for slave in list(slaves):
                 controller.slave_shutdown(slave)
@@ -343,14 +344,15 @@ def slave_shutdown_all(request):
             return StatusResponse(err)
 
         try:
-            if request.POST["shutdown_master"]:
-                print("master is shutting down in a minute")
-                time.sleep(60)
+            if request.POST["shutdown_master"] == 'true':
+                print("master is shutting down in 30 seconds")
+                print(request.POST["shutdown_master"])
+                time.sleep(30)
                 #Shutdown os
-                if platform.system() == "Windows":
-                    os.system('shutdown -s -t 0')
-                else:
-                    os.system('shutdown -h now')
+                #if platform.system() == "Windows":
+                #    os.system('shutdown -s -t 0')
+                #else:
+                #    os.system('shutdown -h now')
         except KeyError:
             return StatusResponse(ValueError("shutdown_master field is missing"))
 
