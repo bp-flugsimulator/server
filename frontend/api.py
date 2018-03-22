@@ -296,7 +296,31 @@ def slave_wol(request, slave_id):
         return HttpResponseForbidden()
 
 def slave_shutdown_all(request):
-    print("got request")
+    """
+    Process requests to shutdown all slaves and the master.
+
+    HTTP Methods
+    ------------
+        POST:
+            Shuts all clients and the master down. The master is only shut down when it's specified in request.data.
+    Parameters
+    ----------
+        request: HttpRequest
+            The request which should be processed. Includes data in which is specified, if the master should be shut down.
+
+    Returns
+    -------
+        HttpResponse:
+            If the HTTP method is not supported, then an `HttpResponseForbidden`
+            is returned.
+    """
+    if request.method == 'POST':
+        
+        
+        
+        
+        if request.POST["shutdown_master"]):
+            print("master is shutting down")
     return StatusResponse.ok("")
 
 
