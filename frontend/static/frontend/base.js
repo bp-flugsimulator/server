@@ -245,50 +245,133 @@ $(document).ready(function () {
         trigger: 'hover'
     });
 
-    $('#restore-filesystem-navbar').click(function() {
-        basicRequest({
-            type: 'POST',
-            url: '/api/filesystems/restore',
-            action: 'query',
-            onSuccess() {
-                window.location.reload();
-            },
+    function stopScript() {
+        return new Promise(function(resolve, reject) {
+            basicRequest({
+                type: 'POST',
+                url: '/api/script/stop',
+                action: 'query',
+                onSuccess(payload){
+                    resolve(payload);
+                }
+            });
+        });        
+    }
+
+    function restoreChangedFilesystems() {
+        return new Promise(function(resolve, reject){
+            basicRequest({
+                type: 'POST',
+                url: '/api/filesystems/restore',
+                action: 'query',
+                onSuccess(payload){
+                    resolve(payload);
+                }
+            });
         });
+    }
+
+    function stopRunningPrograms() {
+        return new Promise(function(resolve, reject){
+            basicRequest({
+                type: 'POST',
+                url: '/api/programs/stop',
+                action: 'query',
+                onSuccess(payload){
+                    resolve(payload);
+                }
+            });     
+        });
+    }
+
+    function shutdownClients() {
+        return new Promise(function(resolve, reject){
+            basicRequest({
+                type: 'POST',
+                url: '/api/slaves/shutdown',
+                action: 'query',
+                onSuccess(payload){
+                    resolve(payload);
+                }
+            });
+        });
+    }
+
+    function shutdownMaster() {
+        return new Promise(function(resolve, reject){
+            basicRequest({
+                type: 'POST',
+                url: '/api/master/shutdown',
+                action: 'query',
+                onSuccess(payload){
+                    resolve(payload);
+                }
+            });
+        });
+    }
+
+    $('#restore-filesystem-navbar').click(function() {
+        stopScript().then(
+            function(val) {
+                restoreChangedFilesystems().then(
+                    function(val){
+                        window.location.reload();
+                    }
+                )
+            }
+        );
     });
 
     $('#stop-programs-navbar').click(function() {
-        basicRequest({
-            type: 'POST',
-            url: '/api/programs/stop',
-            action: 'query',
-            onSuccess() {
-                window.location.reload();
-            },
-        });
+        stopScript().then(
+            function(val) {
+                stopRunningPrograms().then(
+                    function(val){
+                        window.location.reload();
+                    }
+                )
+            }
+        );
     });
 
     $('#shutdown-clients-navbar').click(function() {
-        window.location.reload();
-        basicRequest({
-            type: 'POST',
-            url: '/api/slaves/shutdown',
-            action: 'query',
-            data: {
-                shutdown_master: false,
-            },
-        });
+        stopScript().then(
+            function(val) {
+                stopRunningPrograms().then(
+                    function(val) {
+                        restoreChangedFilesystems().then(
+                            function(val) {
+                                shutdownClients().then(
+                                    function(val) {
+                                        window.location.reload();
+                                    }
+                                )
+                            }
+                        )
+                    }
+                )
+            }
+        );
     });
 
     $('#shutdown-navbar').click(function () {
-        window.location.reload();
-        basicRequest({
-            type: 'POST',
-            url: '/api/slaves/shutdown',
-            action: 'query',
-            data: {
-                shutdown_master: true,
-            },
-        });
+        stopScript().then(
+            function(val) {
+                stopRunningPrograms().then(
+                    function(val) {
+                        restoreChangedFilesystems().then(
+                            function(val) {
+                                shutdownClients().then(
+                                    function(val) {
+                                        shutdownMaster();
+                                    }
+                                )
+                            }
+                        )
+                    }
+                )
+            }
+        );
     });
 
     $('#restoreAllButton').click(function () {

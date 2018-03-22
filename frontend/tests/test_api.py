@@ -2541,3 +2541,18 @@ class SlaveTests(StatusTestCase):
                 args=[0],
             ))
         self.assertEqual(response.status_code, 403)
+
+    def test_stop_all_post_success(self):
+        response = self.client.post(
+            reverse("frontend:slave_shutdown_all"))
+        self.assertEqual(response.status_code, 200)
+
+        self.assertEqual(
+            Status.from_json(response.content.decode('utf-8')),
+            Status.ok(''),
+        )
+
+    def test_stop_all_put_forbidden(self):
+        response = self.client.put(
+            reverse("frontend:slave_shutdown_all"))
+        self.assertEqual(response.status_code, 403)
