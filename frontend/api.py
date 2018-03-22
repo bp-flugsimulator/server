@@ -4,6 +4,7 @@ This module contains all functions that handle requests on the REST api.
 import logging
 import time
 import os
+import platform
 
 from django.http import HttpResponseForbidden, HttpRequest
 from django.http.request import QueryDict
@@ -345,7 +346,11 @@ def slave_shutdown_all(request):
             if request.POST["shutdown_master"]:
                 print("master is shutting down in a minute")
                 time.sleep(60)
-                os.shutdown()
+                #Shutdown os
+                if platform.system() == "Windows":
+                    os.system('shutdown -s -t 0')
+                else:
+                    os.system('shutdown -h now')
         except KeyError:
             return StatusResponse(ValueError("shutdown_master field is missing"))
 
