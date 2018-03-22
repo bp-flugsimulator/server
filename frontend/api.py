@@ -636,6 +636,45 @@ def program_log_disable(request, program_id):
     else:
         return HttpResponseForbidden()
 
+def program_stop_all(request):
+    """
+    Process requests to reset all moved `FilesystemModel`s.
+
+    HTTP Methods
+    ------------
+        POST:
+            Stops all started `ProgramModel`s
+    Parameters
+    ----------
+        request: HttpRequest
+            The request which should be processed.
+
+    Returns
+    -------
+        HttpResponse:
+            If the HTTP method is not supported, then an `HttpResponseForbidden`
+            is returned.
+    """
+    if request.method == 'POST':
+        stopScriptRequest = HttpRequest()
+        stopScriptRequest.method = 'POST'
+        stopScriptRequest.url = '/frontend/script/stop'
+        stopScriptRequest.action = 'query'
+
+        script_stop(stopScriptRequest)
+
+        programs = ProgramModel.objects.all()
+        programs = filter(lambda x: x.is_running, programs)
+        try:
+            for program in list(programs):
+                prog_stop(program)
+        except FsimError as err:
+            return StatusResponse(err)
+
+        return StatusResponse.ok("")
+    else:
+        return HttpResponseForbidden()
+
 
 def script_set(request):
     """
