@@ -55,14 +55,34 @@
                 <div class="navbar-collapse collapse w-110 order-3 dual-collapse2">
                     <ul class="navbar-nav ml-auto">
                         <li class="nav-item mr-2">
+                            <div class="dropdown">
+                                <button class="btn btn-danger dropdown-toggle" type="button" id="dropdownShutdownButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <i class="mdi mdi-power"></i>
+                                </button>
+                                <div class="dropdown-menu dropdown-menu-right shadow" aria-labelledby="dropdownShutdownButton">
+                                    <button class="dropdown-item restore-filesystem-navbar" type="button">
+                                        Restore Files
+                                    </button>
+                                    <button class="dropdown-item stop-programs-navbar" type="button">
+                                        Stop Programs
+                                    </button>
+                                    <div class="dropdown-divider"></div>
+                                    <button class="dropdown-item shutdown-navbar font-weight-bold" type="button">
+                                        <i class="mdi mdi-power"></i>
+                                        Shutdown
+                                    </button>
+                                </div>
+                            </div>
+                        </li>
+                        <!-- <li class="nav-item mr-2">
                             <button class="btn btn-danger restore-filesystem-navbar navbar-btn short-disable text-uppercase">Restore Filesystem</button>
                         </li>
 			            <li class "nav-item mr-2 ml-2">
 		            	    <button class="btn btn-danger stop-programs-navbar navbar-btn short-disable text-uppercase">Stop Programs</button>
-		                </li>    
+		                </li>
 		            	<li class="nav-item ml-2">
                             <button class="btn btn-danger shutdown-navbar navbar-btn short-disable text-uppercase">Shutdown all</button>
-                        </li>
+                        </li> -->
                     </ul>
                 </div>
                 <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
