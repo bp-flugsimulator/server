@@ -318,7 +318,7 @@ def slave_shutdown_all(request):
             is returned.
     """
     if request.method == 'POST':
-        
+
         print("clients are going to shutdown in 2 minutes")
         stopProgramsRequest = HttpRequest()
         stopProgramsRequest.method = 'POST'
@@ -333,7 +333,7 @@ def slave_shutdown_all(request):
         filesystem_restore_all(restoreFilesystemsRequest)
 
         time.sleep(120)
-        
+
         slaves = SlaveModel.objects.all()
         slaves = filter(lambda x: x.is_online, slaves)
         try:
