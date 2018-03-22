@@ -2112,6 +2112,48 @@ class ProgramTests(StatusTestCase):
             reverse('frontend:program_log_enable', args=[0]))
         self.assertEqual(response.status_code, 403)
 
+    def test_stop_all_post_offline_error(self):
+        slave = SlaveFactory(online=False)
+        program = ProgramFactory(slave=slave)
+        ProgramStatusFactory(program=program, running=True)
+
+        # connect slave to websocket
+        ws_client = WSClient()
+        ws_client.join_group('client_' + str(slave.id))
+
+        response = self.client.post(
+            reverse("frontend:program_stop_all"))
+        self.assertEqual(response.status_code, 200)
+
+        self.assertStatusRegex(
+            Status.err(SlaveOfflineError),
+            Status.from_json(response.content.decode('utf-8')),
+        )
+
+    def test_stop_all_post_success(self):
+        slave = SlaveFactory(online=True)
+        slave2 = SlaveFactory(online=True)
+        MovedFileFactory(slave=slave)
+        MovedFileFactory(slave=slave2)
+
+        # connect slave to websocket
+        ws_client = WSClient()
+        ws_client.join_group('client_' + str(slave.id))
+
+        response = self.client.post(
+            reverse("frontend:program_stop_all"))
+        self.assertEqual(response.status_code, 200)
+
+        self.assertEqual(
+            Status.from_json(response.content.decode('utf-8')),
+            Status.ok(''),
+        )
+
+    def test_stop_all_put_forbidden(self):
+        response = self.client.put(
+            reverse("frontend:program_stop_all"))
+        self.assertEqual(response.status_code, 403)
+
 
 class SlaveTests(StatusTestCase):
     def test_set_post_success(self):

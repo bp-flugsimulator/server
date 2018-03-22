@@ -44,18 +44,12 @@ urlpatterns = [  # pylint: disable=C0103
     ),
     url(r'^api/program/([0-9]+)/stop$', api.program_stop, name='program_stop'),
     url(r'^api/program/([0-9]+)/log$',
-        api.program_log_entry,
-        name='program_log_entry'),
-    url(
-        r'^api/program/([0-9]+)/log/enable$',
-        api.program_log_enable,
-        name='program_log_enable',
-    ),
-    url(
-        r'^api/program/([0-9]+)/log/disable$',
-        api.program_log_disable,
-        name='program_log_disable',
-    ),
+        api.program_log_entry, name='program_log_entry'),
+    url(r'^api/program/([0-9]+)/log/enable$', api.program_log_enable,
+        name='program_log_enable',),
+    url(r'^api/program/([0-9]+)/log/disable$', api.program_log_disable,
+        name='program_log_disable',),
+    url(r'^api/programs/stop', api.program_stop_all, name='program_stop_all'),
     # Filesystems
     url(r'^api/filesystems$', api.filesystem_set, name='filesystem_set'),
     url(
