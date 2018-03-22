@@ -267,28 +267,18 @@ $(document).ready(function () {
         });
     });
 
-    $('#restoreAllButton').click(function () {
-        $('#warningBody').html('Are you sure you want to restore all files and directories?');
-        $('#warningButton').html('Restore Files');
-        $('#warningModal').modal('toggle');
-    });
-    $('#stopAllButton').click(function () {
-        $('#warningBody').html('Are you sure you want to stop all programs?');
-        $('#warningButton').html('Stop Programs');
-        $('#warningModal').modal('toggle');
-    });
-    $('#shutdownClientsButton').click(function () {
-        $('#warningBody').html('Are you sure you want to shutdown all Clients?');
-        $('#warningButton').html('Shutdown Clients');
-        $('#warningModal').modal('toggle');
-    });
-    $('#shutdownAllButton').click(function () {
-        $('#warningBody').html('Are you sure you want to shutdown the simulator?');
-        $('#warningButton').html('Shutdown');
-        $('#warningModal').modal('toggle');
+    $('.shutdown-clients-navbar').click(function() {
+        basicRequest({
+            type: 'POST',
+            url: '/api/slaves/shutdown',
+            action: 'query',
+            data: {
+                shutdown_master: false,
+            }
+        });
     });
 
-    $('.shutdown-navbar').click(function() {
+    $('.shutdown-navbar').click(function () {
         basicRequest({
             type: 'POST',
             url: '/api/slaves/shutdown',
@@ -297,5 +287,34 @@ $(document).ready(function () {
                 shutdown_master: true,
             }
         });
+    });
+
+    $('#restoreAllButton').click(function () {
+        $('#warningBody').html('Are you sure you want to restore all files and directories?');
+        $('#warningButton').html('Restore Files')
+            .removeClass()
+            .addClass('restore-filesystem-navbar');
+        $('#warningModal').modal('toggle');
+    });
+    $('#stopAllButton').click(function () {
+        $('#warningBody').html('Are you sure you want to stop all programs?');
+        $('#warningButton').html('Stop Programs')
+            .removeClass()
+            .addClass('stop-programs-navbar');
+        $('#warningModal').modal('toggle');
+    });
+    $('#shutdownClientsButton').click(function () {
+        $('#warningBody').html('Are you sure you want to shutdown all Clients?');
+        $('#warningButton').html('Shutdown Clients')
+            .removeClass()
+            .addClass('shutdown-clients-navbar');
+        $('#warningModal').modal('toggle');
+    });
+    $('#shutdownAllButton').click(function () {
+        $('#warningBody').html('Are you sure you want to shutdown the simulator?');
+        $('#warningButton').html('Shutdown')
+            .removeClass()
+            .addClass('shutdown-navbar');
+        $('#warningModal').modal('toggle');
     });
 });
