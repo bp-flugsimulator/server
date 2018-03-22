@@ -244,4 +244,17 @@ $(document).ready(function () {
         placement: 'left',
         trigger: 'hover'
     });
+
+    $('.restore-filesystem-navbar').click(function() {
+        let slavePromise = new Promise(function(resolve){
+            basicRequest({
+                type: 'POST',
+                url: '/api/filesystems/restore',
+                action: 'query',
+                onSuccess() {
+                    window.location.reload();
+                },
+            });
+        });
+    });
 });

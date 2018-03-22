@@ -178,7 +178,7 @@ class DatabaseTests(TestCase):
         status.running = True
         status.save()
         program = ProgramModel.objects.get(id=program.id)
-        self.assertEqual(program.data_state, "running")
+        self.assertEqual(program.data_state, "warning")
 
     def test_program_error(self):
         status = ProgramStatusFactory(code="1")
