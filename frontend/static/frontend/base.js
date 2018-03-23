@@ -329,7 +329,7 @@ $(document).ready(function () {
                     function(val){
                         window.location.reload();
                     }
-                )
+                );
             }
         );
     });
@@ -345,11 +345,11 @@ $(document).ready(function () {
                                     function(val) {
                                         window.location.reload();
                                     }
-                                )
+                                );
                             }
-                        )
+                        );
                     }
-                )
+                );
             }
         );
     });
@@ -365,11 +365,11 @@ $(document).ready(function () {
                                     function(val) {
                                         shutdownMaster();
                                     }
-                                )
+                                );
                             }
-                        )
+                        );
                     }
-                )
+                );
             }
         );
     });
