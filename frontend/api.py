@@ -2,12 +2,10 @@
 This module contains all functions that handle requests on the REST api.
 """
 import logging
-import time
 import os
 import platform
-import json
 
-from django.http import HttpResponseForbidden, HttpRequest
+from django.http import HttpResponseForbidden
 from django.http.request import QueryDict
 from django.core.exceptions import ValidationError
 from django.db.utils import IntegrityError
@@ -355,7 +353,6 @@ def master_shutdown(request):
             os.system('shutdown -s -t 0')
         else:
             os.system('shutdown -h now')
-        
         return StatusResponse("ok")
     else:
         return HttpResponseForbidden()
