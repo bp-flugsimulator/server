@@ -73,18 +73,21 @@ class DatabaseTests(TestCase):
         script = ScriptFactory()
         program_node = SGPFactory(script=script, index=0)
         filesystem_node = SGFFactory(script=script, index=0)
-        print([{
-            'index': 0,
-            'programs': QuerySet(program_node.program),
-            'filesystems': QuerySet(filesystem_node.filesystem)
-        }])
-        print(script.stages)
 
-        self.assertEqual({program_node.program},
-                         set(script.stages[0]['programs']))
-        self.assertEqual({filesystem_node.filesystem},
-                         set(script.stages[0]['filesystems']))
         self.assertEqual(0, script.stages[0]['index'])
+        self.assertEqual(program_node.program.slave.name,
+                         script.stages[0]['slave_entries'][0]['name'])
+        self.assertEqual({program_node.program},
+                         set(script.stages[0]['slave_entries'][0]['programs']))
+        self.assertEqual(
+            set(), set(script.stages[0]['slave_entries'][0]['filesystems']))
+        self.assertEqual(filesystem_node.filesystem.slave.name,
+                         script.stages[0]['slave_entries'][1]['name'])
+        self.assertEqual(set(),
+                         set(script.stages[0]['slave_entries'][1]['programs']))
+        self.assertEqual(
+            {filesystem_node.filesystem},
+            set(script.stages[0]['slave_entries'][1]['filesystems']))
 
     def test_script_check_online(self):
         script = ScriptFactory()

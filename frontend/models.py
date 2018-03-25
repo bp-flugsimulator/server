@@ -646,18 +646,31 @@ class Script(Model):
         stages = list()
 
         for i in self.indexes:
-            programs = Program.objects.filter(
-                scriptgraphprograms__index=i,
-                scriptgraphprograms__script=self).distinct()
-            filesystems = Filesystem.objects.filter(
-                scriptgraphfiles__index=i,
-                scriptgraphfiles__script=self).distinct()
+            slave_entries = list()
+            slaves = Slave.objects.filter(
+                Q(program__scriptgraphprograms__script=self,
+                  program__scriptgraphprograms__index=i)
+                | Q(filesystem__scriptgraphfiles__script=self,
+                    filesystem__scriptgraphfiles__index=i)).distinct()
+            for slave in slaves:
+                programs = Program.objects.filter(
+                    scriptgraphprograms__index=i,
+                    scriptgraphprograms__script=self,
+                    slave=slave).distinct().order_by('slave__name')
+                filesystems = Filesystem.objects.filter(
+                    scriptgraphfiles__index=i,
+                    scriptgraphfiles__script=self,
+                    slave=slave).distinct().order_by('slave__name')
+                slave_entries.append({
+                    'name': slave.name,
+                    'programs': programs,
+                    'filesystems': filesystems
+                })
+
             stages.append({
                 'index': i,
-                'programs': programs,
-                'filesystems': filesystems
+                'slave_entries': slave_entries,
             })
-
         return stages
 
     @property
