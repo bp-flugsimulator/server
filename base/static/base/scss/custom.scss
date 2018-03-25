@@ -628,11 +628,11 @@ a[data-state=success] i.mdi-checkbox-blank-circle {
 }
 
 .fsim-box[data-state=error] {
-    background: linear-gradient(to right, $red 0, $red 8px, transparent 8px, transparent 100%) no-repeat;
+    background: linear-gradient(to right, $red 0, $red 8px, $white 8px, $white 100%) no-repeat;
 }
 
 .fsim-box[data-state=success], .fsim-box[data-state=moved] {
-    background: linear-gradient(to right, $green 0, $green 8px, transparent 8px, transparent 100%) no-repeat;
+    background: linear-gradient(to right, $green 0, $green 8px, $white 8px, $white 100%) no-repeat;
 }
 
 .fsim-box[data-state=warning], .fsim-box[data-state=running] {
@@ -640,7 +640,7 @@ a[data-state=success] i.mdi-checkbox-blank-circle {
 }
 
 .fsim-box[data-state=teal] {
-    background: linear-gradient(to right, $teal 0, $teal 8px, transparent 8px, transparent 100%) no-repeat;
+    background: linear-gradient(to right, $teal 0, $teal 8px, $white 8px, $white 100%) no-repeat;
 }
 
 .fsim-box .fsim-slave-status-icon {
