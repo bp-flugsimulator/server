@@ -2543,14 +2543,34 @@ class SlaveTests(StatusTestCase):
         self.assertEqual(response.status_code, 403)
 
     def test_stop_all_post_success(self):
+        online_slaves = list()
+        online_slave_websockets = list()
+
+        for _ in range(1000):
+            slave = SlaveFactory(online=True)
+            ws = WSClient()
+            ws.join_group('client_' + str(slave.id))
+            online_slave_websockets.append(ws)
+            online_slaves.append(slave)
+
+        offline_slave = SlaveFactory()
+        offline_slave_websocket = WSClient()
+        offline_slave_websocket.join_group('client_' + str(offline_slave.id))
+
         response = self.client.post(
             reverse("frontend:slave_shutdown_all"))
         self.assertEqual(response.status_code, 200)
+
+        for ws_client in online_slave_websockets:
+            self.assertEqual(Command('shutdown'), Command.from_json(json.dumps(ws_client.receive())))
+
+        self.assertIsNone(offline_slave_websocket.receive())
 
         self.assertEqual(
             Status.from_json(response.content.decode('utf-8')),
             Status.ok(''),
         )
+
 
     def test_stop_all_put_forbidden(self):
         response = self.client.put(
