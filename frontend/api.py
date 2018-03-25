@@ -835,6 +835,37 @@ def script_stop(request):
     else:
         return HttpResponseForbidden()
 
+
+def script_set_default(request, script_id):
+    """
+    Processes an method invocation (set_default) for a `ScriptModel`.
+    HTTP Methods
+    ------------
+        POST:
+            Invokes the method for the `ScriptModel` (which is
+            specified in the URL).
+
+    Parameters
+    ----------
+        request: HttpRequest
+            The request which should be processed.
+
+    Returns
+    -------
+        HttpResponse:
+            If the HTTP method is not supported, then an
+            `HttpResponseForbidden` is returned.
+    """
+    if request.method == 'POST':
+        try:
+            ScriptModel.set_last_started(script_id)
+            return StatusResponse.ok('')
+        except ScriptModel.DoesNotExist as err:
+            return StatusResponse(ScriptNotExistError(err, script_id))
+    else:
+        return HttpResponseForbidden()
+
+
 def filesystem_set(request):
     """
     Process requests on a set of `FilesystemModel`s.
