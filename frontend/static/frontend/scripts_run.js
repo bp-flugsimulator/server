@@ -42,6 +42,10 @@ const socketEventHandler = {
     programStarted(payload) {
         let statusContainer = $('#programStatusContainer_' + payload.pid);
         statusContainer.attr('data-state', 'warning');
+        let timestamp = $('#program_' + payload.pid + '_start_time');
+        let now = Math.round((new Date()).getTime() / 1000);
+        timestamp.removeAttr('data-timestamp');
+        timestamp.attr('data-timestamp', now);
     },
     programStopped(payload) {
         let statusContainer = $('#programStatusContainer_' + payload.pid);
@@ -71,9 +75,61 @@ const socketEventHandler = {
 
 const socket = fsimWebsocket(socketEventHandler);
 
+/**
+ * Updates the timestamps of every Program that has a start_time.
+ */
+function refreshTimestamps(){
+    let now = Math.round((new Date()).getTime() / 1000);
+
+    $('.stage').each(function (_) {
+        let start_time = 0;
+        let timestamp = 0;
+        let elapsed_time = 0;
+
+        $(this).children().find('.timestamp').each(function () {
+            let child_start_time = $(this).attr('data-start-time');
+            let child_timestamp = $(this).attr('data-timestamp');
+            let child_elapsed_time = now - child_timestamp;
+            if(child_start_time - child_elapsed_time > start_time - elapsed_time){
+                start_time = child_start_time;
+                timestamp = child_timestamp;
+                elapsed_time = child_elapsed_time;
+            }
+        });
+
+        if((start_time !== 0 || elapsed_time !== 0) && $(this).attr('data-state') === 'waiting') {
+            $(this).children('.stage-timestamp').text('(' + elapsed_time + '/' + start_time + ' s)');
+        } else {
+            $(this).children('.stage-timestamp').text('');
+        }
+    });
+
+    $('.timestamp').each(function(_) {
+        let start_time = $(this).attr('data-start-time');
+        let timestamp = $(this).attr('data-timestamp');
+        let elapsed_time = now - timestamp;
+
+        if (start_time === '0' || start_time === '-1'){
+            return;
+        }
+        let text = '(';
+
+        if(timestamp === '0'){
+            text += '0';
+        } else if(elapsed_time < start_time){
+            text += elapsed_time;
+        } else {
+            text += start_time;
+        }
+
+        $(this).text(text + '/' + start_time + ' s)');
+    });
+}
+
 $(document).ready(function () {
+    window.setInterval(function(){refreshTimestamps()}, 500);
+
     $('.script-action-stop').click(function (event) {
-        //let id = $(this).attr('data-script-id'); Not important
         basicRequest({
             type: 'POST',
             url: '/api/script/stop',

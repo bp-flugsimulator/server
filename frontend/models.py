@@ -17,6 +17,7 @@ from django.db.models import (
     BooleanField,
     OneToOneField,
     TextField,
+    DateTimeField,
     Count,
     Q,
 )
@@ -357,7 +358,7 @@ class Program(Model):
                 One of "running", "error", "success" or "unknown"
         """
         if self.is_running:
-            return "warning"  # == running
+            return "running"
         elif self.is_error:
             return "error"
         elif self.is_executed:
@@ -643,6 +644,15 @@ class Script(Model):
 
     @property
     def stages(self):
+        """
+        Returns a representation of all stages.
+
+        Returns
+        -------
+            list({index, list({name, programs, filesystems})}):
+                Contains every stage which consists of the index and all
+                programs/filesystem ordered by the slave.
+        """
         stages = list()
 
         for i in self.indexes:
@@ -722,6 +732,7 @@ class Script(Model):
         Script.objects.filter(id=script).update(
             is_running=True,
             is_initialized=True,
+            error_code='',
             current_index=-1,
         )
 
@@ -835,6 +846,8 @@ class ProgramStatus(Model):
         timeouted: BooleanField
             Indicator if the `Program` elapsed the amount of time it needs to
             execute.
+        start_time: DateTimeField
+            Indicator when the `Program` was started.
     """
     program = OneToOneField(
         Program,
@@ -845,3 +858,4 @@ class ProgramStatus(Model):
     command_uuid = CharField(max_length=32, unique=True)
     running = BooleanField(unique=False, default=True)
     timeouted = BooleanField(unique=False, default=False)
+    start_time = DateTimeField(default=0)

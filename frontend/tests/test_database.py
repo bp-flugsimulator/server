@@ -15,7 +15,7 @@ def test_<MODEL>_<OPERATION/ERROR>:
 
 from django.test import TestCase
 from django.core.exceptions import ValidationError
-from django.db.models.query import QuerySet
+from django.utils.timezone import now
 
 from frontend.apps import flush
 
@@ -196,7 +196,7 @@ class DatabaseTests(TestCase):
 
         self.assertEqual(program.data_state, "unknown")
 
-        status = ProgramStatusModel(program=program, code="0", running=False)
+        status = ProgramStatusModel(program=program, code="0", running=False, start_time=now())
         status.save()
 
         program = ProgramModel.objects.get(id=program.id)
@@ -210,7 +210,7 @@ class DatabaseTests(TestCase):
         status.running = True
         status.save()
         program = ProgramModel.objects.get(id=program.id)
-        self.assertEqual(program.data_state, "warning")
+        self.assertEqual(program.data_state, "running")
 
     def test_program_error(self):
         status = ProgramStatusFactory(code="1")
