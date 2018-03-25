@@ -858,4 +858,4 @@ class ProgramStatus(Model):
     command_uuid = CharField(max_length=32, unique=True)
     running = BooleanField(unique=False, default=True)
     timeouted = BooleanField(unique=False, default=False)
-    start_time = DateTimeField(default=0)
+    start_time = DateTimeField()
