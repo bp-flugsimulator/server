@@ -2,8 +2,10 @@
 This module contains all functions that handle requests on the REST api.
 """
 import logging
+import os
+import platform
 
-from django.http import HttpResponseForbidden, HttpRequest
+from django.http import HttpResponseForbidden
 from django.http.request import QueryDict
 from django.core.exceptions import ValidationError
 from django.db.utils import IntegrityError
@@ -295,6 +297,65 @@ def slave_wol(request, slave_id):
     else:
         return HttpResponseForbidden()
 
+def slave_shutdown_all(request):
+    """
+    Process requests to shutdown all slaves.
+
+    HTTP Methods
+    ------------
+        POST:
+            Shuts all clients down.
+    Parameters
+    ----------
+        request: HttpRequest
+            The request which should be processed.
+
+    Returns
+    -------
+        HttpResponse:
+            If the HTTP method is not supported, then an `HttpResponseForbidden`
+            is returned.
+    """
+    if request.method == 'POST':
+        slaves = SlaveModel.objects.all()
+        slaves = filter(lambda x: x.is_online, slaves)
+        try:
+            for slave in list(slaves):
+                controller.slave_shutdown(slave)
+        except FsimError as err:
+            return StatusResponse(err)
+
+        return StatusResponse.ok("")
+    else:
+        return HttpResponseForbidden()
+
+def master_shutdown(request):
+    """
+    Process requests to shutdown the master.
+
+    HTTP Methods
+    ------------
+        POST:
+            Shuts the master down.
+    Parameters
+    ----------
+        request: HttpRequest
+            The request which should be processed.
+
+    Returns
+    -------
+        HttpResponse:
+            If the HTTP method is not supported, then an `HttpResponseForbidden`
+            is returned.
+    """
+    if request.method == 'POST':
+        if platform.system() == "Windows":
+            os.system('shutdown -s -t 0')
+        else:
+            os.system('shutdown -h now')
+        return StatusResponse("ok")
+    else:
+        return HttpResponseForbidden()
 
 def program_set(request):
     """
@@ -628,13 +689,6 @@ def program_stop_all(request):
             is returned.
     """
     if request.method == 'POST':
-        stopScriptRequest = HttpRequest()
-        stopScriptRequest.method = 'POST'
-        stopScriptRequest.url = '/frontend/script/stop'
-        stopScriptRequest.action = 'query'
-
-        script_stop(stopScriptRequest)
-
         programs = ProgramModel.objects.all()
         programs = filter(lambda x: x.is_running, programs)
         try:
@@ -646,7 +700,6 @@ def program_stop_all(request):
         return StatusResponse.ok("")
     else:
         return HttpResponseForbidden()
-
 
 def script_set(request):
     """
@@ -813,8 +866,7 @@ def script_stop(request):
     HTTP Methods
     ------------
         POST:
-            Invokes the method for the `ScriptModel` (which is
-            specified in the URL).
+            Invokes the method for the `ScriptModel`
 
     Parameters
     ----------
@@ -1097,21 +1149,15 @@ def filesystem_restore_all(request):
             is returned.
     """
     if request.method == 'POST':
-        stopScriptRequest = HttpRequest()
-        stopScriptRequest.method = 'POST'
-        stopScriptRequest.url = '/frontend/script/stop'
-        stopScriptRequest.action = 'query'
-
-        script_stop(stopScriptRequest)
-
         filesystems = FilesystemModel.objects.all()
         filesystems = filter(lambda x: x.is_moved, filesystems)
         try:
             for filesystem in list(filesystems):
                 fs_restore(filesystem)
         except FsimError as err:
+            print("test")
             return StatusResponse(err)
 
-        return StatusResponse.ok("")
+        return StatusResponse.ok('')
     else:
         return HttpResponseForbidden()

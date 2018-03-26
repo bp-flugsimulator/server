@@ -111,7 +111,7 @@ function styleSlaveByStatus(sid, error, e_up, success, s_up) {
     let statusContainer = $('#slaveStatusContainer_' + sid);
     let statusTab = $('#slaveTab' + sid);
 
-    let style = function(boolean) {
+    let style = function (boolean) {
         return function (idx, elem) {
             let element = $(elem);
 
@@ -155,9 +155,9 @@ function notify(title, message, type) {
         title,
         message,
     },
-    {
-        type,
-        template: '<div data-notify="container" class="col-11 col-sm-3 alert" role="alert" data-notify-type="{0}">' +
+        {
+            type,
+            template: '<div data-notify="container" class="col-11 col-sm-3 alert" role="alert" data-notify-type="{0}">' +
             '<button type="button" aria-hidden="true" class="close" data-notify="dismiss">×</button>' +
             '<div class="col">' +
             '<span class="row" data-notify="title">' +
@@ -166,7 +166,7 @@ function notify(title, message, type) {
             '<span class="row text-justify" data-notify="message">{2}</span>' +
             '</div>' +
             '</div>'
-    });
+        });
 }
 
 /**
@@ -193,7 +193,7 @@ function basicRequest(options) {
         converters: {
             'text json': Status.from_json
         },
-        success: function(status) {
+        success: function (status) {
             if (status.is_ok()) {
                 if (options.onSuccess !== undefined) {
                     options.onSuccess(status.payload);
@@ -206,7 +206,7 @@ function basicRequest(options) {
                 }
             }
         },
-        error: function(xhr, errorString, errorCode) {
+        error: function (xhr, errorString, errorCode) {
             notify('HTTP request error', 'Could not deliver request `' + options.action + '` to the server.\nReason:\n' + errorCode + ')', 'danger');
         }
     });
@@ -245,25 +245,170 @@ $(document).ready(function () {
         trigger: 'hover'
     });
 
-    $('.restore-filesystem-navbar').click(function() {
-        basicRequest({
-            type: 'POST',
-            url: '/api/filesystems/restore',
-            action: 'query',
-            onSuccess() {
-                window.location.reload();
-            },
+    function stopScript() {
+        return new Promise(function (resolve, reject) {
+            basicRequest({
+                type: 'POST',
+                url: '/api/script/stop',
+                action: 'query',
+                onSuccess(payload) {
+                    resolve(payload);
+                }
+            });
         });
+    }
+
+    function restoreChangedFilesystems() {
+        return new Promise(function (resolve, reject) {
+            basicRequest({
+                type: 'POST',
+                url: '/api/filesystems/restore',
+                action: 'query',
+                onSuccess(payload) {
+                    resolve(payload);
+                }
+            });
+        });
+    }
+
+    function stopRunningPrograms() {
+        return new Promise(function (resolve, reject) {
+            basicRequest({
+                type: 'POST',
+                url: '/api/programs/stop',
+                action: 'query',
+                onSuccess(payload) {
+                    resolve(payload);
+                }
+            });
+        });
+    }
+
+    function shutdownClients() {
+        return new Promise(function (resolve, reject) {
+            basicRequest({
+                type: 'POST',
+                url: '/api/slaves/shutdown',
+                action: 'query',
+                onSuccess(payload) {
+                    resolve(payload);
+                }
+            });
+        });
+    }
+
+    function shutdownMaster() {
+        return new Promise(function (resolve, reject) {
+            basicRequest({
+                type: 'POST',
+                url: '/api/master/shutdown',
+                action: 'query',
+                onSuccess(payload) {
+                    resolve(payload);
+                }
+            });
+        });
+    }
+
+    $('#restore-filesystem-navbar').click(function () {
+        stopScript().then(
+            function (val) {
+                restoreChangedFilesystems().then(
+                    function (val) {
+                        window.location.reload();
+                    }
+                );
+            }
+        );
     });
 
-    $('.stop-programs-navbar').click(function() {
-        basicRequest({
-            type: 'POST',
-            url: '/api/programs/stop',
-            action: 'query',
-            onSuccess() {
-                window.location.reload();
-            },
-        });
+    $('#stop-programs-navbar').click(function () {
+        stopScript().then(
+            function (val) {
+                stopRunningPrograms().then(
+                    function (val) {
+                        window.location.reload();
+                    }
+                );
+            }
+        );
+    });
+
+    $('#shutdown-clients-navbar').click(function () {
+        $(this).prop("disabled", true);
+        stopScript().then(
+            function (val) {
+                stopRunningPrograms().then(
+                    function (val) {
+                        window.setTimeout(function () {
+                            restoreChangedFilesystems().then(
+                                function (val) {
+                                    window.setTimeout(function () {
+                                        shutdownClients().then(
+                                            function (val) {
+                                                window.location.reload();
+                                                $(this).prop("disabled", false);
+                                            }
+                                        );
+                                    }, 6000);
+                                }
+                            );
+                        }, 6000);
+                    }
+                );
+            }
+        );
+    });
+
+    $('#shutdown-navbar').click(function () {
+        $(this).prop("disabled", true);
+        stopScript().then(
+            function (val) {
+                stopRunningPrograms().then(
+                    function (val) {
+                        window.setTimeout(function () {
+                            restoreChangedFilesystems().then(
+                                function (val) {
+                                    window.setTimeout(function () {
+                                        shutdownClients().then(
+                                            function (val) {
+                                                window.setTimeout(function () {
+                                                    shutdownMaster();
+                                                }, 6000);
+                                            }
+                                        );
+                                    }, 6000);
+                                }
+                            );
+                        }, 6000);
+                    }
+                );
+            }
+        );
+    });
+
+    $('#restoreAllButton').click(function () {
+        $('#warningBody').html('Are you sure you want to restore all files and directories?');
+        $('.modal-button').hide();
+        $('#restore-filesystem-navbar').show();
+        $('#warningModal').modal('toggle');
+    });
+    $('#stopAllButton').click(function () {
+        $('#warningBody').html('Are you sure you want to stop all programs?');
+        $('.modal-button').hide();
+        $('#stop-programs-navbar').show();
+        $('#warningModal').modal('toggle');
+    });
+    $('#shutdownClientsButton').click(function () {
+        $('#warningBody').html('Are you sure you want to shutdown all Clients? \n This may take a few seconds.');
+        $('.modal-button').hide();
+        $('#shutdown-clients-navbar').show();
+        $('#warningModal').modal('toggle');
+    });
+    $('#shutdownAllButton').click(function () {
+        $('#warningBody').html('Are you sure you want to shutdown the simulator? \n This may take a few seconds.');
+        $('.modal-button').hide();
+        $('#shutdown-navbar').show();
+        $('#warningModal').modal('toggle');
     });
 });
