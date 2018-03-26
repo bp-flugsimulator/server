@@ -335,7 +335,7 @@ $(document).ready(function () {
     });
 
     $('#shutdown-clients-navbar').click(function () {
-	shutdownMultiple('all');
+	shutdownMultiple('clients');
 	$('#warningModal').modal('toggle');
     });
 
