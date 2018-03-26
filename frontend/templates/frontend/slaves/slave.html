@@ -82,7 +82,7 @@
             {% program_entry program %}
             {% empty %}
             <div class="mt-4">
-                <span class="background-text-normal">No programs registered</span>
+                <span class="background-text-normal">No programs added</span>
             </div>
             {% endfor %}
         </div>
@@ -91,8 +91,8 @@
             {% for filesystem in filesystems %}
             {% filesystem_entry filesystem %}
             {% empty %}
-            <div class="align-items-center list-group-item fsim-box" >
-                <span class="background-text-normal">No filesystems registered</span>
+            <div class="mt-4">
+                <span class="background-text-normal">No file management entries added</span>
             </div>
             {% endfor %}
         </div>
