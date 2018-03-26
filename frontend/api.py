@@ -4,7 +4,7 @@ This module contains all functions that handle requests on the REST api.
 import logging
 import os
 import platform
-from concurrent.futures import ThreadPoolExecutor
+import sched, threading
 
 from django.http import HttpResponseForbidden
 from django.http.request import QueryDict
@@ -1185,28 +1185,43 @@ def scope_operations(request):
     if request.method == 'POST':
         FSIM_CURRENT_SCHEDULER.stop()
         FSIM_CURRENT_SCHEDULER.notify()
-        executor = ThreadPoolExecutor(max_workers=1)
-        # shutdown all programs 
-        if request.POST['scope'] in ('all', 'programs', 'clients'):
-            programs = ProgramModel.objects.all()
-            programs = filter(lambda x: x.is_running, programs)
-            for program in programs:
-                executor.submit(prog_stop, program)
-        # restore the filesystem
-        if request.POST['scope'] in ('all', 'filesystem', 'clients'):
-            filesystems = FilesystemModel.objects.all()
-            filesystems = filter(lambda x: x.is_moved, filesystems)
-            for filesystem in filesystems:
-                executor.submit(fs_restore, filesystem)
-        # shutdown all clients
-        if request.POST['scope'] in ('all', 'shutdown', 'clients'):
-            slaves = SlaveModel.objects.all()
-            slaves = filter(lambda x: x.is_online, slaves)
-            for slave in slaves:
-                executor.submit(controller.slave_shutdown(slave))
-        executor.shutdown(wait=False)
-        if request.POST['scope'] == 'all':
-            return master_shutdown(request)
+        t = ShutdownThread(request.POST['scope'])
+        t.start()
         return StatusResponse.ok('')
     else:
         return HttpResponseForbidden()
+
+class ShutdownThread(threading.Thread):
+    def __init__(self, scope):
+        threading.Thread.__init__(self)
+        self.scope = scope
+
+    def run(self):
+        s = sched.scheduler()
+        filesystems = FilesystemModel.objects.all()
+        filesystems = filter(lambda x: x.is_moved, filesystems)
+        for filesystem in filesystems:
+            s.enter(1, 1, fs_restore, argument=(filesystem,))
+        if self.scope == 'filesystem':
+            s.run()
+            return
+        programs = ProgramModel.objects.all()
+        programs = filter(lambda x: x.is_running, programs)
+        for program in programs:
+            s.enter(5, 2, prog_stop, argument=(program,))
+        if self.scope == 'programs':
+            s.run()
+            return
+        slaves = SlaveModel.objects.all()
+        slaves = filter(lambda x: x.is_online, slaves)
+        for slave in slaves:
+            s.enter(10,3, controller.slave, argument=(slave,))
+        if self.scope == 'clients':
+            s.run()
+            return
+        s.enter(1,1, LOGGER.warning, argument=('Test'))
+        s.run()
+        if platform.system() == "Windows":
+            os.system('shutdown -s -t 0')
+        else:
+            os.system('shutdown -h now')
