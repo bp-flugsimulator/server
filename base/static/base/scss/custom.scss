@@ -711,6 +711,11 @@ a[data-state=success] i.mdi-checkbox-blank-circle {
     border-color: transparent;
 }
 
+.countdown-value[data-value] {
+    &:after {
+        content: attr(data-value);
+    }
+}
 
 @include media-breakpoint-up(xs) {
     .xs-button-set {

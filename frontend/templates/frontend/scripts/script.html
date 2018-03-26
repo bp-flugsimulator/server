@@ -5,9 +5,16 @@
         </div>
         <div class="btn-toolbar justify-content-end" role="toolbar">
             <div class="btn-group mr-2" role="group">
+                <button type="button" class="btn btn-primary font-weight-light script-action-set-default short-disable" data-script-id="{{ script.id }}" data-script-name="{{ script.name }}"
+                    data-editor-id="{{ script.id }}">
+                    <i class="mdi mdi-checkbox-blank-circle"></i> SET DEFAULT
+                </button>
+
                 <button type="button" class="btn btn-info font-weight-light script-action-run short-disable" data-script-id="{{ script.id }}" data-script-name="{{ script.name }}">
                     <i class="mdi mdi-run"></i> RUN
+                </button>
             </div>
+
             <div class="btn-group" role="group">
                 <button type="button" class="btn btn-primary font-weight-light script-action-save short-disable" data-script-id="{{ script.id }}" data-script-name="{{ script.name }}"
                     data-editor-id="{{ script.id }}">
