@@ -33,7 +33,7 @@ def select_method(status):
         status: Status object
 
     """
-    LOGGER.error(dict(status))
+    LOGGER.debug(dict(status))
 
     function_handle_table = {
         'online': handle_online,
@@ -66,6 +66,8 @@ def handle_chain_execution(status):
     status: Status
         The statusobject that was send by the slave
     """
+    LOGGER.info("Handle chain execution %s", dict(status))
+
     if status.is_ok():
         LOGGER.info("chain_execution results: %s", dict(status))
 
@@ -136,6 +138,7 @@ def handle_filesystem_moved(status):
         The statusobject that was send by the slave
     """
     LOGGER.info("Handle filesystem moved %s", dict(status))
+
     try:
         file_ = FilesystemModel.objects.get(command_uuid=status.uuid)
     except FilesystemModel.DoesNotExist:
@@ -188,6 +191,8 @@ def handle_execute(status):
     status: Status
         The statusobject that was send by the slave
     """
+    LOGGER.info("Handle program execute %s", dict(status))
+
     try:
         program_status = ProgramStatusModel.objects.get(
             command_uuid=status.uuid)
@@ -242,6 +247,8 @@ def handle_online(status):
     status: Status
         The statusobject that was send by the slave
     """
+    LOGGER.info("Handle slave online %s", dict(status))
+
     try:
         slave = SlaveModel.objects.get(command_uuid=status.uuid)
     except SlaveModel.DoesNotExist:
@@ -275,6 +282,8 @@ def handle_online(status):
 
 
 def handle_get_log(status):
+
+    LOGGER.info("Handle log get %s", dict(status))
 
     if status.is_ok():
         try:
