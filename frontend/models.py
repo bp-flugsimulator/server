@@ -619,6 +619,22 @@ class Script(Model):
         return self.name
 
     @staticmethod
+    def get_last_ran():
+        """
+        Returns the latest ran `Script`.
+
+        Returns
+        -------
+            Script or None:
+        """
+        query = Script.objects.filter(last_ran=True)
+
+        if query:
+            return query.first()
+        else:
+            return None
+
+    @staticmethod
     def latest():
         """
         Returns the latest `Script`.
