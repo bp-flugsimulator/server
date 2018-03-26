@@ -137,7 +137,7 @@ const socketEventHandler = {
         let startstopButton = $('#programStartStop_' + payload.pid);
         let cardButton = $('#programCardButton_' + payload.pid);
 
-        statusContainer.attr('data-state', 'warning');
+        statusContainer.attr('data-state', 'running');
         cardButton.prop('disabled', false);
 
         // Use Python notation !!!
