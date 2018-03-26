@@ -171,6 +171,19 @@ $(document).ready(function () {
         });
     });
 
+    $('.script-action-set-default').click(function () {
+        let id = $(this).attr('data-script-id');
+
+        basicRequest({
+            url: '/api/script/' + id + '/set_default',
+            type: 'POST',
+            action: 'set default script',
+            onSuccess: function() {
+                window.location.reload();
+            }
+        });
+    });
+
     $('.script-action-save').click(function () {
         window.unloadWarning = false;
         let id = $(this).attr('data-editor-id');

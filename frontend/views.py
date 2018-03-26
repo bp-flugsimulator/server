@@ -31,6 +31,7 @@ class RunScriptView(TemplateView):
         context = super().get_context_data(**kwargs)
         context['navbar_link'] = "scripts_run"
         context['script'] = ScriptModel.latest()
+        context['ran'] = ScriptModel.get_last_ran()
         return context
 
 

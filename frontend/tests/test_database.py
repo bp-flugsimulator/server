@@ -88,6 +88,14 @@ class DatabaseTests(TestCase):
         script = ScriptFactory()
         self.assertEqual(script.name, str(script))
 
+    def test_script_last_ran(self):
+        script = ScriptFactory()
+        ScriptFactory()
+
+        ScriptModel.set_last_started(script.id)
+
+        self.assertEqual(script, ScriptModel.get_last_ran())
+
     def test_slave_has_err(self):
         slave = SlaveFactory()
 
