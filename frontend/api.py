@@ -608,6 +608,7 @@ def program_log_disable(request, program_id):
     else:
         return HttpResponseForbidden()
 
+
 def program_stop_all(request):
     """
     Process requests to reset all moved `FilesystemModel`s.
@@ -805,6 +806,7 @@ def script_run(request, script_id):
     else:
         return HttpResponseForbidden()
 
+
 def script_stop(request):
     """
     Processes an method invocation (stop) for a `ScriptModel` (see
@@ -857,11 +859,8 @@ def script_set_default(request, script_id):
             `HttpResponseForbidden` is returned.
     """
     if request.method == 'POST':
-        try:
-            ScriptModel.set_last_started(script_id)
-            return StatusResponse.ok('')
-        except ScriptModel.DoesNotExist as err:
-            return StatusResponse(ScriptNotExistError(err, script_id))
+        ScriptModel.set_last_started(script_id)
+        return StatusResponse.ok('')
     else:
         return HttpResponseForbidden()
 
@@ -1107,6 +1106,7 @@ def filesystem_entry(request, filesystem_id):
             return StatusResponse(FilesystemNotExistError(err, filesystem_id))
     else:
         return HttpResponseForbidden()
+
 
 def filesystem_restore_all(request):
     """
