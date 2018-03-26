@@ -709,9 +709,25 @@ class ScriptTest(StatusTestCase):
             reverse("frontend:script_run", args=[script.id]))
         self.assertEqual(response.status_code, 200)
 
-        response = self.client.post(
-            reverse("frontend:script_stop"))
+        response = self.client.post(reverse("frontend:script_stop"))
         self.assertEqual(response.status_code, 200)
+
+    def test_set_default_forbidden(self):
+        response = self.client.put(
+            reverse('frontend:script_set_default', args=[0]))
+        self.assertEqual(403, response.status_code)
+
+    def test_set_default_success(self):
+        script1 = ScriptFactory(last_ran=True)
+        script2 = ScriptFactory()
+
+        response = self.client.post(
+            reverse("frontend:script_set_default", args=[script2.id]))
+        self.assertEqual(response.status_code, 200)
+
+        self.assertTrue(ScriptModel.objects.get(id=script2.id).last_ran)
+        self.assertFalse(ScriptModel.objects.get(id=script1.id).last_ran)
+
 
 class FilesystemTests(StatusTestCase):
     def test_set_delete_forbidden(self):
@@ -893,9 +909,8 @@ class FilesystemTests(StatusTestCase):
         name_half = int(len(filesystem.name) / 2)
 
         response = self.client.get(
-            reverse("frontend:filesystem_set"), {
-                'q': filesystem.name[:name_half]
-            })
+            reverse("frontend:filesystem_set"),
+            {'q': filesystem.name[:name_half]})
         self.assertEqual(response.status_code, 200)
 
         self.assertEqual(
@@ -904,9 +919,7 @@ class FilesystemTests(StatusTestCase):
         )
 
         response = self.client.get(
-            reverse("frontend:filesystem_set"), {
-                'q': filesystem.name
-            })
+            reverse("frontend:filesystem_set"), {'q': filesystem.name})
         self.assertEqual(response.status_code, 200)
 
         self.assertEqual(
@@ -929,15 +942,19 @@ class FilesystemTests(StatusTestCase):
 
         with_str = self.client.get(
             reverse('frontend:filesystem_set'),
-            {'slave': filesystem.slave.name,
-             'is_string': 'True'},
+            {
+                'slave': filesystem.slave.name,
+                'is_string': 'True'
+            },
         )
         self.assertEqual(with_str.status_code, 200)
 
         without_str = self.client.get(
             reverse('frontend:filesystem_set'),
-            {'slave': filesystem.slave.id,
-             'is_string': 'False'},
+            {
+                'slave': filesystem.slave.id,
+                'is_string': 'False'
+            },
         )
         self.assertEqual(without_str.status_code, 200)
 
@@ -998,8 +1015,10 @@ class FilesystemTests(StatusTestCase):
 
         response_str = self.client.get(
             reverse("frontend:filesystem_set"),
-            {'slave': "none",
-             'is_string': 'True'},
+            {
+                'slave': "none",
+                'is_string': 'True'
+            },
         )
         self.assertEqual(response_str.status_code, 200)
 
@@ -1410,8 +1429,7 @@ class FilesystemTests(StatusTestCase):
         ws_client = WSClient()
         ws_client.join_group('client_' + str(slave.id))
 
-        response = self.client.post(
-            reverse("frontend:filesystem_restore_all"))
+        response = self.client.post(reverse("frontend:filesystem_restore_all"))
         self.assertEqual(response.status_code, 200)
 
         self.assertStatusRegex(
@@ -1429,8 +1447,7 @@ class FilesystemTests(StatusTestCase):
         ws_client = WSClient()
         ws_client.join_group('client_' + str(slave.id))
 
-        response = self.client.post(
-            reverse("frontend:filesystem_restore_all"))
+        response = self.client.post(reverse("frontend:filesystem_restore_all"))
         self.assertEqual(response.status_code, 200)
 
         self.assertEqual(
@@ -1439,8 +1456,7 @@ class FilesystemTests(StatusTestCase):
         )
 
     def test_restore_all_put_forbidden(self):
-        response = self.client.put(
-            reverse("frontend:filesystem_restore_all"))
+        response = self.client.put(reverse("frontend:filesystem_restore_all"))
         self.assertEqual(response.status_code, 403)
 
 
@@ -1467,9 +1483,7 @@ class ProgramTests(StatusTestCase):
         name_half = int(len(program.name) / 2)
 
         response = self.client.get(
-            reverse("frontend:program_set"), {
-                'q': program.name[:name_half]
-            })
+            reverse("frontend:program_set"), {'q': program.name[:name_half]})
 
         self.assertEqual(response.status_code, 200)
 
@@ -1479,9 +1493,7 @@ class ProgramTests(StatusTestCase):
         )
 
         response = self.client.get(
-            reverse("frontend:program_set"), {
-                'q': program.name
-            })
+            reverse("frontend:program_set"), {'q': program.name})
         self.assertEqual(response.status_code, 200)
 
         self.assertEqual(
@@ -1505,15 +1517,19 @@ class ProgramTests(StatusTestCase):
 
         with_str = self.client.get(
             reverse('frontend:program_set'),
-            {'slave': program.slave.name,
-             'is_string': 'True'},
+            {
+                'slave': program.slave.name,
+                'is_string': 'True'
+            },
         )
         self.assertEqual(with_str.status_code, 200)
 
         without_str = self.client.get(
             reverse('frontend:program_set'),
-            {'slave': program.slave.id,
-             'is_string': 'False'},
+            {
+                'slave': program.slave.id,
+                'is_string': 'False'
+            },
         )
         self.assertEqual(without_str.status_code, 200)
 
@@ -1574,8 +1590,10 @@ class ProgramTests(StatusTestCase):
 
         response_str = self.client.get(
             reverse("frontend:program_set"),
-            {'slave': "none",
-             'is_string': 'True'},
+            {
+                'slave': "none",
+                'is_string': 'True'
+            },
         )
         self.assertEqual(response_str.status_code, 200)
 
@@ -2116,8 +2134,7 @@ class ProgramTests(StatusTestCase):
         ws_client = WSClient()
         ws_client.join_group('client_' + str(slave.id))
 
-        response = self.client.post(
-            reverse("frontend:program_stop_all"))
+        response = self.client.post(reverse("frontend:program_stop_all"))
         self.assertEqual(response.status_code, 200)
 
         self.assertStatusRegex(
@@ -2135,8 +2152,7 @@ class ProgramTests(StatusTestCase):
         ws_client = WSClient()
         ws_client.join_group('client_' + str(slave.id))
 
-        response = self.client.post(
-            reverse("frontend:program_stop_all"))
+        response = self.client.post(reverse("frontend:program_stop_all"))
         self.assertEqual(response.status_code, 200)
 
         self.assertEqual(
@@ -2145,8 +2161,7 @@ class ProgramTests(StatusTestCase):
         )
 
     def test_stop_all_put_forbidden(self):
-        response = self.client.put(
-            reverse("frontend:program_stop_all"))
+        response = self.client.put(reverse("frontend:program_stop_all"))
         self.assertEqual(response.status_code, 403)
 
 
