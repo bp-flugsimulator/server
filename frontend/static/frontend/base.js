@@ -310,81 +310,38 @@ $(document).ready(function () {
         });
     }
 
+    function shutdownMultiple(scope) {
+        return new Promise(function (resolve, reject) {
+            basicRequest({
+                type: 'POST',
+                url: '/api/all/scope_operation',
+                action : 'query',
+		data: {'scope': scope},
+                onSuccess(payload) {
+                    resolve(payload);
+                }
+            });
+        });
+    }
+
     $('#restore-filesystem-navbar').click(function () {
-        stopScript().then(
-            function (val) {
-                restoreChangedFilesystems().then(
-                    function (val) {
-                        window.location.reload();
-                    }
-                );
-            }
-        );
+	shutdownMultiple('filesystem');
+	$('#warningModal').modal('toggle');
     });
 
     $('#stop-programs-navbar').click(function () {
-        stopScript().then(
-            function (val) {
-                stopRunningPrograms().then(
-                    function (val) {
-                        window.location.reload();
-                    }
-                );
-            }
-        );
+	shutdownMultiple('programs');
+	$('#warningModal').modal('toggle');
     });
 
     $('#shutdown-clients-navbar').click(function () {
-        $(this).prop("disabled", true);
-        stopScript().then(
-            function (val) {
-                stopRunningPrograms().then(
-                    function (val) {
-                        window.setTimeout(function () {
-                            restoreChangedFilesystems().then(
-                                function (val) {
-                                    window.setTimeout(function () {
-                                        shutdownClients().then(
-                                            function (val) {
-                                                window.location.reload();
-                                                $(this).prop("disabled", false);
-                                            }
-                                        );
-                                    }, 6000);
-                                }
-                            );
-                        }, 6000);
-                    }
-                );
-            }
-        );
+	shutdownMultiple('all');
+	$('#warningModal').modal('toggle');
     });
 
     $('#shutdown-navbar').click(function () {
-        $(this).prop("disabled", true);
-        stopScript().then(
-            function (val) {
-                stopRunningPrograms().then(
-                    function (val) {
-                        window.setTimeout(function () {
-                            restoreChangedFilesystems().then(
-                                function (val) {
-                                    window.setTimeout(function () {
-                                        shutdownClients().then(
-                                            function (val) {
-                                                window.setTimeout(function () {
-                                                    shutdownMaster();
-                                                }, 6000);
-                                            }
-                                        );
-                                    }, 6000);
-                                }
-                            );
-                        }, 6000);
-                    }
-                );
-            }
-        );
+	shutdownMultiple('all');
+	$('#warningModal').modal('toggle');
     });
 
     $('#restoreAllButton').click(function () {

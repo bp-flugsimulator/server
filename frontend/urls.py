@@ -61,6 +61,10 @@ urlpatterns = [  # pylint: disable=C0103
     url(r'^api/filesystems/restore$',
         api.filesystem_restore_all,
         name='filesystem_restore_all'),
+    # shutdown everything
+    url(r'^api/all/scope_operation$',
+        api.scope_operations,
+        name='scope_operation'),
     # Master
     url(r'^api/master/shutdown$', api.master_shutdown, name='master_shutdown'),
 ]

@@ -4,6 +4,7 @@ This module contains all functions that handle requests on the REST api.
 import logging
 import os
 import platform
+from concurrent.futures import ThreadPoolExecutor
 
 from django.http import HttpResponseForbidden
 from django.http.request import QueryDict
@@ -1158,6 +1159,54 @@ def filesystem_restore_all(request):
             print("test")
             return StatusResponse(err)
 
+        return StatusResponse.ok('')
+    else:
+        return HttpResponseForbidden()
+
+def scope_operations(request):
+    """
+    Process requests to shutdown all clients
+
+    HTTP Methods
+    ------------
+        POST:
+            Stops all programs, resets the filesystem and shuts down every client
+    Parameters
+    ----------
+        request: HttpRequest
+            The request which should be processed.
+
+    Returns
+    -------
+        HttpResponse:
+            If the HTTP method is not supported, then an `HttpResponseForbidden`
+            is returned.
+    """
+    if request.method == 'POST':
+        FSIM_CURRENT_SCHEDULER.stop()
+        FSIM_CURRENT_SCHEDULER.notify()
+        executor = ThreadPoolExecutor(max_workers=1)
+        # shutdown all programs 
+        if request.POST['scope'] in ('all', 'programs', 'clients'):
+            programs = ProgramModel.objects.all()
+            programs = filter(lambda x: x.is_running, programs)
+            for program in programs:
+                executor.submit(prog_stop, program)
+        # restore the filesystem
+        if request.POST['scope'] in ('all', 'filesystem', 'clients'):
+            filesystems = FilesystemModel.objects.all()
+            filesystems = filter(lambda x: x.is_moved, filesystems)
+            for filesystem in filesystems:
+                executor.submit(fs_restore, filesystem)
+        # shutdown all clients
+        if request.POST['scope'] in ('all', 'shutdown', 'clients'):
+            slaves = SlaveModel.objects.all()
+            slaves = filter(lambda x: x.is_online, slaves)
+            for slave in slaves:
+                executor.submit(controller.slave_shutdown(slave))
+        executor.shutdown(wait=False)
+        if request.POST['scope'] == 'all':
+            return master_shutdown(request)
         return StatusResponse.ok('')
     else:
         return HttpResponseForbidden()
