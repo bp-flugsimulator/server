@@ -162,9 +162,9 @@ class FilesystemForm(BaseModelForm):
             <i>Unix</i>: <code>/home/user/MOVED_README.txt</code><br>""",
             'destination_type':
             r"""<b>Description</b><br>
-            <ins>Replace with:</ins> Source path will be moved and renamed to
+            <ins>Rename:</ins> Source path will be moved and renamed to
             destination. <br>
-            <ins>Insert into:</ins> Destination path has to be a folder and
+            <ins>Keep Name:</ins> Destination path has to be a folder and
             the file or directory will be placed inside the destination
             directory.
             <hr>

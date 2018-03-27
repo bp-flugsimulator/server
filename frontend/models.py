@@ -469,8 +469,8 @@ class Filesystem(Model):
         ('dir', 'Directory'),
     ]
     CHOICES_SET_DESTINATION = [
-        ('file', 'Replace with'),
-        ('dir', 'Insert into'),
+        ('file', 'Rename'),
+        ('dir', 'Keep Name'),
     ]
 
     # persistant fields
