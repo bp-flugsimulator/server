@@ -77,6 +77,26 @@
             <div class="collapse navbar-collapse">
             </div>
         </nav>
+    <!-- Fsim restore Waring modal -->
+    <div id="warningModal" class="modal fade" role="dialog">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Confirm Action!</h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+		</div>
+		<div class="modal-body" id="warningBody">
+		</div>
+		<div class="modal-footer">
+			<button type='button' class='btn btn-danger modal-button' id="restore-filesystem-navbar">Restore Files</button>
+			<button type='button' class='btn btn-danger modal-button' id="stop-programs-navbar">Stop Programs</button>
+			<button type='button' class='btn btn-danger modal-button' id="shutdown-clients-navbar">Shutdown Clients</button>
+			<button type='button' class='btn btn-danger modal-button' id="shutdown-navbar">Shutdown</button>
+			<button type='reset' class='btn btn-secondary' data-dismiss="modal" >Cancle</button>
+		</div>
+	    </div>
+	</div>
+    </div>
 
         {% block premain%}{% endblock %}
 
