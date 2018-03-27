@@ -1,14 +1,30 @@
-#  pylint: disable=C0111,C0103
+"""
+Test cases for the script.py module.
+"""
+# pylint: disable=missing-docstring,too-many-public-methods
 
 from django.test import TestCase
-from django.db.utils import IntegrityError
+from django.core.exceptions import ValidationError
 
-from frontend.scripts import Script, ScriptEntryFile, ScriptEntryProgram
+from frontend.scripts import (
+    Script,
+    ScriptEntryFilesystem,
+    ScriptEntryProgram,
+    get_slave,
+)
 
 from frontend.models import (
     Script as ScriptModel,
     ScriptGraphPrograms as SGP,
     ScriptGraphFiles as SGF,
+)
+
+from frontend.errors import (
+    SlaveNotExistError,
+    ProgramNotExistError,
+    QueryParameterError,
+    FilesystemNotExistError,
+    PositiveNumberError,
 )
 
 from .factory import (
@@ -19,81 +35,48 @@ from .factory import (
 )
 
 
-class ScriptTests(TestCase):  # pylint: disable=unused-variable
-    def test_from_json_no_list(self):
-        self.assertRaisesRegex(
-            ValueError,
-            "filesystems has to be a list",
-            Script.from_json,
-            '{"name": "test", "filesystems": {}, "programs": []}',
-        )
+class ScriptTests(TestCase):
+    def test_get_slave_none(self):
+        self.assertEqual(None, get_slave(None))
 
-        self.assertRaisesRegex(
-            ValueError,
-            "Programs has to be a list",
-            Script.from_json,
-            '{"name": "test", "filesystems": [], "programs": {}}',
-        )
+    def test_get_slave_int(self):
+        slave = SlaveFactory()
+        self.assertEqual(get_slave(slave.id), slave)
 
-    def test_script_wrong_type_name(self):
-        self.assertRaises(ValueError, Script, [], [], [])
+    def test_get_slave_str(self):
+        slave = SlaveFactory()
 
-    def test_script_wrong_type_program_not_a_list(self):
-        self.assertRaises(ValueError, Script, "name", "not a list", [])
+        self.assertEqual(get_slave(slave.name), slave)
 
-    def test_script_wrong_type_program_wrong_element(self):
-        self.assertRaises(ValueError, Script, "name", ["String"], [])
-
-    def test_script_wrong_type_file_not_a_list(self):
-        self.assertRaises(ValueError, Script, "name", [], "not a list")
-
-    def test_script_wrong_type_file_wrong_element(self):
-        self.assertRaises(ValueError, Script, "name", [], ["String"])
-
-    def test_script_entry_program_wrong_type_program(self):
+    def test_get_slave_str_not_found(self):
         self.assertRaises(
-            ValueError,
-            ScriptEntryProgram,
-            "a name",
-            "whoops",
-            0,
+            SlaveNotExistError,
+            get_slave,
+            "empty",
         )
 
-    def test_script_entry_program_wrong_type_index(self):
-        self.assertRaises(ValueError, ScriptEntryProgram, [], "whoops", 0)
+    def test_get_slave_int_not_found(self):
+        self.assertRaises(
+            SlaveNotExistError,
+            get_slave,
+            -1,
+        )
 
-    def test_script_entry_program_wrong_type_name(self):
-        self.assertRaises(ValueError, ScriptEntryProgram, 0, [], 0)
-
-    def test_script_entry_program_wrong_type_slave(self):
-        self.assertRaises(ValueError, ScriptEntryProgram, 0, "", [])
-
-    def test_script_wrong_file_type_program(self):
-        self.assertRaises(ValueError, ScriptEntryFile, "a name", "whoops", 0)
-
-    def test_script_entry_file_wrong_type_index(self):
-        self.assertRaises(ValueError, ScriptEntryFile, [], "whoops", 0)
-
-    def test_script_entry_file_wrong_type_name(self):
-        self.assertRaises(ValueError, ScriptEntryFile, 0, [], 0)
-
-    def test_script_entry_file_wrong_type_slave(self):
-        self.assertRaises(ValueError, ScriptEntryFile, 0, "", [])
-
-    def test_script_json(self):
-        string = '{"name": "test", "filesystems": [{"index": 0, "slave": 0, "filesystem": "no name"}],\
-            "programs": [{"index": 0, "slave": 0, "program": "no name"}]}'
+    def test_from_json(self):
+        string = '{"name": "test", "filesystems": [{"index": 0, "slave": 0, "filesystem": \
+            "no name"}], "programs": [{"index": 0, "slave": 0, \
+            "program": "no name"}]}'
 
         script = Script(
             "test",
             [ScriptEntryProgram(0, "no name", 0)],
-            [ScriptEntryFile(0, "no name", 0)],
+            [ScriptEntryFilesystem(0, "no name", 0)],
         )
 
         self.assertEqual(Script.from_json(string), script)
         self.assertEqual(Script.from_json(script.to_json()), script)
 
-    def test_script_entry_program_json(self):
+    def test_from_json_program(self):
         string = '{"index": 0, "slave": 0, "program": "no name"}'
 
         script = ScriptEntryProgram(0, "no name", 0)
@@ -104,21 +87,22 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
             script,
         )
 
-    def test_script_entry_file_json(self):
+    def test_from_json_file(self):
         string = '{"index": 0, "slave": 0, "filesystem": "no name"}'
 
-        script = ScriptEntryFile(0, "no name", 0)
+        script = ScriptEntryFilesystem(0, "no name", 0)
 
-        self.assertEqual(ScriptEntryFile.from_json(string), script)
-        self.assertEqual(ScriptEntryFile.from_json(script.to_json()), script)
+        self.assertEqual(ScriptEntryFilesystem.from_json(string), script)
+        self.assertEqual(
+            ScriptEntryFilesystem.from_json(script.to_json()), script)
 
-    def test_script_name_eq(self):
+    def test_name_not_equal(self):
         self.assertNotEqual(
             Script("test", [ScriptEntryProgram(0, 0, 0)], []),
             Script("test2", [ScriptEntryProgram(0, 0, 0)], []),
         )
 
-    def test_model_support_strings(self):
+    def test_string_identifiers(self):
         slave = SlaveFactory()
         program = ProgramFactory(slave=slave)
         filesystem = FileFactory(slave=slave)
@@ -127,7 +111,7 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
         Script(
             script_name,
             [ScriptEntryProgram(0, program.name, slave.name)],
-            [ScriptEntryFile(0, filesystem.name, slave.name)],
+            [ScriptEntryFilesystem(0, filesystem.name, slave.name)],
         ).save()
 
         script = ScriptModel.objects.get(name=script_name)
@@ -147,7 +131,7 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
                 filesystem=filesystem,
             ).exists())
 
-    def test_model_support_ids(self):
+    def test_integer_identifiers(self):
         slave = SlaveFactory()
         program = ProgramFactory(slave=slave)
         filesystem = FileFactory(slave=slave)
@@ -156,7 +140,7 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
         Script(
             script_name,
             [ScriptEntryProgram(0, int(program.id), int(slave.id))],
-            [ScriptEntryFile(0, int(filesystem.id), int(slave.id))],
+            [ScriptEntryFilesystem(0, int(filesystem.id), int(slave.id))],
         ).save()
 
         script = ScriptModel.objects.get(name=script_name)
@@ -169,7 +153,7 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
                 program=program,
             ).exists())
 
-    def test_model_support_error_in_entry(self):
+    def test_program_not_exist(self):
         program = ProgramFactory()
         slave = program.slave
         script_name = ScriptFactory.build().name
@@ -183,25 +167,25 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
             [],
         )
 
-        self.assertRaisesRegex(
-            ValueError,
-            "Program with id {} does not exist.".format(program.id + 1),
+        self.assertRaises(
+            ProgramNotExistError,
             script.save,
         )
+
         self.assertFalse(ScriptModel.objects.filter(name=script_name).exists())
         self.assertTrue(len(SGP.objects.all()) == 0)
 
-    def test_from_model_file_id_eq_str(self):
+    def test_model_references_same_str(self):
         filesystem = FileFactory()
         slave = filesystem.slave
         script = ScriptFactory()
 
-        ScriptEntryFile(0, filesystem.id, slave.id).save(script)
-        b = ScriptEntryFile(0, filesystem.name, slave.name)
+        ScriptEntryFilesystem(0, filesystem.id, slave.id).save(script)
+        b = ScriptEntryFilesystem(0, filesystem.name, slave.name)
 
-        self.assertRaises(IntegrityError, b.save, script)
+        self.assertRaises(ValidationError, b.save, script)
 
-    def test_from_model_program_id_eq_str(self):
+    def test_model_references_same_int(self):
         program = ProgramFactory()
         slave = program.slave
         script = ScriptFactory()
@@ -214,7 +198,11 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
             slave.name,
         )
 
-        self.assertRaises(IntegrityError, with_str.save, script)
+        self.assertRaises(
+            ValidationError,
+            with_str.save,
+            script,
+        )
 
     def test_from_query_error(self):
         class Dummy:
@@ -224,6 +212,7 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
                         class Dummy:
                             def __init__(self):
                                 self.id = None
+                                self.name = None
 
                         self.slave = Dummy()
 
@@ -231,14 +220,14 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
                 self.filesystem = Dummy()
 
         self.assertRaises(
-            ValueError,
+            QueryParameterError,
             ScriptEntryProgram.from_query,
             Dummy(),
             "not int",
             "not str",
         )
         self.assertRaises(
-            ValueError,
+            QueryParameterError,
             ScriptEntryProgram.from_query,
             Dummy(),
             "int",
@@ -246,62 +235,44 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
         )
 
         self.assertRaises(
-            ValueError,
-            ScriptEntryFile.from_query,
+            QueryParameterError,
+            ScriptEntryFilesystem.from_query,
             Dummy(),
             "not int",
             "not str",
         )
         self.assertRaises(
-            ValueError,
-            ScriptEntryFile.from_query,
+            QueryParameterError,
+            ScriptEntryFilesystem.from_query,
             Dummy(),
             "int",
             "not str",
         )
 
-    def test_script_get_slave(self):
-        from frontend.scripts import get_slave
-        self.assertEqual(None, get_slave(None))
 
-    def test_script_name_is_string(self):
-        self.assertRaisesRegex(
-            ValueError,
-            "Name has to be a string",
-            Script,
-            123123,
-            [
-                ScriptEntryProgram(0, 0, 0),
-            ],
-            [],
-        )
-
-    def test_script_positive_index(self):
-        self.assertRaisesRegex(
-            ValueError,
-            "Use positive or null for the index.",
+    def test_positive_index_error(self):
+        self.assertRaises(
+            PositiveNumberError,
             ScriptEntryProgram,
             -1,
             0,
             0,
         )
 
-        self.assertRaisesRegex(
-            ValueError,
-            "Use positive or null for the index.",
-            ScriptEntryFile,
+        self.assertRaises(
+            PositiveNumberError,
+            ScriptEntryFilesystem,
             -1,
             0,
             0,
         )
 
-    def test_script_programs_missing_slave(self):
+    def test_program_slave_not_exist_error(self):
         slave = SlaveFactory()
         script = ScriptFactory()
 
-        self.assertRaisesRegex(
-            ValueError,
-            "Program with id {} does not exist.".format(-1),
+        self.assertRaises(
+            ProgramNotExistError,
             ScriptEntryProgram(
                 0,
                 -1,
@@ -310,9 +281,8 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
             script,
         )
 
-        self.assertRaisesRegex(
-            ValueError,
-            "Program with name {} does not exist.".format(""),
+        self.assertRaises(
+            ProgramNotExistError,
             ScriptEntryProgram(
                 0,
                 "",
@@ -323,9 +293,8 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
 
         slave.delete()
 
-        self.assertRaisesRegex(
-            ValueError,
-            "Client with name/id {} does not exist.".format(-1),
+        self.assertRaises(
+            SlaveNotExistError,
             ScriptEntryProgram(
                 0,
                 -1,
@@ -334,14 +303,13 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
             script,
         )
 
-    def test_script_file_missing_slave(self):
+    def test_file_slave_not_exist_error(self):
         slave = SlaveFactory()
         script = ScriptFactory()
 
-        self.assertRaisesRegex(
-            ValueError,
-            "filesystem with id {} does not exist.".format(-1),
-            ScriptEntryFile(
+        self.assertRaises(
+            FilesystemNotExistError,
+            ScriptEntryFilesystem(
                 0,
                 -1,
                 int(slave.id),
@@ -349,10 +317,9 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
             script,
         )
 
-        self.assertRaisesRegex(
-            ValueError,
-            "filesystem with name {} does not exist.".format(""),
-            ScriptEntryFile(
+        self.assertRaises(
+            FilesystemNotExistError,
+            ScriptEntryFilesystem(
                 0,
                 "",
                 int(slave.id),
@@ -362,10 +329,9 @@ class ScriptTests(TestCase):  # pylint: disable=unused-variable
 
         slave.delete()
 
-        self.assertRaisesRegex(
-            ValueError,
-            "Client with name/id {} does not exist.".format(-1),
-            ScriptEntryFile(
+        self.assertRaises(
+            SlaveNotExistError,
+            ScriptEntryFilesystem(
                 0,
                 -1,
                 -1,

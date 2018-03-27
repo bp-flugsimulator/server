@@ -37,7 +37,7 @@ class Command(BaseCommand):
         with open(join(self.DEPLOY_FOLDER, 'server', 'settings.py'),
                   'r') as settings:
             for line in settings:
-                if 'DEBUG' in line:
+                if 'DEBUG =' in line:
                     line = 'DEBUG = False\n'
                     self.stdout.write('disabled debug mode')
                 if 'SECRET_KEY' in line:

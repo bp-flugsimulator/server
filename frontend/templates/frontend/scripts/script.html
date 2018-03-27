@@ -1,19 +1,39 @@
+<div class="container-fluid bg-light list-group-item">
+    <div class="d-flex w-100 justify-content-between">
+        <div >
+            <h5 class="mt-2">{{ script.name }}</h5>
+        </div>
+        <div class="btn-toolbar justify-content-end" role="toolbar">
+            <div class="btn-group mr-2" role="group">
+                <button type="button" class="btn btn-primary font-weight-light script-action-set-default short-disable" data-script-id="{{ script.id }}" data-script-name="{{ script.name }}"
+                    data-editor-id="{{ script.id }}">
+                    <i class="mdi mdi-checkbox-blank-circle"></i> SET DEFAULT
+                </button>
 
-<div class="row mb-4">
-    <div class="btn-toolbar col d-flex justify-content-end" role="toolbar">
-        <div class="btn-group mr-2" role="group">
-            <button type="button" class="btn btn-outline-dark program-action-modify font-weight-light script-action-delete" data-script-id="{{ script.id }}" data-script-name="{{ script.name }}">
-                <i class="mdi mdi-delete"></i> DELETE
-            </button>
+                <button type="button" class="btn btn-info font-weight-light script-action-run short-disable" data-script-id="{{ script.id }}" data-script-name="{{ script.name }}">
+                    <i class="mdi mdi-run"></i> RUN
+                </button>
+            </div>
 
-            <button type="button" class="btn btn-outline-dark program-action-delete font-weight-light script-action-save" data-script-id="{{ script.id }}" data-script-name="{{ script.name }}" data-editor-id="{{ script.id }}">
-                <i class="mdi mdi-check"></i> SAVE
-            </button>
+            <div class="btn-group" role="group">
+                <button type="button" class="btn btn-primary font-weight-light script-action-save short-disable" data-script-id="{{ script.id }}" data-script-name="{{ script.name }}"
+                    data-editor-id="{{ script.id }}">
+                    <i class="mdi mdi-check"></i> SAVE
+                </button>
+
+                <button type="button" class="btn btn-dark font-weight-light script-action-copy short-disable" data-script-id="{{ script.id }}" data-script-name="{{ script.name }}">
+                    <i class="mdi mdi-content-copy"></i> COPY
+                </button>
+
+                <button type="button" class="btn btn-dark font-weight-light script-action-delete" data-script-id="{{ script.id }}" data-script-name="{{ script.name }}">
+                    <i class="mdi mdi-delete"></i> DELETE
+                </button>
+            </div>
         </div>
     </div>
 </div>
 
-<div class="row" id="jsoneditor_{{ script.id }}" style="height: 600px;">
+<div id="jsoneditor_{{ script.id }}" class="list-group-item bg-light">
     <script>
         loadScript({{ script.id }});
     </script>

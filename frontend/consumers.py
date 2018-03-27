@@ -3,9 +3,11 @@ This module contains all functions that handle requests on websockets.
 """
 import logging
 import traceback
+import os
 
 from channels import Group
 from channels.sessions import channel_session
+
 from utils import Command, Status, FormatError
 
 from .models import (
@@ -19,6 +21,39 @@ from server.utils import notify_err, notify
 
 # Get an instance of a logger
 LOGGER = logging.getLogger('fsim.websockets')
+
+
+def select_method(status):
+    """
+    Selects a handler for the incoming message by checking the name with the
+    function_handle_table.
+
+    Parameters
+    ----------
+        status: Status object
+
+    """
+    LOGGER.error(dict(status))
+
+    function_handle_table = {
+        'online': handle_online,
+        'execute': handle_execute,
+        'filesystem_move': handle_filesystem_moved,
+        'filesystem_restore': handle_filesystem_restored,
+        'chain_execution': handle_chain_execution,
+        'get_log': handle_get_log,
+    }
+
+    if status.payload['method'] in function_handle_table:
+        function_handle_table[status.payload['method']](status)
+
+        # notify the scheduler that the status has changed
+        FSIM_CURRENT_SCHEDULER.notify()
+    else:
+        LOGGER.warning(
+            'Client send answer from unknown function %s.',
+            status.payload['method'],
+        )
 
 
 def handle_chain_execution(status):
@@ -143,7 +178,7 @@ def handle_filesystem_moved(status):
         })
 
 
-def handle_execute_answer(status):
+def handle_execute(status):
     """
     Handles an incoming message on '/notification' that
     is an answer to an 'execute' request on a slave
@@ -178,8 +213,9 @@ def handle_execute_answer(status):
         )
     else:
         LOGGER.error(
-            'Exception in occurred client while executing %s: \n %s',
+            'Exception in occurred client while executing %s: %s %s',
             program.name,
+            os.linesep,
             status.payload['result'],
         )
 
@@ -196,7 +232,7 @@ def handle_execute_answer(status):
     })
 
 
-def handle_online_answer(status):
+def handle_online(status):
     """
     Handles an incoming message on '/notification' that
     is an answer to an 'online' request on a slave
@@ -231,8 +267,45 @@ def handle_online_answer(status):
             slave.name))
 
         LOGGER.error(
-            'Exception occurred in client %s (online-request): \n %s',
+            'Exception occurred in client %s (online-request): %s %s',
             slave.name,
+            os.linesep,
+            status.payload['result'],
+        )
+
+
+def handle_get_log(status):
+
+    if status.is_ok():
+        try:
+            program_status = ProgramStatusModel.objects.get(
+                command_uuid=status.payload['result']['uuid'])
+            program = program_status.program
+        except ProgramStatusModel.DoesNotExist:
+            notify_err('Received log from unknown program!')
+            LOGGER.warning(
+                "A log from a programm with id %s has arrived, but is not in the database.",
+                status.uuid,
+            )
+            return
+
+        LOGGER.info(
+            "Received answer on get_log request of program %s on %s.",
+            program.name,
+            program.slave.name,
+        )
+
+        notify({
+            'log': status.payload['result']['log'],
+            'pid': str(program.id)
+        })
+        LOGGER.info("Send log of %s to the webinterface", program.name)
+    else:
+        notify_err('An error occured while reading a log file!')
+
+        LOGGER.error(
+            'Exception occurred (get_log-request): %s %s',
+            os.linesep,
             status.payload['result'],
         )
 
@@ -266,7 +339,6 @@ def ws_rpc_connect(message):
         )
 
         # Add to the command group
-        Group('clients').add(message.reply_channel)
         Group('client_{}'.format(slave.id)).add(message.reply_channel)
         LOGGER.debug('Added client to command group client_%s', slave.id)
 
@@ -281,6 +353,42 @@ def ws_rpc_connect(message):
     except SlaveModel.DoesNotExist:
         LOGGER.error("Rejecting unknown client with ip %s!", ip_address)
         message.reply_channel.send({"accept": False})
+
+
+def ws_rpc_receive(message):
+    """
+    Handels websockets.receive requests of '/Commands'. Connections only
+    get accepted if the ip of the sender is the ip of a known slave.
+
+    If the status contains the result of a boottime request a corresponding
+    online will be set in SlaveModel.
+
+    If the status contains the result of an execute request the corresponding
+    ProgramStatus will get updated in the database and the message gets
+    republished to the 'notifications' group.
+
+    Arguments
+    ---------
+    message: channels.message.Message that contains a Status in the 'text' field
+
+    """
+    try:
+        try:
+            status = Status.from_json(message.content['text'])
+        except ValueError as err:
+            LOGGER.error(
+                "Error while parsing json. (cause: %s)",
+                str(err),
+            )
+            return
+        select_method(status)
+    except FormatError as err:
+        LOGGER.error(
+            "Could not parse Status from incoming request. (cause: %s)",
+            str(err),
+        )
+    except KeyError:
+        LOGGER.error("No content['text'] in received message.")
 
 
 @channel_session
@@ -301,7 +409,6 @@ def ws_rpc_disconnect(message):
         slave = SlaveModel.objects.get(
             ip_address=message.channel_session['ip_address'])
 
-        Group('clients').discard(message.reply_channel)
         Group('client_{}'.format(slave.id)).discard(message.reply_channel)
 
         slave.online = False
@@ -332,105 +439,46 @@ def ws_rpc_disconnect(message):
         )
 
 
-def ws_notifications_connect(message):
+def ws_logs_connect(message):
     """
-    Handels websockets.connect requests of '/notifications'. Connections only
-    get accepted if the ip of the sender is the ip of a known slave. Adds the
-    reply_channel to the group 'notifications'
+    Handels websockets.connect requests of '/notifications'.
+    Adds the reply_channel to the group 'notifications'
 
     Arguments
     ---------
     message: channels.message.Message that contains the connection request  on
-    '/'.
-
+    '/notifications'.
     """
-    # Add to the notification group
-    Group('notifications').add(message.reply_channel)
 
     # Accept the connection
     message.reply_channel.send({"accept": True})
 
 
-def select_method(status):
+def ws_logs_receive(message):
     """
-    Selects a handler for the incoming message by checking the name with the
-    function_handle_table.
-
-    Parameters
-    ----------
-        status: Status object
-
-    """
-    LOGGER.error(dict(status))
-
-    function_handle_table = {
-        'online': handle_online_answer,
-        'execute': handle_execute_answer,
-        'filesystem_move': handle_filesystem_moved,
-        'filesystem_restore': handle_filesystem_restored,
-        'chain_execution': handle_chain_execution,
-    }
-
-    if status.payload['method'] in function_handle_table:
-        function_handle_table[status.payload['method']](status)
-
-        # notify the scheduler that the status has changed
-        FSIM_CURRENT_SCHEDULER.notify()
-    else:
-        LOGGER.warning(
-            'Client send answer from unknown function %s.',
-            status.payload['method'],
-        )
-
-
-def ws_notifications_receive(message):
-    """
-    Handels websockets.receive requests of '/notifications'. Connections only
-    get accepted if the ip of the sender is the ip of a known slave.
-
-    If the status contains the result of a boottime request a corresponding
-    online will be set in SlaveModel.
-
-    If the status contains the result of an execute request the corresponding
-    ProgramStatus will get updated in the database and the message gets
-    republished to the 'notifications' group.
+    Handels websockets.receive requests of '/logs'. And forwards the content to
+    the 'notifications' group. Every request gets acknowledged.
 
     Arguments
     ---------
-    message: channels.message.Message that contains a Status in the 'text' field
-
+    message: channels.message.Message that contains a logfile
     """
+    Group('notifications').send({'text': message.content['text']})
+    message.reply_channel.send({'text': 'ack'})
 
-    try:
-        try:
-            from json.decoder import JSONDecodeError
-            try:
-                status = Status.from_json(message.content['text'])
-            except JSONDecodeError as err:
-                LOGGER.error(
-                    "Error while parsing json. (cause: %s)",
-                    str(err),
-                )
-                return
 
-        except ImportError:
-            try:
-                status = Status.from_json(message.content['text'])
-            except ValueError as err:
-                LOGGER.error(
-                    "Error while parsing json. (cause: %s)",
-                    str(err),
-                )
-                return
+def ws_notifications_connect(message):
+    """
+    Handels websockets.connect requests of '/notifications'.
+    Adds the reply_channel to the group 'notifications'
 
-        select_method(status)
-    except FormatError as err:
-        LOGGER.error(
-            "Could not parse Status from incoming request. (cause: %s)",
-            str(err),
-        )
-    except KeyError:
-        LOGGER.error("No content['text'] in received message.")
+    Arguments
+    ---------
+    message: channels.message.Message that contains the connection request  on
+    '/notifications'.
+    """
+    Group('notifications').add(message.reply_channel)
+    message.reply_channel.send({"accept": True})
 
 
 def ws_notifications_disconnect(message):
@@ -441,8 +489,6 @@ def ws_notifications_disconnect(message):
     Arguments
     ---------
     message: channels.message.Message that contains the disconnect request  on
-    '/'
-
+    '/notifications'.
     """
-
     Group('notifications').discard(message.reply_channel)

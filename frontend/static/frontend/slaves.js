@@ -1,7 +1,8 @@
 /* eslint-env browser*/
-/* eslint no-use-before-define: ["error", { "functions": false }] */
-/* global $, getCookie, modalDeleteAction, handleFormStatus, clearErrorMessages, Status,
- fsimWebsocket, notify, swapText, styleSlaveByStatus, basicRequest */
+/* eslint no-use-before-define: ['error', { 'functions': false }] */
+/* global $, modalDeleteAction, clearErrorMessages, fsimWebsocket, swapText,
+ styleSlaveByStatus, basicRequest, AnsiTerm */
+/* exported unloadPrompt */
 
 /**
  * Sets the given text for all '.button-status-display' in a container.
@@ -25,23 +26,28 @@ function onFormSubmit(id) {
         //Stop form from submitting normally
         event.preventDefault();
 
+        //remove the unload-Hook
+        window.unloadPrompt = false;
+
         //send request to given url and with given method
         //data field contains information about the slave
-        $.ajax({
+        basicRequest({
             type: $(this).attr('method'),
             url: $(this).attr('action'),
             data: $(this).serialize(),
-            converters: {
-                'text json': Status.from_json
+            onSuccess() {
+                window.location.reload();
             },
-            beforeSend(xhr) {
-                xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
-            },
-            success(status) {
-                handleFormStatus($('#' + id), status);
-            },
-            error(xhr, errorString, errorCode) {
-                notify('Could deliver', 'Could not send data to server.' + errorCode + ')', 'danger');
+            onError(payload) {
+                let form = $('#' + id);
+                clearErrorMessages(form);
+
+                // insert new feedback
+                $.each(payload, function (id, msg) {
+                    let node = form.find('[name=' + id + ']');
+                    node.addClass('is-invalid');
+                    node.parent().append('<div class="invalid-feedback">' + msg + '</div>');
+                });
             }
         });
     };
@@ -65,6 +71,26 @@ function restoreSlaveInnerTab(slaveId) {
     }
 }
 
+function handleLogging(id, method) {
+    basicRequest({
+        type: 'POST',
+        url: '/api/program/' + id + '/log/' + method,
+        action: method + ' log',
+    });
+}
+
+function checkFormRequired(elem) {
+    let reqEmpty = false;
+    $(elem).parent().parent().find('.form-control').each(function (i, val) {
+        if (val.value === '' && $(val).attr('required')) {
+            reqEmpty = true;
+        }
+    });
+    $('.submit-btn').prop('disabled', reqEmpty);
+}
+
+let terminals = {};
+
 const socketEventHandler = {
     slaveConnect(payload) {
         let statusContainer = $('#slaveStatusContainer_' + payload.sid);
@@ -76,7 +102,7 @@ const socketEventHandler = {
 
         // Use Python notation !!!
         startstopButton.attr('data-is-running', 'True');
-        changeStatusDisplayText(startstopButton, 'STOP');
+        changeStatusDisplayText(startstopButton, 'SWITCH OFF');
 
         // set tooltip to Stop
         startstopButton.children('[data-text-swap]').each(function (idx, val) {
@@ -99,7 +125,7 @@ const socketEventHandler = {
 
         // Use Python notation !!!
         startstopButton.attr('data-is-running', 'False');
-        changeStatusDisplayText(startstopButton, 'START');
+        changeStatusDisplayText(startstopButton, 'SWITCH ON');
 
         // set tooltip to Start
         startstopButton.children('[data-text-swap]').each(function (idx, val) {
@@ -112,7 +138,7 @@ const socketEventHandler = {
         let cardButton = $('#programCardButton_' + payload.pid);
 
         statusContainer.attr('data-state', 'warning');
-        cardButton.prop('disabled', true);
+        cardButton.prop('disabled', false);
 
         // Use Python notation !!!
         startstopButton.attr('data-is-running', 'True');
@@ -125,7 +151,7 @@ const socketEventHandler = {
             return false;
         });
 
-        styleSlaveByStatus(sid);
+        styleSlaveByStatus(sid, false, false, true, true);
 
         startstopButton.children('[data-text-swap]').each(function (idx, val) {
             swapText($(val));
@@ -134,14 +160,15 @@ const socketEventHandler = {
     programStopped(payload) {
         let statusContainer = $('#programStatusContainer_' + payload.pid);
         let startstopButton = $('#programStartStop_' + payload.pid);
+
         let cardButton = $('#programCardButton_' + payload.pid);
-        let cardBox = $('#programCard_' + payload.pid);
+        cardButton.prop('disabled', false);
 
-        if (payload.code !== 0) {
+        let error = false;
+
+        if (payload.code !== 0 && payload.code !== '0') {
+            error = true;
             statusContainer.attr('data-state', 'error');
-
-            cardButton.prop('disabled', false);
-            cardBox.text(payload.code);
         } else {
             statusContainer.attr('data-state', 'success');
         }
@@ -157,11 +184,21 @@ const socketEventHandler = {
             return false;
         });
 
-        styleSlaveByStatus(sid);
+        styleSlaveByStatus(sid, error, error, true, false);
 
         startstopButton.children('[data-text-swap]').each(function (idx, val) {
             swapText($(val));
         });
+    },
+    programUpdateLog(payload) {
+        let pid = payload.pid;
+        if (terminals[pid] == null) {
+            terminals[pid] = new AnsiTerm(pid, 80);
+        }
+
+        terminals[pid].feed(payload.log);
+        $('#waitingText_' + pid).empty();
+        $('#programLog_' + pid).data('has-log', true);
     },
     filesystemMoved(payload) {
         let statusContainer = $('#filesystemStatusContainer_' + payload.fid);
@@ -174,15 +211,6 @@ const socketEventHandler = {
         // Use Python notation !!!
         moveRestoreButton.attr('data-is-moved', 'True');
         changeStatusDisplayText(moveRestoreButton, 'RESTORE');
-
-        let sid = null;
-
-        statusContainer.find('button[data-slave-id]').each(function (idx, val) {
-            sid = $(val).data('slave-id');
-            return false;
-        });
-
-        styleSlaveByStatus(sid);
     },
     filesystemRestored(payload) {
         let statusContainer = $('#filesystemStatusContainer_' + payload.fid);
@@ -195,15 +223,6 @@ const socketEventHandler = {
         // Use Python notation !!!
         moveRestoreButton.attr('data-is-moved', 'False');
         changeStatusDisplayText(moveRestoreButton, 'MOVE');
-
-        let sid = null;
-
-        statusContainer.find('button[data-slave-id]').each(function (idx, val) {
-            sid = $(val).data('slave-id');
-            return false;
-        });
-
-        styleSlaveByStatus(sid);
     },
     filesystemError(payload) {
         let statusContainer = $('#filesystemStatusContainer_' + payload.fid);
@@ -221,7 +240,7 @@ const socketEventHandler = {
             return false;
         });
 
-        styleSlaveByStatus(sid);
+        styleSlaveByStatus(sid, true, true, false, false);
     },
 };
 
@@ -246,23 +265,62 @@ $(document).ready(function () {
         }
     }());
 
+    // Select color after reload
+    $('.slave-content-tab.active').removeClass('text-dark bg-light')
+        .addClass('text-light bg-dark')
+        .children('button').removeClass('btn-dark')
+        .addClass('btn-light');
+
+    $('.slave-content-tab').click(function () {
+        if (!$(this).hasClass('active')) {
+            // Remove color from the old tabs
+            $('.slave-content-tab').each(function (idx, val) {
+                $(val).removeClass('bg-dark text-light')
+                    .addClass('text-dark')
+                    .children('button').removeClass('btn-light')
+                    .addClass('btn-dark');
+            });
+
+            // Save Class when opening for every Slave
+            localStorage.setItem('status-tabs', $(this).attr('href'));
+
+            // Change the color of the current tab
+            $(this).removeClass('text-dark')
+                .addClass('bg-dark text-light')
+                .children('button').removeClass('btn-dark')
+                .addClass('btn-light');
+        }
+    });
+
     // Set color of the current selected.
-    $('.slave-tab-link.active').parent('li').css('background-color', '#dbdbdc');
+    $('.slave-tab-link.active').addClass('border-dark bg-dark text-light')
+        .children('span').removeClass('badge-dark')
+        .addClass('badge-light');
 
     // Changes the color of the clicked slave, if it was not clicked before.
     $('.slave-tab-link').click(function () {
         if (!$(this).hasClass('active')) {
             // Remove color from the old tabs
             $('.slave-tab-link').each(function (idx, val) {
-                $(val).parent('li').css('background-color', 'transparent');
+                $(val).removeClass('border-dark bg-dark text-light')
+                    .addClass('text-dark')
+                    .children('span').removeClass('badge-light')
+                    .addClass('badge-dark');
             });
 
             // Save Class when opening for every Slave
             localStorage.setItem('status', $(this).attr('href'));
 
             // Change the color of the current tab
-            $(this).parent('li').css('background-color', '#dbdbdc');
+            $(this).removeClass('text-dark')
+                .addClass('border-dark bg-dark text-light')
+                .children('span').removeClass('badge-dark')
+                .addClass('badge-light');
         }
+        $('.slave-content-tab.active').removeClass('text-dark bg-light')
+            .addClass('text-light bg-dark')
+            .children('button').removeClass('btn-dark')
+            .addClass('btn-light');
     });
 
     $('.slave-filesystem-tab').click(function () {
@@ -273,34 +331,45 @@ $(document).ready(function () {
         localStorage.setItem('tab-status', 'program');
     });
 
+
+    $('.program-action-handle-logging').click(function () {
+        let pid = $(this).data('program-id');
+        let logBox = $('#programLog_' + pid);
+
+        if (!$(this).data('enabled')) {
+            let waitingText = $('<span/>',{
+                id: 'waitingText_' + pid,
+                text:'Processing the log from the client.\n'
+            });
+            logBox.append(waitingText);
+            $(this).data('enabled', true);
+            handleLogging(pid, 'enable');
+        } else {
+            handleLogging(pid, 'disable');
+            $(this).data('enabled', false);
+            terminals[pid].clear();
+        }
+    });
+
+
     $('.program-action-start-stop').click(function () {
-        let apiRequest = function (url, type) {
-            $.ajax({
-                type,
-                url,
-                beforeSend(xhr) {
-                    xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
-                },
-                converters: {
-                    'text json': Status.from_json
-                },
-                success(status) {
-                    if (status.is_err()) {
-                        notify('Error while starting program', 'Could not start program. (' + JSON.stringify(status.payload) + ')', 'danger');
-                    }
-                },
-                error(xhr, errorString, errorCode) {
-                    notify('Could deliver', 'Could not deliver request `' + type + '` to server.' + errorCode + ')', 'danger');
-                }
+        let apiRequest = function (url, type, action) {
+            basicRequest({
+                type: type,
+                url: url,
+                action: action,
             });
         };
 
         let id = $(this).data('program-id');
 
+        let cardButton = $('#programCardButton_' + id);
+        cardButton.prop('disabled', false);
+
         if ($(this).attr('data-is-running') === 'True') {
-            apiRequest('/api/program/' + id + '/stop', 'GET');
+            apiRequest('/api/program/' + id + '/stop', 'POST', 'stop program');
         } else if ($(this).attr('data-is-running') === 'False') {
-            apiRequest('/api/program/' + id, 'POST');
+            apiRequest('/api/program/' + id + '/start', 'POST', 'start program');
         }
     });
 
@@ -364,7 +433,7 @@ $(document).ready(function () {
         programModal.children().find('.modal-title').text('Edit Program');
         programForm.attr('action', '/api/program/' + id);
         programForm.attr('method', 'PUT');
-        programForm.children().find('.submit-btn').text('Edit');
+        programForm.children().find('.submit-btn').text('Apply');
 
         //clear input fields
         programForm.find('[name="name"]').val(name);
@@ -402,7 +471,7 @@ $(document).ready(function () {
     //opens the fileModal to add a new program
     $('.filesystem-action-add').click(function () {
         let filesystemModal = $('#filesystemModal');
-        filesystemModal.children().find('.modal-title').text('Add filesystem');
+        filesystemModal.children().find('.modal-title').text('Add Filesystem');
 
         //modify the form for the submit button
         let filesystemForm = filesystemModal.children().find('#filesystemForm');
@@ -425,7 +494,35 @@ $(document).ready(function () {
     });
 
     $('.filesystem-action-modify').click(function () {
-        alert('Unimplemented');
+        let filesystemModal = $('#filesystemModal');
+        let filesystemForm = filesystemModal.children().find('#filesystemForm');
+
+        //get info of the filesystem
+        let id = $(this).data('filesystem-id');
+        let name = $(this).data('filesystem-name');
+        let sourcePath = $(this).data('filesystem-source_path');
+        let destinationPath = $(this).data('filesystem-destination_path');
+
+        //modify the form for the submit button
+        filesystemModal.children().find('.modal-title').text('Edit Filesystem');
+        filesystemForm.attr('action', '/api/filesystem/' + id);
+        filesystemForm.attr('method', 'PUT');
+        filesystemForm.children().find('.submit-btn').text('Apply');
+
+        //set values into input fields
+        filesystemForm.find('[name="name"]').val(name);
+        filesystemForm.find('[name="source_path"]').val(sourcePath);
+        filesystemForm.find('[name="destination_path"]').val(destinationPath);
+
+        //clear error messages
+        clearErrorMessages(filesystemForm);
+
+        //find slave id and store it in the form
+        let slaveId = $(this).data('slave-id');
+        filesystemForm.find('[name="slave"]').val(slaveId);
+
+        //find slave id and store it in the form
+        filesystemModal.modal('toggle');
     });
 
     $('.filesystem-action-delete').click(function () {
@@ -441,9 +538,17 @@ $(document).ready(function () {
         let id = $(this).data('filesystem-id');
 
         if ($(this).attr('data-is-moved') === 'True') {
-            basicRequest('/api/filesystem/' + id + '/restore', 'GET', 'restore entry in filesystem');
+            basicRequest({
+                url: '/api/filesystem/' + id + '/restore',
+                type: 'POST',
+                action: 'restore entry in filesystem',
+            });
         } else if ($(this).attr('data-is-moved') === 'False') {
-            basicRequest('/api/filesystem/' + id + '/move', 'GET', 'move entry in filesystem');
+            basicRequest({
+                url: '/api/filesystem/' + id + '/move',
+                type: 'POST',
+                action: 'move entry in filesystem'
+            });
         }
     });
 
@@ -457,61 +562,21 @@ $(document).ready(function () {
     $('.slave-action-start-stop').click(function () {
         if ($(this).attr('data-is-running') === 'True') {
             let id = $(this).data('slave-id');
-            let el = $(this);
 
-            $.ajax({
-                type: 'GET',
+            basicRequest({
+                type: 'POST',
                 url: '/api/slave/' + id + '/shutdown',
-                beforeSend(xhr) {
-                    xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
-                },
-                converters: {
-                    'text json': Status.from_json
-                },
-                success(status) {
-                    if (status.is_ok()) {
-                        el.addClass('animated pulse');
-                        el.one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend', function () {
-                            el.removeClass('animated pulse');
-                        });
-                    } else {
-                        notify('Could not stop client', 'The client could not be stopped. (' + JSON.stringify(status.payload) + ')', 'danger');
-                    }
-                },
-                error(xhr, errorString, errorCode) {
-                    notify('Could deliver', 'The stop command could not been send. (' + errorCode + ')', 'danger');
-                }
+                action: 'stop client'
             });
 
         } else {
             let id = $(this).data('slave-id');
-            let el = $(this);
 
-            $.ajax({
-                type: 'GET',
+            basicRequest({
+                type: 'POST',
                 url: '/api/slave/' + id + '/wol',
-                beforeSend(xhr) {
-                    xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
-                },
-                converters: {
-                    'text json': Status.from_json
-                },
-                success(status) {
-                    if (status.is_ok()) {
-                        el.addClass('animated pulse');
-                        el.one('webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend', function () {
-                            el.removeClass('animated pulse');
-                        });
-                    } else {
-                        notify('Error while starting', 'Could not start client. (' + JSON.stringify(status.payload) + ')', 'danger');
-                    }
-
-                },
-                error(xhr, errorString, errorCode) {
-                    notify('Could deliver', 'The start command could not been send. (' + errorCode + ')', 'danger');
-                }
+                action: 'start client'
             });
-
         }
     });
 
@@ -534,6 +599,7 @@ $(document).ready(function () {
         //clear error messages
         clearErrorMessages(slaveForm);
         slaveModal.modal('toggle');
+
     });
 
     //opens the slaveModal to modify an existing slave
@@ -551,7 +617,7 @@ $(document).ready(function () {
         let slaveForm = slaveModal.children().find('#slaveForm');
         slaveForm.attr('action', '/api/slave/' + id);
         slaveForm.attr('method', 'PUT');
-        slaveForm.children().find('.submit-btn').text('Edit');
+        slaveForm.children().find('.submit-btn').text('Apply');
 
         //insert values into input field
         slaveForm.find('[name="name"]').val(name);
@@ -584,4 +650,79 @@ $(document).ready(function () {
 
     // slaveForm Handler
     $('#slaveForm').submit(onFormSubmit('slaveForm'));
+
+    //register load and unload hooks for modals
+    let hookModals = ['programModal', 'slaveModal', 'filesystemModal'];
+    for (let modal of hookModals) {
+        $('#'+modal).on('show.bs.modal', function() {
+            $(':input').on('input', function() {
+                window.unloadPrompt = true;
+                removeAllChangeListener();
+            });
+
+            $('select').on('input', function() {
+                window.unloadPrompt = true;
+                removeAllChangeListener();
+            });
+        });
+
+        $('#'+modal).on('hidden.bs.modal', function(e) {
+            if (window.unloadPrompt) {
+                $('#unsafedChangesWarning').data('parentModal', e.target.id);
+                $('#unsafedChangesWarning').modal('toggle');
+            }
+            window.unloadPrompt = false;
+        });
+    }
+
+    $('.keepParentModal').click(function() {
+        let parentModal = $('#unsafedChangesWarning').data('parentModal');
+        $('#unsafedChangesWarning').modal('toggle');
+        $('#' + parentModal).modal('toggle');
+    });
+
+    // Disable Modal Submit Button if nothing changed or a field is empty
+    $('.submit-btn').prop('disabled', true);
+    $('.form-control').on('change keyup', function () {
+        checkFormRequired(this);
+    });
 });
+
+// global variable which determines the usage of the unload prompt
+var unloadPrompt = false;
+
+// if the site gets reloaded/closed all logging activity gets stopped
+function logUnloadHandler() {
+    $('.program-action-handle-logging').each(function () {
+        if ($(this).data('enabled')) {
+            let id = $(this).data('program-id');
+            handleLogging(id, 'disable', false);
+            $(this).data('enabled', false);
+        }
+    });
+}
+
+$(window).on('beforeunload', function (e) {
+    logUnloadHandler();
+    if (this.unloadPrompt) {
+        let returnText = 'Are you sure you want to leave?';
+        e.returnValue = returnText;
+        return returnText;
+    }
+});
+
+// if the site gets reloaded/closed all logging activity gets stopped
+$(window).on('unload', function () {
+    $('.program-action-handle-logging').each(function () {
+        if ($(this).data('enabled')) {
+            let id = $(this).data('program-id');
+            handleLogging(id, 'disable', false);
+            $(this).data('enabled', false);
+        }
+    });
+});
+
+function removeAllChangeListener(){
+    $(':input').off('input');
+    $('select').off('input');
+}

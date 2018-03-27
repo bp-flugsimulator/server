@@ -1,9 +1,11 @@
 """
-This module contains all databasemodels from the frontend application.
+This module contains all database models from the `frontend` application.
 """
 
 import logging
 from shlex import split
+
+from utils.typecheck import ensure_type
 
 from django.db.models import (
     Model,
@@ -16,28 +18,16 @@ from django.db.models import (
     OneToOneField,
     TextField,
     Count,
+    Q,
 )
 
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
-from channels import Group
-from wakeonlan import send_magic_packet
-from utils import Command
-from server.utils import notify
+
+from .errors import IdentifierError
 
 LOGGER = logging.getLogger("fsim.models")
-
-
-def timer_timeout_program(identifier):
-    """
-    Sets the timeout flag for a program.
-
-    Arguments
-    ---------
-        id: Program id
-    """
-    ProgramStatus.objects.filter(program=identifier).update(timeouted=True)
-    FSIM_CURRENT_SCHEDULER.notify()
+FILE_BACKUP_ENDING = "_BACK"
 
 
 def validate_mac_address(mac_addr):
@@ -49,22 +39,23 @@ def validate_mac_address(mac_addr):
 
     Parameters
     ----------
-    mac_addr : str
-        MAC address
-
-    Returns
-    -------
-    nothing
+        mac_addr: str
+            MAC address
 
     Exception
     ---------
-    Raises an ValidationError if the given string is not
-    a valid MAC address.
+        ValidationError:
+            If `mac_addr` is not a valid MAC address.
     """
 
     def ishex(char):
         """
-        checks if char is a hexvalue
+        Checks if a given character is a hex character.
+
+        Parameters
+        ----------
+            char: str
+                A single character
         """
         return (char <= 'F' and char >= 'A') or (char <= 'f' and char >= 'a')
 
@@ -86,21 +77,17 @@ def validate_mac_address(mac_addr):
 
 def validate_argument_list(args):
     """
-    Validates that given argument list is parsable by shlex.
+    Validates a list of command line arguments if it is parseable.
 
     Parameters
     ----------
-    args: str
-        argument list
-
-    Returns
-    -------
-    nothing
+        args: str
+            A string which contains command line arguments.
 
     Exception
     ---------
-    Raises an ValidationError if the given argument list is
-    not parsable by shlex.
+        ValidationError:
+            If the given `args` are not parseable by `shlex`.
     """
     try:
         split(args)
@@ -110,18 +97,25 @@ def validate_argument_list(args):
 
 class Slave(Model):
     """
-    Represents a slave which is node in the network. This is stored in a
-    database.
+    Reprents a slave which runs the counter part of this software. The slave is
+    located in a network.
 
-    Members
-    -------
-    name: str The name of the slave
-    ip_address: GenericIPAddressField The IP address of the slave.
-    mac_address: str The MAC address of the slave.
-    command_uuid: The UUID which is related to the RPC command.
-    online: If the client has connected to the server
+    Attributes
+    ----------
+        name: CharField
+            The unique name of the `Slave`.
+        ip_address: GenericIPAddressField
+            The IP address which is used to address packages to the slave.
+        mac_address: CharField(validators=[validate_mac_address])
+            The MAC address of the slave.
+
+        command_uuid:
+            The UUID which is related to the RPC command.
+        online:
+            If the client has connected to the server
 
     """
+    # persistent fields
     name = CharField(unique=True, max_length=200)
     ip_address = GenericIPAddressField(unique=True)
     mac_address = CharField(
@@ -129,28 +123,89 @@ class Slave(Model):
         max_length=17,
         validators=[validate_mac_address],
     )
+
+    # non persistent fields
     command_uuid = CharField(blank=True, null=True, max_length=32, unique=True)
     online = BooleanField(unique=False, default=False)
 
-    @staticmethod
-    def wake_on_lan(slave):
+    def reset(self):
         """
-        Sends wake on lan package to the slave.
+        Resets non persistent fields to their default value.
         """
-        (mac, ) = Slave.objects.values_list('mac_address').get(id=slave)
-        send_magic_packet(mac)
+        self.command_uuid = None
+        self.online = False
+
+        self.save()
+
+    @property
+    def data_state(self):
+        """
+        Returns the current state of this `Slave` as a string.
+
+        Returns
+        -------
+            str:
+                One of "success" or "unknown"
+        """
+        if self.is_online:
+            return "success"
+        else:
+            return "unknown"
+
+    @property
+    def current_errored(self):
+        """
+        Counts the amount of errored `Filesystem`s and `Program`s.
+
+        Returns
+        -------
+        int:
+            The amount of `Program`s and `Filesystem`s where an error occured.
+        """
+        progs = ProgramStatus.objects.filter(~Q(code="0"),
+                                             running=False,
+                                             program__slave=self,).count()
+        filesystems = Filesystem.objects.filter(~Q(error_code="0"),
+                                                ~Q(error_code=""),
+                                                 slave=self,).count()
+
+        return progs + filesystems
+
+    @property
+    def current_running(self):
+        """
+        Counts the amount of `Program`s which are currently running.
+
+        Returns
+        ------
+            int:
+                The amount of `Program`s which are running.
+        """
+        return ProgramStatus.objects.filter(running=True,
+                                            program__slave=self,
+                                            ).count()
 
     @property
     def is_online(self):
         """
-        Returns true of the current slave has connected to the master.
+        Checks if the slave is online.
+
+        Returns
+        -------
+            bool:
+                If the slave is online.
         """
         return self.online
 
     @property
     def has_error(self):
         """
-        Returns true if any program or filesystem is in an error state.
+        Checks if the slave has an error value stored.
+
+        Returns
+        -------
+            bool:
+                If the slave has an error value stored.
         """
         for prog in self.program_set.all():
             if prog.is_error:
@@ -165,27 +220,106 @@ class Slave(Model):
     @property
     def has_running(self):
         """
-        Returns true if any program or filesystem is in an error state.
+        Checks if the slave has running programs.
+
+        Returns
+        -------
+            bool:
+                If the slave has running programs.
         """
         return self.program_set.filter(programstatus__running=True).exists()
+
+    @staticmethod
+    def from_identifier(identifier, is_string):
+        """
+        Returns an slave based on the given `identifier` which can be an index
+        or a name.
+
+        Parameters
+        ----------
+            identifier: str
+                Which is a `name` or `index` form the `Slave` model.
+            is_string: bool
+                If the `identifier` should be interpreted as a `name` or `
+                index`.
+
+        Returns
+        -------
+            Slave:
+                If the type was correct and the slave exist.
+
+        Raises
+        ------
+            Slave.DoesNotExist:
+                If no slave with the given `identifier` exist.
+            TypeError:
+                If `identifier` and `is_string` have not the correct type.
+            IdentifierError:
+                If `is_string` is False and the `identifier` can not be
+                transformed into an int.
+        """
+        ensure_type("identifier", identifier, str)
+        ensure_type("is_string", is_string, bool)
+
+        if is_string:
+            return Slave.objects.get(name=identifier)
+        else:
+            try:
+                return Slave.objects.get(id=int(identifier))
+            except ValueError:
+                raise IdentifierError("slave", "int", identifier)
+
+    @staticmethod
+    def with_programs():
+        """
+        Returns all `Slave`s witch have at least one program.
+
+        Returns
+        -------
+            list of str:
+                The list contains the name of every `Slave` which fulfil the
+                condition.
+        """
+        return Slave.objects.all().annotate(prog_count=Count(
+            'program__pk')).filter(prog_count__gt=0).values_list(
+                'name',
+                flat=True,
+            )
+
+    @staticmethod
+    def with_filesystems():
+        """
+        Returns all `Slave`s witch have at least one filesystem.
+
+        Returns
+        -------
+            list of str:
+                The list contains the name of every `Slave` which fulfil the
+                condition.
+        """
+        return Slave.objects.all().annotate(filesystem_count=Count(
+            'filesystem__pk')).filter(filesystem_count__gt=0).values_list(
+                'name',
+                flat=True,
+            )
 
 
 class Program(Model):
     """
-    Represents a program on a slave This is stored in a database.
+    Represents a program which is located on a slave and which can be executed.
 
-    Members
-    -------
-    name: str The name of the program (has to be unique for every slave)
-
-    path: str The path to the binary filesystem that will be executed
-
-    arguments: str The arguments which will be passed to the executable on
-        execution
-
-    slave: Slave The slave on which the command will be executed
-
-    start_time: int The amount of time a program needs to start.
+    Attributes
+    ----------
+        name: CharField
+            The name of the `Program`, which is unique to every `Slave`.
+        path: TextField
+            A full path to the `Program` on the same `Slave`.
+        arguments: TextField
+            Arguments for the executable `Program`.
+        slave: ForeignKey
+            The `Slave` on which this `Program` is located.
+        start_time: IntegerField
+            The amount of time this `Program` needs to start.
     """
     name = CharField(unique=False, max_length=1000)
     path = TextField(unique=False)
@@ -198,12 +332,42 @@ class Program(Model):
     start_time = IntegerField(default=-1)
 
     class Meta:
+        """
+        Meta class
+        """
         unique_together = (('name', 'slave'), )
+
+    def __str__(self):
+        return str(self.name)
+
+    @property
+    def data_state(self):
+        """
+        Returns the current state of this `Filesystem` as a string.
+
+        Returns
+        -------
+            str:
+                One of "running", "error", "success" or "unknown"
+        """
+        if self.is_running:
+            return "running"
+        elif self.is_error:
+            return "error"
+        elif self.is_executed:
+            return "success"
+        else:
+            return "unknown"
 
     @property
     def is_timeouted(self):
         """
-        Returns true if the time which the program takes to start is over.
+        Checks if the `Program.start_time` is elapsed.
+
+        Returns
+        -------
+            bool:
+                If the specified amount of time is elapsed.
         """
         try:
             return self.programstatus.timeouted
@@ -213,7 +377,12 @@ class Program(Model):
     @property
     def is_running(self):
         """
-        Returns true if program is currently running.
+        Checks if this `Program` is running.
+
+        Returns
+        -------
+            bool:
+                If this `Program` is running.
         """
         try:
             return self.programstatus.running
@@ -223,7 +392,12 @@ class Program(Model):
     @property
     def is_executed(self):
         """
-        Returns true if the program exited.
+        Checks if this `Program` was running in the past.
+
+        Returns
+        -------
+            bool:
+                If this `Program` was running.
         """
         try:
             return not self.is_running and self.programstatus.code != ''
@@ -233,124 +407,83 @@ class Program(Model):
     @property
     def is_error(self):
         """
-        Returns true if the current program was executed not successful, which
-        means the error code was 0.
+        Checks if this `Program` had an error while running.
+
+        Returns
+        -------
+            bool:
+                If this `Program` had an error.
         """
-        # NOTICE: no try and catch needed because self.is_executed is False
-        # if ProgramStatus.DoesNotExist is thrown, thus the whole expression
-        # is false
+        # NOTICE: `Program.is_executed` covers the case
+        # `ProgramStatus.DoesNotExist`.
         return self.is_executed and self.programstatus.code != '0'
 
     @property
     def is_successful(self):
         """
-        Returns true if the current program was executed successful.
+        Checks if this `Program` had no errors while running.
+
+        Returns
+        -------
+            bool:
+                If this `Program` had no error.
         """
-        # NOTICE: no try and catch needed because self.is_executed is False
-        # if ProgramStatus.DoesNotExist is thrown, thus the whole expression
-        # is false
+        # NOTICE: `Program.is_executed` covers the case
+        # `ProgramStatus.DoesNotExist`.
         return self.is_executed and self.programstatus.code == '0'
-
-    def enable(self):
-        """
-        Starts the program on the slave.
-
-        Returns
-        -------
-            boolean which indicates if the program was started.
-        """
-
-        if self.slave.is_online:
-            cmd = Command(
-                method="execute",
-                path=self.path,
-                arguments=split(self.arguments),
-            )
-
-            LOGGER.info(
-                "Starting program %s on slave %s",
-                self.name,
-                self.slave.name,
-            )
-
-            # send command to the client
-            Group('client_' + str(self.slave.id)).send({'text': cmd.to_json()})
-
-            # tell webinterface that the program has started
-            notify({
-                'program_status': 'started',
-                'pid': self.id,
-            })
-
-            # create status entry
-            ProgramStatus(program=self, command_uuid=cmd.uuid).save()
-
-            if self.start_time > 0:
-                LOGGER.debug('started timeout on %s, for %d seconds',
-                             self.name, self.start_time)
-                FSIM_CURRENT_EVENT_LOOP.spawn(self.start_time,
-                                              timer_timeout_program, self.id)
-
-            return True
-        else:
-            return False
-
-    def disable(self):
-        """
-        Stops the program on the slave.
-
-        Returns
-        -------
-            boolean which indicates if the program was stopped.
-        """
-
-        if self.is_running:
-            LOGGER.info(
-                "Stoping program %s on slave %s",
-                self.name,
-                self.slave.name,
-            )
-            Group('client_' + str(self.slave.id)).send({
-                'text':
-                Command(
-                    method="execute",
-                    uuid=self.programstatus.command_uuid).to_json()
-            })
-            return True
-        else:
-            return False
 
 
 class Filesystem(Model):
     """
-    Represents a filesystem on a slave This is stored in a database.
+    Represents a file or directory on a `Slave` which can be moved to another
+    specified location on the same `Slave`.
 
-    Members
-    -------
-    name: str The name of the filesystem (has to be unique for every slave)
+    Attributes
+    ----------
+        name: CharField
+            The unique name for this `Filesystem`
+        slave: ForeignKey
+            The `Slave` on which this `Filesystem` is on.
+        source_path: TextField
+            The path to the existing file or directory on the `Slave`.
+        source_type: CharField
+            Specifies if the source_path is directory or a file.
+        destination_path: TextField
+            The path where the `source_path` object should be moved to.
+        destination_type: CharField
+            Specifies if the `source_path` should be replaced with or, if the
+            `destination_path` is directory, replace with.
+        hash_value: CharField
+            This field is set if this `Filesystem` is moved. The content is
+            equal to the hash value of the corresponding file or directory
+            (`source_path`).
 
-    source_path: str
-        The path to the source of the filesystem
-
-    destination_path: str
-        The path there the filesystem should be used in the filesystem system
-
-    error_code: str
-        The error code which is raised by the slave.
-
-    slave: Slave The slave on which the filesystem belongs to
+        command_uuid: CharField
+            An UUID which identifies the send command.
+        error_code: str
+            The error code which is raised by the slave.
     """
 
-    CHOICES_SET = [('file', 'Replace with'), ('dir', 'Insert into')]
+    CHOICES_SET_SOURCE = [
+        ('file', 'File'),
+        ('dir', 'Directory'),
+    ]
+    CHOICES_SET_DESTINATION = [
+        ('file', 'Replace with'),
+        ('dir', 'Insert into'),
+    ]
 
+    # persistant fields
     name = CharField(unique=False, max_length=200)
+    slave = ForeignKey(Slave, on_delete=CASCADE)
     source_path = TextField(unique=False)
+    source_type = CharField(
+        max_length=4, choices=CHOICES_SET_SOURCE, default='file')
     destination_path = TextField(unique=False)
-    command_uuid = CharField(
-        max_length=32,
-        unique=True,
-        blank=True,
-        null=True,
+    destination_type = CharField(
+        max_length=4,
+        choices=CHOICES_SET_DESTINATION,
+        default='file',
     )
     hash_value = CharField(
         unique=False,
@@ -358,16 +491,20 @@ class Filesystem(Model):
         blank=True,
         default="",
     )
-    error_code = CharField(blank=True, default="", max_length=1000)
-    slave = ForeignKey(Slave, on_delete=CASCADE)
-    source_type = CharField(max_length=4, choices=CHOICES_SET, default='file')
-    destination_type = CharField(
-        max_length=4,
-        choices=CHOICES_SET,
-        default='file',
+
+    # state fields
+    command_uuid = CharField(
+        max_length=32,
+        unique=True,
+        blank=True,
+        null=True,
     )
+    error_code = CharField(blank=True, default="", max_length=1000)
 
     class Meta:
+        """
+        Meta class
+        """
         unique_together = (
             ('name', 'slave'),
             (
@@ -379,26 +516,54 @@ class Filesystem(Model):
             ),
         )
 
+    def reset(self):
+        """
+        Resets non persistent fields to their default value.
+        """
+        self.command_uuid = None
+        self.error_code = ""
+
+        self.save()
+
     def __str__(self):
         return self.name
 
     @property
     def is_moved(self):
         """
-        Returns true if filesystem is moved.
+        Checks if this `Filesystem` `source_path` is moved to
+        `destination_path`.
+
+        Returns
+        -------
+            bool:
+                If this `Filesystem` is moved.
         """
         return self.hash_value is not None and self.hash_value != ""
 
     @property
     def is_error(self):
+        """
+        Checks if this `Filesystem` had an error while the move or restore
+        operation.
+
+        Returns
+        -------
+            bool:
+                If this `Filesystem` had an error.
+        """
         return self.error_code != ''
 
     @property
     def data_state(self):
         """
-        Returns a string which represents the data-state attribute in the html template.
-        """
-        # {% if filesystem.is_error %}error{% elif filesystem.is_moved %}moved{% else %}restored{% endif %}
+        Returns the current state of this `Filesystem` as a string.
+
+        Returns
+        -------
+            str:
+                One of "error", "moved" or "restored".
+         """
         if self.is_error:
             return "error"
         elif self.is_moved:
@@ -409,59 +574,140 @@ class Filesystem(Model):
 
 class Script(Model):
     """
-    Represents a script file in a json format.
+    Represents a `Script` which has different `Program`s and `Filesystem`s. A
+    `Script` can also be executed.
 
-    Members
-    -------
-    name: str
-        The name of the script (has to be unique for every slave)
+    Attributes
+    ----------
+        name: CharField
+            The unqiue name for this `Script`.
+        last_ran: BooleanField
+            If this `Script` was the last one which was executed successful.
+
+        is_initialized: BooleanField
+            If this `Scheduler` started this `Script`.
+        is_running: BooleanField
+            If this `Script` is currently running, by the `Scheduler`.
+        error_code: CharField
+            The message which is set if an error occurred.
+        current_index: IntegerField
+            If the `Script` is running, then this field contains the current
+            index/stage.
     """
-    name = CharField(unique=True, max_length=200)
-    last_ran = BooleanField(default=False)
-    is_initialized = BooleanField(default=False)
-    is_running = BooleanField(default=False)
-    error_code = CharField(default="", max_length=1000)
-    current_index = IntegerField(default=-1)
+    # persistent fields
+    name = CharField(unique=True, blank=False, max_length=200)
+    last_ran = BooleanField(default=False, blank=True)
+
+    # non persistent fields
+    is_initialized = BooleanField(default=False, blank=True)
+    is_running = BooleanField(default=False, blank=True)
+    error_code = CharField(default="", max_length=1000, blank=True)
+    current_index = IntegerField(default=-1, blank=True)
+
+    def reset(self):
+        """
+        Resets non persistent fields to their default value.
+        """
+        self.is_initialized = False
+        self.is_running = False
+        self.error_code = ""
+        self.current_index = -1
+
+        self.save()
 
     def __str__(self):
         return self.name
 
-    @property
-    def indexes(self):
+    @staticmethod
+    def get_last_ran():
         """
-        Returns a query which contains the index and 'id__count' which holds
-        the amount of index for one script.
+        Returns the latest ran `Script`.
 
         Returns
         -------
-            array of maps where 'index' and 'id__count' is in.
+            Script or None:
         """
-        query = ScriptGraphPrograms.objects.filter(
-            script=self).values("index").annotate(
-                Count("id")).order_by("index")
+        query = Script.objects.filter(last_ran=True)
 
-        return query
+        if query:
+            return query.first()
+        else:
+            return None
+
+    @staticmethod
+    def latest():
+        """
+        Returns the latest `Script`.
+
+        Returns
+        -------
+            Script or None:
+
+        """
+        query = Script.objects.filter(is_initialized=True)
+
+        if query:
+            return query.first()
+        else:
+            return None
+
+    @property
+    def indexes(self):
+        """
+        Returns all indexes which are used in this `Script`.
+
+        Returns
+        -------
+            list of int:
+                Which contains all indexes which are used by this `Script`.
+                Every index only occurs once in this list (no duplications).
+        """
+        query_program = ScriptGraphPrograms.objects.filter(
+            script=self).values_list(
+                "index", flat=True).annotate(Count("id")).order_by("index")
+
+        query_filesystems = ScriptGraphFiles.objects.filter(
+            script=self).values_list(
+                "index", flat=True).annotate(Count("id")).order_by("index")
+
+        query = set(query_filesystems).union(set(query_program))
+
+        return list(query)
 
     @property
     def has_error(self):
         """
-        Returns true if the error code is set.
+        Checks if this `Script` had an error.
 
         Returns
         -------
-            bool
+            bool:
+                If this `Script` had an error.
         """
         return self.error_code != ''
 
     @staticmethod
+    def set_selected(script):
+        """
+        Selects the given `Script` for the `Scheduler`.
+
+        Parameters
+        ----------
+            script: int
+                Which identifies the `Script` which is now running.
+        """
+        Script.objects.all().update(is_initialized=False, is_running=False)
+        Script.objects.filter(id=script).update(
+            is_running=True,
+            is_initialized=True,
+            current_index=-1,
+        )
+
+    @staticmethod
     def set_last_started(script):
         """
-        Sets the last_ran flag for this script and disables the flag for all
-        other scripts.
-
-        Arguments
-        ---------
-        script: Script identifier
+        Sets the `Script.last_ran` flag to True for this `Script`, while
+        setting the flag to False for all other `Scripts`.
         """
         Script.objects.all().update(last_ran=False)
         Script.objects.filter(id=script).update(last_ran=True)
@@ -469,12 +715,17 @@ class Script(Model):
     @staticmethod
     def check_online(script):
         """
-        Checks if all needed slaves are online.
+        Checks if all relevant `Slave`s are online.
+
+        Arguments
+        ---------
+            script: Script
+                A valid `Script`
 
         Returns
         -------
-        Returns True if all needed slaves are online or if the script already
-        run successful.
+            bool:
+                If all relevant `Slave`s are online.
         """
 
         return not Program.objects.filter(
@@ -485,27 +736,39 @@ class Script(Model):
     @staticmethod
     def get_involved_slaves(script):
         """
-        Returns all slaves which are involved.
+        Gets all `Slave`s which are have `Program`s or `Filesystem`s, that are
+        used in this `Script`.
+
+        Arguments
+        ---------
+            script: Script
+                A valid `Script`
 
         Returns
         -------
-            A list of slaves
+            list of `Slave`s:
+                With all `Slave`s that are used in this `Script`.
         """
         return Program.objects.filter(
             scriptgraphprograms__script=script).annotate(
                 dcount=Count('slave')).values_list(
-                    'slave', flat=True)
+                    'slave',
+                    flat=True,
+                )
 
 
 class ScriptGraphPrograms(Model):
     """
-    Represents a dependency graph for programs in a script file.
+    Represents a `Program` which is involved in `Script`.
 
-    Members
+    Attributes
     -------
-        script: Script id
-        index: Order in which the script starts
-        program: Which program will be started
+        script: ForeignKey
+            The `Script` which this entry belongs to.
+        index: IntegerField
+            The order in which each entry is executed. (ordered)
+        program: ForeignKey
+            The `Program` which is executed.
     """
     script = ForeignKey(Script, on_delete=CASCADE)
     index = IntegerField(null=False)
@@ -517,13 +780,16 @@ class ScriptGraphPrograms(Model):
 
 class ScriptGraphFiles(Model):
     """
-    Represents a dependency graph for filesystems in a script file.
+    Represents a dependency graph for  in a script file.
 
-    Members
+    Attributes
     -------
-        script: Script id
-        index: Order in which the script starts
-        filesystem: Which file will be move/delete/created
+        script: ForeignKey
+            The `Script` which this entry belongs to.
+        index: IntegerField
+            The order in which each entry is executed. (ordered)
+        filesystem: ForeignKey
+            The `Filesytem` which is moved.
     """
     script = ForeignKey(Script, on_delete=CASCADE)
     index = IntegerField(null=False)
@@ -535,16 +801,21 @@ class ScriptGraphFiles(Model):
 
 class ProgramStatus(Model):
     """
-    Represents a process which is currently running on the slave.
+    Represents the current status of an `Program`.
 
-    Members
-    -------
-        program: Program id
-        code: last returned value of the program
-        command_uuid: uuid of the send 'execute' request
-        running: True if the program is currently running, otherwise False
-        timeouted: True if the Timer function set this. Which means a
-            start_time from program has elapsed.
+    Attributes
+    -----------
+        program: ForeignKey
+            The related `Program`.
+        code: CharField
+            The return code of an execution of the related `Program`.
+        command_uuid: CharField
+            An UUID which identifies the send command.
+        running: BooleanField
+            Indicator if the `Program` is running.
+        timeouted: BooleanField
+            Indicator if the `Program` elapsed the amount of time it needs to
+            execute.
     """
     program = OneToOneField(
         Program,

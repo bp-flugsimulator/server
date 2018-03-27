@@ -8,65 +8,56 @@
 {% block content %}
 
 <div class="ml-4 mr-4">
-    {% if not scripts %}
-        <div class="tab-pane fade show active">
-            <span class="background-text-large">No scripts created</span>
-        </div>
-    {% else %}
-    <h4 class="font-weight-bold ">SELECT A SCRIPT</h4>
-    <ul class="nav nav-tabs" role="tablist">
-        {% for script in scripts %}
-        <li class="nav-item">
-            <a class="nav-item nav-link font-weight-bold slave-program-tab {% if script.last_ran %}active{% endif %}" data-toggle="tab" href="#scriptTabContent{{ script.id }}" role="tab" id="scriptTabNav{{ script.id }}">
-                <i class="fsim-script-status-icon" data-state="{% if script.has_error %}error{% elif script.is_initialized and not script.is_running %}done{% elif script.is_running %}waiting{% else %}none{% endif %}"></i>
-                {{ script.name }}
-            </a>
-        </li>
-        {% endfor %}
-    </ul>
-    {% endif %}
-
-
-    <br>
-    <br>
-    <br>
-
-    <div class="tab-content" id="scriptTabContent">
-        {% for script in scripts %}
-            <div class="tab-pane fade show {% if script.last_ran %}active{% endif %}" id="scriptTabContent{{ script.id }}" role="tabpanel">
-                <h4 class="font-weight-bold">CURRENT STATUS</h4>
-                <ul class="list-group">
-                    <li class="list-group-item fsim-progress" id="runInit{{ script.id }}" data-state="{% if script.is_initialized %}done{% else %}none{% endif %}">
-                        <i class="mdi"></i>
-                        <i class="fsim-progress-name">Initial</i>
-                    </li>
-                    <li class="list-group-item fsim-progress" id="runWaitSlaves{{ script.id }}" data-state="{% if script.is_initialized and script.is_running and script.current_index < 0 %}waiting{% elif script.current_index >= 0 %}done{% else %}{% if script.has_error %}error{% else %}none{% endif %}{% endif %}">
-                        <i class="mdi"></i>
-                        <i class="fsim-progress-name">Wait for Clients</i>
-                    </li>
-                    {% for query in script.indexes %}
-                        <li class="list-group-item fsim-progress" id="runStage{{ script.id }}_{{ query.index }}" data-state="{% if script.current_index > query.index %}done{% elif script.current_index == query.index %}{% if script.has_error %}error{% else %}waiting{% endif %}{% else %}none{% endif %}">
-                            <i class="mdi"></i>
-                            <i class="fsim-progress-name">Stage {{ query.index }}</i>
-                        </li>
-                    {% endfor %}
-                    <li class="list-group-item fsim-progress" id="runDone{{ script.id }}" data-state="{% if script.is_initialized and not script.is_running and not script.has_error %}done{% elif script.has_error %}error{% else %}none{% endif %}">
-                        <i class="mdi"></i>
-                        <i class="fsim-progress-name">Done</i>
-                    </li>
-                    <button type="button" class="btn btn-outline-dark font-weight-light list-group-item script-action-run" id="scriptRun{{ script.id }}" data-script-id="{{ script.id }}">
-                        <i class="mdi mdi-play-arrow"></i>
-                        <i class="button-status-display font-weight-bold">
-                            RUN
-                        </i>
-                    </button>
-                </ul>
-            </div>
-        {% endfor %}
+    {% if not script %}
+    <div>
+        {% if ran %}
+        <span class="background-text-large">
+            The script {{ ran.name }} will start in <i class="countdown-value" data-script="{{ ran.id }}" data-value="30"></i> seconds. <br> To cancel this click <a href="#" class="countdown-abort">Abort</a>.</span>
+        {% else %}
+        <span class="background-text-large">No scripts running</span>
+        <br>
+        <span class="background-text-normal">click run on a <a class="text-info" href="/scripts">script</a></span>
+        {% endif %}
     </div>
+    {% else %}
+    <div>
+        <h4 class="font-weight-bold text-uppercase">CURRENT STATUS</h4>
+        <ul class="list-group">
+            <li class="list-group-item fsim-progress" id="runInit{{ script.id }}" data-state="{% if script.is_initialized %}done{% else %}none{% endif %}">
+                <i class="mdi"></i>
+                <i class="fsim-progress-name">Initial</i>
+            </li>
+
+            <li class="list-group-item fsim-progress" id="runWaitSlaves{{ script.id }}" data-state="{% if script.is_initialized and script.is_running and script.current_index < 0 %}waiting{% elif script.current_index >= 0 %}done{% else %}{% if script.has_error %}error{% else %}none{% endif %}{% endif %}">
+                <i class="mdi"></i>
+                <i class="fsim-progress-name">Wait for Clients</i>
+            </li>
+
+            {% for index in script.indexes %}
+            <li class="list-group-item fsim-progress" id="runStage{{ script.id }}_{{ query.index }}" data-state="{% if script.current_index > query.index %}done{% elif script.current_index == query.index %}{% if script.has_error %}error{% else %}waiting{% endif %}{% else %}none{% endif %}">
+                <i class="mdi"></i>
+                <i class="fsim-progress-name">Stage {{ index }}</i>
+            </li>
+            {% endfor %}
+
+            <li class="list-group-item fsim-progress" id="runDone{{ script.id }}" data-state="{% if script.is_initialized and not script.is_running and not script.has_error %}done{% elif script.has_error %}error{% else %}none{% endif %}">
+                <i class="mdi"></i>
+                <i class="fsim-progress-name">Finished</i>
+            </li>
+        </ul>
+
+        <button type="button" class="container-fluid btn btn-danger navbar-btn short-disable text-uppercase script-action-stop" data-script-id="{{ script.id }}" {% if script.is_initialized and not script.is_running and not script.has_error %}disabled{% elif script.has_error %}disabled{% else %}{% endif %}>
+            <i class="mdi mdi-play-arrow"></i>
+            <i class="button-status-display font-weight-bold">
+                STOP
+            </i>
+        </button>
+
+    </div>
+    {% endif %}
 </div>
 {% endblock %}
 
 {% block script %}
-    <script src="{% static 'frontend/scripts_run.js'%}"></script>
+<script src="{% static 'frontend/scripts_run.js'%}"></script>
 {% endblock %}

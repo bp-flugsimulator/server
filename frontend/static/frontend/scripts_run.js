@@ -1,6 +1,7 @@
 /* eslint-env browser*/
 /* eslint no-use-before-define: ["error", { "functions": false }] */
-/* global $, getCookie, Status, fsimWebsocket, notify*/
+/* global $, fsimWebsocket, notify, basicRequest */
+/* exported socket */
 
 var socketEventHandler = {
     scriptWaitForSlaves(payload) {
@@ -36,28 +37,47 @@ var socketEventHandler = {
 var socket = fsimWebsocket(socketEventHandler);
 
 $(document).ready(function () {
-    $('.script-action-run').click(function (event) {
-        event.preventDefault();
-        let id = $(this).attr('data-script-id');
-        $('#scriptTabContent' + id + ' [data-state]').attr('data-state', 'none');
-
-        $.ajax({
-            type: 'GET',
-            url: '/api/script/' + id + '/run',
-            beforeSend(xhr) {
-                xhr.setRequestHeader('X-CSRFToken', getCookie('csrftoken'));
+    $('.script-action-stop').click(function (event) {
+        //let id = $(this).attr('data-script-id'); Not important
+        basicRequest({
+            type: 'POST',
+            url: '/api/script/stop',
+            action: 'stop script',
+            onSuccess() {
+                window.location.reload();
             },
-            converters: {
-                'text json': Status.from_json
-            },
-            success(status) {
-                if (status.is_err()) {
-                    notify('Error while starting', 'Could not start script. (' + JSON.stringify(status.payload) + ')', 'danger');
-                }
-            },
-            error(xhr, errorString, errorCode) {
-                notify('Error while transport', errorCode, 'danger');
-            }
         });
     });
+
+    if ($('.countdown-value[data-value][data-script]').first() !== null) {
+        var countdownCurrent = 30;
+        var interval = setInterval(function() {
+            countdownCurrent -= 1;
+
+            $('.countdown-value[data-value][data-script]').each(function(idx, val) {
+                val.setAttribute('data-value', countdownCurrent);
+            });
+
+            let script = $('.countdown-value[data-value][data-script]').first().attr('data-script');
+
+            if (countdownCurrent === 0) {
+                clearInterval(interval);
+                basicRequest({
+                    type: 'POST',
+                    url: '/api/script/' + script + '/run',
+                    action: 'start script',
+                    onSuccess: function() {
+                        window.location.href = '/scripts/run';
+                    },
+                    onError: function() {
+                        window.location.href = '/scripts/run';
+                    }
+                });
+            }
+        }, 1000);
+
+        $('.countdown-abort').on('click', function() {
+            clearInterval(interval);
+        });
+    }
 });

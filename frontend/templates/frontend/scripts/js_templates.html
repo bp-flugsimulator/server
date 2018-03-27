@@ -1,0 +1,112 @@
+{% verbatim %}
+<script id="templateEntry" type="text/x-handlebars-template">
+    <div class="list-group-item flex-column align-items-start script-{{type}}-entry">
+        <div class="d-flex w-100">
+            <div class="form-group slave-choice col-xl-10 col-lg-10 col-md-10 col-sm-10">
+                <div>
+                    <div class="d-flex w-100 justify-content-between">
+                        <span class="font-weight-light text-uppercase">Client</span>
+                        <a class="text-info mr-2" data-toggle="popover" data-container="body"
+                            data-content="<b>Description</b><br>
+                            Client where the {{type}} is located.<hr>
+                            <b>Example</b><br>
+                            <code>Simulation Server<code/>">
+                            <i class="mdi mdi-information"></i>
+                        </a>
+                    </div>
+                    <select class="form-control script-{{type}}-slave" type="text" required>
+                        {{#each slaves}}
+                        <option {{#ifEq ../currentSlave this}}selected{{/ifEq}}>{{this}}</option>
+                        {{/each}}
+                    </select>
+                </div>
+            </div>
+            <button class="btn script-{{type}}-remove btn-light text-danger self-align-start ml-auto unload-warning" type="button">
+                <i class="mdi mdi-delete"></i>
+            </button>
+        </div>
+        <div class="d-flex w-100">
+            <div class="form-group {{type}}-choice col-10">
+                <div>
+                    <div class="d-flex w-100 justify-content-between">
+                        <span class="font-weight-light text-uppercase">{{type}}</span>
+                        <a class="text-info mr-2" data-toggle="popover" data-container="body"
+                            data-content="<b>Description</b><br>
+                            Select the {{type}} which will be execute.<hr>
+                            <b>Example</b><br>
+                            <code>{{type}} name<code/>">
+                            <i class="mdi mdi-information"></i>
+                        </a>
+                    </div>
+                    <select class="form-control script-{{type}}-{{type}}" type="text"
+                    name="script-{{type}}" data-selected="{{#if currentSelects}}{{ currentSelects }}{{/if}}"
+                        required>
+                        {{#each selects}}
+                        <option>{{this}}</option>
+                        {{/each}}
+                    </select>
+                </div>
+            </div>
+            <div class="form-group col-2">
+                <div class="d-flex w-100 justify-content-between">
+                    <span class="font-weight-light text-uppercase">index</span>
+                    <a class="text-info mr-2" data-toggle="popover" data-container="body"
+                        data-content="<b>Description</b><br>Number to determine in which stage the {{type}} is executed.
+                        <br> The index is starting at zero is counting upwards.
+                        <br> Multiple elements with the same index are executed in the same stage. <hr>
+                        <b>Example</b><br>
+                        <code>3<code/>">
+                        <i class="mdi mdi-information"></i>
+                    </a>
+                </div>
+                <input class="inset-shadow form-control script-{{type}}-index" type="number" value="{{#if index}}{{index}}{{else}}0{{/if}}"
+                    required/>
+            </div>
+        </div>
+    </div>
+</script>
+
+<script id="templateNoElement" type="text/x-handlebars-template">
+    <div class="list-group-item slave-no-elements bg-light">
+        <i class="background-text-normal">No Clients with {{type}}s created.</i>
+    </div>
+</script>
+
+<script id="templateContainer" type="text/x-handlebars-template">
+    <div class="container-fluid list-group-flush">
+        <div class="mt-2">
+            <span class="text-uppercase font-weight-bold">display name</span>
+            <input class="inset-shadow form-control script-name" placeholder="Script Name" type="text" {{#if name}}value="{{name}}"{{/if}} required/>
+            <div class="invalid-feedback">Script name is required.</div>
+        </div>
+
+        <div class="d-flex w-100 justify-content-between align-items-center pl-2 pr-2 pt-2 pb-2 mb-1 mt-4">
+            <i class="mdi mdi-widgets mr-1"></i>
+            <span class="text-uppercase font-weight-bold">programs</span>
+            <button type="button" class="btn btn-dark btn-sm script-program-add ml-2 unload-warning">
+                <i class="mdi mdi-plus"></i>
+            </button>
+            <button type="button" class="btn btn-dark btn-sm ml-auto script-program-hide">
+                <i class="mdi mdi-chevron-up"></i>
+            </button>
+        </div>
+
+        <div class="script-program-content row list-group">
+        </div>
+
+        <div class="d-flex w-100 justify-content-between align-items-center pl-2 pr-2 pt-2 pb-2 mb-1 mt-4">
+            <i class="mdi mdi-file-tree mr-1"></i>
+            <span class="text-uppercase font-weight-bold">filesystems</span>
+            <button type="button" class="btn btn-dark btn-sm script-filesystem-add ml-2 unload-warning">
+                <i class="mdi mdi-plus"></i>
+            </button>
+            <button type="button" class="btn btn-dark btn-sm script-filesystem-hide ml-auto">
+                <i class="mdi mdi-chevron-up"></i>
+            </button>
+        </div>
+
+        <div class="script-filesystem-content row list-group">
+        </div>
+    </div>
+</script>
+{% endverbatim %}

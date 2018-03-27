@@ -21,7 +21,7 @@ class DownloadTests(TestCase):
         response = self.client.get(reverse('frontend:downloads'))
         self.assertEqual(response.status_code, 200)
         self.assertIn(
-            'No files are present in the download folder',
+            'No files to download',
             str(response.content),
         )
 

@@ -1,4 +1,17 @@
-#  pylint: disable=C0111,C0103,R0201
+"""
+TESTCASE NAMING SCHEME
+
+def test_<MODEL>_<OPERATION/ERROR>:
+    pass
+
+<MODEL>:
+    The name of the model.
+
+<OPERATION/ERROR>:
+    If there is no error then use the operation name
+    else use the error.
+"""
+# pylint: disable=missing-docstring,too-many-public-methods
 
 from django.test import TestCase
 from django.core.exceptions import ValidationError
@@ -7,6 +20,9 @@ from frontend.apps import flush
 
 from frontend.models import (
     Slave as SlaveModel,
+    Script as ScriptModel,
+    Filesystem as FilesystemModel,
+    Program as ProgramModel,
     ProgramStatus as ProgramStatusModel,
     validate_mac_address,
     validate_argument_list,
@@ -22,18 +38,7 @@ from .factory import (
 )
 
 
-class DatabaseTests(TestCase):  # pylint: disable=unused-variable
-    def test_validate_argument_list(self):
-        self.assertIsNone(validate_argument_list('a b c d e f g'))
-
-    def test_validate_argument_list_raises(self):
-        self.assertRaisesMessage(
-            ValidationError,
-            'Enter a valid argument list.',
-            validate_argument_list,
-            'a "abc',
-        )
-
+class DatabaseTests(TestCase):
     def test_script_has_error(self):
         script = ScriptFactory()
 
@@ -53,17 +58,43 @@ class DatabaseTests(TestCase):  # pylint: disable=unused-variable
         sgp1 = SGPFactory(index=0, program=prog1, script=script)
         sgp2 = SGPFactory(index=2, program=prog2, script=script)
 
-        self.assertEqual([{
-            'index': sgp1.index,
-            'id__count': 1
-        }, {
-            'index': sgp2.index,
-            'id__count': 1
-        }], list(script.indexes))
+        self.assertEqual([
+            sgp1.index,
+            sgp2.index,
+        ], list(script.indexes))
+
+    def test_script_check_online(self):
+        script = ScriptFactory()
+
+        self.assertTrue(ScriptModel.check_online(script))
+
+        slave1 = SlaveFactory(online=True)
+        program1 = ProgramFactory(slave=slave1)
+        SGPFactory(script=script, program=program1)
+
+        self.assertTrue(ScriptModel.check_online(script))
+
+        slave2 = SlaveFactory(online=False)
+        program2 = ProgramFactory(slave=slave2)
+        SGPFactory(script=script, program=program2)
+
+        self.assertFalse(ScriptModel.check_online(script))
+
+        slave2.online = True
+        slave2.save()
+        self.assertTrue(ScriptModel.check_online(script))
 
     def test_script_name(self):
         script = ScriptFactory()
         self.assertEqual(script.name, str(script))
+
+    def test_script_last_ran(self):
+        script = ScriptFactory()
+        ScriptFactory()
+
+        ScriptModel.set_last_started(script.id)
+
+        self.assertEqual(script, ScriptModel.get_last_ran())
 
     def test_slave_has_err(self):
         slave = SlaveFactory()
@@ -79,6 +110,14 @@ class DatabaseTests(TestCase):  # pylint: disable=unused-variable
     def test_slave_is_online_err(self):
         slave = SlaveFactory()
         self.assertFalse(slave.is_online)
+
+    def test_slave_insert_invalid_ip(self):
+        self.assertRaises(
+            ValidationError, SlaveModel(ip_address='my_cool_ip').full_clean)
+
+    def test_slave_insert_invalid_mac(self):
+        self.assertRaises(
+            ValidationError, SlaveModel(mac_address='my_cool_mac').full_clean)
 
     def test_program_is_timeouted(self):
         status = ProgramStatusFactory(running=True, timeouted=True)
@@ -128,6 +167,27 @@ class DatabaseTests(TestCase):  # pylint: disable=unused-variable
         self.assertFalse(prog.is_error)
         self.assertFalse(prog.is_timeouted)
 
+    def test_program_state(self):
+        program = ProgramFactory()
+
+        self.assertEqual(program.data_state, "unknown")
+
+        status = ProgramStatusModel(program=program, code="0", running=False)
+        status.save()
+
+        program = ProgramModel.objects.get(id=program.id)
+        self.assertEqual(program.data_state, "success")
+
+        status.code = "1"
+        status.save()
+        program = ProgramModel.objects.get(id=program.id)
+        self.assertEqual(program.data_state, "error")
+
+        status.running = True
+        status.save()
+        program = ProgramModel.objects.get(id=program.id)
+        self.assertEqual(program.data_state, "running")
+
     def test_program_error(self):
         status = ProgramStatusFactory(code="1")
         prog = status.program
@@ -141,13 +201,12 @@ class DatabaseTests(TestCase):  # pylint: disable=unused-variable
         self.assertTrue(prog.is_error)
         self.assertFalse(prog.is_timeouted)
 
-    def test_flush_error(self):
-        slave = SlaveFactory()
-
-        flush('Slave')
-        flush('UnknownModel')
-
-        self.assertFalse(SlaveModel.objects.filter(name=slave.name).exists())
+    def test_filesystem_str(self):
+        filesystem = FileFactory()
+        self.assertEqual(
+            str(filesystem),
+            filesystem.name,
+        )
 
     def test_filesystem_state(self):
         moved = FileFactory(hash_value="Some")
@@ -158,22 +217,25 @@ class DatabaseTests(TestCase):  # pylint: disable=unused-variable
         self.assertEqual(errored.data_state, "error")
         self.assertEqual(restored.data_state, "restored")
 
-    def test_slave_insert_invalid_ip(self):
-        self.assertRaises(
-            ValidationError, SlaveModel(ip_address='my_cool_ip').full_clean)
+    def test_argument_validator_list(self):
+        self.assertIsNone(validate_argument_list('a b c d e f g'))
 
-    def test_slave_insert_invalid_mac(self):
-        self.assertRaises(
-            ValidationError, SlaveModel(mac_address='my_cool_mac').full_clean)
+    def test_argument_validator_list_raises(self):
+        self.assertRaisesMessage(
+            ValidationError,
+            'Enter a valid argument list.',
+            validate_argument_list,
+            'a "abc',
+        )
 
     def test_mac_validator_upper(self):
-        validate_mac_address("00:AA:BB:CC:DD:EE")
+        self.assertIsNone(validate_mac_address("00:AA:BB:CC:DD:EE"))
 
     def test_mac_validator_lower(self):
-        validate_mac_address("00:aa:bb:cc:dd:ee")
+        self.assertIsNone(validate_mac_address("00:aa:bb:cc:dd:ee"))
 
     def test_mac_validator_mixed(self):
-        validate_mac_address("00:Aa:Bb:cC:dD:EE")
+        self.assertIsNone(validate_mac_address("00:Aa:Bb:cC:dD:EE"))
 
     def test_mac_validator_too_short(self):
         self.assertRaises(
@@ -203,7 +265,28 @@ class DatabaseTests(TestCase):  # pylint: disable=unused-variable
             "00:02:23:2:23:23",
         )
 
-    def test_flush(self):
+    def test_reset_success(self):
+        slave = SlaveFactory(online=True, command_uuid="some")
+        script = ScriptFactory(is_running=True)
+        fs = FileFactory(error_code="Test")
+
+        from frontend.apps import reset
+
+        reset("Script", "Slave", "Filesystem")
+
+        self.assertFalse(SlaveModel.objects.get(id=slave.id).online)
+        self.assertIsNone(SlaveModel.objects.get(id=slave.id).command_uuid)
+
+        self.assertFalse(ScriptModel.objects.get(id=script.id).is_running)
+        self.assertFalse(ScriptModel.objects.get(id=script.id).is_initialized)
+        self.assertEqual(ScriptModel.objects.get(id=script.id).error_code, "")
+        self.assertEqual(
+            ScriptModel.objects.get(id=script.id).current_index, -1)
+
+        self.assertEqual(FilesystemModel.objects.get(id=fs.id).error_code, "")
+        self.assertIsNone(FilesystemModel.objects.get(id=fs.id).command_uuid)
+
+    def test_flush_success(self):
         slave = SlaveFactory()
         prog = ProgramFactory(slave=slave)
 
@@ -214,3 +297,15 @@ class DatabaseTests(TestCase):  # pylint: disable=unused-variable
         flush("ProgramStatus")
 
         self.assertEqual(ProgramStatusModel.objects.count(), 0)
+
+    def test_flush_error(self):
+        slave = SlaveFactory()
+
+        flush('Slave')
+        self.assertRaises(
+            AttributeError,
+            flush,
+            'UnknownModel',
+        )
+
+        self.assertFalse(SlaveModel.objects.filter(name=slave.name).exists())
