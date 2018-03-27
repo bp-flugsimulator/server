@@ -283,21 +283,50 @@ $(document).ready(function () {
     $('#restore-filesystem-navbar').click(function () {
 	shutdownMultiple('filesystem');
 	$('#warningModal').modal('toggle');
+	$('#warningModal').on('hidden.bs.modal', function (e) {
+	notify(
+		'Filemanagement',
+                'Restore of all clients in progress'
+        );
+		$('#warningModal').off('hidden.bs.modal');
+	});
+
     });
 
     $('#stop-programs-navbar').click(function () {
 	shutdownMultiple('programs');
 	$('#warningModal').modal('toggle');
+	$('#warningModal').on('hidden.bs.modal', function (e) {
+	notify(
+		'Programs',
+                'Killing programs on all clients'
+        );
+		$('#warningModal').off('hidden.bs.modal');
+	});
     });
 
     $('#shutdown-clients-navbar').click(function () {
 	shutdownMultiple('clients');
 	$('#warningModal').modal('toggle');
+	$('#warningModal').on('hidden.bs.modal', function (e) {
+	notify(
+		'Clients',
+                'Shutting down all clients.'
+        );
+		$('#warningModal').off('hidden.bs.modal');
+	});
     });
 
     $('#shutdown-navbar').click(function () {
 	shutdownMultiple('all');
 	$('#warningModal').modal('toggle');
+	$('#warningModal').on('hidden.bs.modal', function (e) {
+	notify(
+		'Shutdown',
+                'Shutting down everything.'
+        );
+		$('#warningModal').off('hidden.bs.modal');
+	});
     });
 
     $('#restoreAllButton').click(function () {
