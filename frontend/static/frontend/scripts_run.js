@@ -41,7 +41,7 @@ const socketEventHandler = {
     },
     programStarted(payload) {
         let statusContainer = $('#programStatusContainer_' + payload.pid);
-        statusContainer.attr('data-state', 'warning');
+        statusContainer.attr('data-state', 'running');
         let timestamp = $('#program_' + payload.pid + '_start_time');
         let now = Math.round((new Date()).getTime() / 1000);
         timestamp.removeAttr('data-timestamp');
