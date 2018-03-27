@@ -2,7 +2,6 @@
 This module contains all functions that handle requests on the REST api.
 """
 import logging
-import os
 import platform
 import sched, threading
 import subprocess
