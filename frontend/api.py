@@ -837,7 +837,7 @@ def script_stop(request):
     else:
         return HttpResponseForbidden()
 
-      
+
 def script_set_default(request, script_id):
     """
     Processes an method invocation (set_default) for a `ScriptModel`.
