@@ -265,57 +265,6 @@ $(document).ready(function () {
         });
     }
 
-    function restoreChangedFilesystems() {
-        return new Promise(function (resolve, reject) {
-            basicRequest({
-                type: 'POST',
-                url: '/api/filesystems/restore',
-                action: 'query',
-                onSuccess(payload) {
-                    resolve(payload);
-                }
-            });
-        });
-    }
-
-    function stopRunningPrograms() {
-        return new Promise(function (resolve, reject) {
-            basicRequest({
-                type: 'POST',
-                url: '/api/programs/stop',
-                action: 'query',
-                onSuccess(payload) {
-                    resolve(payload);
-                }
-            });
-        });
-    }
-
-    function shutdownClients() {
-        return new Promise(function (resolve, reject) {
-            basicRequest({
-                type: 'POST',
-                url: '/api/slaves/shutdown',
-                action: 'query',
-                onSuccess(payload) {
-                    resolve(payload);
-                }
-            });
-        });
-    }
-
-    function shutdownMaster() {
-        return new Promise(function (resolve, reject) {
-            basicRequest({
-                type: 'POST',
-                url: '/api/master/shutdown',
-                action: 'query',
-                onSuccess(payload) {
-                    resolve(payload);
-                }
-            });
-        });
-    }
 
     function shutdownMultiple(scope) {
         return new Promise(function (resolve, reject) {
@@ -352,24 +301,28 @@ $(document).ready(function () {
     });
 
     $('#restoreAllButton').click(function () {
+	$(this).prop("disabled", true);
         $('#warningBody').html('Are you sure you want to restore all files and directories?');
         $('.modal-button').hide();
         $('#restore-filesystem-navbar').show();
         $('#warningModal').modal('toggle');
     });
     $('#stopAllButton').click(function () {
+	$(this).prop("disabled", true);
         $('#warningBody').html('Are you sure you want to stop all programs?');
         $('.modal-button').hide();
         $('#stop-programs-navbar').show();
         $('#warningModal').modal('toggle');
     });
     $('#shutdownClientsButton').click(function () {
+	$(this).prop("disabled", true);
         $('#warningBody').html('Are you sure you want to shutdown all Clients? \n This may take a few seconds.');
         $('.modal-button').hide();
         $('#shutdown-clients-navbar').show();
         $('#warningModal').modal('toggle');
     });
     $('#shutdownAllButton').click(function () {
+	$(this).prop("disabled", true);
         $('#warningBody').html('Are you sure you want to shutdown the simulator? \n This may take a few seconds.');
         $('.modal-button').hide();
         $('#shutdown-navbar').show();

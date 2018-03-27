@@ -1229,13 +1229,6 @@ class ShutdownThread(threading.Thread):
 
     def run(self):
         s = sched.scheduler()
-        filesystems = FilesystemModel.objects.all()
-        filesystems = filter(lambda x: x.is_moved, filesystems)
-        for filesystem in filesystems:
-            s.enter(0, 1, fs_restore, argument=(filesystem,))
-        if self.scope == 'filesystem':
-            s.run()
-            return
         programs = ProgramModel.objects.all()
         programs = filter(lambda x: x.is_running, programs)
         delay = 5
@@ -1243,6 +1236,13 @@ class ShutdownThread(threading.Thread):
             s.enter(delay, 2, prog_stop, argument=(program,))
             delay += 1
         if self.scope == 'programs':
+            s.run()
+            return
+        filesystems = FilesystemModel.objects.all()
+        filesystems = filter(lambda x: x.is_moved, filesystems)
+        for filesystem in filesystems:
+            s.enter(0, 1, fs_restore, argument=(filesystem,))
+        if self.scope == 'filesystem':
             s.run()
             return
         slaves = SlaveModel.objects.all()
