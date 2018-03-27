@@ -15,6 +15,7 @@ def test_<MODEL>_<OPERATION/ERROR>:
 
 from django.test import TestCase
 from django.core.exceptions import ValidationError
+from django.utils.timezone import now
 
 from frontend.apps import flush
 
@@ -35,10 +36,15 @@ from .factory import (
     ProgramFactory,
     ProgramStatusFactory,
     SGPFactory,
+    SGFFactory,
 )
 
 
 class DatabaseTests(TestCase):
+    def test_script_latest(self):
+        script = ScriptFactory(is_initialized=True)
+        self.assertEqual(script, ScriptModel.latest())
+
     def test_script_has_error(self):
         script = ScriptFactory()
 
@@ -62,6 +68,26 @@ class DatabaseTests(TestCase):
             sgp1.index,
             sgp2.index,
         ], list(script.indexes))
+
+    def test_script_stages(self):
+        script = ScriptFactory()
+        program_node = SGPFactory(script=script, index=0)
+        filesystem_node = SGFFactory(script=script, index=0)
+
+        self.assertEqual(0, script.stages[0]['index'])
+        self.assertEqual(program_node.program.slave.name,
+                         script.stages[0]['slave_entries'][0]['name'])
+        self.assertEqual({program_node.program},
+                         set(script.stages[0]['slave_entries'][0]['programs']))
+        self.assertEqual(
+            set(), set(script.stages[0]['slave_entries'][0]['filesystems']))
+        self.assertEqual(filesystem_node.filesystem.slave.name,
+                         script.stages[0]['slave_entries'][1]['name'])
+        self.assertEqual(set(),
+                         set(script.stages[0]['slave_entries'][1]['programs']))
+        self.assertEqual(
+            {filesystem_node.filesystem},
+            set(script.stages[0]['slave_entries'][1]['filesystems']))
 
     def test_script_check_online(self):
         script = ScriptFactory()
@@ -87,6 +113,12 @@ class DatabaseTests(TestCase):
     def test_script_name(self):
         script = ScriptFactory()
         self.assertEqual(script.name, str(script))
+
+    def test_slave_data_state(self):
+        offline_slave = SlaveFactory()
+        self.assertEqual('unknown', offline_slave.data_state)
+        online_slave = SlaveFactory(online=True)
+        self.assertEqual('success', online_slave.data_state)
 
     def test_script_last_ran(self):
         script = ScriptFactory()
@@ -172,7 +204,7 @@ class DatabaseTests(TestCase):
 
         self.assertEqual(program.data_state, "unknown")
 
-        status = ProgramStatusModel(program=program, code="0", running=False)
+        status = ProgramStatusModel(program=program, code="0", running=False, start_time=now())
         status.save()
 
         program = ProgramModel.objects.get(id=program.id)

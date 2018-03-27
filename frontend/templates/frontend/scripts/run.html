@@ -23,24 +23,66 @@
     <div>
         <h4 class="font-weight-bold text-uppercase">CURRENT STATUS</h4>
         <ul class="list-group">
-            <li class="list-group-item fsim-progress" id="runInit{{ script.id }}" data-state="{% if script.is_initialized %}done{% else %}none{% endif %}">
+            <li class="btn list-group-item fsim-progress" id="runInit{{ script.id }}" data-state="{% if script.is_initialized %}done{% else %}none{% endif %}">
                 <i class="mdi"></i>
                 <i class="fsim-progress-name">Initial</i>
             </li>
 
-            <li class="list-group-item fsim-progress" id="runWaitSlaves{{ script.id }}" data-state="{% if script.is_initialized and script.is_running and script.current_index < 0 %}waiting{% elif script.current_index >= 0 %}done{% else %}{% if script.has_error %}error{% else %}none{% endif %}{% endif %}">
-                <i class="mdi"></i>
-                <i class="fsim-progress-name">Wait for Clients</i>
-            </li>
+            <li class="btn list-group-item container-fluid" data-target="#clientCollapse" data-toggle="collapse" id="runWaitSlaves{{ script.id }}" >
+                <div id="waitSlavesIcon" class="fsim-progress" data-state="{% if script.is_initialized and script.is_running and script.current_index < 0 %}waiting{% elif script.current_index >= 0 or not script.is_running %}done{% else %}{% if script.has_error %}error{% else %}none{% endif %}{% endif %}">
+                    <i class="mdi"></i>
+                    <i class="fsim-progress-name">Waiting for Clients</i>
+                </div>
 
-            {% for index in script.indexes %}
-            <li class="list-group-item fsim-progress" id="runStage{{ script.id }}_{{ query.index }}" data-state="{% if script.current_index > query.index %}done{% elif script.current_index == query.index %}{% if script.has_error %}error{% else %}waiting{% endif %}{% else %}none{% endif %}">
-                <i class="mdi"></i>
-                <i class="fsim-progress-name">Stage {{ index }}</i>
+                <div id="clientCollapse" class="collapse {% if script.is_initialized and script.is_running and script.current_index < 0 %}show{% endif %} pl-4 pr-4 mt-2">
+                    <div class="list-group rounded shadow" id="slaveTabList" role="tablist">
+
+                    {% for slave in involved_slaves %}
+                        <a class="d-flex list-group-item font-weight-bold bg-light text-dark list-group-flush fade active show " data-state="{{ slave.data_state }}" id="slaveTab{{ slave.id }}" data-toggle="tab" href="#slaveTabContent{{ slave.id }}" data-slave-id="{{ slave.id }}">
+                            <i>
+                                <i class="mdi mdi-checkbox-blank-circle"></i>
+                            </i>
+                            <span>{{ slave.name }}</span>
+                        </a>
+                    {% endfor %}
+                    </div>
+                </div>
+
             </li>
+            {% for stage in script.stages%}
+                <li class="btn list-group-item fsim-progress stage" data-target="#stageCollapse{{ stage.index }}" data-toggle="collapse" id="runStage{{ stage.index }}" data-state="{% if script.current_index > stage.index or not script.is_running and not script.has_error %}done{% elif script.current_index == stage.index %}{% if script.has_error %}error{% else %}waiting{% endif %}{% else %}none{% endif %}"  >
+                    <i class="mdi"></i>
+                    <i class="fsim-progress-name">Stage {{ stage.index }}</i> <i class="stage-timestamp"></i>
+
+                    <div id="stageCollapse{{ stage.index }}" class="collapse {% if script.is_initialized and script.is_running and script.current_index == stage.index %}show{% endif %} pl-4 pr-4 mt-2">
+                    {% for slave_entry in stage.slave_entries %}
+                        <div style="text-align:left;font-weight: bold;">{{ slave_entry.name }}</div>
+                        {% for program in slave_entry.programs %}
+                            <div class="align-items-center list-group-item fsim-box" data-state="{{ program.data_state }}" id="programStatusContainer_{{ program.id }}">
+                                <div class="d-xl-flex d-lg-flex d-md-flex d-sm-flex w-100 justify-content-between">
+                                    <div class="program-name">
+                                        <i class="fsim-program-status-icon" id="programStatusIcon_{{ program.id }}"></i>
+                                        <span style="font-weight: normal">{{ program.name }}</span>
+                                        <span id="program_{{ program.id }}_start_time" style="font-weight: normal" class="timestamp" data-timestamp="{% if program.is_running %}{{ program.programstatus.start_time | date:"U" }}{% else %}0{% endif %}" data-start-time="{{ program.start_time }}"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                        {% for filesystem in slave_entry.filesystems %}
+                            <div class="align-items-center list-group-item fsim-box" data-state="{{ filesystem.data_state }}" id="filesystemStatusContainer_{{ filesystem.id }}">
+                                <div class="d-xl-flex d-lg-flex d-md-flex d-sm-flex w-100 justify-content-between">
+                                    <div class="filesystem-name">
+                                        <i class="fsim-filesystem-status-icon" id="fileStatusIcon_{{ filesystem.id }}"></i>
+                                        <span style="font-weight: normal">{{ filesystem.name }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% endfor %}
+                    </div>
+                </li>
             {% endfor %}
-
-            <li class="list-group-item fsim-progress" id="runDone{{ script.id }}" data-state="{% if script.is_initialized and not script.is_running and not script.has_error %}done{% elif script.has_error %}error{% else %}none{% endif %}">
+            <li class="btn list-group-item fsim-progress" id="runDone{{ script.id }}" data-state="{% if script.is_initialized and not script.is_running and not script.has_error %}done{% elif script.has_error %}error{% else %}none{% endif %}">
                 <i class="mdi"></i>
                 <i class="fsim-progress-name">Finished</i>
             </li>

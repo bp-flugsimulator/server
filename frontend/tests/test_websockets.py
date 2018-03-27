@@ -102,9 +102,7 @@ class RPCWebsocketTests(TestCase):
         ws_client.send_and_consume(
             'websocket.connect',
             path='/commands',
-            content={
-                'client': [slave.ip_address, slave.mac_address]
-            })
+            content={'client': [slave.ip_address, slave.mac_address]})
 
         # connect webinterface on /notifications
         webinterface = WSClient()
@@ -150,9 +148,7 @@ class RPCWebsocketTests(TestCase):
         ws_client.send_and_consume(
             'websocket.connect',
             path='/commands',
-            content={
-                'client': [slave.ip_address, slave.mac_address]
-            })
+            content={'client': [slave.ip_address, slave.mac_address]})
 
         # connect webinterface on /notifications
         webinterface = WSClient()
@@ -289,9 +285,7 @@ class RPCWebsocketTests(TestCase):
         ws_client.send_and_consume(
             'websocket.receive',
             path='/commands',
-            content={
-                'text': error_status.to_json()
-            })
+            content={'text': error_status.to_json()})
 
         self.assertFalse(SlaveModel.objects.get(id=slave.id).is_online)
 
@@ -780,8 +774,6 @@ class LogWebsocketTests(TestCase):
         })
 
         ws_client.send_and_consume(
-            'websocket.receive', path='/logs', content={
-                'text': msg.to_json()
-            })
+            'websocket.receive', path='/logs', content={'text': msg.to_json()})
         self.assertEqual(msg,
                          Status.from_json(json.dumps(webinterface.receive())))

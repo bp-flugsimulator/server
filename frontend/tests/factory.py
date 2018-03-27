@@ -3,6 +3,7 @@ Database factories for tests
 """
 import socket
 import struct
+from django.utils.timezone import now
 from uuid import uuid4
 from factory import SubFactory, Sequence, LazyAttribute
 from factory.django import DjangoModelFactory
@@ -87,6 +88,7 @@ class ProgramStatusFactory(DjangoModelFactory):
     command_uuid = LazyAttribute(lambda a: uuid4().hex)
     running = False
     code = ""
+    start_time = now()
 
 
 class FileFactory(DjangoModelFactory):

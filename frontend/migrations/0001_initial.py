@@ -15,119 +15,135 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Filesystem',
             fields=[
-                ('id', models.AutoField(
-                    auto_created=True,
-                    primary_key=True,
-                    serialize=False,
-                    verbose_name='ID')),
+                ('id',
+                 models.AutoField(
+                     auto_created=True,
+                     primary_key=True,
+                     serialize=False,
+                     verbose_name='ID')),
                 ('name', models.CharField(max_length=200)),
                 ('source_path', models.TextField()),
-                ('source_type', models.CharField(
-                    choices=[('file', 'Source is a file'),
-                             ('dir', 'Source is a directory')],
-                    default='file',
-                    max_length=4)),
+                ('source_type',
+                 models.CharField(
+                     choices=[('file', 'Source is a file'),
+                              ('dir', 'Source is a directory')],
+                     default='file',
+                     max_length=4)),
                 ('destination_path', models.TextField()),
-                ('destination_type', models.CharField(
-                    choices=[('file', 'Replace with'), ('dir', 'Insert into')],
-                    default='file',
-                    max_length=4)),
-                ('hash_value', models.CharField(
-                    blank=True, default='', max_length=32)),
-                ('command_uuid', models.CharField(
-                    blank=True, max_length=32, null=True, unique=True)),
-                ('error_code', models.CharField(
-                    blank=True, default='', max_length=1000)),
+                ('destination_type',
+                 models.CharField(
+                     choices=[('file', 'Replace with'), ('dir',
+                                                         'Insert into')],
+                     default='file',
+                     max_length=4)),
+                ('hash_value',
+                 models.CharField(blank=True, default='', max_length=32)),
+                ('command_uuid',
+                 models.CharField(
+                     blank=True, max_length=32, null=True, unique=True)),
+                ('error_code',
+                 models.CharField(blank=True, default='', max_length=1000)),
             ],
         ),
         migrations.CreateModel(
             name='Program',
             fields=[
-                ('id', models.AutoField(
-                    auto_created=True,
-                    primary_key=True,
-                    serialize=False,
-                    verbose_name='ID')),
+                ('id',
+                 models.AutoField(
+                     auto_created=True,
+                     primary_key=True,
+                     serialize=False,
+                     verbose_name='ID')),
                 ('name', models.CharField(max_length=1000)),
                 ('path', models.TextField()),
-                ('arguments', models.TextField(
-                    blank=True,
-                    validators=[frontend.models.validate_argument_list])),
+                ('arguments',
+                 models.TextField(
+                     blank=True,
+                     validators=[frontend.models.validate_argument_list])),
                 ('start_time', models.IntegerField(default=-1)),
             ],
         ),
         migrations.CreateModel(
             name='Script',
             fields=[
-                ('id', models.AutoField(
-                    auto_created=True,
-                    primary_key=True,
-                    serialize=False,
-                    verbose_name='ID')),
+                ('id',
+                 models.AutoField(
+                     auto_created=True,
+                     primary_key=True,
+                     serialize=False,
+                     verbose_name='ID')),
                 ('name', models.CharField(max_length=200, unique=True)),
                 ('last_ran', models.BooleanField(default=False)),
                 ('is_initialized', models.BooleanField(default=False)),
                 ('is_running', models.BooleanField(default=False)),
-                ('error_code', models.CharField(
-                    blank=True, default='', max_length=1000)),
+                ('error_code',
+                 models.CharField(blank=True, default='', max_length=1000)),
                 ('current_index', models.IntegerField(blank=True, default=-1)),
             ],
         ),
         migrations.CreateModel(
             name='ScriptGraphFiles',
             fields=[
-                ('id', models.AutoField(
-                    auto_created=True,
-                    primary_key=True,
-                    serialize=False,
-                    verbose_name='ID')),
+                ('id',
+                 models.AutoField(
+                     auto_created=True,
+                     primary_key=True,
+                     serialize=False,
+                     verbose_name='ID')),
                 ('index', models.IntegerField()),
-                ('filesystem', models.ForeignKey(
-                    on_delete=django.db.models.deletion.CASCADE,
-                    to='frontend.Filesystem')),
-                ('script', models.ForeignKey(
-                    on_delete=django.db.models.deletion.CASCADE,
-                    to='frontend.Script')),
+                ('filesystem',
+                 models.ForeignKey(
+                     on_delete=django.db.models.deletion.CASCADE,
+                     to='frontend.Filesystem')),
+                ('script',
+                 models.ForeignKey(
+                     on_delete=django.db.models.deletion.CASCADE,
+                     to='frontend.Script')),
             ],
         ),
         migrations.CreateModel(
             name='ScriptGraphPrograms',
             fields=[
-                ('id', models.AutoField(
-                    auto_created=True,
-                    primary_key=True,
-                    serialize=False,
-                    verbose_name='ID')),
+                ('id',
+                 models.AutoField(
+                     auto_created=True,
+                     primary_key=True,
+                     serialize=False,
+                     verbose_name='ID')),
                 ('index', models.IntegerField()),
             ],
         ),
         migrations.CreateModel(
             name='Slave',
             fields=[
-                ('id', models.AutoField(
-                    auto_created=True,
-                    primary_key=True,
-                    serialize=False,
-                    verbose_name='ID')),
+                ('id',
+                 models.AutoField(
+                     auto_created=True,
+                     primary_key=True,
+                     serialize=False,
+                     verbose_name='ID')),
                 ('name', models.CharField(max_length=200, unique=True)),
                 ('ip_address', models.GenericIPAddressField(unique=True)),
-                ('mac_address', models.CharField(
-                    max_length=17,
-                    unique=True,
-                    validators=[frontend.models.validate_mac_address])),
-                ('command_uuid', models.CharField(
-                    blank=True, max_length=32, null=True, unique=True)),
+                ('mac_address',
+                 models.CharField(
+                     max_length=17,
+                     unique=True,
+                     validators=[frontend.models.validate_mac_address])),
+                ('command_uuid',
+                 models.CharField(
+                     blank=True, max_length=32, null=True, unique=True)),
                 ('online', models.BooleanField(default=False)),
             ],
         ),
         migrations.CreateModel(
             name='ProgramStatus',
             fields=[
-                ('program', models.OneToOneField(
-                    on_delete=django.db.models.deletion.CASCADE,
-                    primary_key=True,
-                    serialize=False,
-                    to='frontend.Program')),
+                ('program',
+                 models.OneToOneField(
+                     on_delete=django.db.models.deletion.CASCADE,
+                     primary_key=True,
+                     serialize=False,
+                     to='frontend.Program')),
                 ('code', models.CharField(blank=True, max_length=200)),
                 ('command_uuid', models.CharField(max_length=32, unique=True)),
                 ('running', models.BooleanField(default=True)),

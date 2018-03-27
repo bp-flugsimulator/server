@@ -7,6 +7,8 @@ import json
 import asyncio
 from uuid import uuid4
 
+from django.utils.timezone import now
+
 from utils import Status
 from channels.test import WSClient
 import django.db
@@ -294,7 +296,7 @@ class SchedulerTests(SchedulerTestCase):
         self.assertStatusSet([msg1], [expct1])
 
         ProgramStatusModel.objects.create(
-            program=self.prog2, code='0', command_uuid='1')
+            program=self.prog2, code='0', command_uuid='1',start_time=now())
 
         self.sched._Scheduler__state = SchedulerStatus.NEXT_STEP
         self.sched._Scheduler__state_next()
@@ -350,7 +352,7 @@ class SchedulerTests(SchedulerTestCase):
         self.slave2.save()
 
         ProgramStatusModel.objects.create(
-            program=self.prog1, code='0', command_uuid='0')
+            program=self.prog1, code='0', command_uuid='0', start_time=now())
 
         self.sched._Scheduler__index = -1
         self.sched._Scheduler__event = asyncio.Event(loop=self.sched.loop)
@@ -381,7 +383,7 @@ class SchedulerTests(SchedulerTestCase):
         self.assertStatusSet([msg1], [expct1])
 
         ProgramStatusModel.objects.create(
-            program=self.prog2, code='0', command_uuid='1')
+            program=self.prog2, code='0', command_uuid='1', start_time=now())
 
         self.sched._Scheduler__state = SchedulerStatus.NEXT_STEP
         self.sched._Scheduler__state_next()
@@ -558,6 +560,7 @@ class SchedulerTests(SchedulerTestCase):
             code="Some",
             program=self.prog1,
             command_uuid=uuid4().hex,
+            start_time=now()
         ).save()
 
         self.sched._Scheduler__state_wait_programs_filesystems()
@@ -581,12 +584,12 @@ class SchedulerTests(SchedulerTestCase):
         ProgramStatusModel(
             running=True,
             program=self.prog1,
-            command_uuid=uuid4().hex,
+            command_uuid=uuid4().hex, start_time=now()
         ).save()
         ProgramStatusModel(
             running=False,
             program=self.prog2,
-            command_uuid=uuid4().hex,
+            command_uuid=uuid4().hex, start_time=now()
         ).save()
 
         self.sched._Scheduler__state_wait_programs_filesystems()
