@@ -33,6 +33,7 @@ class RunScriptView(TemplateView):
         context['script'] = ScriptModel.latest()
         context['involved_slaves'] = ScriptModel.get_involved_slaves(
             context['script'])
+        context['ran'] = ScriptModel.get_last_ran()
         return context
 
 

@@ -82,52 +82,52 @@ function refreshTimestamps(){
     let now = Math.round((new Date()).getTime() / 1000);
 
     $('.stage').each(function (_) {
-        let start_time = 0;
+        let startTime = 0;
         let timestamp = 0;
-        let elapsed_time = 0;
+        let elapsedTime = 0;
 
         $(this).children().find('.timestamp').each(function () {
-            let child_start_time = $(this).attr('data-start-time');
-            let child_timestamp = $(this).attr('data-timestamp');
-            let child_elapsed_time = now - child_timestamp;
-            if(child_start_time - child_elapsed_time > start_time - elapsed_time){
-                start_time = child_start_time;
-                timestamp = child_timestamp;
-                elapsed_time = child_elapsed_time;
+            let childStartTime = $(this).attr('data-start-time');
+            let childTimestamp = $(this).attr('data-timestamp');
+            let childElapsedTime = now - childTimestamp;
+            if(childStartTime - childElapsedTime > startTime - elapsedTime){
+                startTime = childStartTime;
+                timestamp = childTimestamp;
+                elapsedTime = childElapsedTime;
             }
         });
 
-        if((start_time !== 0 || elapsed_time !== 0) && $(this).attr('data-state') === 'waiting') {
-            $(this).children('.stage-timestamp').text('(' + elapsed_time + '/' + start_time + ' s)');
+        if((startTime !== 0 || elapsedTime !== 0) && $(this).attr('data-state') === 'waiting') {
+            $(this).children('.stage-timestamp').text('(' + elapsedTime + '/' + startTime + ' s)');
         } else {
             $(this).children('.stage-timestamp').text('');
         }
     });
 
     $('.timestamp').each(function(_) {
-        let start_time = $(this).attr('data-start-time');
+        let startTime = $(this).attr('data-start-time');
         let timestamp = $(this).attr('data-timestamp');
-        let elapsed_time = now - timestamp;
+        let elapsedTime = now - timestamp;
 
-        if (start_time === '0' || start_time === '-1'){
+        if (startTime === '0' || startTime === '-1'){
             return;
         }
         let text = '(';
 
         if(timestamp === '0'){
             text += '0';
-        } else if(elapsed_time < start_time){
-            text += elapsed_time;
+        } else if(elapsedTime < startTime){
+            text += elapsedTime;
         } else {
-            text += start_time;
+            text += startTime;
         }
 
-        $(this).text(text + '/' + start_time + ' s)');
+        $(this).text(text + '/' + startTime + ' s)');
     });
 }
 
 $(document).ready(function () {
-    window.setInterval(function(){refreshTimestamps()}, 500);
+    window.setInterval(function(){refreshTimestamps();}, 500);
 
     $('.script-action-stop').click(function (event) {
         basicRequest({
