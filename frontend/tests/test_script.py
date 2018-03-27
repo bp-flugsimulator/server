@@ -249,7 +249,6 @@ class ScriptTests(TestCase):
             "not str",
         )
 
-
     def test_positive_index_error(self):
         self.assertRaises(
             PositiveNumberError,

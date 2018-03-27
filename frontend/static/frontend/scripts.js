@@ -135,7 +135,7 @@ $(document).ready(function () {
             url: '/api/script/' + id + '/run',
             action: 'start script',
             onSuccess: function() {
-                window.location.href = '/scripts/run';
+                window.location.href = '/';
             }
         });
     });
@@ -168,6 +168,19 @@ $(document).ready(function () {
             onSuccess() {
                 window.location.reload();
             },
+        });
+    });
+
+    $('.script-action-set-default').click(function () {
+        let id = $(this).attr('data-script-id');
+
+        basicRequest({
+            url: '/api/script/' + id + '/set_default',
+            type: 'POST',
+            action: 'set default script',
+            onSuccess: function() {
+                window.location.reload();
+            }
         });
     });
 

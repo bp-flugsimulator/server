@@ -17,6 +17,7 @@ from django.db.models import (
     BooleanField,
     OneToOneField,
     TextField,
+    DateTimeField,
     Count,
     Q,
 )
@@ -162,12 +163,16 @@ class Slave(Model):
         int:
             The amount of `Program`s and `Filesystem`s where an error occured.
         """
-        progs = ProgramStatus.objects.filter(~Q(code="0"),
-                                             running=False,
-                                             program__slave=self,).count()
-        filesystems = Filesystem.objects.filter(~Q(error_code="0"),
-                                                ~Q(error_code=""),
-                                                 slave=self,).count()
+        progs = ProgramStatus.objects.filter(
+            ~Q(code="0"),
+            running=False,
+            program__slave=self,
+        ).count()
+        filesystems = Filesystem.objects.filter(
+            ~Q(error_code="0"),
+            ~Q(error_code=""),
+            slave=self,
+        ).count()
 
         return progs + filesystems
 
@@ -181,9 +186,10 @@ class Slave(Model):
             int:
                 The amount of `Program`s which are running.
         """
-        return ProgramStatus.objects.filter(running=True,
-                                            program__slave=self,
-                                            ).count()
+        return ProgramStatus.objects.filter(
+            running=True,
+            program__slave=self,
+        ).count()
 
     @property
     def is_online(self):
@@ -297,11 +303,12 @@ class Slave(Model):
                 The list contains the name of every `Slave` which fulfil the
                 condition.
         """
-        return Slave.objects.all().annotate(filesystem_count=Count(
-            'filesystem__pk')).filter(filesystem_count__gt=0).values_list(
-                'name',
-                flat=True,
-            )
+        return Slave.objects.all().annotate(
+            filesystem_count=Count('filesystem__pk')).filter(
+                filesystem_count__gt=0).values_list(
+                    'name',
+                    flat=True,
+                )
 
 
 class Program(Model):
@@ -329,7 +336,7 @@ class Program(Model):
         validators=[validate_argument_list],
     )
     slave = ForeignKey(Slave, on_delete=CASCADE)
-    start_time = IntegerField(default=-1)
+    start_time = IntegerField(default=0)
 
     class Meta:
         """
@@ -469,8 +476,8 @@ class Filesystem(Model):
         ('dir', 'Directory'),
     ]
     CHOICES_SET_DESTINATION = [
-        ('file', 'Replace with'),
-        ('dir', 'Insert into'),
+        ('file', 'Rename'),
+        ('dir', 'Keep Name'),
     ]
 
     # persistant fields
@@ -619,6 +626,22 @@ class Script(Model):
         return self.name
 
     @staticmethod
+    def get_last_ran():
+        """
+        Returns the latest ran `Script`.
+
+        Returns
+        -------
+            Script or None:
+        """
+        query = Script.objects.filter(last_ran=True)
+
+        if query:
+            return query.first()
+        else:
+            return None
+
+    @staticmethod
     def latest():
         """
         Returns the latest `Script`.
@@ -634,6 +657,47 @@ class Script(Model):
             return query.first()
         else:
             return None
+
+    @property
+    def stages(self):
+        """
+        Returns a representation of all stages.
+
+        Returns
+        -------
+            list({index, list({name, programs, filesystems})}):
+                Contains every stage which consists of the index and all
+                programs/filesystem ordered by the slave.
+        """
+        stages = list()
+
+        for i in self.indexes:
+            slave_entries = list()
+            slaves = Slave.objects.filter(
+                Q(program__scriptgraphprograms__script=self,
+                  program__scriptgraphprograms__index=i)
+                | Q(filesystem__scriptgraphfiles__script=self,
+                    filesystem__scriptgraphfiles__index=i)).distinct()
+            for slave in slaves:
+                programs = Program.objects.filter(
+                    scriptgraphprograms__index=i,
+                    scriptgraphprograms__script=self,
+                    slave=slave).distinct().order_by('slave__name')
+                filesystems = Filesystem.objects.filter(
+                    scriptgraphfiles__index=i,
+                    scriptgraphfiles__script=self,
+                    slave=slave).distinct().order_by('slave__name')
+                slave_entries.append({
+                    'name': slave.name,
+                    'programs': programs,
+                    'filesystems': filesystems
+                })
+
+            stages.append({
+                'index': i,
+                'slave_entries': slave_entries,
+            })
+        return stages
 
     @property
     def indexes(self):
@@ -684,6 +748,7 @@ class Script(Model):
         Script.objects.filter(id=script).update(
             is_running=True,
             is_initialized=True,
+            error_code='',
             current_index=-1,
         )
 
@@ -733,12 +798,9 @@ class Script(Model):
             list of `Slave`s:
                 With all `Slave`s that are used in this `Script`.
         """
-        return Program.objects.filter(
-            scriptgraphprograms__script=script).annotate(
-                dcount=Count('slave')).values_list(
-                    'slave',
-                    flat=True,
-                )
+        return Slave.objects.filter(
+            Q(program__scriptgraphprograms__script=script)
+            | Q(filesystem__scriptgraphfiles__script=script)).distinct()
 
 
 class ScriptGraphPrograms(Model):
@@ -800,6 +862,8 @@ class ProgramStatus(Model):
         timeouted: BooleanField
             Indicator if the `Program` elapsed the amount of time it needs to
             execute.
+        start_time: DateTimeField
+            Indicator when the `Program` was started.
     """
     program = OneToOneField(
         Program,
@@ -810,3 +874,4 @@ class ProgramStatus(Model):
     command_uuid = CharField(max_length=32, unique=True)
     running = BooleanField(unique=False, default=True)
     timeouted = BooleanField(unique=False, default=False)
+    start_time = DateTimeField()

@@ -6,6 +6,7 @@ from django.forms import (
     ModelForm,
     ModelChoiceField,
     HiddenInput,
+    Textarea
 )
 
 from .models import (
@@ -14,10 +15,12 @@ from .models import (
     Filesystem as FilesystemModel,
 )
 
+
 class BaseModelForm(ModelForm):
     def __init__(self, *args, **kwargs):
         kwargs.setdefault('label_suffix', '')
         super(BaseModelForm, self).__init__(*args, **kwargs)
+
 
 class SlaveForm(BaseModelForm):
     """
@@ -69,6 +72,8 @@ class ProgramForm(BaseModelForm):
         labels = {'name': 'Display Name', 'path': 'Path to executable'}
         model = ProgramModel
         fields = ['name', 'path', 'arguments', 'start_time']
+        widgets = {'path': Textarea(attrs={'rows':1}),
+                'arguments': Textarea(attrs={'rows':1}),}
         help_texts = {
             'name':
             r"""<b>Description</b><br>
@@ -125,6 +130,8 @@ class FilesystemForm(BaseModelForm):
             'destination_path',
             'destination_type',
         ]
+        widgets = {'source_path': Textarea(attrs={'rows':1}),
+                'destination_path': Textarea(attrs={'rows':1}),}
         help_texts = {
             'name':
             r"""<b>Description</b><br>
@@ -157,9 +164,9 @@ class FilesystemForm(BaseModelForm):
             <i>Unix</i>: <code>/home/user/MOVED_README.txt</code><br>""",
             'destination_type':
             r"""<b>Description</b><br>
-            <ins>Replace with:</ins> Source path will be moved and renamed to
+            <ins>Rename:</ins> Source path will be moved and renamed to
             destination. <br>
-            <ins>Insert into:</ins> Destination path has to be a folder and
+            <ins>Keep Name:</ins> Destination path has to be a folder and
             the file or directory will be placed inside the destination
             directory.
             <hr>

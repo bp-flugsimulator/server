@@ -8,6 +8,7 @@ from shlex import split
 from uuid import uuid4
 
 from django.db.models import Q
+from django.utils.timezone import now
 
 from wakeonlan import send_magic_packet
 from utils import Command
@@ -260,7 +261,7 @@ def prog_start(prog):
             own_uuid=uuid,  # for the function that gets executed
             method="execute",
             path=prog.path,
-            arguments=split(prog.arguments),
+            arguments=[prog.arguments],
         )
 
         LOGGER.info(
@@ -279,7 +280,7 @@ def prog_start(prog):
         })
 
         # create status entry
-        ProgramStatusModel(program=prog, command_uuid=cmd.uuid).save()
+        ProgramStatusModel(program=prog, command_uuid=cmd.uuid, start_time=now()).save()
 
         if prog.start_time > 0:
             LOGGER.debug(

@@ -481,7 +481,7 @@ class ScriptEntryProgram:
     @transaction.atomic
     def save(self, script):
         """
-        This function coresspondes to the Django `Model.save` functionm,
+        This function corresponds to the Django `Model.save` functionm,
         which saves the model to the database.
 
         Parameters

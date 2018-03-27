@@ -151,13 +151,20 @@ function styleSlaveByStatus(sid, error, e_up, success, s_up) {
  * box
  */
 function notify(title, message, type) {
+    let delay = $.notifyDefaults().delay;
+
+    if (type === 'danger') {
+        delay *= 3;
+    }
+
     $.notify({
         title,
         message,
     },
-        {
-            type,
-            template: '<div data-notify="container" class="col-11 col-sm-3 alert" role="alert" data-notify-type="{0}">' +
+    {
+        delay,
+        type,
+        template: '<div data-notify="container" class="col-11 col-sm-3 alert" role="alert" data-notify-type="{0}">' +
             '<button type="button" aria-hidden="true" class="close" data-notify="dismiss">×</button>' +
             '<div class="col">' +
             '<span class="row" data-notify="title">' +
@@ -219,7 +226,7 @@ $(document).ready(function () {
         newest_on_top: true,
         showProgressbar: false,
         placement: {
-            from: 'top',
+            from: 'bottom',
             align: 'right'
         },
         animate: {
