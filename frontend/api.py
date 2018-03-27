@@ -5,6 +5,7 @@ import logging
 import os
 import platform
 import sched, threading
+import subprocess
 
 from django.http import HttpResponseForbidden
 from django.http.request import QueryDict
@@ -1132,6 +1133,6 @@ class ShutdownThread(threading.Thread):
         s.enter(1,1, LOGGER.warning, argument=('Test'))
         s.run()
         if platform.system() == "Windows":
-            os.system('shutdown -s -t 0')
+            subprocess.run(['shutdown', '-s', '-t 0'])
         else:
-            os.system('shutdown -h now')
+            subprocess.run(['shutdown', '-h now'])
