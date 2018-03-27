@@ -5,22 +5,22 @@
 
 ## Installation
 1. Install python 3.4 or newer and git
-1. Clone the github repository
+1. Clone the Github repository
     ```sh
     git clone https://github.com/bp-flugsimulator/server.git
     ```
-1. Run the deploy command which will setup the server and output a zip file with all relevant files
+1. Run the deploy command, which will setup the server and output a zip file with all relevant files:
     ```sh
     cd server
     python manage.py deploy
     ```
-1. Unzip the resulting file to the desired installation directory (the cloned repository can be deleted at this point)
-    Linux:
+1. Unzip the resulting file to the desired installation directory (the cloned repository can be deleted at this point):
+    * On Linux:
     ```sh
     mkdir /home/fsim-user/fsim-master
     unzip ../server.zip /home/fsim-user/fsim-master/
     ```
-    On Windows use the Windows Explorer.
+    * On Windows use the Windows Explorer.
 
 ## Entwicklungsumgebung (intern)
 Es bietet sich an, die Abhängigkeiten in ein virtualenv zu installieren, sodass sie unabhängig geupdatet werden können:
