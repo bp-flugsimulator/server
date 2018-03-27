@@ -298,65 +298,6 @@ def slave_wol(request, slave_id):
     else:
         return HttpResponseForbidden()
 
-def slave_shutdown_all(request):
-    """
-    Process requests to shutdown all slaves.
-
-    HTTP Methods
-    ------------
-        POST:
-            Shuts all clients down.
-    Parameters
-    ----------
-        request: HttpRequest
-            The request which should be processed.
-
-    Returns
-    -------
-        HttpResponse:
-            If the HTTP method is not supported, then an `HttpResponseForbidden`
-            is returned.
-    """
-    if request.method == 'POST':
-        slaves = SlaveModel.objects.all()
-        slaves = filter(lambda x: x.is_online, slaves)
-        try:
-            for slave in list(slaves):
-                controller.slave_shutdown(slave)
-        except FsimError as err:
-            return StatusResponse(err)
-
-        return StatusResponse.ok("")
-    else:
-        return HttpResponseForbidden()
-
-def master_shutdown(request):
-    """
-    Process requests to shutdown the master.
-
-    HTTP Methods
-    ------------
-        POST:
-            Shuts the master down.
-    Parameters
-    ----------
-        request: HttpRequest
-            The request which should be processed.
-
-    Returns
-    -------
-        HttpResponse:
-            If the HTTP method is not supported, then an `HttpResponseForbidden`
-            is returned.
-    """
-    if request.method == 'POST':
-        if platform.system() == "Windows":
-            os.system('shutdown -s -t 0')
-        else:
-            os.system('shutdown -h now')
-        return StatusResponse("ok")
-    else:
-        return HttpResponseForbidden()
 
 def program_set(request):
     """
@@ -667,39 +608,6 @@ def program_log_disable(request, program_id):
             return StatusResponse(err)
         except ProgramModel.DoesNotExist as err:
             return StatusResponse(ProgramNotExistError(err, program_id))
-    else:
-        return HttpResponseForbidden()
-
-
-def program_stop_all(request):
-    """
-    Process requests to reset all moved `FilesystemModel`s.
-
-    HTTP Methods
-    ------------
-        POST:
-            Stops all started `ProgramModel`s
-    Parameters
-    ----------
-        request: HttpRequest
-            The request which should be processed.
-
-    Returns
-    -------
-        HttpResponse:
-            If the HTTP method is not supported, then an `HttpResponseForbidden`
-            is returned.
-    """
-    if request.method == 'POST':
-        programs = ProgramModel.objects.all()
-        programs = filter(lambda x: x.is_running, programs)
-        try:
-            for program in list(programs):
-                prog_stop(program)
-        except FsimError as err:
-            return StatusResponse(err)
-
-        return StatusResponse.ok("")
     else:
         return HttpResponseForbidden()
 
@@ -1160,40 +1068,6 @@ def filesystem_entry(request, filesystem_id):
     else:
         return HttpResponseForbidden()
 
-
-def filesystem_restore_all(request):
-    """
-    Process requests to reset all moved `FilesystemModel`s.
-
-    HTTP Methods
-    ------------
-        POST:
-            Resets all moved `FilesystemModel`s
-    Parameters
-    ----------
-        request: HttpRequest
-            The request which should be processed.
-
-    Returns
-    -------
-        HttpResponse:
-            If the HTTP method is not supported, then an `HttpResponseForbidden`
-            is returned.
-    """
-    if request.method == 'POST':
-        filesystems = FilesystemModel.objects.all()
-        filesystems = filter(lambda x: x.is_moved, filesystems)
-        try:
-            for filesystem in list(filesystems):
-                fs_restore(filesystem)
-        except FsimError as err:
-            print("test")
-            return StatusResponse(err)
-
-        return StatusResponse.ok('')
-    else:
-        return HttpResponseForbidden()
-
 def scope_operations(request):
     """
     Process requests to shutdown all clients
@@ -1227,7 +1101,7 @@ class ShutdownThread(threading.Thread):
         threading.Thread.__init__(self)
         self.scope = scope
 
-    def run(self):
+    def run(self):# pragma: no cover
         s = sched.scheduler()
         programs = ProgramModel.objects.all()
         programs = filter(lambda x: x.is_running, programs)
