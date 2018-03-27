@@ -1231,7 +1231,7 @@ class ShutdownThread(threading.Thread):
         s = sched.scheduler()
         programs = ProgramModel.objects.all()
         programs = filter(lambda x: x.is_running, programs)
-        delay = 5
+        delay = 0
         for program in programs:
             s.enter(delay, 2, prog_stop, argument=(program,))
             delay += 1
@@ -1240,6 +1240,7 @@ class ShutdownThread(threading.Thread):
             return
         filesystems = FilesystemModel.objects.all()
         filesystems = filter(lambda x: x.is_moved, filesystems)
+        delay += 5
         for filesystem in filesystems:
             s.enter(0, 1, fs_restore, argument=(filesystem,))
         if self.scope == 'filesystem':
@@ -1247,7 +1248,7 @@ class ShutdownThread(threading.Thread):
             return
         slaves = SlaveModel.objects.all()
         slaves = filter(lambda x: x.is_online, slaves)
-        delay = 20
+        delay += 8
         for slave in slaves:
             s.enter(delay,3, controller.slave_shutdown, argument=(slave,))
             delay += 1
