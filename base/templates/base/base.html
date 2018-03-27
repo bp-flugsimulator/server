@@ -1,7 +1,6 @@
-
-<!DOCTYPE html>{% load staticfiles %}
+<!DOCTYPE html>
+{% load staticfiles %}
 <html>
-
     <head>
         <title>{% block title %}{% endblock %} | Flugsimulator</title>
         <link rel="icon" type="image/svg+xml" href="{% static 'base/favicon.svg' %}" sizes="any">
@@ -10,9 +9,6 @@
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
         <!-- Stylesheets -->
-        <link href="{% static 'node/jsoneditor/dist/jsoneditor.min.css' %}" rel="stylesheet" type="text/css">
-        <link rel="stylesheet" href="{% static 'node/animate.css/animate.min.css' %}" />
-        <!--Import Google Icon Font-->
         <link rel="stylesheet" href="{% static 'node/mdi/css/materialdesignicons.css' %}">
         <link rel="stylesheet" href="{% static 'base/css/custom.css' %}" />
 
@@ -33,7 +29,7 @@
     <body>
         <!-- Navigation -->
         <nav class="navbar navbar-expand-md bg-dark navbar-dark navbar-toggleable-md bg-faded mb-4">
-            <a class="navbar-brand text-uppercase font-weight-bold mr-5" href="#">
+            <a class="navbar-brand text-uppercase font-weight-bold mr-5" href="/">
                 <img src="{% static 'base/favicon.svg' %}" style="max-width:32px; max-height:32px;" class="d-inline-block align-top" alt="FS">
                 Flugsimulator
             </a>
@@ -45,62 +41,47 @@
                     <li class="nav-item text-uppercase font-weight-bold {% if navbar_link == 'scripts' %}active{% endif %}">
                         <a class="nav-link" href="/scripts">Scripts</a>
                     </li>
-                    <li class="nav-item text-uppercase font-weight-bold {% if navbar_link == 'scripts_run' %}active{% endif %}">
-                        <a class="nav-link" href="/scripts/run"><span>Run</span></a>
-                        <li class="nav-item text-uppercase font-weight-bold {% if navbar_link == 'downloads' %}active{% endif %}">
-                            <a class="nav-link" href="/downloads">Downloads</a>
-                        </li>
-                    </ul>
-                </div>
-                <div class="navbar-collapse collapse w-110 order-3 dual-collapse2">
-                    <ul class="navbar-nav ml-auto">
-                        <li class="nav-item mr-2">
-                            <div class="dropdown">
-                                <button class="btn btn-danger dropdown-toggle" type="button" id="dropdownShutdownButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                    <i class="mdi mdi-power"></i>
-                                </button>
-                                <div class="dropdown-menu dropdown-menu-right shadow " aria-labelledby="dropdownShutdownButton">
-                                    <button class="dropdown-item restore-filesystem-navbar short-disable" type="button">
-                                        Restore Files
-                                    </button>
-                                    <button class="dropdown-item stop-programs-navbar short-disable" type="button">
-                                        Stop Programs
-                                    </button>
-                                    <div class="dropdown-divider"></div>
-                                    <button class="dropdown-item shutdown-navbar font-weight-bold short-disable" type="button">
-                                        <i class="mdi mdi-power"></i>
-                                        Shutdown
-                                    </button>
-                                </div>
-                            </div>
-                        </li>
-                    </ul>
-                </div>
-                <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-            </nav>
-
-            {% block premain%}{% endblock %}
-
-            <main class="container-fluid">
-                {% block content %}{% endblock %}
-            </main>
-
-            <footer class="navbar navbar-expand-lg navbar-fixed-bottom bg-dark navbar-dark">
-                <ul class="navbar-nav">
-                    <li class="nav-item">
-                        <a href="https://github.com/bp-flugsimulator/server" class="nav-link text-uppercase font-weight-bold">
-                            <i class="mdi mdi-github-circle"></i>
-                            Repository
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="https://github.com/bp-flugsimulator/server" class="nav-link text-uppercase font-weight-bold">
-                            <i class="mdi mdi-copyright"></i>
-                            MIT-LICENSE
-                        </a>
+                    <li class="nav-item text-uppercase font-weight-bold {% if navbar_link == 'downloads' %}active{% endif %}">
+                        <a class="nav-link" href="/downloads">Downloads</a>
                     </li>
                 </ul>
-            </footer>
-        </body>
+            </div>
+            <div class="navbar-collapse collapse w-100 order-3 dual-collapse2">
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item mr-2">
+                        <button class="btn btn-danger navbar-btn short-disable text-uppercase">Reset Filesystem</button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="btn btn-danger navbar-btn short-disable text-uppercase">Shutdown all</button>
+                    </li>
+                </ul>
+            </div>
+            <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+        </nav>
+
+        {% block premain%}{% endblock %}
+
+        <main class="container-fluid">
+            {% block content %}{% endblock %}
+        </main>
+
+        <footer class="navbar navbar-expand-lg navbar-fixed-bottom bg-dark navbar-dark">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a href="https://github.com/bp-flugsimulator/server" class="nav-link text-uppercase font-weight-bold">
+                        <i class="mdi mdi-github-circle"></i>
+                        Repository
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="https://github.com/bp-flugsimulator/server" class="nav-link text-uppercase font-weight-bold">
+                        <i class="mdi mdi-copyright"></i>
+                        MIT-LICENSE
+                    </a>
+                </li>
+            </ul>
+        </footer>
+    </body>
+</html>

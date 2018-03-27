@@ -135,7 +135,7 @@ $(document).ready(function () {
             url: '/api/script/' + id + '/run',
             action: 'start script',
             onSuccess: function() {
-                window.location.href = '/scripts/run';
+                window.location.href = '/';
             }
         });
     });

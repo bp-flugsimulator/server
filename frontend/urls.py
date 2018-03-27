@@ -12,10 +12,10 @@ app_name = 'frontend'  # pylint: disable=C0103
 
 urlpatterns = [  # pylint: disable=C0103
     # VIEWS
+    url(r'^$', views.RunScriptView.as_view(), name='scripts_run'),
     url(r'^welcome$', views.WelcomeView.as_view(), name='welcome'),
     url(r'^slaves/$', views.SlavesView.as_view(), name='slaves'),
     url(r'^scripts/$', views.ScriptsView.as_view(), name='scripts'),
-    url(r'^scripts/run$', views.RunScriptView.as_view(), name='scripts_run'),
     url(r'^downloads/$', views.DownloadView.as_view(), name='downloads'),
 
     # API

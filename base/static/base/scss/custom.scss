@@ -580,16 +580,6 @@ div[data-notify="container"] > [data-notify="message"] {
     font-weight: 400;
 }
 
-.fsim-slave-status-icon {
-    @extend .mdi;
-    @extend .mdi-power-plug-off;
-}
-
-a[data-state=success] i.fsim-slave-status-icon {
-    @extend .mdi;
-    @extend .mdi-power-plug;
-}
-
 a[data-state=success] i.mdi-checkbox-blank-circle {
     color: $teal;
 }
@@ -620,7 +610,7 @@ a[data-state=success] i.mdi-checkbox-blank-circle {
     @extend .mdi-clock;
 }
 
-.fsim-box, .fsim-box[data-state=restored]  {
+.fsim-box, .fsim-box[data-state=restored], .fsim-box[data-state=success]  {
     border: none;
     margin-top: 5px;
     margin-bottom: 10px;
@@ -628,69 +618,15 @@ a[data-state=success] i.mdi-checkbox-blank-circle {
 }
 
 .fsim-box[data-state=error] {
-    background: linear-gradient(to right, $red 0, $red 8px, transparent 8px, transparent 100%) no-repeat;
+    background: linear-gradient(to right, $red 0, $red 8px, $white 8px, $white 100%) no-repeat;
 }
 
-.fsim-box[data-state=success], .fsim-box[data-state=moved] {
-    background: linear-gradient(to right, $green 0, $green 8px, transparent 8px, transparent 100%) no-repeat;
-}
-
-.fsim-box[data-state=warning] {
-    background: linear-gradient(to right, $yellow 0, $yellow 8px, $white 8px, $white 100%) no-repeat;
+.fsim-box[data-state=moved], .fsim-box[data-state=running] {
+    background: linear-gradient(to right, $green 0, $green 8px, $white 8px, $white 100%) no-repeat;
 }
 
 .fsim-box[data-state=teal] {
-    background: linear-gradient(to right, $teal 0, $teal 8px, transparent 8px, transparent 100%) no-repeat;
-}
-
-.fsim-box .fsim-slave-status-icon {
-    @extend .mdi;
-    @extend .mdi-apps;
-}
-
-.fsim-box[data-state=error] .fsim-slave-status-icon {
-    @extend .mdi;
-    @extend .mdi-alert-circle-outline;
-}
-
-.fsim-box[data-state=warning] .fsim-slave-status-icon {
-    @extend .mdi;
-    @extend .mdi-clock;
-}
-
-.fsim-box[data-state=error] .fsim-filesystem-status-icon {
-    @extend .mdi;
-    @extend .mdi-alert-circle-outline;
-}
-
-.fsim-box[data-state=moved] .fsim-filesystem-status-icon {
-    @extend .mdi;
-    @extend .mdi-undo;
-}
-
-.fsim-box[data-state=restored] .fsim-filesystem-status-icon {
-    @extend .mdi;
-    @extend .mdi-redo;
-}
-
-.fsim-box[data-state=error] .fsim-program-status-icon {
-    @extend .mdi;
-    @extend .mdi-alert-circle-outline;
-}
-
-.fsim-box[data-state=success] .fsim-program-status-icon {
-    @extend .mdi;
-    @extend .mdi-check;
-}
-
-.fsim-box[data-state=unknown] .fsim-program-status-icon {
-    @extend .mdi;
-    @extend .mdi-help;
-}
-
-.fsim-box[data-state=warning] .fsim-program-status-icon {
-    @extend .mdi;
-    @extend .mdi-clock;
+    background: linear-gradient(to right, $teal 0, $teal 8px, $white 8px, $white 100%) no-repeat;
 }
 
 .fsim-box-bottom {

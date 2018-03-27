@@ -65,7 +65,7 @@ class Command(BaseCommand):
         # compile sass
         call(
             [
-                'python',
+                'python3',
                 'manage.py',
                 'compilesass',
             ],
@@ -80,11 +80,11 @@ class Command(BaseCommand):
 
         # update packages
         call(
-            ['python', 'install.py', '--update'],
+            ['python3', 'install.py', '--update'],
             cwd=self.DEPLOY_FOLDER,
         )
         call(
-            ['python', 'install.py', '--update'],
+            ['python3', 'install.py', '--update'],
             cwd=join(self.DEPLOY_FOLDER, 'downloads'),
         )
 
@@ -115,7 +115,7 @@ class Command(BaseCommand):
         # collect static files
         self.stdout.write('collect static files')
         call(
-            ['python', 'manage.py', 'collectstatic', '--noinput'],
+            ['python3', 'manage.py', 'collectstatic', '--noinput'],
             cwd=self.DEPLOY_FOLDER,
         )
 
@@ -148,11 +148,11 @@ class Command(BaseCommand):
                     file,
                 ))
         call(
-            ['python', 'manage.py', 'makemigrations'],
+            ['python3', 'manage.py', 'makemigrations'],
             cwd=self.DEPLOY_FOLDER,
         )
         call(
-            ['python', 'manage.py', 'migrate'],
+            ['python3', 'manage.py', 'migrate'],
             cwd=self.DEPLOY_FOLDER,
         )
 

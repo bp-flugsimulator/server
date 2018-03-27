@@ -67,10 +67,10 @@ $(document).ready(function () {
                     url: '/api/script/' + script + '/run',
                     action: 'start script',
                     onSuccess: function() {
-                        window.location.href = '/scripts/run';
+                        window.location.href = '/';
                     },
                     onError: function() {
-                        window.location.href = '/scripts/run';
+                        window.location.href = '/';
                     }
                 });
             }

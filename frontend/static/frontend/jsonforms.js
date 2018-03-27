@@ -1,4 +1,4 @@
-/* eslint-env browser*/
+/symotion-prefixb* eslint-env browser*/
 /* eslint no-use-before-define: ["error", { "functions": false }] */
 /* global $, Handlebars*/
 /* exported JsonForm */
@@ -28,7 +28,7 @@ function addTypeEntry(container, type, querySlaves, queryType, context) {
 
         if (slaves.length === 0) {
             let html = templateNoElement({ type });
-            entryContainer.append(html);
+            entryContainer.prepend(html);
         } else {
 
             let templateContext = {slaves: slaves, type: type};
@@ -84,7 +84,15 @@ function addTypeEntry(container, type, querySlaves, queryType, context) {
     });
 }
 
+/**
+ * JSON form class.
+ */
 const JsonForm = {
+    /**
+     * Initialises the container.
+     * @param {HTMLElement} container A HTML container for the form.
+     * @param {Objects} options An object of options.
+     */
     init(container, options) {
         $(container).find('.script-program-add').on('click', function () {
             addTypeEntry(container, 'program', options.querySlavesPrograms, options.queryPrograms);
@@ -114,8 +122,8 @@ const JsonForm = {
     },
     /**
      * Creates a form from a JSON object.
-     * @param {HTMLElement} container
-     * @param {JSONObject} json
+     * @param {HTMLElement} container A HTML container for the form.
+     * @param {Objects} options An object of options.
      */
     loads(container, options, json) {
         $(container).append(templateContainer({ 'name': json.name }));
@@ -132,7 +140,7 @@ const JsonForm = {
     },
     /**
      * Tries to get the current modification and returns it as an JSON object.
-     * @param {HTMLElement} container
+     * @param {HTMLElement} container A HTML container for the form.
      * @returns JSON Objects
      */
     dumps(container) {
