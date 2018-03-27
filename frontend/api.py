@@ -1201,21 +1201,25 @@ class ShutdownThread(threading.Thread):
         filesystems = FilesystemModel.objects.all()
         filesystems = filter(lambda x: x.is_moved, filesystems)
         for filesystem in filesystems:
-            s.enter(1, 1, fs_restore, argument=(filesystem,))
+            s.enter(0, 1, fs_restore, argument=(filesystem,))
         if self.scope == 'filesystem':
             s.run()
             return
         programs = ProgramModel.objects.all()
         programs = filter(lambda x: x.is_running, programs)
+        delay = 5
         for program in programs:
-            s.enter(5, 2, prog_stop, argument=(program,))
+            s.enter(delay, 2, prog_stop, argument=(program,))
+            delay += 1
         if self.scope == 'programs':
             s.run()
             return
         slaves = SlaveModel.objects.all()
         slaves = filter(lambda x: x.is_online, slaves)
+        delay = 20
         for slave in slaves:
-            s.enter(10,3, controller.slave, argument=(slave,))
+            s.enter(delay,3, controller.slave_shutdown, argument=(slave,))
+            delay += 1
         if self.scope == 'clients':
             s.run()
             return
