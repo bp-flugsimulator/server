@@ -260,7 +260,7 @@ def prog_start(prog):
             own_uuid=uuid,  # for the function that gets executed
             method="execute",
             path=prog.path,
-            arguments=split(prog.arguments),
+            arguments=[prog.arguments],
         )
 
         LOGGER.info(
