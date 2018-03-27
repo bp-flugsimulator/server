@@ -38,10 +38,9 @@
                     <div class="list-group rounded shadow" id="slaveTabList" role="tablist">
 
                     {% for slave in involved_slaves %}
-                        <a class="d-flex  list-group-item font-weight-bold bg-light text-dark list-group-flush fade active show " data-state="{{ slave.data_state }}" id="slaveTab{{ slave.id }}" data-toggle="tab" href="#slaveTabContent{{ slave.id }}" data-slave-id="{{ slave.id }}">
+                        <a class="d-flex list-group-item font-weight-bold bg-light text-dark list-group-flush fade active show " data-state="{{ slave.data_state }}" id="slaveTab{{ slave.id }}" data-toggle="tab" href="#slaveTabContent{{ slave.id }}" data-slave-id="{{ slave.id }}">
                             <i>
                                 <i class="mdi mdi-checkbox-blank-circle"></i>
-                                <i class="fsim-slave-status-icon"></i>
                             </i>
                             <span>{{ slave.name }}</span>
                         </a>
