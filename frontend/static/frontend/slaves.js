@@ -502,6 +502,8 @@ $(document).ready(function () {
         let name = $(this).data('filesystem-name');
         let sourcePath = $(this).data('filesystem-source_path');
         let destinationPath = $(this).data('filesystem-destination_path');
+        let source_type = $(this).data('filesystem-source_type');
+        let destination_type = $(this).data('filesystem-destination_type');
 
         //modify the form for the submit button
         filesystemModal.children().find('.modal-title').text('Edit Filesystem');
@@ -513,6 +515,9 @@ $(document).ready(function () {
         filesystemForm.find('[name="name"]').val(name);
         filesystemForm.find('[name="source_path"]').val(sourcePath);
         filesystemForm.find('[name="destination_path"]').val(destinationPath);
+        filesystemForm.find('[name="source_type"]').val(source_type);
+        filesystemForm.find('[name="destination_type"]').val(destination_type);
+
 
         //clear error messages
         clearErrorMessages(filesystemForm);
