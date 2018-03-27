@@ -766,15 +766,20 @@ a[data-state=success] i.mdi-checkbox-blank-circle {
 
 .script-filesystem-entry:nth-child(odd),
 .script-program-entry:nth-child(odd) {
-	@extend .bg-light;
+    @extend .bg-light;
 }
 
 .script-program-remove,
-.script-filesystem-remove{	
-	background-color: transparent;
-	border-color: transparent;
+.script-filesystem-remove{
+    background-color: transparent;
+    border-color: transparent;
 }
 
+.countdown-value[data-value] {
+    &:after {
+        content: attr(data-value);
+    }
+}
 
 @include media-breakpoint-up(xs) {
     .xs-button-set {

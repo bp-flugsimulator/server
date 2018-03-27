@@ -712,6 +712,22 @@ class ScriptTest(StatusTestCase):
         response = self.client.post(reverse("frontend:script_stop"))
         self.assertEqual(response.status_code, 200)
 
+    def test_set_default_forbidden(self):
+        response = self.client.put(
+            reverse('frontend:script_set_default', args=[0]))
+        self.assertEqual(403, response.status_code)
+
+    def test_set_default_success(self):
+        script1 = ScriptFactory(last_ran=True)
+        script2 = ScriptFactory()
+
+        response = self.client.post(
+            reverse("frontend:script_set_default", args=[script2.id]))
+        self.assertEqual(response.status_code, 200)
+
+        self.assertTrue(ScriptModel.objects.get(id=script2.id).last_ran)
+        self.assertFalse(ScriptModel.objects.get(id=script1.id).last_ran)
+
 
 class FilesystemTests(StatusTestCase):
     def test_set_delete_forbidden(self):

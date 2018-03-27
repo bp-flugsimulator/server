@@ -120,6 +120,14 @@ class DatabaseTests(TestCase):
         online_slave = SlaveFactory(online=True)
         self.assertEqual('success', online_slave.data_state)
 
+    def test_script_last_ran(self):
+        script = ScriptFactory()
+        ScriptFactory()
+
+        ScriptModel.set_last_started(script.id)
+
+        self.assertEqual(script, ScriptModel.get_last_ran())
+
     def test_slave_has_err(self):
         slave = SlaveFactory()
 
