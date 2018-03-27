@@ -329,7 +329,7 @@ class Program(Model):
         validators=[validate_argument_list],
     )
     slave = ForeignKey(Slave, on_delete=CASCADE)
-    start_time = IntegerField(default=-1)
+    start_time = IntegerField(default=0)
 
     class Meta:
         """
