@@ -622,7 +622,6 @@ class RPCWebsocketTests(TestCase):
         )
 
         query = FilesystemModel.objects.get(id=filesystem.id)
-        self.assertEqual(query.hash_value, "")
         self.assertEqual(query.error_code, error_code)
 
         self.assertEqual(
