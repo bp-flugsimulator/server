@@ -1114,7 +1114,7 @@ class ShutdownThread(threading.Thread):
             return
         filesystems = FilesystemModel.objects.all()
         filesystems = filter(lambda x: x.is_moved, filesystems)
-        delay += 5
+        delay += 8
         for filesystem in filesystems:
             s.enter(0, 1, fs_restore, argument=(filesystem,))
         if self.scope == 'filesystem':
