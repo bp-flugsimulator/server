@@ -34,7 +34,7 @@
                 Flugsimulator
             </a>
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
+                <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse w-100" id="navbarNav">
                 <ul class="navbar-nav mr-auto">
@@ -77,26 +77,26 @@
             <div class="collapse navbar-collapse">
             </div>
         </nav>
-    <!-- Fsim restore Waring modal -->
-    <div id="warningModal" class="modal fade" role="dialog">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h4 class="modal-title">Confirm Action!</h4>
-                    <button type="button" class="close" data-dismiss="modal">&times;</button>
-		</div>
-		<div class="modal-body" id="warningBody">
-		</div>
-		<div class="modal-footer">
-			<button type='button' class='btn btn-danger modal-button' id="restore-filesystem-navbar">Restore Files</button>
-			<button type='button' class='btn btn-danger modal-button' id="stop-programs-navbar">Stop Programs</button>
-			<button type='button' class='btn btn-danger modal-button' id="shutdown-clients-navbar">Shutdown Clients</button>
-			<button type='button' class='btn btn-danger modal-button' id="shutdown-navbar">Shutdown All</button>
-			<button type='reset' class='btn btn-secondary' data-dismiss="modal" >Cancel</button>
-		</div>
-	    </div>
-	</div>
-    </div>
+        <!-- Fsim restore Waring modal -->
+        <div id="warningModal" class="modal fade" role="dialog">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title">Confirm Action!</h4>
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    </div>
+                    <div class="modal-body" id="warningBody">
+                    </div>
+                    <div class="modal-footer">
+                        <button type='button' class='btn btn-danger modal-button' id="stop-programs-navbar">Stop Programs</button>
+                        <button type='button' class='btn btn-danger modal-button' id="restore-filesystem-navbar">Restore Files</button>
+                        <button type='button' class='btn btn-danger modal-button' id="shutdown-clients-navbar">Shutdown Clients</button>
+                        <button type='button' class='btn btn-danger modal-button' id="shutdown-navbar">Shutdown All</button>
+                        <button type='reset' class='btn btn-secondary' data-dismiss="modal" >Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         {% block premain%}{% endblock %}
 
