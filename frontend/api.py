@@ -1129,8 +1129,8 @@ class ShutdownThread(threading.Thread):
         if self.scope == 'clients':
             s.run()
             return
-        s.enter(1,1, LOGGER.warning, argument=('Test'))
         s.run()
+
         if platform.system() == "Windows":
             subprocess.run(['shutdown', '-s', '-t 0'])
         else:
