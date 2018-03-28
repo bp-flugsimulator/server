@@ -14,8 +14,8 @@ LOGGER = logging.getLogger("fsim.scheduler")
 
 class SchedulerStatus:
     """
-    A state based automata which runs is used to start `ScriptModel`s.
-    The automata has the folloing states:
+    A state based automata which runs is used to start `ScriptModel`s. The
+    automata has the folloing states:
         INIT: 0
             The scheduler starts all relevant slaves.
         WAITING_FOR_SLAVES: 1
@@ -83,8 +83,8 @@ class Scheduler:
 
         Returns
         -------
-        bool:
-            If the task is still running.
+            bool:
+                If the task is still running.
         """
         with self.lock:
             if self.__task is not None:
@@ -110,8 +110,8 @@ class Scheduler:
 
         Returns
         -------
-        bool:
-            If this `Scheduler` should stop.
+            bool:
+                If this `Scheduler` should stop.
         """
         with self.lock:
             stop = self.__stop
@@ -121,7 +121,8 @@ class Scheduler:
         """
         Thread-safe function.
 
-        Sets the stop flag and waits for the `Scheduler` to finish.
+        Sets the stop flag and waits for the `Scheduler` to finish. After this
+        functions exists the event loop and the thread are closed.
         """
         with self.lock:
             self.__stop = True
@@ -152,19 +153,19 @@ class Scheduler:
         """
         Thread-safe function.
 
-        Creates a new `SafeLoop` and run self into this loop.
-
+        Initializes the `Scheduler` for a given `script` and starts the event
+        loop.
 
         Parameters
         ----------
             script: int
-                An identifier which can identifier the `ScriptModel`
-                in the database.
+                An identifier which can identifier the `ScriptModel` in the
+                database.
 
         Returns
         -------
-        bool:
-            If the scheudler is not running.
+            bool:
+                If the scheduler is not running.
         """
         if self.is_running():
             return False
@@ -197,8 +198,8 @@ class Scheduler:
         Thread-safe function.
 
         This function is called by someone who modified the data which are
-        related to the `Scheudler`. If `notify` is called then this indicates
-        that the related data has changed and the `Scheudler` could make a
+        related to the `Scheduler`. If `notify` is called then this indicates
+        that the related data has changed and the `Scheduler` could make a
         step.
         """
         if self.is_running():
@@ -216,14 +217,14 @@ class Scheduler:
     def __get_next_stage(self):
         """
         Fetches the next index/stage for the `Scheduler` and stores the value
-        into `Scheudler.__index`.
+        into `Scheduler.__index`.
 
         Returns
         -------
-        old_index: int
-            The previous index/stage.
-        all_done: bool
-            If no more indexes/stages are avialable.
+            old_index: int
+                The previous index/stage.
+            all_done: bool
+                If no more indexes/stages are available.
 
         """
         from .models import (
@@ -264,8 +265,8 @@ class Scheduler:
 
     def slave_timeout_callback(self):
         """
-        This function is called after an amount of time. If the internal state
-        is still on `WAITING_FOR_SLAVES` then the `Scheudler` aborts.
+        This is callback function which will abort the `Scheduler` if the
+        internal state is still on `WAITING_FOR_SLAVES`.
         """
 
         if self.__state == SchedulerStatus.WAITING_FOR_SLAVES:
@@ -277,7 +278,7 @@ class Scheduler:
     @asyncio.coroutine
     def __run__(self):
         """
-        This functions maps every internal state to a seperated function.
+        This functions maps every internal state to a handler function.
         """
 
         while True:
@@ -288,7 +289,7 @@ class Scheduler:
 
             if self.__stop:
                 LOGGER.info(
-                    "Scheduler received interupt event. Exiting scheduler loop."
+                    "Scheduler received interrupt event. Exiting scheduler loop."
                 )
                 return
 
@@ -317,7 +318,7 @@ class Scheduler:
 
     def __state_init(self):
         """
-        This functions handle the `INIT` state. And sending every relevant
+        This functions handles the `INIT` state. And sending every relevant
         slave the Wake-On-Lan package.
         """
         from .models import Script, Slave
@@ -339,9 +340,9 @@ class Scheduler:
 
     def __state_wait_slaves(self):
         """
-        This funcitons handels the `WAITING_FOR_SLAVES` state. If not all
-        slaves are connected yet this functions wait for them by waiting for
-        the `Scheduler.notify` call.
+        This functions handles the `WAITING_FOR_SLAVES` state. If not all
+        slaves are connected yet the state is unchanged. After all slaves are
+        connected the `Scheduler` goes into the next state.
         """
         from .models import Script
 
@@ -358,7 +359,7 @@ class Scheduler:
         This function handles the `NEXT_STEP` state, where all programs are
         started and all filesystems are moved. If a program is started then it
         will be not started again. If a filesystem is moved already then it
-        will be not moved agian.
+        will be not moved again.
         """
         from .controller import prog_start, fs_move
         from .errors import (
@@ -457,7 +458,7 @@ class Scheduler:
         This functions handle the `WAITING_FOR_PROGRAMS_FILESYSTEMS` state
         where it checks the database for the program and filesystem status. If
         not all programs and filesystems are ready it will wait for the
-        `Scheudler.notify` call to proceed.
+        `Scheduler.notify` call to proceed.
         """
         from .models import (
             ScriptGraphPrograms,
@@ -520,7 +521,7 @@ class Scheduler:
 
     def __state_success(self):
         """
-        This function handles the `SUCCESS` state, where the `Scheudler`
+        This function handles the `SUCCESS` state, where the `Scheduler`
         finishes without an error.
         """
         from .models import Script
@@ -541,8 +542,8 @@ class Scheduler:
 
     def __state_error(self):
         """
-        This function handles the `ERROR` state, where the `Scheudler`
-        finishes an error.
+        This function handles the `ERROR` state, where the `Scheduler` finishes
+        with an error.
         """
         from .models import Script
 

@@ -43,7 +43,7 @@ LOGGER = logging.getLogger("fsim.controller")
 
 def timer_timeout_program(identifier):
     """
-    This callback function sets the timeout flag for a `ProgramModel`.
+    This is callback function which sets the timeout flag for a `ProgramModel`.
 
     Parameters
     ----------
@@ -57,9 +57,9 @@ def timer_timeout_program(identifier):
 
 def fs_move(fs):
     """
-    This functions sends a command to slave to move the given filesystem.
-    If any filesystem is at the same place, it will be replaced and then this
-    `fs` will be moved to the destination.
+    This functions sends a command to slave to move the given filesystem. If
+    any filesystem is at the same place it will be restored and the then `fs`
+    will be moved. If the slave is offline an error will be returned.
 
     Parameters
     ----------
@@ -159,8 +159,9 @@ def fs_move(fs):
 
 def fs_restore(fs):
     """
-    This functions restores a given `FilesystemModel` by sending a command to
-    the slave to undo the previously done move.
+    This functions restores a given `fs` by sending a command to the slave to
+    restore the original state.  If the slave is offline an error will be
+    returned.
 
     Parameters
     ----------
@@ -210,8 +211,7 @@ def fs_restore(fs):
 
 def fs_delete(fs):
     """
-    This functions deletes a `FilesystemModel` only if `fs` is not moved
-    currently.
+    This functions deletes a `fs` only if `fs` is not moved.
 
     Parameters
     ----------
@@ -234,8 +234,9 @@ def fs_delete(fs):
 
 def prog_start(prog):
     """
-    This functions starts a `ProgramModel` by sending a command to the slave.
-    But only if the program is not started.
+    This functions starts a `prog` by sending a command to the slave.
+    The program can only be started if the program is currently not running.
+    If the slave is offline an error will be returned.
 
     Parameters
     ----------
@@ -309,8 +310,9 @@ def prog_start(prog):
 
 def prog_stop(prog):
     """
-    This function stops a `ProgramModel` by sending a command to the slave. But
-    only if `prog` is running.
+    This function stops a `prog` by sending a command to the slave.
+    The program can only be stoped if the program is currently running. If the
+    slave is offline an error will be returned.
 
     Parameters
     ----------
@@ -354,7 +356,7 @@ def prog_stop(prog):
 
 def slave_shutdown(slave):
     """
-    This functions shutsdown a `SlaveModel` by a command to the slave.
+    This functions shutsdown a `slave` by a command to the slave.
 
     Parameters
     ----------
@@ -375,8 +377,8 @@ def slave_shutdown(slave):
 
 def slave_wake_on_lan(slave):
     """
-    This functions starts a `SlaveModel` by sending a magic (Wake-On-Lan
-    package) to the slave.
+    This functions starts a `slave` by sending a magic (Wake-On-Lan
+    package) to the `slave`.
 
     Parameters
     ----------
@@ -396,18 +398,13 @@ def slave_wake_on_lan(slave):
 
 def prog_log_get(program):
     """
-    This function is asking for a log for a `ProgramModel` by sending a command
-    to the slave.
+    This function is asking for a log for a `program` by sending a command to
+    the slave. If the slave is offline an error will be returned.
 
     Parameters
     ----------
         program: ProgramModel
             A valid `ProgramModel`.
-
-    Returns
-    -------
-        boolean:
-            If the request is possible.
 
     Raises
     ------
@@ -441,9 +438,9 @@ def prog_log_get(program):
 
 def prog_log_enable(program):
     """
-    This function is enabling the log transfer for a `ProgramModel` by sending
-    a command to the slave. But only if the slave is online and the program has
-    a log.
+    This function enables the log transfer for a `ProgramModel` by sending a
+    command to the slave. Not all programs support the log function. If the
+    slave is offline an error will be returned.
 
     Parameters
     ----------
@@ -482,8 +479,8 @@ def prog_log_enable(program):
 
 def prog_log_disable(program):
     """
-    This function is disabling the log transfer for a `ProgramModel` by sending
-    a command to the slave. But only if the slave is online.
+    This function disables the log transfer for a `ProgramModel` by sending a
+    command to the slave. If the slave is offline an error will be returned.
 
     Parameters
     ----------
@@ -518,9 +515,10 @@ def prog_log_disable(program):
 
 def script_deep_copy(script):
     """
-    This function creates a copy of a `ScriptModel` with all
-    `ScriptGraphFiles` and `ScriptGraphPrograms` by adding a `_copy` suffix
-    with a number if a copy already exists.
+    This function creates a copy of a `ScriptModel` with all `ScriptGraphFiles`
+    and `ScriptGraphPrograms`. The result `ScriptModle` has the same name but
+    with an suffix '_copy'. If the `ScriptModel` with the suffix already exists
+    then a number is appended to the name.
 
     Parameters
     ----------
