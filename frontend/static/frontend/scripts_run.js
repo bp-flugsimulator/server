@@ -140,8 +140,8 @@ $(document).ready(function () {
         });
     });
 
-    if ($('.countdown-value[data-value][data-script]').first() !== null &&
-    typeof $('.countdown-value[data-value][data-script]').first() !== 'undefined') {
+    if ($('.countdown-value[data-value][data-script]').first() !== null
+    && typeof $('.countdown-value[data-value][data-script]').first() !== 'undefined') {
         var countdownCurrent = 30;
 
         var interval = setInterval(function() {
@@ -151,7 +151,11 @@ $(document).ready(function () {
                 val.setAttribute('data-value', countdownCurrent);
             });
 
-            let script = $('.countdown-value[data-value][data-script]').first().attr('data-script');
+            let script = $('.countdown-value[data-value][data-script]').attr('data-script');
+
+            if (typeof script === 'undefined') {
+                clearInterval(interval);
+            }
 
             if (countdownCurrent === 0) {
                 clearInterval(interval);
