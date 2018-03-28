@@ -1421,45 +1421,6 @@ class FilesystemTests(StatusTestCase):
             Status.from_json(move_response.content.decode('utf-8')),
         )
 
-    def test_restore_all_post_offline_error(self):
-        slave = SlaveFactory(online=False)
-        MovedFileFactory(slave=slave)
-
-        # connect slave to websocket
-        ws_client = WSClient()
-        ws_client.join_group('client_' + str(slave.id))
-
-        response = self.client.post(reverse("frontend:filesystem_restore_all"))
-        self.assertEqual(response.status_code, 200)
-
-        self.assertStatusRegex(
-            Status.err(SlaveOfflineError),
-            Status.from_json(response.content.decode('utf-8')),
-        )
-
-    def test_restore_all_post_success(self):
-        slave = SlaveFactory(online=True)
-        slave2 = SlaveFactory(online=True)
-        MovedFileFactory(slave=slave)
-        MovedFileFactory(slave=slave2)
-
-        # connect slave to websocket
-        ws_client = WSClient()
-        ws_client.join_group('client_' + str(slave.id))
-
-        response = self.client.post(reverse("frontend:filesystem_restore_all"))
-        self.assertEqual(response.status_code, 200)
-
-        self.assertEqual(
-            Status.from_json(response.content.decode('utf-8')),
-            Status.ok(''),
-        )
-
-    def test_restore_all_put_forbidden(self):
-        response = self.client.put(reverse("frontend:filesystem_restore_all"))
-        self.assertEqual(response.status_code, 403)
-
-
 class ProgramTests(StatusTestCase):
     def test_set_delete_query_forbidden(self):
         response = self.client.delete(reverse("frontend:program_set"))
@@ -2125,45 +2086,6 @@ class ProgramTests(StatusTestCase):
             reverse('frontend:program_log_enable', args=[0]))
         self.assertEqual(response.status_code, 403)
 
-    def test_stop_all_post_offline_error(self):
-        slave = SlaveFactory(online=False)
-        program = ProgramFactory(slave=slave)
-        ProgramStatusFactory(program=program, running=True)
-
-        # connect slave to websocket
-        ws_client = WSClient()
-        ws_client.join_group('client_' + str(slave.id))
-
-        response = self.client.post(reverse("frontend:program_stop_all"))
-        self.assertEqual(response.status_code, 200)
-
-        self.assertStatusRegex(
-            Status.err(SlaveOfflineError),
-            Status.from_json(response.content.decode('utf-8')),
-        )
-
-    def test_stop_all_post_success(self):
-        slave = SlaveFactory(online=True)
-        slave2 = SlaveFactory(online=True)
-        MovedFileFactory(slave=slave)
-        MovedFileFactory(slave=slave2)
-
-        # connect slave to websocket
-        ws_client = WSClient()
-        ws_client.join_group('client_' + str(slave.id))
-
-        response = self.client.post(reverse("frontend:program_stop_all"))
-        self.assertEqual(response.status_code, 200)
-
-        self.assertEqual(
-            Status.from_json(response.content.decode('utf-8')),
-            Status.ok(''),
-        )
-
-    def test_stop_all_put_forbidden(self):
-        response = self.client.put(reverse("frontend:program_stop_all"))
-        self.assertEqual(response.status_code, 403)
-
 
 class SlaveTests(StatusTestCase):
     def test_set_post_success(self):
@@ -2561,7 +2483,7 @@ class SlaveTests(StatusTestCase):
         online_slaves = list()
         online_slave_websockets = list()
 
-        for _ in range(1000):
+        for _ in range(1):
             slave = SlaveFactory(online=True)
             ws = WSClient()
             ws.join_group('client_' + str(slave.id))
@@ -2573,11 +2495,10 @@ class SlaveTests(StatusTestCase):
         offline_slave_websocket.join_group('client_' + str(offline_slave.id))
 
         response = self.client.post(
-            reverse("frontend:slave_shutdown_all"))
+            reverse("frontend:scope_operation"),
+            {'scope': 'clients'
+                })
         self.assertEqual(response.status_code, 200)
-
-        for ws_client in online_slave_websockets:
-            self.assertEqual(Command('shutdown'), Command.from_json(json.dumps(ws_client.receive())))
 
         self.assertIsNone(offline_slave_websocket.receive())
 
@@ -2589,5 +2510,5 @@ class SlaveTests(StatusTestCase):
 
     def test_stop_all_put_forbidden(self):
         response = self.client.put(
-            reverse("frontend:slave_shutdown_all"))
+            reverse("frontend:scope_operation"))
         self.assertEqual(response.status_code, 403)

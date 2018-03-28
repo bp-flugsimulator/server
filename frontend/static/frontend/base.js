@@ -283,46 +283,71 @@ $(document).ready(function () {
     $('#restore-filesystem-navbar').click(function () {
 	shutdownMultiple('filesystem');
 	$('#warningModal').modal('toggle');
+	$('#warningModal').on('hidden.bs.modal', function (e) {
+	notify(
+		'Filemanagement',
+                'Restore of all clients in progress'
+        );
+		$('#warningModal').off('hidden.bs.modal');
+	});
+
     });
 
     $('#stop-programs-navbar').click(function () {
 	shutdownMultiple('programs');
 	$('#warningModal').modal('toggle');
+	$('#warningModal').on('hidden.bs.modal', function (e) {
+	notify(
+		'Programs',
+                'Killing programs on all clients'
+        );
+		$('#warningModal').off('hidden.bs.modal');
+	});
     });
 
     $('#shutdown-clients-navbar').click(function () {
 	shutdownMultiple('clients');
 	$('#warningModal').modal('toggle');
+	$('#warningModal').on('hidden.bs.modal', function (e) {
+	notify(
+		'Clients',
+                'Shutting down all clients.'
+        );
+		$('#warningModal').off('hidden.bs.modal');
+	});
     });
 
     $('#shutdown-navbar').click(function () {
 	shutdownMultiple('all');
 	$('#warningModal').modal('toggle');
+	$('#warningModal').on('hidden.bs.modal', function (e) {
+	notify(
+		'Shutdown',
+                'Shutting down everything.'
+        );
+		$('#warningModal').off('hidden.bs.modal');
+	});
     });
 
     $('#restoreAllButton').click(function () {
-	$(this).prop("disabled", true);
         $('#warningBody').html('Are you sure you want to restore all files and directories?');
         $('.modal-button').hide();
         $('#restore-filesystem-navbar').show();
         $('#warningModal').modal('toggle');
     });
     $('#stopAllButton').click(function () {
-	$(this).prop("disabled", true);
         $('#warningBody').html('Are you sure you want to stop all programs?');
         $('.modal-button').hide();
         $('#stop-programs-navbar').show();
         $('#warningModal').modal('toggle');
     });
     $('#shutdownClientsButton').click(function () {
-	$(this).prop("disabled", true);
         $('#warningBody').html('Are you sure you want to shutdown all Clients? \n This may take a few seconds.');
         $('.modal-button').hide();
         $('#shutdown-clients-navbar').show();
         $('#warningModal').modal('toggle');
     });
     $('#shutdownAllButton').click(function () {
-	$(this).prop("disabled", true);
         $('#warningBody').html('Are you sure you want to shutdown the simulator? \n This may take a few seconds.');
         $('.modal-button').hide();
         $('#shutdown-navbar').show();

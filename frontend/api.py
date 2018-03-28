@@ -2,9 +2,9 @@
 This module contains all functions that handle requests on the REST api.
 """
 import logging
-import os
 import platform
 import sched, threading
+import subprocess
 
 from django.http import HttpResponseForbidden
 from django.http.request import QueryDict
@@ -298,65 +298,6 @@ def slave_wol(request, slave_id):
     else:
         return HttpResponseForbidden()
 
-def slave_shutdown_all(request):
-    """
-    Process requests to shutdown all slaves.
-
-    HTTP Methods
-    ------------
-        POST:
-            Shuts all clients down.
-    Parameters
-    ----------
-        request: HttpRequest
-            The request which should be processed.
-
-    Returns
-    -------
-        HttpResponse:
-            If the HTTP method is not supported, then an `HttpResponseForbidden`
-            is returned.
-    """
-    if request.method == 'POST':
-        slaves = SlaveModel.objects.all()
-        slaves = filter(lambda x: x.is_online, slaves)
-        try:
-            for slave in list(slaves):
-                controller.slave_shutdown(slave)
-        except FsimError as err:
-            return StatusResponse(err)
-
-        return StatusResponse.ok("")
-    else:
-        return HttpResponseForbidden()
-
-def master_shutdown(request):
-    """
-    Process requests to shutdown the master.
-
-    HTTP Methods
-    ------------
-        POST:
-            Shuts the master down.
-    Parameters
-    ----------
-        request: HttpRequest
-            The request which should be processed.
-
-    Returns
-    -------
-        HttpResponse:
-            If the HTTP method is not supported, then an `HttpResponseForbidden`
-            is returned.
-    """
-    if request.method == 'POST':
-        if platform.system() == "Windows":
-            os.system('shutdown -s -t 0')
-        else:
-            os.system('shutdown -h now')
-        return StatusResponse("ok")
-    else:
-        return HttpResponseForbidden()
 
 def program_set(request):
     """
@@ -667,39 +608,6 @@ def program_log_disable(request, program_id):
             return StatusResponse(err)
         except ProgramModel.DoesNotExist as err:
             return StatusResponse(ProgramNotExistError(err, program_id))
-    else:
-        return HttpResponseForbidden()
-
-
-def program_stop_all(request):
-    """
-    Process requests to reset all moved `FilesystemModel`s.
-
-    HTTP Methods
-    ------------
-        POST:
-            Stops all started `ProgramModel`s
-    Parameters
-    ----------
-        request: HttpRequest
-            The request which should be processed.
-
-    Returns
-    -------
-        HttpResponse:
-            If the HTTP method is not supported, then an `HttpResponseForbidden`
-            is returned.
-    """
-    if request.method == 'POST':
-        programs = ProgramModel.objects.all()
-        programs = filter(lambda x: x.is_running, programs)
-        try:
-            for program in list(programs):
-                prog_stop(program)
-        except FsimError as err:
-            return StatusResponse(err)
-
-        return StatusResponse.ok("")
     else:
         return HttpResponseForbidden()
 
@@ -1160,40 +1068,6 @@ def filesystem_entry(request, filesystem_id):
     else:
         return HttpResponseForbidden()
 
-
-def filesystem_restore_all(request):
-    """
-    Process requests to reset all moved `FilesystemModel`s.
-
-    HTTP Methods
-    ------------
-        POST:
-            Resets all moved `FilesystemModel`s
-    Parameters
-    ----------
-        request: HttpRequest
-            The request which should be processed.
-
-    Returns
-    -------
-        HttpResponse:
-            If the HTTP method is not supported, then an `HttpResponseForbidden`
-            is returned.
-    """
-    if request.method == 'POST':
-        filesystems = FilesystemModel.objects.all()
-        filesystems = filter(lambda x: x.is_moved, filesystems)
-        try:
-            for filesystem in list(filesystems):
-                fs_restore(filesystem)
-        except FsimError as err:
-            print("test")
-            return StatusResponse(err)
-
-        return StatusResponse.ok('')
-    else:
-        return HttpResponseForbidden()
-
 def scope_operations(request):
     """
     Process requests to shutdown all clients
@@ -1227,11 +1101,11 @@ class ShutdownThread(threading.Thread):
         threading.Thread.__init__(self)
         self.scope = scope
 
-    def run(self):
+    def run(self):# pragma: no cover
         s = sched.scheduler()
         programs = ProgramModel.objects.all()
         programs = filter(lambda x: x.is_running, programs)
-        delay = 5
+        delay = 0
         for program in programs:
             s.enter(delay, 2, prog_stop, argument=(program,))
             delay += 1
@@ -1240,6 +1114,7 @@ class ShutdownThread(threading.Thread):
             return
         filesystems = FilesystemModel.objects.all()
         filesystems = filter(lambda x: x.is_moved, filesystems)
+        delay += 5
         for filesystem in filesystems:
             s.enter(0, 1, fs_restore, argument=(filesystem,))
         if self.scope == 'filesystem':
@@ -1247,7 +1122,7 @@ class ShutdownThread(threading.Thread):
             return
         slaves = SlaveModel.objects.all()
         slaves = filter(lambda x: x.is_online, slaves)
-        delay = 20
+        delay += 8
         for slave in slaves:
             s.enter(delay,3, controller.slave_shutdown, argument=(slave,))
             delay += 1
@@ -1257,6 +1132,6 @@ class ShutdownThread(threading.Thread):
         s.enter(1,1, LOGGER.warning, argument=('Test'))
         s.run()
         if platform.system() == "Windows":
-            os.system('shutdown -s -t 0')
+            subprocess.run(['shutdown', '-s', '-t 0'])
         else:
-            os.system('shutdown -h now')
+            subprocess.run(['shutdown', '-h now'])
