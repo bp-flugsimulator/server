@@ -13,7 +13,10 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='filesystem',
             name='destination_type',
-            field=models.CharField(choices=[('file', 'Rename'), ('dir', 'Keep Name')], default='file', max_length=4),
+            field=models.CharField(
+                choices=[('file', 'Rename'), ('dir', 'Keep Name')],
+                default='file',
+                max_length=4),
         ),
         migrations.AlterField(
             model_name='program',

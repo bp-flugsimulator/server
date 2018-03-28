@@ -611,6 +611,7 @@ def program_log_disable(request, program_id):
     else:
         return HttpResponseForbidden()
 
+
 def script_set(request):
     """
     Process requests on a set of `ScriptModel`s.
@@ -1068,6 +1069,7 @@ def filesystem_entry(request, filesystem_id):
     else:
         return HttpResponseForbidden()
 
+
 def scope_operations(request):
     """
     Process requests to shutdown all clients
@@ -1096,18 +1098,19 @@ def scope_operations(request):
     else:
         return HttpResponseForbidden()
 
+
 class ShutdownThread(threading.Thread):
     def __init__(self, scope):
         threading.Thread.__init__(self)
         self.scope = scope
 
-    def run(self):# pragma: no cover
+    def run(self):  # pragma: no cover
         s = sched.scheduler()
         programs = ProgramModel.objects.all()
         programs = filter(lambda x: x.is_running, programs)
         delay = 0
         for program in programs:
-            s.enter(delay, 2, prog_stop, argument=(program,))
+            s.enter(delay, 2, prog_stop, argument=(program, ))
             delay += 1
         if self.scope == 'programs':
             s.run()
@@ -1116,7 +1119,7 @@ class ShutdownThread(threading.Thread):
         filesystems = filter(lambda x: x.is_moved, filesystems)
         delay += 10
         for filesystem in filesystems:
-            s.enter(delay, 1, fs_restore, argument=(filesystem,))
+            s.enter(delay, 1, fs_restore, argument=(filesystem, ))
         if self.scope == 'filesystem':
             s.run()
             return
@@ -1124,7 +1127,7 @@ class ShutdownThread(threading.Thread):
         slaves = filter(lambda x: x.is_online, slaves)
         delay += 8
         for slave in slaves:
-            s.enter(delay,3, controller.slave_shutdown, argument=(slave,))
+            s.enter(delay, 3, controller.slave_shutdown, argument=(slave, ))
             delay += 1
         if self.scope == 'clients':
             s.run()

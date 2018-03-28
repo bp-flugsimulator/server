@@ -204,7 +204,8 @@ class DatabaseTests(TestCase):
 
         self.assertEqual(program.data_state, "unknown")
 
-        status = ProgramStatusModel(program=program, code="0", running=False, start_time=now())
+        status = ProgramStatusModel(
+            program=program, code="0", running=False, start_time=now())
         status.save()
 
         program = ProgramModel.objects.get(id=program.id)

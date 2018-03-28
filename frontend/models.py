@@ -875,4 +875,3 @@ class ProgramStatus(Model):
     running = BooleanField(unique=False, default=True)
     timeouted = BooleanField(unique=False, default=False)
     start_time = DateTimeField(null=True, blank=True)
-

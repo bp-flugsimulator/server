@@ -2,12 +2,7 @@
 This module contains Django `Forms`.
 """
 
-from django.forms import (
-    ModelForm,
-    ModelChoiceField,
-    HiddenInput,
-    Textarea
-)
+from django.forms import (ModelForm, ModelChoiceField, HiddenInput, Textarea)
 
 from .models import (
     Slave as SlaveModel,
@@ -72,8 +67,10 @@ class ProgramForm(BaseModelForm):
         labels = {'name': 'Display Name', 'path': 'Path to executable'}
         model = ProgramModel
         fields = ['name', 'path', 'arguments', 'start_time']
-        widgets = {'path': Textarea(attrs={'rows':1}),
-                'arguments': Textarea(attrs={'rows':1}),}
+        widgets = {
+            'path': Textarea(attrs={'rows': 1}),
+            'arguments': Textarea(attrs={'rows': 1}),
+        }
         help_texts = {
             'name':
             r"""<b>Description</b><br>
@@ -130,8 +127,10 @@ class FilesystemForm(BaseModelForm):
             'destination_path',
             'destination_type',
         ]
-        widgets = {'source_path': Textarea(attrs={'rows':1}),
-                'destination_path': Textarea(attrs={'rows':1}),}
+        widgets = {
+            'source_path': Textarea(attrs={'rows': 1}),
+            'destination_path': Textarea(attrs={'rows': 1}),
+        }
         help_texts = {
             'name':
             r"""<b>Description</b><br>

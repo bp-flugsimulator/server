@@ -1421,6 +1421,7 @@ class FilesystemTests(StatusTestCase):
             Status.from_json(move_response.content.decode('utf-8')),
         )
 
+
 class ProgramTests(StatusTestCase):
     def test_set_delete_query_forbidden(self):
         response = self.client.delete(reverse("frontend:program_set"))
@@ -2495,9 +2496,7 @@ class SlaveTests(StatusTestCase):
         offline_slave_websocket.join_group('client_' + str(offline_slave.id))
 
         response = self.client.post(
-            reverse("frontend:scope_operation"),
-            {'scope': 'clients'
-                })
+            reverse("frontend:scope_operation"), {'scope': 'clients'})
         self.assertEqual(response.status_code, 200)
 
         self.assertIsNone(offline_slave_websocket.receive())
@@ -2507,8 +2506,6 @@ class SlaveTests(StatusTestCase):
             Status.ok(''),
         )
 
-
     def test_stop_all_put_forbidden(self):
-        response = self.client.put(
-            reverse("frontend:scope_operation"))
+        response = self.client.put(reverse("frontend:scope_operation"))
         self.assertEqual(response.status_code, 403)

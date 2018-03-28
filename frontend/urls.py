@@ -35,7 +35,8 @@ urlpatterns = [  # pylint: disable=C0103
     url(
         r'^api/slave/([0-9]+)/shutdown$',
         api.slave_shutdown,
-        name='slave_shutdown',),
+        name='slave_shutdown',
+    ),
     # Programs
     url(r'^api/programs$', api.program_set, name='program_set'),
     url(r'^api/program/([0-9]+)$', api.program_entry, name='program_entry'),
@@ -73,7 +74,8 @@ urlpatterns = [  # pylint: disable=C0103
     url(
         r'^api/filesystem/([0-9]+)/restore$',
         api.filesystem_restore,
-        name='filesystem_restore',),
+        name='filesystem_restore',
+    ),
     # shutdown everything
     url(r'^api/all/scope_operation$',
         api.scope_operations,

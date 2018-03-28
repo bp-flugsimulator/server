@@ -280,7 +280,8 @@ def prog_start(prog):
         })
 
         # create status entry
-        ProgramStatusModel(program=prog, command_uuid=cmd.uuid, start_time=now()).save()
+        ProgramStatusModel(
+            program=prog, command_uuid=cmd.uuid, start_time=now()).save()
 
         if prog.start_time > 0:
             LOGGER.debug(
