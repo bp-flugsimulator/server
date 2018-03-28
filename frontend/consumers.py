@@ -117,7 +117,6 @@ def handle_filesystem_restored(status):
         })
     else:
         file_.error_code = status.payload['result']
-        file_.hash_value = ""
         file_.save()
 
         notify({
