@@ -33,7 +33,10 @@
                 <img src="{% static 'base/favicon.svg' %}" style="max-width:32px; max-height:32px;" class="d-inline-block align-top" alt="FS">
                 Flugsimulator
             </a>
-            <div class="collapse navbar-collapse" id="navbarNav">
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse w-100" id="navbarNav">
                 <ul class="navbar-nav mr-auto">
                     <li class="nav-item">
                         <a class="nav-link text-uppercase font-weight-bold {% if navbar_link == 'slaves' %}active{% endif %}" href="/slaves">Clients</a>
@@ -45,21 +48,55 @@
                         <a class="nav-link" href="/downloads">Downloads</a>
                     </li>
                 </ul>
-            </div>
-            <div class="navbar-collapse collapse w-100 order-3 dual-collapse2">
                 <ul class="navbar-nav ml-auto">
                     <li class="nav-item mr-2">
-                        <button class="btn btn-danger navbar-btn short-disable text-uppercase">Reset Filesystem</button>
-                    </li>
-                    <li class="nav-item">
-                        <button class="btn btn-danger navbar-btn short-disable text-uppercase">Shutdown all</button>
+                        <div class="dropdown">
+                            <button class="btn btn-danger dropdown-toggle" type="button" id="dropdownShutdownButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <i class="mdi mdi-power"></i>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-right shadow" aria-labelledby="dropdownShutdownButton">
+                                <button class="dropdown-item short-disable" id="stopAllButton" type="button">
+                                    Stop Programs
+                                </button>
+                                <button class="dropdown-item short-disable" id="restoreAllButton" type="button">
+                                    Restore Files
+                                </button>
+                                <button class="dropdown-item short-disable" id="shutdownClientsButton" type="button">
+                                    Shutdown Clients
+                                </button>
+                                <div class="dropdown-divider"></div>
+                                <button class="dropdown-item short-disable" id="shutdownAllButton" type="button">
+                                    <i class="mdi mdi-power"></i>
+                                    Shutdown
+                                </button>
+                            </div>
+                        </div>
                     </li>
                 </ul>
             </div>
-            <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+            <div class="collapse navbar-collapse">
+            </div>
         </nav>
+        <!-- Fsim restore Waring modal -->
+        <div id="warningModal" class="modal fade" role="dialog">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title">Confirm Action!</h4>
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    </div>
+                    <div class="modal-body" id="warningBody">
+                    </div>
+                    <div class="modal-footer">
+                        <button type='button' class='btn btn-danger modal-button' id="stop-programs-navbar">Stop Programs</button>
+                        <button type='button' class='btn btn-danger modal-button' id="restore-filesystem-navbar">Restore Files</button>
+                        <button type='button' class='btn btn-danger modal-button' id="shutdown-clients-navbar">Shutdown Clients</button>
+                        <button type='button' class='btn btn-danger modal-button' id="shutdown-navbar">Shutdown All</button>
+                        <button type='reset' class='btn btn-secondary' data-dismiss="modal" >Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         {% block premain%}{% endblock %}
 

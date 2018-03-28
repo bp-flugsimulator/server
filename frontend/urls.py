@@ -29,14 +29,13 @@ urlpatterns = [  # pylint: disable=C0103
         api.script_set_default,
         name='script_set_default'),
     # Slaves
-    url(r'^api/slaves', api.slave_set, name='slave_set'),
+    url(r'^api/slaves$', api.slave_set, name='slave_set'),
     url(r'^api/slave/([0-9]+)$', api.slave_entry, name='slave_entry'),
     url(r'^api/slave/([0-9]+)/wol$', api.slave_wol, name='slave_wol'),
     url(
         r'^api/slave/([0-9]+)/shutdown$',
         api.slave_shutdown,
-        name='slave_shutdown',
-    ),
+        name='slave_shutdown',),
     # Programs
     url(r'^api/programs$', api.program_set, name='program_set'),
     url(r'^api/program/([0-9]+)$', api.program_entry, name='program_entry'),
@@ -59,7 +58,6 @@ urlpatterns = [  # pylint: disable=C0103
         api.program_log_disable,
         name='program_log_disable',
     ),
-    url(r'^api/programs/stop', api.program_stop_all, name='program_stop_all'),
     # Filesystems
     url(r'^api/filesystems$', api.filesystem_set, name='filesystem_set'),
     url(
@@ -75,9 +73,9 @@ urlpatterns = [  # pylint: disable=C0103
     url(
         r'^api/filesystem/([0-9]+)/restore$',
         api.filesystem_restore,
-        name='filesystem_restore',
-    ),
-    url(r'^api/filesystems/restore',
-        api.filesystem_restore_all,
-        name='filesystem_restore_all'),
+        name='filesystem_restore',),
+    # shutdown everything
+    url(r'^api/all/scope_operation$',
+        api.scope_operations,
+        name='scope_operation'),
 ]

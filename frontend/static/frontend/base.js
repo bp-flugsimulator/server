@@ -111,7 +111,7 @@ function styleSlaveByStatus(sid, error, e_up, success, s_up) {
     let statusContainer = $('#slaveStatusContainer_' + sid);
     let statusTab = $('#slaveTab' + sid);
 
-    let style = function(boolean) {
+    let style = function (boolean) {
         return function (idx, elem) {
             let element = $(elem);
 
@@ -173,7 +173,7 @@ function notify(title, message, type) {
             '<span class="row text-justify" data-notify="message">{2}</span>' +
             '</div>' +
             '</div>'
-    });
+        });
 }
 
 /**
@@ -200,7 +200,7 @@ function basicRequest(options) {
         converters: {
             'text json': Status.from_json
         },
-        success: function(status) {
+        success: function (status) {
             if (status.is_ok()) {
                 if (options.onSuccess !== undefined) {
                     options.onSuccess(status.payload);
@@ -213,7 +213,7 @@ function basicRequest(options) {
                 }
             }
         },
-        error: function(xhr, errorString, errorCode) {
+        error: function (xhr, errorString, errorCode) {
             notify('HTTP request error', 'Could not deliver request `' + options.action + '` to the server.\nReason:\n' + errorCode + ')', 'danger');
         }
     });
@@ -252,25 +252,105 @@ $(document).ready(function () {
         trigger: 'hover'
     });
 
-    $('.restore-filesystem-navbar').click(function() {
-        basicRequest({
-            type: 'POST',
-            url: '/api/filesystems/restore',
-            action: 'query',
-            onSuccess() {
-                window.location.reload();
-            },
+    function stopScript() {
+        return new Promise(function (resolve, reject) {
+            basicRequest({
+                type: 'POST',
+                url: '/api/script/stop',
+                action: 'query',
+                onSuccess(payload) {
+                    resolve(payload);
+                }
+            });
         });
+    }
+
+
+    function shutdownMultiple(scope) {
+        return new Promise(function (resolve, reject) {
+            basicRequest({
+                type: 'POST',
+                url: '/api/all/scope_operation',
+                action : 'query',
+		data: {'scope': scope},
+                onSuccess(payload) {
+                    resolve(payload);
+                }
+            });
+        });
+    }
+
+    $('#restore-filesystem-navbar').click(function () {
+	shutdownMultiple('filesystem');
+	$('#warningModal').modal('toggle');
+	$('#warningModal').on('hidden.bs.modal', function (e) {
+	notify(
+		'Filemanagement',
+                'Restore of all clients in progress'
+        );
+		$('#warningModal').off('hidden.bs.modal');
+	});
+
     });
 
-    $('.stop-programs-navbar').click(function() {
-        basicRequest({
-            type: 'POST',
-            url: '/api/programs/stop',
-            action: 'query',
-            onSuccess() {
-                window.location.reload();
-            },
-        });
+    $('#stop-programs-navbar').click(function () {
+	shutdownMultiple('programs');
+	$('#warningModal').modal('toggle');
+	$('#warningModal').on('hidden.bs.modal', function (e) {
+	notify(
+		'Programs',
+                'Killing programs on all clients'
+        );
+		$('#warningModal').off('hidden.bs.modal');
+	});
+    });
+
+    $('#shutdown-clients-navbar').click(function () {
+	shutdownMultiple('clients');
+	$('#warningModal').modal('toggle');
+	$('#warningModal').on('hidden.bs.modal', function (e) {
+	notify(
+		'Clients',
+                'Shutting down all clients.'
+        );
+		$('#warningModal').off('hidden.bs.modal');
+	});
+    });
+
+    $('#shutdown-navbar').click(function () {
+	shutdownMultiple('all');
+	$('#warningModal').modal('toggle');
+	$('#warningModal').on('hidden.bs.modal', function (e) {
+	notify(
+		'Shutdown',
+                'Shutting down everything.'
+        );
+		$('#warningModal').off('hidden.bs.modal');
+	});
+    });
+
+    $('#restoreAllButton').click(function () {
+        $('#warningBody').html('Are you sure you want to restore all files and directories?');
+        $('.modal-button').hide();
+        $('#restore-filesystem-navbar').show();
+        $('#warningModal').modal('toggle');
+    });
+    $('#stopAllButton').click(function () {
+        $('#warningBody').html('Are you sure you want to stop all programs?');
+        $('.modal-button').hide();
+        $('#stop-programs-navbar').show();
+        $('#warningModal').modal('toggle');
+    });
+    $('#shutdownClientsButton').click(function () {
+        $('#warningBody').html('Are you sure you want to shutdown all Clients? \n This may take a few seconds.');
+        $('.modal-button').hide();
+        $('#shutdown-clients-navbar').show();
+        $('#warningModal').modal('toggle');
+    });
+    $('#shutdownAllButton').click(function () {
+        $('#warningBody').html('Are you sure you want to shutdown the simulator? \n This may take a few seconds.');
+        $('.modal-button').hide();
+        $('#shutdown-navbar').show();
+        $('#warningModal').modal('toggle');
     });
 });

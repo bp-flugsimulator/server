@@ -2,8 +2,11 @@
 This module contains all functions that handle requests on the REST api.
 """
 import logging
+import platform
+import sched, threading
+import subprocess
 
-from django.http import HttpResponseForbidden, HttpRequest
+from django.http import HttpResponseForbidden
 from django.http.request import QueryDict
 from django.core.exceptions import ValidationError
 from django.db.utils import IntegrityError
@@ -608,47 +611,6 @@ def program_log_disable(request, program_id):
     else:
         return HttpResponseForbidden()
 
-
-def program_stop_all(request):
-    """
-    Process requests to reset all moved `FilesystemModel`s.
-
-    HTTP Methods
-    ------------
-        POST:
-            Stops all started `ProgramModel`s
-    Parameters
-    ----------
-        request: HttpRequest
-            The request which should be processed.
-
-    Returns
-    -------
-        HttpResponse:
-            If the HTTP method is not supported, then an `HttpResponseForbidden`
-            is returned.
-    """
-    if request.method == 'POST':
-        stopScriptRequest = HttpRequest()
-        stopScriptRequest.method = 'POST'
-        stopScriptRequest.url = '/frontend/script/stop'
-        stopScriptRequest.action = 'query'
-
-        script_stop(stopScriptRequest)
-
-        programs = ProgramModel.objects.all()
-        programs = filter(lambda x: x.is_running, programs)
-        try:
-            for program in list(programs):
-                prog_stop(program)
-        except FsimError as err:
-            return StatusResponse(err)
-
-        return StatusResponse.ok("")
-    else:
-        return HttpResponseForbidden()
-
-
 def script_set(request):
     """
     Process requests on a set of `ScriptModel`s.
@@ -815,8 +777,7 @@ def script_stop(request):
     HTTP Methods
     ------------
         POST:
-            Invokes the method for the `ScriptModel` (which is
-            specified in the URL).
+            Invokes the method for the `ScriptModel`
 
     Parameters
     ----------
@@ -1107,15 +1068,14 @@ def filesystem_entry(request, filesystem_id):
     else:
         return HttpResponseForbidden()
 
-
-def filesystem_restore_all(request):
+def scope_operations(request):
     """
-    Process requests to reset all moved `FilesystemModel`s.
+    Process requests to shutdown all clients
 
     HTTP Methods
     ------------
         POST:
-            Resets all moved `FilesystemModel`s
+            Stops all programs, resets the filesystem and shuts down every client
     Parameters
     ----------
         request: HttpRequest
@@ -1128,21 +1088,50 @@ def filesystem_restore_all(request):
             is returned.
     """
     if request.method == 'POST':
-        stopScriptRequest = HttpRequest()
-        stopScriptRequest.method = 'POST'
-        stopScriptRequest.url = '/frontend/script/stop'
-        stopScriptRequest.action = 'query'
-
-        script_stop(stopScriptRequest)
-
-        filesystems = FilesystemModel.objects.all()
-        filesystems = filter(lambda x: x.is_moved, filesystems)
-        try:
-            for filesystem in list(filesystems):
-                fs_restore(filesystem)
-        except FsimError as err:
-            return StatusResponse(err)
-
-        return StatusResponse.ok("")
+        FSIM_CURRENT_SCHEDULER.stop()
+        FSIM_CURRENT_SCHEDULER.notify()
+        t = ShutdownThread(request.POST['scope'])
+        t.start()
+        return StatusResponse.ok('')
     else:
         return HttpResponseForbidden()
+
+class ShutdownThread(threading.Thread):
+    def __init__(self, scope):
+        threading.Thread.__init__(self)
+        self.scope = scope
+
+    def run(self):# pragma: no cover
+        s = sched.scheduler()
+        programs = ProgramModel.objects.all()
+        programs = filter(lambda x: x.is_running, programs)
+        delay = 0
+        for program in programs:
+            s.enter(delay, 2, prog_stop, argument=(program,))
+            delay += 1
+        if self.scope == 'programs':
+            s.run()
+            return
+        filesystems = FilesystemModel.objects.all()
+        filesystems = filter(lambda x: x.is_moved, filesystems)
+        delay += 10
+        for filesystem in filesystems:
+            s.enter(delay, 1, fs_restore, argument=(filesystem,))
+        if self.scope == 'filesystem':
+            s.run()
+            return
+        slaves = SlaveModel.objects.all()
+        slaves = filter(lambda x: x.is_online, slaves)
+        delay += 8
+        for slave in slaves:
+            s.enter(delay,3, controller.slave_shutdown, argument=(slave,))
+            delay += 1
+        if self.scope == 'clients':
+            s.run()
+            return
+        s.run()
+
+        if platform.system() == "Windows":
+            subprocess.run(['shutdown', '-s', '-t', '0'])
+        else:
+            subprocess.run(['shutdown', '-h now'])
