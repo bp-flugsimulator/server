@@ -1132,6 +1132,6 @@ class ShutdownThread(threading.Thread):
         s.run()
 
         if platform.system() == "Windows":
-            subprocess.run(['shutdown', '-s', '-t 0'])
+            subprocess.run(['shutdown', '-s', '-t', '0'])
         else:
             subprocess.run(['shutdown', '-h now'])
