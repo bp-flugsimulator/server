@@ -1,5 +1,5 @@
 """
-This module contains all functions that handle requests on websockets.
+This module contains functions that handle requests on websockets.
 """
 import logging
 import traceback
@@ -25,12 +25,14 @@ LOGGER = logging.getLogger('fsim.websockets')
 
 def select_method(status):
     """
-    Selects a handler for the incoming message by checking the name with the
-    function_handle_table.
+    Inspects incoming `Status` objects and selects an appropriate handler. All
+    possible handlers are saved inside a table. The method attribute in the
+    `Status` object decides which handler is used.
 
     Parameters
     ----------
-        status: Status object
+        status: Status
+            The `Status` object that was send by the slave
 
     """
     LOGGER.debug(dict(status))
@@ -58,13 +60,15 @@ def select_method(status):
 
 def handle_chain_execution(status):
     """
-    Handles an incoming message on '/notification' that
-    is an answer to an 'chain_execution' request on a slave
+    This function handles incoming responses for the method `chain_execution`.
+    The `Status` object consists of multiple `Status` objects. For all `Status`
+    objects the appropriate handler will be called.
 
     Parameters
     ----------
-    status: Status
-        The statusobject that was send by the slave
+        status: Status
+            The `Status` object that was send by the slave
+
     """
     LOGGER.info("Handle chain execution %s", dict(status))
 
@@ -82,13 +86,14 @@ def handle_chain_execution(status):
 
 def handle_filesystem_restored(status):
     """
-    Handles an incoming message on '/notification' that
-    is an answer to an 'filesystem_restore' request on a slave
+    This function handles incoming responses for the method
+    `filesystem_restore`. The corresponding `FilesystemModel` will be modified
+    and the user will be notified.
 
     Parameters
     ----------
-    status: Status
-        The statusobject that was send by the slave
+        status: Status
+            The `Status` object that was send by the slave
     """
     LOGGER.info("Handle filesystem restored %s", dict(status))
 
@@ -128,13 +133,14 @@ def handle_filesystem_restored(status):
 
 def handle_filesystem_moved(status):
     """
-    Handles an incoming message on '/notification' that
-    is an answer to an 'filesystem_move' request on a slave
+    This function handles incoming responses for the method `filesystem_move`.
+    The corresponding `FilesystemModel` will be modified and the user will be
+    notified.
 
     Parameters
     ----------
-    status: Status
-        The statusobject that was send by the slave
+        status: Status
+            The `Status` object that was send by the slave
     """
     LOGGER.info("Handle filesystem moved %s", dict(status))
 
@@ -182,13 +188,14 @@ def handle_filesystem_moved(status):
 
 def handle_execute(status):
     """
-    Handles an incoming message on '/notification' that
-    is an answer to an 'execute' request on a slave
+    This function handles incoming responses for the method `execute`.  The
+    corresponding `ProgramStatusModel` will be modified and the user will be
+    notified.
 
     Parameters
     ----------
-    status: Status
-        The statusobject that was send by the slave
+        status: Status
+            The `Status` object that was send by the slave
     """
     LOGGER.info("Handle program execute %s", dict(status))
 
@@ -238,13 +245,14 @@ def handle_execute(status):
 
 def handle_online(status):
     """
-    Handles an incoming message on '/notification' that
-    is an answer to an 'online' request on a slave
+    This function handles incoming responses for the method `online`.
+    The corresponding `SlaveModel` will be modified and the user will be
+    notified.
 
     Parameters
     ----------
-    status: Status
-        The statusobject that was send by the slave
+        status: Status
+            The `Status` object that was send by the slave
     """
     LOGGER.info("Handle slave online %s", dict(status))
 
@@ -281,6 +289,16 @@ def handle_online(status):
 
 
 def handle_get_log(status):
+    """
+    This function handles incoming responses for the method `get_log`.
+    The corresponding `ProgramStatusModel` will be modified and the user will
+    be notified.
+
+    Parameters
+    ----------
+        status: Status
+            The `Status` object that was send by the slave
+    """
 
     LOGGER.info("Handle log get %s", dict(status))
 
@@ -321,15 +339,16 @@ def handle_get_log(status):
 @channel_session
 def ws_rpc_connect(message):
     """
-    Handels websockets.connect requests of '/commands'. Connections only get
-    accepted if the ip of the sender is the ip of a known client. Adds the
-    reply_channel to the groups 'clients' and 'client_$slave.id' and sends an
-    online request to the client.
+    Handles incoming connections on the websocket `/commands`. Connections only
+    get accepted if the IP of the sender matches the IP of a known client.  If
+    the client is known then a unique group will be created. The only member of
+    this group is the sender. The naming scheme for this group is
+    `client_<id>`. Now the sender has to response to the `online` method.
 
-    Arguments
-    ---------
-    message: channels.message.Message that contains the connection request  on
-    /commands
+    Parameters
+    ----------
+        message: channels.message.Message
+            The first message which is send by the sender.
 
     """
     ip_address, port = message.get('client')
@@ -365,19 +384,14 @@ def ws_rpc_connect(message):
 
 def ws_rpc_receive(message):
     """
-    Handels websockets.receive requests of '/Commands'. Connections only
-    get accepted if the ip of the sender is the ip of a known slave.
+    Handles incoming requests on the websocket `/commands`. The incoming
+    message will be parsed to a `Status` object. The appropriate handler is
+    called with `select_method`.
 
-    If the status contains the result of a boottime request a corresponding
-    online will be set in SlaveModel.
-
-    If the status contains the result of an execute request the corresponding
-    ProgramStatus will get updated in the database and the message gets
-    republished to the 'notifications' group.
-
-    Arguments
-    ---------
-    message: channels.message.Message that contains a Status in the 'text' field
+    Parameters
+    ----------
+        message: channels.message.Message
+            Contains a message which needs to be JSON encoded string.
 
     """
     try:
@@ -402,14 +416,15 @@ def ws_rpc_receive(message):
 @channel_session
 def ws_rpc_disconnect(message):
     """
-    Handels websockets.disconnect requests of '/commands'. Only disconnects
-    known clients. Removes the reply_channel from 'clients' and
-    'clients_$slave.id' and sets online to False.
+    Handles disconnects for websockets on `/commands`. The disconnect can only
+    be successful if the sender is a known client. If the sender is a known
+    client then the `SlaveModel` will be updated and the sender will be removed
+    from the group. The user will be notified if the disconnect was successful.
 
-    Arguments
-    ---------
-    message: channels.message.Message that contains the disconnect request  on
-    /commands
+    Parameters
+    ----------
+        message: channels.message.Message
+            The last message which is send by the sender.
 
     """
 
@@ -429,7 +444,7 @@ def ws_rpc_disconnect(message):
             if ProgramStatusModel.objects.filter(program=program).exists():
                 ProgramStatusModel.objects.get(program=program).delete()
 
-        # tell the webinterface that the client has disconnected
+        # tell the web interface that the client has disconnected
         notify({'slave_status': 'disconnected', 'sid': str(slave.id)})
 
         # notify the scheduler that status has change
@@ -449,13 +464,13 @@ def ws_rpc_disconnect(message):
 
 def ws_logs_connect(message):
     """
-    Handels websockets.connect requests of '/notifications'.
-    Adds the reply_channel to the group 'notifications'
+    Handles incoming connections on the websocket `/log`. All senders are
+    accepted.
 
-    Arguments
-    ---------
-    message: channels.message.Message that contains the connection request  on
-    '/notifications'.
+    Parameters
+    ----------
+        message: channels.message.Message
+            The first message which is send by the sender.
     """
 
     # Accept the connection
@@ -464,12 +479,13 @@ def ws_logs_connect(message):
 
 def ws_logs_receive(message):
     """
-    Handels websockets.receive requests of '/logs'. And forwards the content to
-    the 'notifications' group. Every request gets acknowledged.
+    Handles incoming requests on the websocket `/log`. The incoming messages
+    will be forwarded to the `notification` group.
 
-    Arguments
-    ---------
-    message: channels.message.Message that contains a logfile
+    Parameters
+    ----------
+        message: channels.message.Message
+            A message which contains log content.
     """
     Group('notifications').send({'text': message.content['text']})
     message.reply_channel.send({'text': 'ack'})
@@ -477,13 +493,13 @@ def ws_logs_receive(message):
 
 def ws_notifications_connect(message):
     """
-    Handels websockets.connect requests of '/notifications'.
-    Adds the reply_channel to the group 'notifications'
+    Handles incoming connections on the websocket `/notifications`. All senders
+    are accepted and added to the `notification` group.
 
-    Arguments
-    ---------
-    message: channels.message.Message that contains the connection request  on
-    '/notifications'.
+    Parameters
+    ----------
+        message: channels.message.Message
+            The first message which is send by the sender.
     """
     Group('notifications').add(message.reply_channel)
     message.reply_channel.send({"accept": True})
@@ -491,12 +507,13 @@ def ws_notifications_connect(message):
 
 def ws_notifications_disconnect(message):
     """
-    Handels websockets.disconnected requests of '/notifications'. Removes the
-    reply_channel from the 'notifications' group
+    Handles disconnects for websockets on `/notifications`. The sender will be
+    removed from the `notification` group.
 
-    Arguments
-    ---------
-    message: channels.message.Message that contains the disconnect request  on
-    '/notifications'.
+    Parameters
+    ----------
+        message: channels.message.Message
+            The last message which is send by the sender.
     """
     Group('notifications').discard(message.reply_channel)
+
