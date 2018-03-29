@@ -22,6 +22,12 @@
     ```
     * On Windows use the Windows Explorer.
 
+1. Install the dependecies with install.py
+    ```sh
+    py install.py
+    ```
+
+
 ## Entwicklungsumgebung (intern)
 Es bietet sich an, die Abhängigkeiten in ein virtualenv zu installieren, sodass sie unabhängig geupdatet werden können:
 
