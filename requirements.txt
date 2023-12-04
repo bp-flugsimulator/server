@@ -1,4 +1,4 @@
-Django==2.0.3
+Django==4.2.8
 django-widget-tweaks==1.4.1
 wakeonlan==1.1.6
 channels==1.1.8
